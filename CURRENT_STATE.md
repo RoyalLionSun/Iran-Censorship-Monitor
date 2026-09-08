@@ -1,4 +1,4 @@
-# Current State
+# Current State — v1.1.0 development
 
 Version: **1.0.0**  
 Audit date: **2026-09-08**
@@ -98,3 +98,19 @@ The development sandbox used for this reconstruction could start the local servi
 - local API/static serving is smoke-tested;
 - upstream API contracts were checked against current provider documentation;
 - end-to-end live upstream calls must be verified once deployed on a host with normal outbound Internet access.
+
+## v1.1 implemented in the development branch
+
+- Censored Planet GraphQL/CenAlert;
+- RIPEstat/RIS visibility, prefix/neighbour context and bounded BGP drilldown;
+- Globalping Iran probe inventory plus protected disabled-by-default active measurement API;
+- Tor bridge transport lower/upper bounds;
+- Cloudflare Radar HTTP protocol/version, IP version and TLS-version distributions;
+- PeeringDB + IHR AS-Hegemony topology/chokepoint context;
+- Citizen Lab Iran target inventory;
+- token-gated Internet Society Pulse context;
+- curated Iran-intelligence source registry and allowlisted GDELT discovery;
+- control/data-plane divergence classification;
+- dense UI panels for the new evidence families.
+
+The offline deterministic suite currently contains **42 passing tests**. Live upstream reachability still depends on the deployment host.

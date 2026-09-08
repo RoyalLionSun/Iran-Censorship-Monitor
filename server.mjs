@@ -10,6 +10,14 @@ import { getRipeSignals } from './lib/ripe.mjs';
 import { getRadarSignals } from './lib/radar.mjs';
 import { getIodaSignals } from './lib/ioda.mjs';
 import { getTorMetrics } from './lib/tor.mjs';
+import { getRipeBgpUpdates, getRipeStatSignals } from './lib/ripestat.mjs';
+import { authorizeGlobalpingControl, createGlobalpingMeasurement, getGlobalpingIranProbes, getGlobalpingMeasurement, globalpingRateLimit } from './lib/globalping.mjs';
+import { getCensoredPlanetSignals } from './lib/censoredplanet.mjs';
+import { getCitizenLabIranTargets } from './lib/citizenlab.mjs';
+import { getPeeringDbTopology } from './lib/peeringdb.mjs';
+import { getIhrDependencies } from './lib/ihr.mjs';
+import { getPulseShutdowns } from './lib/pulse.mjs';
+import { getGdeltIranIntelligence } from './lib/osint.mjs';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
 
@@ -34,6 +42,7 @@ await loadDotEnv();
 const publicRoot = resolve(root, 'public');
 const asns = JSON.parse(await readFile(join(root, 'data/asns.json'), 'utf8'));
 const sources = JSON.parse(await readFile(join(root, 'data/sources.json'), 'utf8'));
+const intelligenceSources = JSON.parse(await readFile(join(root, 'data/intelligence-sources.json'), 'utf8'));
 const HOST = process.env.HOST || '127.0.0.1';
 const PORT = Number(process.env.PORT || 4173);
 
@@ -80,9 +89,29 @@ async function safeSource(name, work) {
   }
 }
 
+async function readJsonBody(req, maxBytes = 16_384) {
+  let size = 0;
+  const chunks = [];
+  for await (const chunk of req) {
+    size += chunk.length;
+    if (size > maxBytes) throw new Error('Request body is too large.');
+    chunks.push(chunk);
+  }
+  if (!chunks.length) return {};
+  const text = Buffer.concat(chunks).toString('utf8');
+  let payload;
+  try { payload = JSON.parse(text); } catch { throw new Error('Expected a valid JSON request body.'); }
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) throw new Error('Expected a JSON object.');
+  return payload;
+}
+
+function scopeRequired(source, input) {
+  return { ok: true, source, status: 'scope_required', asn: null, since: input.since, until: input.until, note: 'Select a specific ASN for this control-plane analysis.' };
+}
+
 async function handleApi(req, res, url) {
   if (url.pathname === '/api/health') {
-    jsonResponse(res, 200, { ok: true, service: 'iran-internet-monitor', now: new Date().toISOString(), radarConfigured: Boolean(process.env.CLOUDFLARE_RADAR_API_TOKEN) });
+    jsonResponse(res, 200, { ok: true, service: 'iran-censorship-monitor', now: new Date().toISOString(), radarConfigured: Boolean(process.env.CLOUDFLARE_RADAR_API_TOKEN), pulseConfigured: Boolean(process.env.INTERNET_SOCIETY_PULSE_API_TOKEN), globalpingActiveConfigured: process.env.GLOBALPING_ACTIVE_ENABLED === 'true' && Boolean(process.env.GLOBALPING_CONTROL_KEY) });
     return true;
   }
 
@@ -92,6 +121,7 @@ async function handleApi(req, res, url) {
       country: { code: 'IR', name: 'Iran' },
       asns,
       sources,
+      intelligenceSources,
       defaultRange: defaultRange(),
       radarConfigured: Boolean(process.env.CLOUDFLARE_RADAR_API_TOKEN),
       ooniTests: [...OONI_TESTS],
@@ -101,6 +131,15 @@ async function handleApi(req, res, url) {
         cloudflareRadarConfigured: Boolean(process.env.CLOUDFLARE_RADAR_API_TOKEN),
         liveIoda: true,
         liveTorMetrics: true,
+        ripeStatRouting: true,
+        censoredPlanet: true,
+        globalpingProbeInventory: true,
+        globalpingActiveMeasurements: process.env.GLOBALPING_ACTIVE_ENABLED === 'true' && Boolean(process.env.GLOBALPING_CONTROL_KEY),
+        citizenLabIranTargets: true,
+        peeringDbTopology: true,
+        ihrAsHegemony: true,
+        internetSocietyPulseConfigured: Boolean(process.env.INTERNET_SOCIETY_PULSE_API_TOKEN),
+        gdeltProfessionalOsintDiscovery: true,
         wireguardOrOpenvpnProbeFleet: false,
       },
     });
@@ -109,16 +148,22 @@ async function handleApi(req, res, url) {
 
   if (url.pathname === '/api/overview') {
     const input = queryInput(url);
-    const [ooni, ripe, radar, ioda, tor] = await Promise.all([
+    const [ooni, ripe, radar, ioda, tor, ripestat, globalping, censoredPlanet, peeringdb, ihr, pulse] = await Promise.all([
       safeSource('OONI', () => getOoniTimeline(input)),
       safeSource('RIPE Atlas', () => getRipeSignals(input)),
       safeSource('Cloudflare Radar', () => getRadarSignals(input)),
       safeSource('IODA', () => getIodaSignals(input)),
       safeSource('Tor Metrics', () => getTorMetrics(input)),
+      input.asn ? safeSource('RIPEstat / RIPE RIS', () => getRipeStatSignals(input)) : Promise.resolve(scopeRequired('RIPEstat / RIPE RIS', input)),
+      safeSource('Globalping', () => getGlobalpingIranProbes(input)),
+      safeSource('Censored Planet', () => getCensoredPlanetSignals(input)),
+      input.asn ? safeSource('PeeringDB', () => getPeeringDbTopology(input)) : Promise.resolve(scopeRequired('PeeringDB', input)),
+      input.asn ? safeSource('Internet Health Report', () => getIhrDependencies(input)) : Promise.resolve(scopeRequired('Internet Health Report', input)),
+      safeSource('Internet Society Pulse', () => getPulseShutdowns()),
     ]);
     const scopeLabel = input.asn ? `${input.asn} / Iran` : 'Iran / all measured networks';
-    const assessment = buildAssessment({ ooni, ripe, radar, ioda, scopeLabel });
-    jsonResponse(res, 200, { ok: true, input, fetchedAt: new Date().toISOString(), assessment, ooni, ripe, radar, ioda, tor });
+    const assessment = buildAssessment({ ooni, ripe, radar, ioda, ripestat, scopeLabel });
+    jsonResponse(res, 200, { ok: true, input, fetchedAt: new Date().toISOString(), assessment, ooni, ripe, radar, ioda, tor, ripestat, globalping, censoredPlanet, peeringdb, ihr, pulse });
     return true;
   }
 
@@ -139,6 +184,57 @@ async function handleApi(req, res, url) {
   if (url.pathname.startsWith('/api/ooni/measurement/')) {
     const uid = decodeURIComponent(url.pathname.slice('/api/ooni/measurement/'.length));
     const result = await getOoniMeasurementDetail(uid);
+    jsonResponse(res, 200, result);
+    return true;
+  }
+
+  if (url.pathname === '/api/routing-updates') {
+    const input = queryInput(url);
+    if (!input.asn) throw new Error('Select a specific ASN for BGP update drilldown.');
+    const result = await getRipeBgpUpdates(input);
+    jsonResponse(res, 200, result);
+    return true;
+  }
+
+  if (url.pathname === '/api/globalping/probes') {
+    const input = queryInput(url);
+    const result = await getGlobalpingIranProbes(input);
+    jsonResponse(res, 200, result);
+    return true;
+  }
+
+  if (url.pathname === '/api/globalping/measure' && req.method === 'POST') {
+    const auth = authorizeGlobalpingControl(req.headers['x-control-key']);
+    if (!auth.ok) { jsonResponse(res, auth.status, { ok: false, source: 'Globalping', error: auth.error }); return true; }
+    const rate = globalpingRateLimit();
+    if (!rate.ok) { jsonResponse(res, 429, { ok: false, source: 'Globalping', error: 'Server-side active measurement rate limit reached.', retryAfterSeconds: rate.retryAfterSeconds }, { 'retry-after': String(rate.retryAfterSeconds) }); return true; }
+    const body = await readJsonBody(req);
+    const result = await createGlobalpingMeasurement({ type: body.type, target: body.target, asn: body.asn ?? '', limit: body.limit });
+    jsonResponse(res, 202, result);
+    return true;
+  }
+
+  if (url.pathname.startsWith('/api/globalping/measurement/') && req.method === 'GET') {
+    const auth = authorizeGlobalpingControl(req.headers['x-control-key']);
+    if (!auth.ok) { jsonResponse(res, auth.status, { ok: false, source: 'Globalping', error: auth.error }); return true; }
+    const id = decodeURIComponent(url.pathname.slice('/api/globalping/measurement/'.length));
+    const result = await getGlobalpingMeasurement(id);
+    jsonResponse(res, 200, result);
+    return true;
+  }
+
+  if (url.pathname === '/api/intelligence') {
+    const input = queryInput(url);
+    const gdelt = await safeSource('GDELT DOC 2.0', () => getGdeltIranIntelligence(input));
+    jsonResponse(res, 200, { ok: true, input: { since: input.since, until: input.until }, fetchedAt: new Date().toISOString(), sources: intelligenceSources, gdelt, note: 'Intelligence sources and GDELT articles are contextual research/discovery. They are not counted as independent technical sensor votes without provenance review.' });
+    return true;
+  }
+
+  if (url.pathname === '/api/targets') {
+    const category = url.searchParams.get('category') || '';
+    const search = url.searchParams.get('search') || '';
+    const limit = url.searchParams.get('limit') || '200';
+    const result = await safeSource('Citizen Lab Test Lists', () => getCitizenLabIranTargets({ category, search, limit }));
     jsonResponse(res, 200, result);
     return true;
   }
@@ -187,7 +283,6 @@ function safeStaticPath(pathname) {
 async function serveStatic(res, pathname) {
   let file = safeStaticPath(pathname);
   if (!file) return false;
-  if (!existsSync(file) && !extname(file)) file = join(publicRoot, 'index.html');
   if (!existsSync(file)) return false;
   const extension = extname(file).toLowerCase();
   res.writeHead(200, {
@@ -221,5 +316,5 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, HOST, () => {
-  console.log(`Iran Internet Monitor listening on http://${HOST}:${PORT}`);
+  console.log(`Iran Censorship Monitor listening on http://${HOST}:${PORT}`);
 });

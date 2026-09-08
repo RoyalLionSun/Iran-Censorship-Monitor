@@ -154,3 +154,30 @@ Manually entered VPN field measurements are stored exclusively in the browser's 
 - `package.json`
 - `.env.example`
 - build metadata
+
+## v1.1 evidence architecture
+
+The runtime deliberately keeps these evidence families distinct:
+
+```text
+OONI + Censored Planet                 censorship/interference measurements
+RIPE Atlas + IODA + Cloudflare Radar   data-plane/connectivity signals
+RIPEstat / RIPE RIS                    BGP control plane
+Globalping                             Iran vantage inventory / protected active probing
+Tor Metrics                            circumvention context and transport bounds
+PeeringDB + IHR AS Hegemony            topology/dependency context
+Citizen Lab                            test-target inventory
+Pulse + curated OSINT + GDELT          contextual intelligence, never sensor votes
+```
+
+The correlation layer may identify **control/data-plane divergence**, but contextual sources do not increase the independent-technical-source count. This prevents double counting when an article or curated shutdown record ultimately derives from OONI, Cloudflare, IODA or another sensor already present.
+
+### Additional internal API (v1.1)
+
+- `GET /api/routing-updates` — selected-ASN RIPEstat BGP drilldown, max 48 h effective window and 250 records.
+- `GET /api/globalping/probes` — passive Iran probe inventory.
+- `POST /api/globalping/measure` — disabled-by-default, authenticated/rate-limited Iran-only active test.
+- `GET /api/globalping/measurement/:id` — read active-measurement result.
+- `GET /api/targets` — Citizen Lab Iran target inventory/search.
+- `GET /api/intelligence` — curated source registry plus professional-domain GDELT discovery.
+

@@ -1,0 +1,20 @@
+[
+  {"id":"asl19","name":"ASL19","domain":"asl19.org","class":"iran-technical-research","role":"Iran-specific shutdown, NIN, whitelisting and circumvention analysis","url":"https://asl19.org/en/"},
+  {"id":"miaan","name":"Miaan / Filterwatch","domain":"miaan.org","class":"iran-technical-research","role":"Iran-specific filtering, infrastructure, policy and shutdown research","url":"https://miaan.org/projects/filterwatch/"},
+  {"id":"accessnow","name":"Access Now #KeepItOn","domain":"accessnow.org","class":"curated-incident","role":"Shutdown documentation and contextual verification","url":"https://www.accessnow.org/keepiton/"},
+  {"id":"pulse","name":"Internet Society Pulse","domain":"internetsociety.org","class":"curated-incident","role":"Shutdown tracker and Internet resilience context","url":"https://pulse.internetsociety.org/en/shutdowns/"},
+  {"id":"netblocks","name":"NetBlocks","domain":"netblocks.org","class":"external-corroboration","role":"Public disruption reporting and corroboration","url":"https://netblocks.org/"},
+  {"id":"psiphon","name":"Psiphon","domain":"psiphon.ca","class":"circumvention-context","role":"Circumvention-network usage and operational reporting","url":"https://psiphon.ca/"},
+  {"id":"proton","name":"Proton VPN Observatory","domain":"protonvpn.com","class":"circumvention-context","role":"VPN demand spikes during censorship events","url":"https://protonvpn.com/internet-censorship-observatory"},
+  {"id":"ceno","name":"Ceno / eQualitie","domain":"ceno.app","class":"circumvention-context","role":"Peer-to-peer circumvention and resilience context","url":"https://ceno.app/"},
+  {"id":"article19","name":"ARTICLE 19","domain":"article19.org","class":"rights-policy-context","role":"Freedom of expression, censorship and policy documentation","url":"https://www.article19.org/"},
+  {"id":"freedomhouse","name":"Freedom House","domain":"freedomhouse.org","class":"rights-policy-context","role":"Long-term Internet freedom and policy baseline","url":"https://freedomhouse.org/country/iran/freedom-net"},
+  {"id":"kentik","name":"Kentik","domain":"kentik.com","class":"network-analysis-context","role":"Traffic and routing analysis used for independent technical context","url":"https://www.kentik.com/"},
+  {"id":"ooni","name":"OONI","domain":"ooni.org","class":"technical-sensor","role":"Open censorship measurements and findings","url":"https://ooni.org/"},
+  {"id":"censoredplanet","name":"Censored Planet","domain":"censoredplanet.org","class":"technical-sensor","role":"Remote censorship measurement research","url":"https://censoredplanet.org/"},
+  {"id":"ripe","name":"RIPE NCC","domain":"ripe.net","class":"routing-measurement","role":"RIPE Atlas, RIS and RIPEstat routing/active measurement context","url":"https://www.ripe.net/"},
+  {"id":"tor","name":"Tor Project","domain":"torproject.org","class":"circumvention-context","role":"Tor network, bridge and pluggable-transport documentation","url":"https://www.torproject.org/"},
+  {"id":"ioda","name":"IODA / Georgia Tech","domain":"gatech.edu","class":"technical-sensor","role":"Internet outage detection and analysis","url":"https://ioda.inetintel.cc.gatech.edu/"},
+  {"id":"cloudflare","name":"Cloudflare Radar","domain":"cloudflare.com","class":"technical-sensor","role":"Traffic, outage, protocol and BGP context","url":"https://radar.cloudflare.com/"},
+  {"id":"globalping","name":"Globalping / jsDelivr","domain":"globalping.io","class":"active-measurement","role":"Independent in-country active measurement vantage points","url":"https://globalping.io/"}
+]

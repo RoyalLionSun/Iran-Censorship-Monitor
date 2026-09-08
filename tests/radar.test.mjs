@@ -42,3 +42,13 @@ test('Radar URL construction never contains the API token', () => {
   }
   delete process.env.CLOUDFLARE_RADAR_API_TOKEN;
 });
+
+test('Radar protocol summary URLs are Iran and ASN scoped', () => {
+  const urls = buildRadarUrls({ asn:'AS58224', since:'2026-09-01', until:'2026-09-08' });
+  for (const dimension of ['HTTP_PROTOCOL','HTTP_VERSION','IP_VERSION','TLS_VERSION']) {
+    const url = new URL(urls.summaryUrls[dimension]);
+    assert.equal(url.searchParams.get('location'), 'IR');
+    assert.equal(url.searchParams.get('asn'), '58224');
+    assert.match(url.pathname, new RegExp(`/summary/${dimension}$`));
+  }
+});

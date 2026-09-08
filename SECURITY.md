@@ -46,3 +46,11 @@ The runtime has no third-party npm dependencies. Node.js itself and the reverse 
 - Radar URLs never contain the credential.
 - `scripts/verify-radar.mjs` prints only source states/counts/errors and never the token.
 - Use a dedicated token restricted to **Account > Radar > Read**.
+
+## Active-measurement safety (v1.1)
+
+Globalping active measurements are `false` by default. Enabling them requires both `GLOBALPING_ACTIVE_ENABLED=true` and a server-only `GLOBALPING_CONTROL_KEY`. Requests are server-rate-limited, Iran-vantage-only, capped to five probes, restricted to an allowlist of measurement types and reject localhost/private/reserved/CGNAT/link-local/documentation targets and URL credentials. The browser UI does not store or expose the control key.
+
+## OSINT integrity
+
+GDELT and curated reports are explicitly contextual. They do not become additional technical votes simply because multiple articles repeat the same upstream measurement. Evidence provenance must be traced to the root sensor before corroboration.

@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.1.0 — development — 2026-09-08
+
+- shifted the product model from generic Internet monitoring toward Iran-specific censorship intelligence;
+- added Censored Planet GraphQL/CenAlert, RIPEstat/RIS, Globalping, Citizen Lab targets, PeeringDB, IHR AS Hegemony, Pulse context and GDELT professional OSINT discovery;
+- added control/data-plane divergence classification for high-BGP-visibility / severe-user-path-disruption patterns;
+- added bounded on-demand BGP announcements/withdrawals with explicit pre-2024 data-horizon semantics;
+- added Tor bridge transport lower/upper bounds and Cloudflare Radar protocol distributions;
+- added disabled-by-default protected active measurement controls;
+- expanded the dashboard with routing, interference, vantage coverage, topology, protocol mix, targets and intelligence panels;
+- maintained strict separation between technical sensor votes and contextual/curated OSINT;
+- offline deterministic suite: 42 tests passing; production build succeeds.
+
 ## 1.0.1 — 2026-09-08
 
 - enabled the Cloudflare Radar integration path for a real server-side Radar Read token;

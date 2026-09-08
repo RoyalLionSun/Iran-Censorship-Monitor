@@ -114,3 +114,15 @@ npm run verify:radar
 ```
 
 The check is read-only and never prints the credential. It reports the HTTP-series point count, traffic-anomaly count, outage count, BGP-event count and source-specific errors. A DNS/TLS/API error is a failed acceptance check; do not treat `radarConfigured: true` alone as proof of a working upstream connection.
+
+## Optional v1.1 environment variables
+
+```env
+INTERNET_SOCIETY_PULSE_API_TOKEN=
+GLOBALPING_API_TOKEN=
+GLOBALPING_ACTIVE_ENABLED=false
+GLOBALPING_CONTROL_KEY=
+GLOBALPING_SERVER_RUNS_PER_HOUR=10
+```
+
+Do not enable Globalping active measurements on an Internet-facing deployment without a server-only control key, reverse-proxy access controls and an explicit operational reason. Passive Globalping inventory does not require active mode.

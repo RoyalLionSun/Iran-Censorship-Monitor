@@ -47,10 +47,11 @@
   {
     "id": "censored-planet",
     "name": "Censored Planet",
-    "class": "context",
-    "access": "public-data",
-    "role": "Longitudinal censorship measurement datasets",
-    "url": "https://censoredplanet.org/"
+    "class": "live-graphql",
+    "access": "public",
+    "role": "Remote censorship measurements, interference-rate context and CenAlert signals",
+    "url": "https://censoredplanet.org/",
+    "docs": "https://github.com/censoredplanet/cp-api"
   },
   {
     "id": "bgpstream",
@@ -67,5 +68,68 @@
     "access": "public-dataset",
     "role": "Verified shutdown event context",
     "url": "https://www.accessnow.org/keepiton-data-dashboard/"
+  },
+  {
+    "id": "ripestat",
+    "name": "RIPEstat / RIPE RIS",
+    "class": "live-api",
+    "access": "public",
+    "role": "BGP visibility, announced prefixes, neighbours and bounded routing updates",
+    "url": "https://stat.ripe.net/",
+    "docs": "https://stat.ripe.net/docs/data-api/"
+  },
+  {
+    "id": "globalping",
+    "name": "Globalping",
+    "class": "live-api",
+    "access": "public / optional token",
+    "role": "Iran probe inventory and protected operator-controlled active measurements",
+    "url": "https://globalping.io/",
+    "docs": "https://www.jsdelivr.com/docs/api.globalping.io"
+  },
+  {
+    "id": "citizenlab",
+    "name": "Citizen Lab Test Lists",
+    "class": "live-csv",
+    "access": "public",
+    "role": "Curated Iran censorship-test target inventory",
+    "url": "https://github.com/citizenlab/test-lists/blob/master/lists/ir.csv",
+    "docs": "https://github.com/citizenlab/test-lists"
+  },
+  {
+    "id": "peeringdb",
+    "name": "PeeringDB",
+    "class": "live-api",
+    "access": "public",
+    "role": "Operator-maintained ASN, exchange and facility topology context",
+    "url": "https://www.peeringdb.com/",
+    "docs": "https://docs.peeringdb.com/api_specs/"
+  },
+  {
+    "id": "ihr",
+    "name": "Internet Health Report",
+    "class": "live-api",
+    "access": "public",
+    "role": "AS Hegemony dependency and chokepoint context",
+    "url": "https://www.ihr.live/",
+    "docs": "https://github.com/InternetHealthReport/ihr-api"
+  },
+  {
+    "id": "pulse",
+    "name": "Internet Society Pulse",
+    "class": "curated-api",
+    "access": "token",
+    "role": "Curated shutdown incidents and verification levels; context only",
+    "url": "https://pulse.internetsociety.org/en/shutdowns/",
+    "docs": "https://pulse.internetsociety.org/api/docs"
+  },
+  {
+    "id": "gdelt",
+    "name": "GDELT DOC 2.0",
+    "class": "osint-discovery",
+    "access": "public",
+    "role": "Professional-source discovery for Iran censorship reporting; context only",
+    "url": "https://www.gdeltproject.org/",
+    "docs": "https://blog.gdeltproject.org/gdelt-doc-2-0-api-debuts/"
   }
 ]

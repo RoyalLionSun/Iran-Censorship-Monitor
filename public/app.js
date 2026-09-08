@@ -6,6 +6,8 @@ const state = {
   overview: null,
   circumvention: null,
   providers: null,
+  targets: null,
+  routingUpdates: null,
   loading: false,
   requestSerial: 0,
 };
@@ -74,6 +76,9 @@ function setLoading(value) {
   $('#radar-panel').classList.toggle('loading-shimmer', value);
   $('#ioda-panel').classList.toggle('loading-shimmer', value);
   $('#tor-panel').classList.toggle('loading-shimmer', value);
+  $('#routing-panel').classList.toggle('loading-shimmer', value);
+  $('#censoredplanet-panel').classList.toggle('loading-shimmer', value);
+  $('#globalping-panel').classList.toggle('loading-shimmer', value);
   if (value) $('#ooni-query-state').textContent = 'Requesting live sources';
 }
 
@@ -88,6 +93,7 @@ function renderConfig(config) {
   $('#since-input').value = config.defaultRange.since;
   $('#until-input').value = config.defaultRange.until;
   renderSources(config.sources, config.radarConfigured);
+  renderIntelligenceSourceRegistry(config.intelligenceSources || []);
 }
 
 function renderSources(sources, radarConfigured) {
@@ -95,6 +101,10 @@ function renderSources(sources, radarConfigured) {
     const access = source.id === 'radar' && !radarConfigured ? 'token not configured' : source.access;
     return `<div class="source-card"><div class="source-card-head"><strong>${escapeHtml(source.name)}</strong><span class="access">${escapeHtml(access)}</span></div><p>${escapeHtml(source.role)}</p><a href="${escapeHtml(source.url)}" target="_blank" rel="noreferrer">Open source ↗</a>${source.docs ? ` · <a href="${escapeHtml(source.docs)}" target="_blank" rel="noreferrer">Docs ↗</a>` : ''}</div>`;
   }).join('');
+}
+
+function renderIntelligenceSourceRegistry(sources) {
+  $('#intelligence-source-grid').innerHTML = sources.map((source)=>`<a class="intelligence-chip" href="${escapeHtml(source.url)}" target="_blank" rel="noreferrer" title="${escapeHtml(source.role)}"><strong>${escapeHtml(source.name)}</strong><span>${escapeHtml(source.class)}</span></a>`).join('');
 }
 
 function updateTargetVisibility() {
@@ -163,6 +173,98 @@ function renderOoniChart(ooni) {
   const methodCounts = new Map();
   for (const point of data) for (const method of point.methods || []) methodCounts.set(method.label, (methodCounts.get(method.label) || 0) + method.count);
   $('#ooni-methods').innerHTML = [...methodCounts.entries()].sort((a,b) => b[1]-a[1]).slice(0,8).map(([label,count]) => `<span class="method-chip"><i></i>${escapeHtml(label)} <b>${count}×</b></span>`).join('') || '<span class="method-chip">No safely inferable mechanism fields in returned rows</span>';
+}
+
+function renderDivergence(assessment) {
+  const item = assessment?.controlDataPlane;
+  const box = $('#divergence-card');
+  if (!item || item.classification === 'insufficient-data') {
+    $('#divergence-state').textContent = 'Insufficient data';
+    box.dataset.state = 'neutral';
+    box.innerHTML = '<div class="empty-state">No defensible control/data-plane comparison is available for this scope.</div>';
+    return;
+  }
+  const diverged = item.classification === 'control-data-plane-divergence';
+  $('#divergence-state').textContent = diverged ? 'Divergence detected' : 'No strong divergence';
+  box.dataset.state = diverged ? 'warning' : 'ok';
+  box.innerHTML = `<div class="posture-head"><strong>${escapeHtml(diverged ? 'Routing remains visible while user-path disruption is elevated' : 'No strong routing/data-plane split established')}</strong><span>${escapeHtml(item.classification)}</span></div><div class="posture-metrics"><div><span>BGP visibility</span><b>${item.bgpVisibilityPercent===null?'—':percent(item.bgpVisibilityPercent)}</b></div><div><span>RIPE loss</span><b>${item.ripePacketLossPercent===null?'—':percent(item.ripePacketLossPercent)}</b></div><div><span>IODA events</span><b>${number(item.iodaOutageEvents,0)}</b></div><div><span>Radar events</span><b>${number(item.radarDisruptionEvents,0)}</b></div></div><p>${escapeHtml(item.interpretation)}</p>`;
+}
+
+function renderRouting(ripestat) {
+  const summary = $('#routing-summary');
+  const neighbours = $('#routing-neighbours');
+  const button = $('#load-bgp-updates');
+  if (!ripestat || ripestat.status === 'scope_required') {
+    summary.innerHTML = '<div class="mini-stat"><span>Status</span><b>Select ASN</b></div>';
+    neighbours.innerHTML = '<tr><td colspan="4" class="table-empty">Select a specific ASN for RIPE RIS routing context.</td></tr>';
+    button.disabled = true;
+    return;
+  }
+  if (!ripestat.ok) {
+    summary.innerHTML = `<div class="mini-stat"><span>Status</span><b>Error</b></div><div class="mini-stat"><span>Detail</span><b>${escapeHtml(ripestat.error || 'Unavailable')}</b></div>`;
+    neighbours.innerHTML = '<tr><td colspan="4" class="table-empty">Routing context unavailable.</td></tr>';
+    button.disabled = true;
+    return;
+  }
+  button.disabled = false;
+  const routing = ripestat.routing || {};
+  const vis = routing.visibility || {};
+  const space = routing.announcedSpace || {};
+  summary.innerHTML = `<div class="mini-stat"><span>BGP visibility</span><b>${vis.percent===null || vis.percent===undefined?'—':percent(vis.percent)}</b></div><div class="mini-stat"><span>RIS peers</span><b>${number(vis.seeingPeers,0)} / ${number(vis.totalPeers,0)}</b></div><div class="mini-stat"><span>Announced IPv4</span><b>${number(space.ipv4Prefixes ?? ripestat.announcedPrefixes?.length,0)} prefixes</b></div><div class="mini-stat"><span>Observed neighbours</span><b>${number(routing.observedNeighbours?.length || 0,0)}</b></div>`;
+  neighbours.innerHTML = routing.observedNeighbours?.length ? routing.observedNeighbours.slice(0,20).map((row)=>`<tr><td><strong>${escapeHtml(row.asn)}</strong></td><td>${number(row.power,3)}</td><td>${number(row.v4Peers,0)}</td><td>${number(row.v6Peers,0)}</td></tr>`).join('') : '<tr><td colspan="4" class="table-empty">No observed neighbours returned.</td></tr>';
+}
+
+function renderCensoredPlanet(cp) {
+  const summary = $('#censoredplanet-summary');
+  const events = $('#censoredplanet-events');
+  if (!cp?.ok) {
+    summary.innerHTML = `<div class="mini-stat"><span>Status</span><b>Error</b></div><div class="mini-stat"><span>Detail</span><b>${escapeHtml(cp?.error || 'Unavailable')}</b></div>`;
+    events.innerHTML = '<div class="empty-state">Censored Planet unavailable.</div>';
+    return;
+  }
+  summary.innerHTML = `<div class="mini-stat"><span>Unexpected rate</span><b>${cp.iranUnexpectedRate===null?'—':percent(cp.iranUnexpectedRate)}</b></div><div class="mini-stat"><span>CenAlert points</span><b>${number(cp.timeseries?.length || 0,0)}</b></div><div class="mini-stat"><span>CenAlert events</span><b>${number(cp.events?.length || 0,0)}</b></div><div class="mini-stat"><span>Partial errors</span><b>${number(cp.partialErrors?.length || 0,0)}</b></div>`;
+  events.innerHTML = cp.events?.length ? cp.events.slice().sort((a,b)=>String(b.peak||b.startDate).localeCompare(String(a.peak||a.startDate))).slice(0,8).map((row)=>`<div class="event-item"><span class="event-time">${escapeHtml(shortDate(row.peak || row.startDate))}</span><div class="event-copy"><strong>CenAlert · impact ${row.impact===null?'—':number(row.impact,2)}</strong><small>${escapeHtml([row.cause,row.reportedBy,row.startDate&&row.endDate?`${row.startDate} → ${row.endDate}`:null].filter(Boolean).join(' · ') || 'Behavioral anomaly')}</small></div><span class="event-source warn">CP</span></div>`).join('') : '<div class="empty-state">No CenAlert events returned for the selected window.</div>';
+}
+
+function renderGlobalping(globalping) {
+  const summary = $('#globalping-summary');
+  const table = $('#globalping-networks');
+  if (!globalping?.ok) {
+    summary.innerHTML = `<div class="mini-stat"><span>Status</span><b>Error</b></div><div class="mini-stat"><span>Detail</span><b>${escapeHtml(globalping?.error || 'Unavailable')}</b></div>`;
+    table.innerHTML = '<tr><td colspan="6" class="table-empty">Probe inventory unavailable.</td></tr>';
+    return;
+  }
+  const cities = new Set((globalping.probes || []).map((p)=>p.city).filter(Boolean));
+  const asnCount = new Set((globalping.probes || []).map((p)=>p.asn).filter(Boolean)).size;
+  const eyeball = (globalping.probes || []).filter((p)=>p.tags?.some((tag)=>/eyeball/i.test(tag))).length;
+  summary.innerHTML = `<div class="mini-stat"><span>Iran probes</span><b>${number(globalping.probeCount,0)}</b></div><div class="mini-stat"><span>ASNs covered</span><b>${number(asnCount,0)}</b></div><div class="mini-stat"><span>Cities observed</span><b>${number(cities.size,0)}</b></div><div class="mini-stat"><span>Eyeball probes</span><b>${number(eyeball,0)}</b></div>`;
+  table.innerHTML = globalping.networks?.length ? globalping.networks.slice(0,20).map((row)=>`<tr><td><strong>${escapeHtml(row.asn)}</strong></td><td>${escapeHtml(row.network || '—')}</td><td>${number(row.probes,0)}</td><td>${escapeHtml((row.cities || []).join(', ') || '—')}</td><td>${number(row.eyeball,0)}</td><td>${number(row.datacenter,0)}</td></tr>`).join('') : '<tr><td colspan="6" class="table-empty">No matching Iran probes are currently visible for this scope.</td></tr>';
+}
+
+function renderProtocolMix(radar) {
+  const el = $('#protocol-mix');
+  const dimensions = radar?.protocolMix?.dimensions || {};
+  const labels = { HTTP_PROTOCOL:'HTTP protocol', HTTP_VERSION:'HTTP version', IP_VERSION:'IP version', TLS_VERSION:'TLS version' };
+  const cards = Object.entries(labels).map(([key,label]) => {
+    const row = dimensions[key];
+    if (!row || row.status !== 'observed') return `<div class="distribution-card"><strong>${escapeHtml(label)}</strong><span class="micro-note">No observed distribution</span></div>`;
+    const values = Object.entries(row.values || {}).sort((a,b)=>b[1]-a[1]);
+    return `<div class="distribution-card"><div class="distribution-head"><strong>${escapeHtml(label)}</strong><span>confidence ${row.confidenceLevel===null||row.confidenceLevel===undefined?'—':`L${number(row.confidenceLevel,0)}`}</span></div>${values.map(([name,value])=>`<div class="distribution-row"><span>${escapeHtml(name)}</span><progress max="100" value="${Math.max(0,Math.min(100,Number(value)))}"></progress><b>${percent(value)}</b></div>`).join('') || '<span class="micro-note">No values</span>'}</div>`;
+  });
+  el.innerHTML = radar?.status === 'token_required' ? '<div class="empty-state">Radar Read token required for protocol distributions.</div>' : cards.join('');
+}
+
+function renderTopology(peeringdb, ihr) {
+  const summary = $('#topology-summary');
+  const table = $('#hegemony-table');
+  if (peeringdb?.status === 'scope_required' || ihr?.status === 'scope_required') {
+    summary.innerHTML = '<div class="mini-stat"><span>Status</span><b>Select ASN</b></div>';
+    table.innerHTML = '<tr><td colspan="4" class="table-empty">Select a specific ASN to inspect topology and transit dependency.</td></tr>';
+    return;
+  }
+  const net = peeringdb?.networks?.[0];
+  summary.innerHTML = `<div class="mini-stat"><span>Network</span><b>${escapeHtml(net?.name || peeringdb?.asn || '—')}</b></div><div class="mini-stat"><span>IX presence</span><b>${number(net?.ixCount,0)}</b></div><div class="mini-stat"><span>Facilities</span><b>${number(net?.facilityCount,0)}</b></div><div class="mini-stat"><span>IHR latest bin</span><b>${escapeHtml(ihr?.latestTimebin ? String(ihr.latestTimebin).slice(0,16).replace('T',' ') : '—')}</b></div>`;
+  table.innerHTML = ihr?.dependencies?.length ? ihr.dependencies.slice(0,15).map((row)=>`<tr><td><strong>AS${number(row.transitAsn,0).replaceAll(',','')}</strong></td><td>${escapeHtml(row.transitName || '—')}</td><td>${number(row.hegemony,4)}</td><td>IPv${number(row.addressFamily,0)}</td></tr>`).join('') : `<tr><td colspan="4" class="table-empty">${escapeHtml(ihr?.error || 'No dependency rows returned.')}</td></tr>`;
 }
 
 function renderRipeChart(ripe) {
@@ -263,6 +365,7 @@ function renderTorChart(tor) {
     el.className='chart empty-chart';
     el.innerHTML=`<span>${escapeHtml(tor?.error || tor?.partialErrors?.relay || tor?.partialErrors?.bridge || 'Tor Metrics returned no observations for this selection.')}</span>`;
     $('#tor-summary').innerHTML='';
+    $('#tor-transports').innerHTML='';
     return;
   }
   el.className='chart';
@@ -278,6 +381,8 @@ function renderTorChart(tor) {
   const labels=dates.map(date=>({date}));
   el.innerHTML=`<div class="chart-legend"><span><i class="legend-key tor-direct"></i>direct users</span><span><i class="legend-key tor-lower"></i>expected lower bound</span><span><i class="legend-key tor-bridge"></i>bridge users</span></div><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Tor direct and bridge user estimates in Iran">${grid}<path d="${pathFor(direct,x,y)}" fill="none" stroke="#9d8cf2" stroke-width="2.2"/><path d="${pathFor(lower,x,y)}" fill="none" stroke="#e2bd59" stroke-width="1.4" stroke-dasharray="5 4"/><path d="${pathFor(bridged,x,y)}" fill="none" stroke="#52c9c4" stroke-width="1.9"/>${chartLabels(labels,x,H-7)}</svg>`;
   $('#tor-summary').innerHTML=`<div class="mini-stat"><span>Direct users latest</span><b>${number(tor.relay?.latestUsers,0)}</b></div><div class="mini-stat"><span>Bridge users latest</span><b>${number(tor.bridge?.latestUsers,0)}</b></div><div class="mini-stat"><span>Direct below lower bound</span><b>${number(tor.relay?.possibleCensorshipDays,0)} day(s)</b></div><div class="mini-stat"><span>Latest observation</span><b>${escapeHtml(tor.relay?.latestDate || tor.bridge?.latestDate || '—')}</b></div>`;
+  const transports = tor.transports || [];
+  $('#tor-transports').innerHTML = transports.length ? transports.slice(0,8).map((row)=>`<div class="transport-card"><span>${escapeHtml(row.transport)}</span><b>${row.latestLow===null?'—':number(row.latestLow,0)}–${row.latestHigh===null?'—':number(row.latestHigh,0)}</b><small>${escapeHtml(row.latestDate || '—')} · derived bounds</small></div>`).join('') : '';
 }
 
 function renderAssessment(assessment) {
@@ -322,8 +427,11 @@ function renderKpis(overview) {
   $('#kpi-tor-meta').textContent = tor?.ok ? `${number(tor.bridge?.latestUsers,0)} bridge users · direct estimate shown above` : (tor?.error || 'Unavailable');
   stateDot($('#tor-state-dot'), tor?.ok && (tor.relay?.rows?.length || tor.bridge?.rows?.length) ? 'ok' : tor?.ok ? 'warn' : 'error');
 
-  $('#kpi-freshness').textContent = ageLabel(overview.fetchedAt);
-  $('#kpi-freshness-meta').textContent = dateTime(overview.fetchedAt);
+  const ripestat = overview.ripestat;
+  const bgpVisibility = ripestat?.routing?.visibility?.percent;
+  $('#kpi-bgp').textContent = bgpVisibility===null || bgpVisibility===undefined ? (ripestat?.status === 'scope_required' ? 'Select ASN' : '—') : percent(bgpVisibility);
+  $('#kpi-bgp-meta').textContent = ripestat?.status === 'scope_required' ? 'RIPE RIS requires selected ASN' : ripestat?.ok ? `${number(ripestat.routing?.visibility?.seeingPeers,0)} / ${number(ripestat.routing?.visibility?.totalPeers,0)} RIS peers` : (ripestat?.error || 'Unavailable');
+  stateDot($('#bgp-state-dot'), bgpVisibility===null || bgpVisibility===undefined ? 'neutral' : bgpVisibility >= 80 ? 'ok' : bgpVisibility >= 50 ? 'warn' : 'error');
   $('#header-updated').textContent = `Updated ${ageLabel(overview.fetchedAt)} ago`;
   const active = [
     ooni?.ok && ooni.totalMeasurements > 0,
@@ -331,8 +439,14 @@ function renderKpis(overview) {
     ioda?.ok && (ioda.series?.length > 0 || ioda.events?.length > 0),
     radarStatus === 'observed' || radarStatus === 'partial',
     tor?.ok && (tor.relay?.rows?.length > 0 || tor.bridge?.rows?.length > 0),
+    overview.ripestat?.ok && overview.ripestat?.status === 'observed',
+    overview.globalping?.ok && overview.globalping?.probeCount > 0,
+    overview.censoredPlanet?.ok && overview.censoredPlanet?.status === 'observed',
+    overview.peeringdb?.ok && overview.peeringdb?.status === 'observed',
+    overview.ihr?.ok && overview.ihr?.status === 'observed',
+    overview.pulse?.ok && overview.pulse?.status === 'observed',
   ].filter(Boolean).length;
-  $('#header-source-state').textContent = `${active}/5 live source families observed`;
+  $('#header-source-state').textContent = `${active}/11 source families observed`;
 }
 
 function renderEvents(overview) {
@@ -352,6 +466,12 @@ function renderEvents(overview) {
   for (const item of overview.ioda?.events || []) {
     events.push({ time: item.start || overview.input.since, source: 'IODA', severity: 'critical', title: `IODA outage event · ${item.datasource || 'signal'}`, detail: `${item.entityName || item.entityCode || 'Iran'}${item.durationSeconds ? ` · ${number(item.durationSeconds / 3600,1)} h` : ''}${item.score !== null && item.score !== undefined ? ` · score ${number(item.score,1)}` : ''}` });
   }
+  for (const item of overview.censoredPlanet?.events || []) {
+    events.push({ time: item.peak || item.startDate || overview.input.since, source: 'CP', severity: 'warn', title: `CenAlert event · impact ${item.impact===null?'—':number(item.impact,2)}`, detail: [item.cause,item.reportedBy].filter(Boolean).join(' · ') || 'Censored Planet behavioral anomaly' });
+  }
+  for (const item of overview.pulse?.events || []) {
+    events.push({ time: item.startDate || overview.input.since, source: 'PULSE', severity: item.verificationLevel === 'confirmed' || item.verificationLevel === 'acknowledged' ? 'critical' : 'warn', title: `${item.type || 'Shutdown'} · ${item.verificationLevel || 'verification unknown'}`, detail: [item.affectedRegions,item.cause].filter(Boolean).join(' · ') || 'Curated shutdown context' });
+  }
   events.sort((a,b) => Date.parse(b.time) - Date.parse(a.time));
   $('#event-feed').innerHTML = events.length ? events.slice(0,12).map((event) => `<div class="event-item"><span class="event-time">${escapeHtml(shortDate(String(event.time).slice(0,10)))}</span><div class="event-copy"><strong>${escapeHtml(event.title)}</strong><small>${escapeHtml(event.detail || 'Source event')}</small></div><span class="event-source ${event.severity}">${escapeHtml(event.source)}</span></div>`).join('') : '<div class="empty-state">No thresholded OONI days, IODA events or Radar/BGP annotations in this selected window.</div>';
 }
@@ -360,6 +480,12 @@ function renderOverview(overview) {
   state.overview = overview;
   renderAssessment(overview.assessment);
   renderKpis(overview);
+  renderDivergence(overview.assessment);
+  renderRouting(overview.ripestat);
+  renderCensoredPlanet(overview.censoredPlanet);
+  renderGlobalping(overview.globalping);
+  renderTopology(overview.peeringdb, overview.ihr);
+  renderProtocolMix(overview.radar);
   renderOoniChart(overview.ooni);
   renderRipeChart(overview.ripe);
   renderRadarChart(overview.radar);
@@ -409,6 +535,9 @@ async function loadAll() {
   const serial = ++state.requestSerial;
   setLoading(true);
   state.providers = null;
+  state.routingUpdates = null;
+  $('#bgp-updates-state').textContent = 'BGP update drilldown not requested.';
+  $('#bgp-updates-table').innerHTML = '<tr><td colspan="5" class="table-empty">Load updates for a selected ASN.</td></tr>';
   $('#providers-table').innerHTML = '<tr><td colspan="7" class="table-empty">Provider comparison has not been requested for this filter state.</td></tr>';
   try {
     const overview = await api(`/api/overview?${queryString()}`, activeController.signal);
@@ -431,6 +560,66 @@ let scheduled = null;
 function scheduleLoad() {
   clearTimeout(scheduled);
   scheduled = setTimeout(loadAll, 450);
+}
+
+async function loadIntelligence() {
+  const button = $('#load-intelligence');
+  button.disabled = true;
+  button.textContent = 'Discovering…';
+  $('#intelligence-state').textContent = 'Querying professional-domain OSINT discovery…';
+  try {
+    const payload = await api(`/api/intelligence?${queryString()}`);
+    const gdelt = payload.gdelt;
+    if (gdelt?.status === 'unavailable_historical_window') {
+      $('#intelligence-state').textContent = gdelt.note || 'GDELT recent-corpus limit reached.';
+      $('#intelligence-table').innerHTML = '<tr><td colspan="5" class="table-empty">GDELT DOC discovery is unavailable for this historical window; the curated research-source registry remains available above.</td></tr>';
+      return;
+    }
+    $('#intelligence-state').textContent = `${number(gdelt?.articles?.length || 0,0)} allowlisted articles discovered · context only · no sensor vote`;
+    $('#intelligence-table').innerHTML = gdelt?.articles?.length ? gdelt.articles.map((row)=>`<tr><td>${escapeHtml(row.seenDate ? dateTime(row.seenDate) : '—')}</td><td><strong>${escapeHtml(row.domain || '—')}</strong></td><td><a href="${escapeHtml(row.url)}" target="_blank" rel="noreferrer">${escapeHtml(row.title || row.url)}</a></td><td>${escapeHtml(row.language || '—')}</td><td>OSINT discovery · provenance review required</td></tr>`).join('') : '<tr><td colspan="5" class="table-empty">No allowlisted professional reporting returned.</td></tr>';
+  } catch (error) {
+    $('#intelligence-state').textContent = `Error: ${error.message}`;
+    $('#intelligence-table').innerHTML = `<tr><td colspan="5" class="table-empty">${escapeHtml(error.message)}</td></tr>`;
+  } finally { button.disabled = false; button.textContent = 'Refresh reporting discovery'; }
+}
+
+async function loadBgpUpdates() {
+  const button = $('#load-bgp-updates');
+  if ($('#asn-select').value === 'ALL') return;
+  button.disabled = true;
+  button.textContent = 'Loading…';
+  $('#bgp-updates-state').textContent = 'Requesting bounded RIPEstat update history…';
+  try {
+    const payload = await api(`/api/routing-updates?${queryString()}`);
+    state.routingUpdates = payload;
+    if (payload.status === 'unavailable_historical_window') {
+      $('#bgp-updates-state').textContent = payload.note || 'Historical BGP updates unavailable for this window.';
+      $('#bgp-updates-table').innerHTML = '<tr><td colspan="5" class="table-empty">Selected range is outside the RIPEstat BGP Updates index.</td></tr>';
+      return;
+    }
+    const effective = payload.effective ? `${payload.effective.since} → ${payload.effective.until}${payload.effective.cappedTo48Hours?' · capped to last 48 h':''}` : '—';
+    $('#bgp-updates-state').textContent = `${number(payload.events?.length || 0,0)} updates · ${effective}`;
+    $('#bgp-updates-table').innerHTML = payload.preview?.length ? payload.preview.map((row)=>`<tr><td>${escapeHtml(dateTime(row.timestamp))}</td><td><span class="route-type ${escapeHtml(row.type)}">${escapeHtml(row.type)}</span></td><td>${escapeHtml(row.prefix || '—')}</td><td class="mono-cell">${escapeHtml((row.asPath || []).join(' → ') || '—')}</td><td>${escapeHtml([row.collector,row.peerAsn,row.peerIp].filter(Boolean).join(' · ') || '—')}</td></tr>`).join('') : '<tr><td colspan="5" class="table-empty">No BGP announcements/withdrawals returned for the effective window.</td></tr>';
+  } catch (error) {
+    $('#bgp-updates-state').textContent = `Error: ${error.message}`;
+    $('#bgp-updates-table').innerHTML = `<tr><td colspan="5" class="table-empty">${escapeHtml(error.message)}</td></tr>`;
+  } finally { button.disabled = $('#asn-select').value === 'ALL'; button.textContent = 'Reload BGP updates'; }
+}
+
+async function loadTargets() {
+  const button = $('#load-targets');
+  button.disabled = true;
+  button.textContent = 'Loading…';
+  const params = new URLSearchParams({ search: $('#target-search').value.trim(), category: $('#target-category').value, limit: '200' });
+  try {
+    const payload = await api(`/api/targets?${params}`);
+    state.targets = payload;
+    if ($('#target-category').options.length === 1 && payload.categories?.length) {
+      $('#target-category').innerHTML = '<option value="">All categories</option>' + payload.categories.map((row)=>`<option value="${escapeHtml(row.code)}">${escapeHtml(row.code)} · ${escapeHtml(row.description || 'Other')} (${number(row.count,0)})</option>`).join('');
+    }
+    $('#targets-table').innerHTML = payload.targets?.length ? payload.targets.map((row)=>`<tr><td><a href="${escapeHtml(row.url)}" target="_blank" rel="noreferrer">${escapeHtml(row.url)}</a></td><td><strong>${escapeHtml(row.categoryCode || '—')}</strong></td><td>${escapeHtml(row.categoryDescription || '—')}</td><td>${escapeHtml(row.dateAdded || '—')}</td><td>${escapeHtml([row.source,row.notes].filter(Boolean).join(' · ') || '—')}</td></tr>`).join('') : '<tr><td colspan="5" class="table-empty">No matching Iran test targets.</td></tr>';
+  } catch (error) { $('#targets-table').innerHTML = `<tr><td colspan="5" class="table-empty">${escapeHtml(error.message)}</td></tr>`; }
+  finally { button.disabled = false; button.textContent = 'Reload Iran targets'; }
 }
 
 async function loadProviders() {
@@ -559,6 +748,11 @@ $('#refresh-button').addEventListener('click', loadAll);
 $('#export-button').addEventListener('click', exportCsv);
 $('#print-button').addEventListener('click', () => window.print());
 $('#load-providers').addEventListener('click', loadProviders);
+$('#load-bgp-updates').addEventListener('click', loadBgpUpdates);
+$('#load-intelligence').addEventListener('click', loadIntelligence);
+$('#load-targets').addEventListener('click', loadTargets);
+$('#target-search').addEventListener('keydown', (event) => { if (event.key === 'Enter') { event.preventDefault(); loadTargets(); } });
+$('#target-category').addEventListener('change', loadTargets);
 $('#load-measurements').addEventListener('click', loadMeasurementIds);
 $('#measurement-select').addEventListener('change', loadMeasurementDetail);
 $('#save-vpn-run').addEventListener('click', saveVpnRun);

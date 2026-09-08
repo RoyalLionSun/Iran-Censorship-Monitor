@@ -1,10 +1,26 @@
-# Iran Internet Monitor
+# Iran Censorship Monitor
 
 Production-oriented monitoring dashboard for Internet connectivity, censorship indicators, routing/outage signals, and circumvention context in Iran.
 
 **Status:** v1.0.1 · reconstructed from the prototype export and made independently runnable on 2026-09-08.
 
 The application does **not** ship simulated monitoring values. Live upstream observations are requested server-side. When a source is unavailable, unconfigured, rate-limited, or has no data, the UI reports that state instead of inventing a value.
+
+## v1.1 censorship-intelligence layers
+
+The application now separates evidence by observation family instead of collapsing everything into a generic availability score:
+
+- **censorship measurement:** OONI + Censored Planet;
+- **data plane / outages:** RIPE Atlas + IODA + Cloudflare Radar;
+- **control plane:** RIPEstat / RIPE RIS, with bounded on-demand BGP announcements/withdrawals;
+- **Iran vantage coverage:** Globalping probe inventory; active measurements are disabled by default and operator-controlled;
+- **circumvention:** Tor direct/bridge estimates plus country × transport lower/upper bounds;
+- **topology/chokepoints:** PeeringDB + Internet Health Report AS Hegemony;
+- **test inventory:** Citizen Lab Iran list;
+- **curated incident context:** Internet Society Pulse when a token is configured;
+- **OSINT discovery:** curated Iran-specialist/professional source registry + GDELT DOC 2.0 allowlisted discovery.
+
+A dedicated control/data-plane divergence classifier flags the Iran-relevant pattern where BGP visibility remains high while independent user-path disruption signals are severe. This is described as **compatible with** selective isolation/filtering/throttling/whitelisting, never as proof of mechanism or intent.
 
 ## What is monitored
 

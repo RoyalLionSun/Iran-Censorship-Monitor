@@ -1,4 +1,4 @@
-# Verification Report
+# Verification Report — v1.1 development
 
 Date: **2026-09-08**
 
@@ -41,3 +41,20 @@ curl -fsS 'http://127.0.0.1:4173/api/overview?asn=AS58224&testName=web_connectiv
 ```
 
 The second response must show source-specific observed/no-data/error states. Do not accept a deployment where all public sources remain in network/DNS error.
+
+## v1.1 verification additions
+
+The deterministic suite is currently **42/42 passing** and covers, in addition to the v1.0.1 baseline:
+
+- RIPEstat ASN/date scope, routing visibility, announcements/withdrawals, AS paths, pre-2024 availability semantics and 48-hour drilldown cap;
+- Censored Planet GraphQL Iran/date scoping and partial errors;
+- Globalping Iran/ASN filtering, five-probe cap, target safety and control-key behavior;
+- Tor country × transport bounds;
+- Radar protocol-summary scoping;
+- PeeringDB and IHR request/parser behavior;
+- Pulse Iran/verification parsing;
+- Citizen Lab quoted CSV parsing;
+- GDELT recent-corpus scoping and professional-domain filtering;
+- control/data-plane divergence classification.
+
+Production build succeeds. Local runtime smoke checks confirm `/api/health`, `/api/config` and `/` return 200; unknown and traversal-like static paths return 404. Upstream Internet calls may fail in the isolated build sandbox and are therefore separated from deterministic parser/scope tests.

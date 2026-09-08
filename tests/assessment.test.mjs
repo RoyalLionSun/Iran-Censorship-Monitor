@@ -33,3 +33,16 @@ test('Radar outage plus OONI elevation can corroborate', () => {
   const result = buildAssessment({ ooni:ooni({rate:40}), ripe:null, radar:{status:'observed',outages:{annotations:[{}]},trafficAnomalies:{events:[]}}, scopeLabel:'Iran' });
   assert.equal(result.status, 'corroborated');
 });
+
+test('high BGP visibility plus severe data-plane loss is flagged as divergence, not as proof of censorship', () => {
+  const result = buildAssessment({
+    ooni:null,
+    ripe:ripe({loss:65,samples:20}),
+    radar:{status:'token_required'},
+    ioda:null,
+    ripestat:{routing:{visibility:{percent:95}}},
+    scopeLabel:'AS58224 / Iran',
+  });
+  assert.equal(result.controlDataPlane.classification, 'control-data-plane-divergence');
+  assert.match(result.controlDataPlane.interpretation, /compatible with selective isolation/i);
+});

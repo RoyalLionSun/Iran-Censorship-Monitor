@@ -37,3 +37,13 @@ test('Tor bridge CSV parser accepts country usage series', () => {
   const rows = parseTorBridgeStats(text);
   assert.deepEqual(rows[0], { date:'2026-09-01', country:'ir', users:300, frac:92 });
 });
+
+import { parseTorBridgeTransportStats } from '../lib/tor.mjs';
+
+test('Tor country by transport parser keeps low/high bounds instead of inventing exact users', () => {
+  const rows = parseTorBridgeTransportStats('date,country,transport,low,high,frac\n2026-09-08,ir,obfs4,1000,1400,80\n');
+  assert.equal(rows[0].transport, 'obfs4');
+  assert.equal(rows[0].low, 1000);
+  assert.equal(rows[0].high, 1400);
+  assert.equal('users' in rows[0], false);
+});
