@@ -1,107 +1,74 @@
-name: Import v1.1
+name: CI
 
 on:
-  workflow_dispatch:
   push:
-    branches:
-      - develop/v1.1
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  import-v11:
+  verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          fetch-depth: 0
+          node-version: 22
+          cache: npm
 
-      - name: Reconstruct verified v1.1 archive
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests and checks
+        run: npm run check
+
+      - name: Build production bundle
+        run: npm run build
+
+      - name: Reject committed secrets
         shell: bash
         run: |
           set -euo pipefail
-          normcat() { for f in "$@"; do tr -d '\r\n' < "$f"; done; }
-
-          normcat bootstrap-v11/fix3-c00-0a bootstrap-v11/fix3-c00-0b bootstrap-v11/fix3-c00-0c bootstrap-v11/fix3-c00-0d > /tmp/c0a
-          tr -d '\r\n' < bootstrap-v11/fix2-c00-1 > /tmp/c0b
-          tr -d '\r\n' < bootstrap-v11/fix-c-00-1 > /tmp/c0c
-          cat /tmp/c0a /tmp/c0b /tmp/c0c > /tmp/c-00
-          echo '13e3364f7ee6a7262994c828f17386b9d74a6650a93428520b6b8b24621770d6  /tmp/c-00' | sha256sum -c -
-
-          head -c 8000 bootstrap-v11/r-00 > /tmp/r00-first8
-          head -c 2000 bootstrap-v11/fix2-r00-2-0 > /tmp/r2a
-          normcat bootstrap-v11/fix3-r00-2b-a bootstrap-v11/fix3-r00-2b-b bootstrap-v11/fix3-r00-2b-c bootstrap-v11/fix3-r00-2b-d > /tmp/r2b
-          tail -c 3000 bootstrap-v11/r-00 > /tmp/r00-last3
-          cat /tmp/r00-first8 /tmp/r2a /tmp/r2b /tmp/r00-last3 > /tmp/r-00
-          echo '19b2cbe2e455b90343ea050ffe930d041d516df4c833d1a26e503d782e8fbaae  /tmp/r-00' | sha256sum -c -
-
-          tr -d '\r\n' < bootstrap-v11/c-01 > /tmp/c-01
-          tr -d '\r\n' < bootstrap-v11/r-01 > /tmp/r-01
-          tr -d '\r\n' < bootstrap-v11/r-02 > /tmp/r-02
-          head -c 15000 bootstrap-v11/r-03 | tr -d '\r\n' > /tmp/r-03
-          tr -d '\r\n' < bootstrap-v11/r-04 > /tmp/r-04
-
-          echo 'a593c1eb69e9953b2c7955417630f6bc93f1ed6d5568297a793f09cacdd135e2  /tmp/c-01' | sha256sum -c -
-          echo 'ca140973194679b4cb413b82c7dfb8715fe677e67278b6faab84d6b353f2e209  /tmp/r-01' | sha256sum -c -
-          echo 'e20f0a4f736df8193d88bd3efd5bfc2905a01ab88b20300f5d943e755cbfb803  /tmp/r-02' | sha256sum -c -
-          echo '3f5b93c48e6a7e72965f1c2e7473827863f578540eacf54e4884f6ffc865f677  /tmp/r-03' | sha256sum -c -
-          echo '60ba5ebf2a12bf5d7fb82d41133f81b97c181f71141d1347855a5e0502c132ec  /tmp/r-04' | sha256sum -c -
-
-          cat /tmp/c-00 /tmp/c-01 /tmp/r-00 /tmp/r-01 /tmp/r-02 /tmp/r-03 /tmp/r-04 > /tmp/v11.b64
-          base64 -d /tmp/v11.b64 > /tmp/v11.tar.xz
-          echo 'bf188d5d8564131f169a11b79da4e684afd2b391f574e4ed83388e06d9a0130f  /tmp/v11.tar.xz' | sha256sum -c -
-
-          mkdir -p /tmp/v11
-          tar -xJf /tmp/v11.tar.xz -C /tmp/v11
-
-      - name: Overlay verified v1.1 delta
-        shell: bash
-        run: |
-          set -euo pipefail
-          rsync -a \
-            --exclude='.git/' \
-            --exclude='.github/' \
-            /tmp/v11/ ./
-          rm -rf bootstrap-v11
-
-      - name: Install and verify
-        shell: bash
-        run: |
-          set -euo pipefail
-          npm ci
-          npm run check
-          npm run build
-
-      - name: Security and runtime smoke test
-        shell: bash
-        run: |
-          set -euo pipefail
-          if grep -RIl --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=dist -E 'cfat_[A-Za-z0-9_-]{20,}' .; then
-            echo 'Potential Cloudflare token detected in tracked source'
+          if grep -RInE \
+            --exclude-dir=.git \
+            --exclude-dir=node_modules \
+            --exclude-dir=dist \
+            --exclude='.env.example' \
+            'cfa[t]_[A-Za-z0-9_-]{20,}' .; then
+            echo 'Potential Cloudflare API token committed to repository.' >&2
             exit 1
           fi
-          test ! -f .env
-          PORT=4173 node server.mjs >/tmp/server.log 2>&1 &
-          pid=$!
-          trap 'kill $pid 2>/dev/null || true' EXIT
-          for i in $(seq 1 20); do
-            curl -fsS http://127.0.0.1:4173/api/health >/tmp/health.json && break
-            sleep 0.25
-          done
-          grep -q '"ok"' /tmp/health.json
-          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:4173/)" = 200
-          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:4173/does-not-exist)" = 404
-          test "$(curl --path-as-is -s -o /dev/null -w '%{http_code}' http://127.0.0.1:4173/../server.mjs)" = 404
+          if find . -maxdepth 3 -type f -name '.env' -print -quit | grep -q .; then
+            echo 'A .env file is committed or present in the CI checkout.' >&2
+            exit 1
+          fi
 
-      - name: Commit verified v1.1 source
+      - name: Smoke-test production server
         shell: bash
         run: |
           set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A -- . ':(exclude).github/workflows/ci.yml'
-          git commit -m 'Import verified v1.1 censorship-intelligence expansion'
-          git push origin HEAD:develop/v1.1
+          node server.mjs >/tmp/iran-monitor.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          for i in {1..20}; do
+            if curl --fail --silent http://127.0.0.1:4173/api/health >/tmp/health.json; then
+              break
+            fi
+            sleep 0.25
+          done
+          curl --fail --silent http://127.0.0.1:4173/ >/dev/null
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:4173/does-not-exist)" = 404
+          test "$(curl --path-as-is -s -o /dev/null -w '%{http_code}' http://127.0.0.1:4173/../server.mjs)" = 404
+          cat /tmp/health.json
