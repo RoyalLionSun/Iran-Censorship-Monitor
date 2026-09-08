@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="description" content="Iran-focused internet censorship and connectivity monitoring using OONI, IODA, RIPE Atlas, Cloudflare Radar and Tor Metrics." />
+  <title>Iran Internet Monitor</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></div>
+        <div>
+          <strong>Iran Internet Monitor</strong>
+          <small>Measurement & censorship signals</small>
+        </div>
+      </div>
+      <div class="topbar-meta">
+        <span class="scope-chip"><i></i> IRAN / IR</span>
+        <span id="header-source-state" class="source-state">Sources pending</span>
+        <span id="header-updated" class="updated">Not loaded</span>
+      </div>
+      <div class="topbar-actions">
+        <button id="refresh-button" class="button primary" type="button">Refresh</button>
+        <button id="export-button" class="button" type="button" disabled>Export CSV</button>
+        <button id="print-button" class="button" type="button">Print</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="filterbar" aria-label="Monitoring filters">
+        <label>
+          <span>Network scope</span>
+          <select id="asn-select"></select>
+        </label>
+        <label>
+          <span>OONI test</span>
+          <select id="test-select">
+            <option value="web_connectivity">Web Connectivity</option>
+            <option value="dns_consistency">DNS Consistency</option>
+            <option value="http_header_field_manipulation">HTTP Header Manipulation</option>
+            <option value="ndt">NDT</option>
+            <option value="tor">Tor</option>
+            <option value="psiphon">Psiphon</option>
+            <option value="signal">Signal</option>
+            <option value="whatsapp">WhatsApp</option>
+            <option value="telegram">Telegram</option>
+          </select>
+        </label>
+        <label id="target-field">
+          <span>Target</span>
+          <select id="target-select">
+            <option value="">All tested inputs</option>
+            <option value="https://web.whatsapp.com/">WhatsApp Web</option>
+            <option value="https://www.instagram.com/">Instagram</option>
+            <option value="https://signal.org/">Signal</option>
+            <option value="https://play.google.com/">Google Play</option>
+            <option value="https://1.1.1.1/dns/">Encrypted DNS endpoint</option>
+          </select>
+        </label>
+        <label>
+          <span>From</span>
+          <input id="since-input" type="date" />
+        </label>
+        <label>
+          <span>To</span>
+          <input id="until-input" type="date" />
+        </label>
+        <div class="presets" aria-label="Date presets">
+          <button type="button" data-days="7">7D</button>
+          <button type="button" data-days="14">14D</button>
+          <button type="button" data-days="30">30D</button>
+          <button type="button" data-historical="2022">Sep 2022</button>
+        </div>
+      </section>
+
+      <section class="assessment-strip" id="assessment-strip">
+        <div class="assessment-main">
+          <span class="section-label">MEASUREMENT ASSESSMENT</span>
+          <strong id="assessment-label">Load measurements to assess the selected scope.</strong>
+          <small id="assessment-boundary">No political attribution is derived from these measurements.</small>
+        </div>
+        <div class="assessment-meta">
+          <span>Confidence <b id="assessment-confidence">—</b></span>
+          <span>Independent sources <b id="assessment-sources">0</b></span>
+          <span>Scope <b id="assessment-scope">—</b></span>
+        </div>
+      </section>
+
+      <section class="kpi-grid" aria-label="Key monitoring indicators">
+        <article class="kpi-card">
+          <div class="kpi-head"><span>OONI measurements</span><i id="ooni-state-dot" class="state-dot neutral"></i></div>
+          <strong id="kpi-ooni-count">—</strong>
+          <small id="kpi-ooni-meta">Awaiting query</small>
+        </article>
+        <article class="kpi-card">
+          <div class="kpi-head"><span>OONI anomaly rate</span><i class="state-dot neutral"></i></div>
+          <strong id="kpi-anomaly-rate">—</strong>
+          <small id="kpi-anomaly-meta">Not interpreted without sample context</small>
+        </article>
+        <article class="kpi-card">
+          <div class="kpi-head"><span>RIPE Atlas probes</span><i id="ripe-state-dot" class="state-dot neutral"></i></div>
+          <strong id="kpi-ripe-probes">—</strong>
+          <small id="kpi-ripe-meta">Built-in Ping 1001</small>
+        </article>
+        <article class="kpi-card">
+          <div class="kpi-head"><span>RIPE packet loss</span><i class="state-dot neutral"></i></div>
+          <strong id="kpi-loss">—</strong>
+          <small id="kpi-loss-meta">Selected measurement window</small>
+        </article>
+        <article class="kpi-card">
+          <div class="kpi-head"><span>IODA outage events</span><i id="ioda-state-dot" class="state-dot neutral"></i></div>
+          <strong id="kpi-ioda">—</strong>
+          <small id="kpi-ioda-meta">Country / ASN connectivity signals</small>
+        </article>
+        <article class="kpi-card">
+          <div class="kpi-head"><span>Cloudflare Radar</span><i id="radar-state-dot" class="state-dot neutral"></i></div>
+          <strong id="kpi-radar">—</strong>
+          <small id="kpi-radar-meta">Token-dependent country signal</small>
+        </article>
+        <article class="kpi-card">
+          <div class="kpi-head"><span>Tor direct users</span><i id="tor-state-dot" class="state-dot neutral"></i></div>
+          <strong id="kpi-tor">—</strong>
+          <small id="kpi-tor-meta">Direct + bridge estimates</small>
+        </article>
+        <article class="kpi-card">
+          <div class="kpi-head"><span>Data freshness</span><i class="state-dot neutral"></i></div>
+          <strong id="kpi-freshness">—</strong>
+          <small id="kpi-freshness-meta">Server fetch time</small>
+        </article>
+      </section>
+
+      <section class="dashboard-grid">
+        <article class="panel span-8" id="ooni-panel">
+          <header class="panel-header">
+            <div><span class="section-label">OONI / CENSORSHIP SIGNALS</span><h2>Measurement anomalies over time</h2></div>
+            <div class="panel-status"><span id="ooni-query-state">Ready</span><a id="ooni-source-link" href="https://api.ooni.io/" target="_blank" rel="noreferrer">Source ↗</a></div>
+          </header>
+          <p class="panel-note">Anomaly rate is an OONI measurement signal, not a direct percentage of blocked internet traffic. Volume bars show returned measurements per UTC day.</p>
+          <div id="ooni-chart" class="chart large-chart empty-chart"><span>No data loaded</span></div>
+          <div id="ooni-methods" class="method-chips"></div>
+        </article>
+
+        <article class="panel span-4" id="signals-panel">
+          <header class="panel-header">
+            <div><span class="section-label">CORROBORATION</span><h2>Independent signal review</h2></div>
+          </header>
+          <div id="signal-list" class="signal-list"><div class="empty-state">Load the selected period to review source agreement.</div></div>
+        </article>
+
+        <article class="panel span-6" id="ripe-panel">
+          <header class="panel-header">
+            <div><span class="section-label">RIPE ATLAS / ACTIVE PROBING</span><h2>RTT and packet-loss observations</h2></div>
+            <a id="ripe-source-link" href="https://atlas.ripe.net/measurements/1001/" target="_blank" rel="noreferrer">Measurement 1001 ↗</a>
+          </header>
+          <p class="panel-note">Built-in Ping 1001 measures paths from matching RIPE probes to its public measurement target. It is not a complete national reachability metric.</p>
+          <div id="ripe-chart" class="chart empty-chart"><span>No data loaded</span></div>
+          <div id="ripe-summary" class="mini-stats"></div>
+        </article>
+
+        <article class="panel span-6" id="radar-panel">
+          <header class="panel-header">
+            <div><span class="section-label">CLOUDFLARE RADAR / IRAN & ASN CONTEXT</span><h2>Traffic and annotated events</h2></div>
+            <a href="https://radar.cloudflare.com/" target="_blank" rel="noreferrer">Radar ↗</a>
+          </header>
+          <p class="panel-note">Radar uses a server-side Radar Read token. HTTP traffic, traffic anomalies, outage annotations and BGP events follow the selected Iran/ASN scope; the token is never exposed to the browser.</p>
+          <div id="radar-chart" class="chart empty-chart"><span>No data loaded</span></div>
+          <div id="radar-summary" class="mini-stats"></div>
+        </article>
+
+        <article class="panel span-6" id="ioda-panel">
+          <header class="panel-header">
+            <div><span class="section-label">IODA / CONNECTIVITY OUTAGES</span><h2>Routing & active-probing signals</h2></div>
+            <a id="ioda-source-link" href="https://ioda.inetintel.cc.gatech.edu/country/IR" target="_blank" rel="noreferrer">IODA ↗</a>
+          </header>
+          <p class="panel-note">Each IODA series is normalized only for visualization inside the selected window. Outage events are upstream disruption signals and are not treated as proof of censorship intent.</p>
+          <div id="ioda-chart" class="chart empty-chart"><span>No data loaded</span></div>
+          <div id="ioda-summary" class="mini-stats"></div>
+        </article>
+
+        <article class="panel span-6" id="tor-panel">
+          <header class="panel-header">
+            <div><span class="section-label">TOR METRICS / CIRCUMVENTION CONTEXT</span><h2>Direct and bridge user estimates</h2></div>
+            <a href="https://metrics.torproject.org/userstats-relay-country.html?country=ir" target="_blank" rel="noreferrer">Tor Metrics ↗</a>
+          </header>
+          <p class="panel-note">Tor Metrics estimates users from directory requests. Falling below its statistical lower bound may indicate a censorship-related event, but can also have non-censorship causes.</p>
+          <div id="tor-chart" class="chart empty-chart"><span>No data loaded</span></div>
+          <div id="tor-summary" class="mini-stats"></div>
+        </article>
+
+        <article class="panel span-7" id="circumvention-panel">
+          <header class="panel-header">
+            <div><span class="section-label">OONI / CIRCUMVENTION & MESSAGING</span><h2>Observed test availability</h2></div>
+            <span id="circumvention-state" class="micro-state">Pending</span>
+          </header>
+          <p class="panel-note">These rows are real OONI test observations. They are not measurements of WireGuard/OpenVPN tunnel success.</p>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Test</th><th>Status</th><th>Measurements</th><th>Anomalies</th><th>Last observation</th></tr></thead>
+              <tbody id="circumvention-table"><tr><td colspan="5" class="table-empty">No data loaded.</td></tr></tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="panel span-5" id="events-panel">
+          <header class="panel-header">
+            <div><span class="section-label">SIGNALS / EVENTS</span><h2>Selected-window event feed</h2></div>
+          </header>
+          <div id="event-feed" class="event-feed"><div class="empty-state">No event data loaded.</div></div>
+        </article>
+
+        <article class="panel span-12" id="providers-panel">
+          <header class="panel-header">
+            <div><span class="section-label">PROVIDER / ASN COMPARISON</span><h2>Iran network measurement coverage</h2></div>
+            <button id="load-providers" class="button" type="button">Load provider comparison</button>
+          </header>
+          <p class="panel-note">Provider comparison is loaded on demand to avoid unnecessary upstream requests. Values are source observations for the selected period, not a provider quality ranking.</p>
+          <div class="table-wrap provider-table-wrap">
+            <table>
+              <thead><tr><th>Network</th><th>Type</th><th>OONI measurements</th><th>OONI anomaly rate</th><th>RIPE probes</th><th>RIPE RTT</th><th>RIPE loss</th></tr></thead>
+              <tbody id="providers-table"><tr><td colspan="7" class="table-empty">Provider comparison has not been requested.</td></tr></tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="panel span-12" id="vpn-field-panel">
+          <header class="panel-header">
+            <div><span class="section-label">VPN / FIELD MEASUREMENT</span><h2>Control vs tunnel measurement</h2></div>
+            <span class="micro-state">LOCAL INPUT · NO DEMO VALUES</span>
+          </header>
+          <p class="panel-note">Enter measurements collected from the same device, network, ASN, target and time window. This tool does not invent or preload tunnel performance.</p>
+          <form id="vpn-form" class="vpn-form">
+            <label><span>Protocol</span><select id="vpn-protocol"><option>WireGuard</option><option>OpenVPN</option><option>Shadowsocks</option><option>Tor / Snowflake</option><option>Other</option></select></label>
+            <label class="wide"><span>Target / test note</span><input id="vpn-target" type="text" placeholder="e.g. target URL or application" /></label>
+            <div class="vpn-column"><strong>Control / without tunnel</strong><label><span>Latency (ms)</span><input id="control-latency" type="number" min="0" step="0.1" /></label><label><span>Packet loss (%)</span><input id="control-loss" type="number" min="0" max="100" step="0.1" /></label><label><span>Download (Mbps)</span><input id="control-download" type="number" min="0" step="0.1" /></label></div>
+            <div class="vpn-column"><strong>Tunnel / with VPN</strong><label><span>Latency (ms)</span><input id="tunnel-latency" type="number" min="0" step="0.1" /></label><label><span>Packet loss (%)</span><input id="tunnel-loss" type="number" min="0" max="100" step="0.1" /></label><label><span>Download (Mbps)</span><input id="tunnel-download" type="number" min="0" step="0.1" /></label></div>
+            <div id="vpn-result" class="vpn-result"><span>Enter both control and tunnel values to calculate the measured cost.</span></div>
+            <div class="vpn-actions"><button class="button" type="reset">Clear</button><button id="save-vpn-run" class="button primary" type="button">Save local run</button></div>
+          </form>
+          <div id="vpn-runs" class="saved-runs"></div>
+        </article>
+
+        <details class="panel span-12 details-panel" id="measurement-explorer">
+          <summary><span><b>OONI raw measurement explorer</b><small>Load IDs and inspect a public raw response</small></span><span>Expand</span></summary>
+          <div class="details-body">
+            <div class="explorer-controls"><button id="load-measurements" class="button" type="button">Load measurement IDs</button><select id="measurement-select" disabled><option value="">Choose measurement UID…</option></select><a id="measurement-external" class="hidden" target="_blank" rel="noreferrer">OONI Explorer ↗</a></div>
+            <pre id="measurement-json" class="json-view">No measurement selected.</pre>
+          </div>
+        </details>
+
+        <article class="panel span-12" id="sources-panel">
+          <header class="panel-header"><div><span class="section-label">DATA PROVENANCE</span><h2>Source register</h2></div></header>
+          <div id="source-grid" class="source-grid"></div>
+        </article>
+      </section>
+    </main>
+
+    <footer>
+      <span>Iran Internet Monitor</span>
+      <span>Real public measurements · transparent no-data states · no fabricated live values</span>
+      <span id="footer-version">v1.0.0</span>
+    </footer>
+  </div>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+{
+  "name": "iran-internet-monitor",
+  "version": "1.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Iran-focused internet censorship and connectivity monitoring dashboard using public measurement APIs.",
+  "engines": {
+    "node": ">=20.11"
+  },
+  "scripts": {
+    "dev": "node --watch server.mjs",
+    "start": "node server.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "build": "node scripts/build.mjs",
+    "check": "node --check server.mjs && node --check public/app.js && node --test tests/*.test.mjs",
+    "verify:radar": "node scripts/verify-radar.mjs"
+  }
+}

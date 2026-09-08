@@ -1,0 +1,12 @@
+[
+  {"asn":"AS58224","name":"TCI","type":"fixed/backbone"},
+  {"asn":"AS197207","name":"MCI","type":"mobile"},
+  {"asn":"AS57218","name":"Rightel","type":"mobile"},
+  {"asn":"AS44244","name":"IranCell","type":"mobile"},
+  {"asn":"AS50810","name":"Mobinnet","type":"fixed-wireless"},
+  {"asn":"AS12880","name":"TIC / Telecommunication Company of Iran","type":"backbone"},
+  {"asn":"AS31549","name":"Asiatech","type":"fixed"},
+  {"asn":"AS16322","name":"Pars Online","type":"fixed"},
+  {"asn":"AS35718","name":"Shatel","type":"fixed"},
+  {"asn":"AS43754","name":"Sabanet","type":"fixed"}
+]
