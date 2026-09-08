@@ -13,7 +13,7 @@ permissions:
 jobs:
   bootstrap:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
@@ -36,10 +36,12 @@ jobs:
         run: |
           set -euo pipefail
           rm -rf bootstrap
-          rm -f .github/workflows/bootstrap.yml
+          rm -f .github/workflows/ci.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
+          git restore --staged .github/workflows/bootstrap.yml 2>/dev/null || true
+          git checkout -- .github/workflows/bootstrap.yml
           git status --short
           git diff --cached --quiet && { echo 'No reconstructed source changes found.' >&2; exit 1; }
           git commit -m 'Import verified v1.0.1 source baseline'
