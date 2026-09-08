@@ -18,6 +18,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: true
 
       - name: Reconstruct verified v1.0.1 source snapshot
         shell: bash
@@ -30,7 +31,7 @@ jobs:
           test -f server.mjs
           test -f .env.example
 
-      - name: Replace one-time bootstrap transport with canonical source
+      - name: Prepare canonical source commit
         shell: bash
         run: |
           set -euo pipefail
@@ -39,5 +40,12 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
+          git status --short
+          git diff --cached --quiet && { echo 'No reconstructed source changes found.' >&2; exit 1; }
           git commit -m 'Import verified v1.0.1 source baseline'
-          git push
+
+      - name: Push canonical source commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git push origin HEAD:main
