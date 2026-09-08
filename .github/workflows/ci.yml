@@ -56,16 +56,14 @@ jobs:
 
           mkdir -p /tmp/v11
           tar -xJf /tmp/v11.tar.xz -C /tmp/v11
-          find /tmp/v11 -type f -print | sort
 
-      - name: Replace working tree with verified source
+      - name: Overlay verified v1.1 delta
         shell: bash
         run: |
           set -euo pipefail
-          rsync -a --delete \
+          rsync -a \
             --exclude='.git/' \
             --exclude='.github/' \
-            --exclude='bootstrap-v11/' \
             /tmp/v11/ ./
           rm -rf bootstrap-v11
 
@@ -105,9 +103,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A -- . ':(exclude).github/workflows/ci.yml'
-          if git diff --cached --quiet; then
-            echo 'No source changes to commit.'
-            exit 0
-          fi
           git commit -m 'Import verified v1.1 censorship-intelligence expansion'
           git push origin HEAD:develop/v1.1
