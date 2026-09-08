@@ -38,7 +38,16 @@ jobs:
           npm ci
           npm run check
           npm run build
-          if grep -RInE --exclude-dir=.git --exclude-dir=dist --exclude='.env.example' '(cfat_[A-Za-z0-9_-]+|CLOUDFLARE_RADAR_API_TOKEN=.+|GLOBALPING_API_TOKEN=.+|INTERNET_SOCIETY_PULSE_API_TOKEN=.+)' .; then
+          # Scan reconstructed project files only. Exclude this bootstrap workflow,
+          # because the workflow itself necessarily contains the secret-name regex.
+          if grep -RInE \
+            --exclude-dir=.git \
+            --exclude-dir=dist \
+            --exclude-dir=bootstrap \
+            --exclude='bootstrap.yml' \
+            --exclude='.env.example' \
+            '(cfat_[A-Za-z0-9_-]+|CLOUDFLARE_RADAR_API_TOKEN=.+|GLOBALPING_API_TOKEN=.+|INTERNET_SOCIETY_PULSE_API_TOKEN=.+)' \
+            .; then
             echo 'Potential credential material found.' >&2
             exit 1
           fi
