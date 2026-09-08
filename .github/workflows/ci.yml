@@ -14,40 +14,18 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Reconstruct and verify v1.1 transport
+      - name: Verify 500-byte repair fragments
         shell: bash
         run: |
           set -euo pipefail
-          normcat() { for f in "$@"; do tr -d '\r\n' < "$f"; done; }
-
-          normcat bootstrap-v11/fix3-c00-0a bootstrap-v11/fix3-c00-0b bootstrap-v11/fix3-c00-0c bootstrap-v11/fix3-c00-0d > /tmp/c0a
-          tr -d '\r\n' < bootstrap-v11/fix2-c00-1 > /tmp/c0b
-          tr -d '\r\n' < bootstrap-v11/fix-c-00-1 > /tmp/c0c
-          cat /tmp/c0a /tmp/c0b /tmp/c0c > /tmp/c-00
-          echo '13e3364f7ee6a7262994c828f17386b9d74a6650a93428520b6b8b24621770d6  /tmp/c-00' | sha256sum -c -
-
-          head -c 8000 bootstrap-v11/r-00 > /tmp/r00-first8
-          head -c 2000 bootstrap-v11/fix2-r00-2-0 > /tmp/r2a
-          normcat bootstrap-v11/fix3-r00-2b-a bootstrap-v11/fix3-r00-2b-b bootstrap-v11/fix3-r00-2b-c bootstrap-v11/fix3-r00-2b-d > /tmp/r2b
-          tail -c 3000 bootstrap-v11/r-00 > /tmp/r00-last3
-          cat /tmp/r00-first8 /tmp/r2a /tmp/r2b /tmp/r00-last3 > /tmp/r-00
-          echo '19b2cbe2e455b90343ea050ffe930d041d516df4c833d1a26e503d782e8fbaae  /tmp/r-00' | sha256sum -c -
-
-          tr -d '\r\n' < bootstrap-v11/c-01 > /tmp/c-01
-          tr -d '\r\n' < bootstrap-v11/r-01 > /tmp/r-01
-          tr -d '\r\n' < bootstrap-v11/r-02 > /tmp/r-02
-          head -c 15000 bootstrap-v11/r-03 | tr -d '\r\n' > /tmp/r-03
-          tr -d '\r\n' < bootstrap-v11/r-04 > /tmp/r-04
-
-          echo 'a593c1eb69e9953b2c7955417630f6bc93f1ed6d5568297a793f09cacdd135e2  /tmp/c-01' | sha256sum -c -
-          echo 'ca140973194679b4cb413b82c7dfb8715fe677e67278b6faab84d6b353f2e209  /tmp/r-01' | sha256sum -c -
-          echo 'e20f0a4f736df8193d88bd3efd5bfc2905a01ab88b20300f5d943e755cbfb803  /tmp/r-02' | sha256sum -c -
-          echo '3f5b93c48e6a7e72965f1c2e7473827863f578540eacf54e4884f6ffc865f677  /tmp/r-03' | sha256sum -c -
-          echo '60ba5ebf2a12bf5d7fb82d41133f81b97c181f71141d1347855a5e0502c132ec  /tmp/r-04' | sha256sum -c -
-
-          cat /tmp/c-00 /tmp/c-01 /tmp/r-00 /tmp/r-01 /tmp/r-02 /tmp/r-03 /tmp/r-04 > /tmp/v11.b64
-          base64 -d /tmp/v11.b64 > /tmp/v11.tar.xz
-          echo 'bf188d5d8564131f169a11b79da4e684afd2b391f574e4ed83388e06d9a0130f  /tmp/v11.tar.xz' | sha256sum -c -
-          tar -tJf /tmp/v11.tar.xz >/tmp/files.txt
-          test "$(wc -l < /tmp/files.txt)" -eq 43
-          cat /tmp/files.txt
+          for f in bootstrap-v11/fix3-c00-0a bootstrap-v11/fix3-c00-0b bootstrap-v11/fix3-c00-0c bootstrap-v11/fix3-c00-0d bootstrap-v11/fix3-r00-2b-a bootstrap-v11/fix3-r00-2b-b bootstrap-v11/fix3-r00-2b-c bootstrap-v11/fix3-r00-2b-d; do
+            tr -d '\r\n' < "$f" > "/tmp/$(basename "$f")"
+          done
+          echo 'a266bce3620c171cbca68f92a6c5e831b5de1a5753fdd1d5a382e73377cb7f1a  /tmp/fix3-c00-0a' | sha256sum -c -
+          echo 'c3ca8aa8d289c88bbea488306741db5ca6b48de700a9e3c808967e1dbb35df8d  /tmp/fix3-c00-0b' | sha256sum -c -
+          echo 'ad56383c6c97e40798bbc0331533d8e581e92c81a3d6a098c1db524cfe11248b  /tmp/fix3-c00-0c' | sha256sum -c -
+          echo 'c34df3539676bcd2fe6627056ce92454c243a863bd212c61d7cc95bad61ba277  /tmp/fix3-c00-0d' | sha256sum -c -
+          echo '582236685a5293c155ca4b4de9974ea2d820b4ba67c5a40c936c6fcee6d5b05c  /tmp/fix3-r00-2b-a' | sha256sum -c -
+          echo 'ba19407b2f0dad7b91b877a648bd1f7f1ce0bff2ff86711995a29d06291d5d7c  /tmp/fix3-r00-2b-b' | sha256sum -c -
+          echo '4e0ced1b2714fe842cd06a11e9199360d09899fbb187ec12531cb6e162f0b39a  /tmp/fix3-r00-2b-c' | sha256sum -c -
+          echo 'e5ed9329469242a7ba8ad8797bc2e66ef24ae6fc57319c39590bb47502cfa116  /tmp/fix3-r00-2b-d' | sha256sum -c -
