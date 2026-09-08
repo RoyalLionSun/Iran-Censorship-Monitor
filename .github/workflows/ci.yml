@@ -14,12 +14,19 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Locate c00 corruption
+      - name: Verify small v1.1 repair pieces
         shell: bash
         run: |
           set -euo pipefail
-          echo 'size:' $(wc -c < bootstrap-v11/c-00)
-          echo prefixes
-          for n in 250 500 750 1000 1500 2000 2500 3000 3500 4000 5000 6000; do printf '%s ' "$n"; head -c "$n" bootstrap-v11/c-00 | sha256sum | cut -d' ' -f1; done
-          echo suffixes
-          for n in 250 500 750 1000 1500 2000 2500 3000 3500 4000 5000 6000; do printf '%s ' "$n"; tail -c "$n" bootstrap-v11/c-00 | sha256sum | cut -d' ' -f1; done
+          norm() { tr -d '\r\n' < "$1" > "$2"; }
+          head -c 2000 bootstrap-v11/fix2-c00-0 > /tmp/c0a
+          norm bootstrap-v11/fix2-c00-1 /tmp/c0b
+          norm bootstrap-v11/fix-c-00-1 /tmp/c0c
+          head -c 2000 bootstrap-v11/fix2-r00-2-0 > /tmp/r2a
+          echo '--- actual ---'
+          sha256sum /tmp/c0a /tmp/c0b /tmp/c0c /tmp/r2a
+          echo '--- expected verification ---'
+          echo 'd90c05208a6020f0cbb52f56836fc68a35b1f72543c0da83d02b9717c8348526  /tmp/c0a' | sha256sum -c -
+          echo 'e8f076eba9652c2f6f5fcdc5e1ffb2cd426ef5a1f4cf95ead6f7e66a035cff4f  /tmp/c0b' | sha256sum -c -
+          echo '985af94fc3b2ce8f78789727c51bc9fe37801648d56e850ba489548ec7d9c6bf  /tmp/c0c' | sha256sum -c -
+          echo '14fda6d7b7f1656da980fcc526830a5fc92d5cf9a0d96a64d156dac2cb3d13a9  /tmp/r2a' | sha256sum -c -
