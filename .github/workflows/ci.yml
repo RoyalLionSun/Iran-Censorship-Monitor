@@ -7,10 +7,6 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -18,19 +14,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Diagnose staged transport chunks
+      - name: Verify repair chunk hashes
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p /tmp/chunks
-          split -b 4000 -d -a 1 bootstrap-v11/c-00 /tmp/chunks/c00-
-          split -b 4000 -d -a 1 bootstrap-v11/r-00 /tmp/chunks/r00-
-          head -c 15000 bootstrap-v11/r-03 | split -b 4000 -d -a 1 - /tmp/chunks/r03-
-          echo '--- c00 ---'
-          sha256sum /tmp/chunks/c00-*
-          echo '--- r00 ---'
-          sha256sum /tmp/chunks/r00-*
-          echo '--- r03 ---'
-          sha256sum /tmp/chunks/r03-*
-          echo '--- repair files already staged ---'
-          sha256sum bootstrap-v11/fix-* || true
+          echo 'd90c05208a6020f0cbb52f56836fc68a35b1f72543c0da83d02b9717c8348526  bootstrap-v11/fix2-c00-0' | sha256sum -c -
+          echo 'e8f076eba9652c2f6f5fcdc5e1ffb2cd426ef5a1f4cf95ead6f7e66a035cff4f  bootstrap-v11/fix2-c00-1' | sha256sum -c -
+          echo '14fda6d7b7f1656da980fcc526830a5fc92d5cf9a0d96a64d156dac2cb3d13a9  bootstrap-v11/fix2-r00-2-0' | sha256sum -c -
+          echo 'a6f81b3489a66b77e81c70b352eb43f054c22d26727ffcac5492df7b844f7749  bootstrap-v11/fix2-r00-2-1' | sha256sum -c -
