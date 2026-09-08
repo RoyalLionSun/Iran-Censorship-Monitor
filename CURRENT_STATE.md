@@ -1,116 +1,87 @@
 # Current State — v1.1.0 development
 
-Version: **1.0.0**  
-Audit date: **2026-09-08**
+Version: **1.1.0-dev**  
+Audit date: **2026-09-08**  
+Development branch: **`develop/v1.1`**
 
-## Implemented
+## Canonical branch model
 
-### Monitoring UI
+- `main` remains the verified v1.0.1 production baseline.
+- `develop/v1.1` contains the current v1.1 censorship-intelligence expansion.
+- The verified v1.1 source import is committed on GitHub; temporary `bootstrap-v11` transport files have been removed.
+- Permanent GitHub CI runs on branch pushes and pull requests against `main`.
 
-- compact sticky header;
-- ASN, OONI test, target, and date-range filters;
-- 7/14/30-day quick ranges plus historical September 2022 query preset;
-- multi-source assessment strip with confidence and scope;
-- eight compact KPIs;
-- responsive 12-column dashboard grid;
-- OONI timeline and inferred signal-method labels;
-- RIPE Atlas RTT/loss view;
-- Cloudflare Radar traffic/event view;
-- IODA signal/outage view;
-- Tor direct/bridge usage context;
-- OONI circumvention/messaging table;
-- selected-window event feed;
-- on-demand provider/ASN comparison;
-- empty operator-entered VPN control/tunnel measurement panel;
-- raw OONI measurement explorer;
-- source/provenance register;
-- CSV export of loaded observed data;
-- print support.
+## Implemented measurement and intelligence layers
 
-### Backend/data layer
+### Existing baseline sensors
 
-- server-side adapters for OONI, RIPE Atlas, IODA, Tor Metrics, and Cloudflare Radar;
-- Iran-only query scoping;
-- ASN/date/target validation;
-- timeout and in-memory cache;
-- independent source failure isolation;
-- provider-query concurrency limits;
-- OONI API-limit integrity guard;
-- RIPE probe pagination and safety-cap reporting;
-- multi-source corroboration assessment.
+- OONI;
+- Cloudflare Radar, token-gated server-side;
+- RIPE Atlas;
+- IODA;
+- Tor Metrics.
 
-### Security/runtime
+### v1.1 additions
 
-- no runtime third-party npm dependencies;
-- no embedded secrets;
-- optional Radar token held server-side;
-- strict CSP preventing direct browser API calls;
-- MIME sniffing protection;
-- referrer policy;
-- frame embedding disabled through CSP;
-- `.env` excluded from Git.
-
-### Testing
-
-Deterministic tests cover:
-
-- OONI mechanism classification;
-- OONI aggregation and Iran-scoped query generation;
-- OONI truncation exclusion from assessment;
-- multi-source assessment states;
-- date and ASN validation;
-- IODA signal/event parsing;
-- Tor direct/bridge CSV parsing;
-- RIPE Atlas pagination and safety-cap behavior.
-
-## Intentionally not implemented as fake telemetry
-
-### WireGuard/OpenVPN live availability
-
-There is no owned Iran probe fleet in the inherited project. The production UI therefore does not claim live national WireGuard/OpenVPN success rates.
-
-To make this a real measurement source, deploy controlled probes and define:
-
-- probe identity and location/ASN privacy model;
-- control endpoint;
-- WireGuard/OpenVPN endpoints;
-- periodic test protocol;
-- signed ingestion endpoint;
-- clock synchronization;
-- success/failure semantics;
-- retention and operator-security policy.
-
-### Province-level map
-
-The inherited project does not contain a reliable province-level telemetry feed. No province heatmap is shown because mapping country-level/ASN data onto provinces would create false precision.
-
-A province map should only be activated once the underlying observations have defensible province/geolocation granularity.
-
-## Optional source not configured by default
-
-Cloudflare Radar requires a real Radar Read API token. The production adapter is fully token-gated and supports Iran/ASN-scoped HTTP traffic, outages, traffic anomalies, BGP hijack context, adaptive time aggregation, and Radar confidence metadata. OONI, RIPE Atlas, IODA, and Tor Metrics remain usable without proprietary credentials.
-
-## Known operational boundary in this build environment
-
-The development sandbox used for this reconstruction could start the local service and run tests/builds, but external DNS resolution to public APIs was unavailable during the final local validation session. Therefore:
-
-- request construction and response parsers are tested deterministically;
-- local API/static serving is smoke-tested;
-- upstream API contracts were checked against current provider documentation;
-- end-to-end live upstream calls must be verified once deployed on a host with normal outbound Internet access.
-
-## v1.1 implemented in the development branch
-
-- Censored Planet GraphQL/CenAlert;
-- RIPEstat/RIS visibility, prefix/neighbour context and bounded BGP drilldown;
-- Globalping Iran probe inventory plus protected disabled-by-default active measurement API;
-- Tor bridge transport lower/upper bounds;
+- Censored Planet GraphQL / CenAlert;
+- RIPEstat / RIPE RIS routing visibility, prefix and neighbour context;
+- bounded on-demand BGP announcement/withdrawal drilldown with AS paths and collector metadata;
+- Globalping Iran probe inventory;
+- protected, disabled-by-default Globalping active measurement endpoint;
+- Tor bridge transport low/high bounds;
 - Cloudflare Radar HTTP protocol/version, IP version and TLS-version distributions;
-- PeeringDB + IHR AS-Hegemony topology/chokepoint context;
+- PeeringDB topology context;
+- Internet Health Report AS-Hegemony dependency/chokepoint context;
 - Citizen Lab Iran target inventory;
 - token-gated Internet Society Pulse context;
-- curated Iran-intelligence source registry and allowlisted GDELT discovery;
-- control/data-plane divergence classification;
-- dense UI panels for the new evidence families.
+- curated Iran-intelligence source registry;
+- allowlisted GDELT professional-source discovery;
+- control-plane / data-plane divergence classification;
+- dense UI panels for routing, interference, vantage coverage, topology, protocol mix, targets and intelligence.
 
-The offline deterministic suite currently contains **42 passing tests**. Live upstream reachability still depends on the deployment host.
+## Methodological rules enforced
+
+- BGP visibility is not treated as proof of user Internet availability.
+- OONI or Censored Planet anomalies are not automatically labeled censorship.
+- Tor/circumvention activity remains contextual evidence rather than an automatic disruption vote.
+- OSINT is separated from technical sensors and does not create duplicate independent evidence when it cites an underlying measurement source.
+- Missing data stays explicit; no province-level or VPN availability values are fabricated.
+- Control/data-plane divergence is presented as an inferred pattern with confidence, not as a directly measured censorship mechanism.
+
+## Active-measurement safety
+
+Globalping active measurements are disabled by default and protected by server-side controls. The implementation restricts target classes and measurement scope and prevents private, loopback, link-local, CGNAT and reserved-address targets from being used as a measurement/SSRF proxy.
+
+## Validation status
+
+The v1.1 development source has passed:
+
+- deterministic adapter/parser/scope tests;
+- **42/42 offline tests**;
+- `npm ci`;
+- `npm run check`;
+- production build;
+- committed-secret scan;
+- `.env` absence check;
+- runtime `/api/health` smoke test;
+- root-page HTTP 200 check;
+- unknown-path HTTP 404 check;
+- traversal-style path HTTP 404 check;
+- GitHub Actions CI on the final development branch.
+
+## Operational boundary
+
+The original development sandbox did not provide reliable outbound DNS to all public upstream APIs. Parser behavior, query construction, security boundaries and local runtime behavior are deterministic and tested; end-to-end live-source freshness still depends on deployment on a host with normal outbound Internet access.
+
+## Not yet implemented / intentionally deferred
+
+- M-Lab aggregation layer for throughput/RTT/loss with sample-size-aware interpretation;
+- continuous RIPE RIS Live / CAIDA BGPStream ingestion;
+- owned in-country Iran probe mesh;
+- trustworthy province-level continuous telemetry;
+- live nationwide WireGuard/OpenVPN/V2Ray/Outline status;
+- white-SIM versus ordinary-SIM measurements;
+- robust continuous NIN-versus-global end-user reachability;
+- automatic live ingestion of sources that only expose reports/aggregates rather than a stable machine-readable feed.
+
+These remain future work and must not be represented as live measurements until a defensible data path exists.
