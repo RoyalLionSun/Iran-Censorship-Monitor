@@ -56,7 +56,7 @@ jobs:
 
           mkdir -p /tmp/v11
           tar -xJf /tmp/v11.tar.xz -C /tmp/v11
-          test "$(find /tmp/v11 -type f | wc -l)" -eq 43
+          find /tmp/v11 -type f -print | sort
 
       - name: Replace working tree with verified source
         shell: bash
