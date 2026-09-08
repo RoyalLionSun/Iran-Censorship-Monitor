@@ -18,6 +18,7 @@ import { getPeeringDbTopology } from './lib/peeringdb.mjs';
 import { getIhrDependencies } from './lib/ihr.mjs';
 import { getPulseShutdowns } from './lib/pulse.mjs';
 import { getGdeltIranIntelligence } from './lib/osint.mjs';
+import { getMlabPerformance } from './lib/mlab.mjs';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
 
@@ -131,6 +132,7 @@ async function handleApi(req, res, url) {
         cloudflareRadarConfigured: Boolean(process.env.CLOUDFLARE_RADAR_API_TOKEN),
         liveIoda: true,
         liveTorMetrics: true,
+        mlabNdtPerformance: true,
         ripeStatRouting: true,
         censoredPlanet: true,
         globalpingProbeInventory: true,
@@ -148,12 +150,13 @@ async function handleApi(req, res, url) {
 
   if (url.pathname === '/api/overview') {
     const input = queryInput(url);
-    const [ooni, ripe, radar, ioda, tor, ripestat, globalping, censoredPlanet, peeringdb, ihr, pulse] = await Promise.all([
+    const [ooni, ripe, radar, ioda, tor, mlab, ripestat, globalping, censoredPlanet, peeringdb, ihr, pulse] = await Promise.all([
       safeSource('OONI', () => getOoniTimeline(input)),
       safeSource('RIPE Atlas', () => getRipeSignals(input)),
       safeSource('Cloudflare Radar', () => getRadarSignals(input)),
       safeSource('IODA', () => getIodaSignals(input)),
       safeSource('Tor Metrics', () => getTorMetrics(input)),
+      safeSource('M-Lab NDT', () => getMlabPerformance(input)),
       input.asn ? safeSource('RIPEstat / RIPE RIS', () => getRipeStatSignals(input)) : Promise.resolve(scopeRequired('RIPEstat / RIPE RIS', input)),
       safeSource('Globalping', () => getGlobalpingIranProbes(input)),
       safeSource('Censored Planet', () => getCensoredPlanetSignals(input)),
@@ -163,7 +166,7 @@ async function handleApi(req, res, url) {
     ]);
     const scopeLabel = input.asn ? `${input.asn} / Iran` : 'Iran / all measured networks';
     const assessment = buildAssessment({ ooni, ripe, radar, ioda, ripestat, scopeLabel });
-    jsonResponse(res, 200, { ok: true, input, fetchedAt: new Date().toISOString(), assessment, ooni, ripe, radar, ioda, tor, ripestat, globalping, censoredPlanet, peeringdb, ihr, pulse });
+    jsonResponse(res, 200, { ok: true, input, fetchedAt: new Date().toISOString(), assessment, ooni, ripe, radar, ioda, tor, mlab, ripestat, globalping, censoredPlanet, peeringdb, ihr, pulse });
     return true;
   }
 
