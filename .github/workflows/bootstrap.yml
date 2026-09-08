@@ -1,53 +1,73 @@
-name: Bootstrap verified baseline
+name: CI
 
 on:
   push:
     branches: [main]
-    paths:
-      - '.github/workflows/bootstrap.yml'
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  bootstrap:
+  verify:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          fetch-depth: 0
-          persist-credentials: true
+          node-version: 22
+          cache: npm
 
-      - name: Reconstruct verified v1.0.1 source snapshot
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests and checks
+        run: npm run check
+
+      - name: Build production bundle
+        run: npm run build
+
+      - name: Reject committed secrets
         shell: bash
         run: |
           set -euo pipefail
-          cat bootstrap/part-* > /tmp/source.b64
-          base64 -d /tmp/source.b64 > /tmp/source.tar.xz
-          tar -xJf /tmp/source.tar.xz -C .
-          test -f package.json
-          test -f server.mjs
-          test -f .env.example
+          if grep -RInE \
+            --exclude-dir=.git \
+            --exclude-dir=node_modules \
+            --exclude-dir=dist \
+            --exclude='.env.example' \
+            'cfa[t]_[A-Za-z0-9_-]{20,}' .; then
+            echo 'Potential Cloudflare API token committed to repository.' >&2
+            exit 1
+          fi
+          if find . -maxdepth 3 -type f -name '.env' -print -quit | grep -q .; then
+            echo 'A .env file is committed or present in the CI checkout.' >&2
+            exit 1
+          fi
 
-      - name: Prepare canonical source commit
+      - name: Smoke-test production server
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf bootstrap
-          rm -f .github/workflows/ci.yml
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A
-          git restore --staged .github/workflows/bootstrap.yml 2>/dev/null || true
-          git checkout -- .github/workflows/bootstrap.yml
-          git status --short
-          git diff --cached --quiet && { echo 'No reconstructed source changes found.' >&2; exit 1; }
-          git commit -m 'Import verified v1.0.1 source baseline'
-
-      - name: Push canonical source commit
-        shell: bash
-        run: |
-          set -euo pipefail
-          git push origin HEAD:main
+          node server.mjs >/tmp/iran-monitor.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          for i in {1..20}; do
+            if curl --fail --silent http://127.0.0.1:4173/api/health >/tmp/health.json; then
+              break
+            fi
+            sleep 0.25
+          done
+          curl --fail --silent http://127.0.0.1:4173/ >/dev/null
+          cat /tmp/health.json
