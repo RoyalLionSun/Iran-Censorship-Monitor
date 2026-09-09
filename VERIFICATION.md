@@ -1,137 +1,88 @@
-# Verification Report — v1.1.0 release
+# Verification Report — v1.2.0-dev readiness
 
 Date: **2026-09-09**  
-Production branch: **`main`**  
-Release merge commit: **`8a66e32947c0d4f82612f03ad72555c87fd56fe6`**
+Production: **v1.1.0 / `main` / `9087809d6a87ae578dd590d185c35b4438319b2d`**  
+Development: **`develop/v1.2`**
 
-## Deterministic and production gates
+## Current v1.2 gates
 
-The v1.1 release state passed the following GitHub Actions gates:
+Latest verified runtime/UI development head before this documentation-only readiness pass:
 
-- code-state CI: `34323940265` — success;
-- code-state public live-source acceptance: `34323940251` — success;
-- release PR CI: `34334883650` — success;
-- post-merge `main` CI: `34337684528` — success.
+- normal CI `34365724780` — **success**;
+- deterministic suite — **203/203 passed**;
+- production build — success;
+- committed-token/private-key and `.env` checks — success;
+- runtime `/api/health`, root, unknown-path and traversal smoke tests — success;
+- real headless Chrome presentation gate — success;
+- live public-source acceptance `34365369630` — **success**.
 
-The deterministic suite contains **73 tests**, all passing.
-
-CI verifies:
-
-- `npm ci` and dependency audit;
-- server/client/operator-script syntax;
-- parser/scope/safety semantics;
-- production build;
-- committed Cloudflare-token pattern rejection;
-- committed private-key marker rejection;
-- `.env` absence;
-- `/api/health` HTTP 200;
-- static root HTTP 200;
-- unknown path HTTP 404;
-- traversal-style path HTTP 404.
-
-GitHub Actions dependencies are pinned to exact verified commits rather than floating major tags.
-
-## Deterministic test coverage
-
-The 73-test suite covers, among other areas:
-
-- ASN/date validation;
-- OONI Iran scope, mechanism classification, anomaly/confirmation separation and API-limit exclusion;
-- RIPE Atlas probe pagination, per-probe `ping-stats`, daily loss/RTT aggregation, pagination bounds and timeout/concurrency boundaries;
-- exclusion of partial RIPE Atlas coverage from corroboration and control/data-plane divergence;
-- IODA signal/event parsing;
-- Tor direct/bridge and transport-bound parsing;
-- Cloudflare Radar scope, aggregation, protocol summary and secret-free URL construction;
-- RIPEstat visibility/neighbours, update parsing, historical horizon and 48-hour cap;
-- RIPE RIS Live CIDR validation, prefix-scoped subscription construction, scope/header fail-closed behavior, HTTP stream request, UPDATE parsing, announcement/withdrawal separation, chunk decoding, RIPEstat scope resolution and bounded reconnect backoff;
-- Censored Planet Iran/date scope and partial-error visibility;
-- Globalping Iran probe filtering, active probe cap, SSRF/target restrictions and control-key behavior;
-- Citizen Lab quoted CSV parsing;
-- PeeringDB and IHR scope/parser behavior;
-- Pulse Iran/verification parsing;
-- GDELT recent-corpus and professional-domain filtering;
-- control/data-plane divergence classification;
-- M-Lab Iran/ASN paths, histogram-bucket collapse, sample-gated comparison, insufficient-data behavior, concrete GCS missing-object recognition and separation of no-data from transport/server errors;
-- Access Now STOP official-sheet binding, robust CSV parsing, Iran/time overlap, evidence lineage, Ongoing-vs-Unknown semantics and schema fail-closed behavior;
-- APNIC Labs IPv6 Iran/ASN URL scope, raw sample preservation, date/country/ASN filtering, smoothed context and explicit no-data behavior.
-
-## Live public-source acceptance
-
-Live-source run: **`34323940251` — success**  
-Window: **`2026-08-27..2026-09-09`**  
-Selected ASN: **`AS58224`**
-
-| Source | Live result |
-|---|---|
-| OONI | `ok` |
-| RIPE Atlas | `no_data` — valid non-error state |
-| IODA | observed |
-| Tor Metrics | observed |
-| M-Lab NDT | `no_data` — valid non-error state |
-| APNIC Labs IPv6 | observed |
-| RIPEstat / RIPE RIS | observed |
-| Globalping passive inventory | `no_data` |
-| Censored Planet | partial |
-| PeeringDB | observed |
-| Internet Health Report | observed |
-| Access Now STOP | 5 matching Iran incident records |
-| Citizen Lab | targets returned |
-| GDELT | HTTP 429; optional rate-limited discovery context only |
-
-The gate completed with `LIVE ACCEPTANCE PASS`.
-
-### RIPE Atlas runtime semantics
-
-The earlier raw Measurement 1001 result path timed out on real upstream responses. The adapter was migrated to daily `ping-stats` aggregation.
-
-The public service then exposed HTTP 400 `Please specify only one probe` for multi-probe `probe_ids`; production therefore sends one bounded request per selected probe with limited concurrency. A failed subset yields `partial`, and partial RIPE data remains visible but excluded from automated assessment/divergence.
-
-### M-Lab no-data semantics
-
-For the selected ASN/year, M-Lab returned a concrete GCS missing-object `404 NoSuchKey`. The adapter recognizes only that specific missing-aggregate condition as `no_data` for the exact scope.
-
-DNS/TLS/network/parser/5xx failures remain hard errors, and there is no automatic ASN-to-country fallback.
-
-## Passive RIPE RIS Live acceptance
-
-The live-source workflow also runs `npm run verify:ris-live`.
-
-Verified result:
+Real browser result:
 
 ```text
-PASS RIPE RIS Live passive subscription handshake · AS58224 · 217.218.96.0/20 · HTTP 200
+UI PRESENTATION PASS · google-chrome · M-Lab/APNIC/STOP rendered in a real headless browser
 ```
 
-This verifies the public stream endpoint and `X-RIS-Subscribe` path using one RIPEstat-derived prefix. It does not claim full collector coverage or require/fabricate a route event.
+The initial UI-gate run failed because `spawnSync()` blocked the same Node event loop serving the loopback fixture. That was a harness deadlock, not an application/rendering failure. Commit `330ca12a6819dc4657d60f35c164e28c01b24f1b` switched browser execution to asynchronous `execFile()`; the unchanged fixture/assertions then passed.
 
-## Security/integrity boundary
+## Major deterministic coverage added in v1.2
 
-- Active Globalping remains disabled by default and protected by explicit configuration, operator key, scope and target controls.
-- RIPE RIS Live is passive and requires an allowlisted ASN plus a validated bounded prefix set.
-- Runtime RIS output is under Git-ignored `var/ris-live/`; the dashboard server does not serve it.
-- Contextual STOP/Pulse/GDELT/Tor/M-Lab/APNIC information does not become an additional independent censorship vote.
-- No deterministic or live gate converts missing/partial/error states into fabricated zero impact.
+The suite now verifies, in addition to the v1.1 source adapters and assessment rules:
 
-## Dashboard/UI verification boundary
+- Route Views/BGPStream project/resource separation and bounded prefix scope;
+- CAIDA live-broker request semantics;
+- signed fleet manifest exact schemas and expiry/lifetime bounds;
+- local target resolution and rejection of scheduler-supplied endpoints/commands;
+- authenticated result envelopes and manifest binding;
+- sensitive metadata rejection;
+- replay/rate/size/concurrency guards;
+- bounded memory-only result buffering and purge behavior;
+- Class-A loopback DNS/TCP/TLS/HTTPS adapters and timeout/error semantics;
+- local enable and consent gates before any network/measurement operation;
+- real Node HTTPS handshake, hostname validation and SPKI pinning;
+- Stage-1 fixed-path/redirect/content-size transport rules;
+- collection-edge source-IP/XFF exclusion;
+- systemd laboratory sandbox/default-deny configuration and negative-policy validation;
+- key provisioning/rotation/revocation rules;
+- rollback order, no-shell and no-auto-reenable rules;
+- per-probe publication isolation and one-source-family semantics;
+- VPN protocol/NIN evidence readiness rules;
+- province and SIM segmentation NO-GO rules;
+- real browser rendering of the v1.1 context presentation layer.
 
-The v1.1 UI exposes M-Lab, APNIC and STOP context without adding those sources to the censorship assessment. A separate context CSV export keeps contextual records distinct from the established technical export.
+## Live source acceptance
 
-Syntax/build/serve behavior is covered by CI. There is no full headless visual browser interaction test in v1.1; this is a presentation-testing limitation, not a data-integrity bypass.
+The latest v1.2 runtime/UI live gate `34365369630` completed successfully. It exercises the existing public-source server adapters plus passive routing acceptance checks. Legitimate `observed`, `partial` and `no_data` states remain distinct and no source error is converted into zero impact.
 
-## Invalid release interpretations
+The v1.2 Route Views/CAIDA gate establishes the supported live resource/provenance path. Route Views routing data remains control-plane evidence; using BGPStream to consume RIPE data would not create source independence.
 
-The following remain explicitly invalid:
+## Security / evidence boundary
 
-- “BGP is visible, therefore Internet access is working”;
-- “RIS Live announcement/withdrawal = censorship”;
-- “OONI anomaly = confirmed censorship”;
-- “M-Lab slowdown = intentional state throttling”;
-- “APNIC IPv6 change = censorship”;
-- “STOP/Pulse/article count = independent technical corroboration”;
-- “Tor/VPN usage spike = proof of blocking”;
-- “no data = zero impact”;
-- “partial coverage = complete source confirmation”.
+Verification does **not** authorize an Iran pilot. In particular:
 
-## Release conclusion
+- owned probes remain one source family;
+- per-probe observations cannot automatically become national/province status;
+- website reachability cannot become VPN transport evidence;
+- complete VPN/NIN evidence gates reach analyst review only;
+- province cannot be inferred from source IP/ASN/latency;
+- SIM entitlement class is not collected or inferred;
+- routing visibility remains separate from data-plane reachability;
+- missing/partial/error states are never promoted to complete confirmation.
 
-The v1.1 technical and methodological release gate is complete. The final release-metadata commit must pass CI after which that exact `main` commit is the intended target for tag `v1.1.0`.
+## External predeployment gates not reproducible in GitHub CI
+
+Before any Iran pilot, separate evidence is still required for:
+
+1. actual Linux/systemd kernel/cgroup sandbox and negative egress enforcement on an isolated host;
+2. real project-controlled Class-A endpoints and real collection edge;
+3. out-of-band key provisioning/rotation/revocation exercise;
+4. rollback exercise against a known-safe version;
+5. real voluntary operator consent and withdrawal capability;
+6. explicit authorization to deploy the pilot.
+
+A green CI, PR, tag or release cannot satisfy these external gates. Repository policy remains `deploymentAuthorized:false`.
+
+## Release-readiness conclusion
+
+**Repository/laboratory v1.2 development: ready for pre-release review.**  
+**Iran Stage-1 pilot: NO-GO.**  
+**Merge/release: requires the normal PR/release gate and explicit authorization; this document does not authorize it.**

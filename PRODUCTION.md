@@ -1,6 +1,12 @@
 # Production Deployment
 
-## Recommended topology
+## Supported production state
+
+The currently published production release is **`v1.1.0`** from `main` at commit `9087809d6a87ae578dd590d185c35b4438319b2d`.
+
+`develop/v1.2` is a development/pre-release branch. Its Fleet Stage-1 laboratory material is **not** an Iran production deployment template and must not be enabled on an Iran host merely because repository CI is green.
+
+## Dashboard topology
 
 ```text
 Internet / administrator network
@@ -19,60 +25,33 @@ Iran Censorship Monitor / Node.js
         +--> PeeringDB / IHR / Access Now / Citizen Lab / GDELT
         \--> Cloudflare Radar / Internet Society Pulse (optional tokens)
 
-Optional separate operator service
-        |
-        +--> RIPEstat prefix scope
-        +--> RIPE RIS Live passive stream
-        \--> /opt/iran-censorship-monitor/var/ris-live/
+Optional passive operator processes
+        +--> RIPE RIS Live
+        \--> v1.2 dev: Route Views via BGPStream/bgpreader
 ```
 
-The web service and the optional RIS Live collector are separate processes. Starting the dashboard does not start continuous routing collection.
+Starting the dashboard does not start either routing collector.
 
-## Build
+## Build / validation
 
 ```bash
 npm ci
 npm run check
 npm run build
+npm run verify:public
+npm run verify:ris-live
+npm run verify:bgpstream   # v1.2 development
+npm run verify:ui          # v1.2 development; loopback headless browser gate
+npm run verify:radar       # optional token
 ```
 
-Copy `dist/` to the target host.
+Current v1.2 development verification is **203/203 deterministic tests**, plus production build, secret/private-key checks, runtime smoke testing and real headless-Chrome rendering. This does not supersede the external Fleet deployment gates.
 
-The verified v1.1 runtime baseline passes 73/73 deterministic tests, production build, secret checks and runtime/404 smoke tests.
+## Dashboard service
 
-## Dashboard systemd unit
+Keep the Node listener private where practical and terminate HTTPS at a reverse proxy. A hardened systemd service should use an unprivileged account, `NoNewPrivileges=true`, private temporary space and read-only system/home protections appropriate to the distribution.
 
-Create `/etc/systemd/system/iran-censorship-monitor.service`:
-
-```ini
-[Unit]
-Description=Iran Censorship Monitor
-After=network-online.target
-Wants=network-online.target
-
-[Service]
-Type=simple
-User=iran-monitor
-Group=iran-monitor
-WorkingDirectory=/opt/iran-censorship-monitor
-Environment=NODE_ENV=production
-EnvironmentFile=-/etc/iran-censorship-monitor.env
-ExecStart=/usr/bin/node /opt/iran-censorship-monitor/server.mjs
-Restart=on-failure
-RestartSec=5
-NoNewPrivileges=true
-PrivateTmp=true
-ProtectSystem=strict
-ProtectHome=true
-ReadWritePaths=/tmp
-
-[Install]
-WantedBy=multi-user.target
-```
-
-The dashboard service itself does not require persistent application-data write access. Adjust hardening directives to your distribution and reverse-proxy setup.
-
-Create `/etc/iran-censorship-monitor.env` only if needed:
+Typical environment values:
 
 ```text
 HOST=127.0.0.1
@@ -86,125 +65,61 @@ GLOBALPING_CONTROL_KEY=
 GLOBALPING_SERVER_RUNS_PER_HOUR=10
 ```
 
-Protect the file:
+Protect environment/secret files outside Git. Do not expose tokens to browser JavaScript.
 
-```bash
-chmod 600 /etc/iran-censorship-monitor.env
-chown root:root /etc/iran-censorship-monitor.env
-```
+## Passive routing collectors
 
-Then:
-
-```bash
-systemctl daemon-reload
-systemctl enable --now iran-censorship-monitor
-curl -fsS http://127.0.0.1:4173/api/health
-```
-
-## Public-source acceptance
-
-From the deployed tree:
-
-```bash
-npm run verify:public
-npm run verify:ris-live
-npm run verify:radar   # only when the Radar token is configured
-```
-
-`verify:public` exercises the real server API against credential-free public sources and accepts legitimate source-specific `observed`, `partial` or `no_data` states according to the verifier rules. It must not convert network/systemic errors into successful zero measurements.
-
-`verify:ris-live` performs a bounded passive handshake against RIPE RIS Live for one RIPEstat-derived prefix. It does not trigger a measurement and does not claim full production prefix coverage.
-
-The verified development live gate passed both the real public-server source check and the RIS Live handshake.
-
-## Optional RIPE RIS Live collector
-
-Start manually first:
-
-```bash
-npm run collect:ris -- --asn AS58224 --duration-seconds 300
-```
-
-For continuous collection omit `--duration-seconds` after validating the intended scope and output permissions:
+### RIPE RIS Live
 
 ```bash
 npm run collect:ris -- --asn AS58224
 ```
 
-Defaults and limits:
+The collector is passive, validates/limits prefix scope, writes under Git-ignored `var/ris-live/` and should run as a separate service/user with write access only to its output directory.
 
-- ASN must exist in `data/asns.json`;
-- default scope comes from RIPEstat currently announced prefixes;
-- maximum automatic prefix scope: 200;
-- no silent scope truncation;
-- optional narrower `--prefix-file` supported;
-- output: `var/ris-live/`;
-- daily JSONL rotation;
-- default retention: 7 days;
-- maximum retention: 30 days.
-
-For production, run the collector as a **separate service/user/process** and grant write access only to its output directory. Example unit:
-
-```ini
-[Unit]
-Description=Iran Censorship Monitor RIPE RIS Live Collector - AS58224
-After=network-online.target
-Wants=network-online.target
-
-[Service]
-Type=simple
-User=iran-ris
-Group=iran-ris
-WorkingDirectory=/opt/iran-censorship-monitor
-ExecStart=/usr/bin/node /opt/iran-censorship-monitor/scripts/collect-ris-live.mjs --asn AS58224 --output-dir /opt/iran-censorship-monitor/var/ris-live --retention-days 7
-Restart=on-failure
-RestartSec=10
-NoNewPrivileges=true
-PrivateTmp=true
-ProtectSystem=strict
-ProtectHome=true
-ReadWritePaths=/opt/iran-censorship-monitor/var/ris-live
-
-[Install]
-WantedBy=multi-user.target
-```
-
-Create and secure the output directory before enabling that unit. Do not point the collector at a web-served directory. The JSONL records can include prefixes, peer/RRC identifiers, peer IPs, AS paths and next-hop metadata from RIPE.
-
-## Reverse proxy requirements
-
-- TLS 1.2+ / TLS 1.3;
-- preserve the application's security headers or strengthen them;
-- optionally add HTTP authentication/SSO/IP allow-listing;
-- add request-rate limits if exposed beyond a trusted operator network;
-- do not expose Radar/Pulse/Globalping control credentials to browser JavaScript;
-- do not expose `var/ris-live/` or other operator data directories.
-
-## Monitoring the monitor
-
-At minimum alert on:
-
-- `/api/health` unavailable;
-- repeated upstream source errors;
-- sustained source freshness degradation;
-- dashboard process restarts;
-- TLS certificate expiry at the reverse proxy;
-- if RIS Live collection is enabled: stale `status-ASxxxxx.json`, repeated reconnects and disk/retention failures.
-
-A source returning `no_data`, `partial`, `token_required` or a rate-limit state is not automatically the same as the monitor being unhealthy. Alert logic should distinguish application failure from an upstream-specific state.
-
-## Cloudflare Radar acceptance test
-
-After configuring `CLOUDFLARE_RADAR_API_TOKEN`, run:
+### Route Views / BGPStream — v1.2 development
 
 ```bash
-npm run verify:radar
+npm run collect:routeviews -- --asn AS58224
 ```
 
-The check is read-only and never prints the credential. A DNS/TLS/API error is a failed acceptance check; do not treat `radarConfigured: true` alone as proof of a working upstream connection.
+This is also a separate optional operator process. It must remain restricted to Route Views resources and validated prefix scope. BGPStream must not be used to relabel RIPE data as a second independent routing source. Route events remain control-plane context only.
 
-## Active Globalping warning
+## Fleet Stage-1 laboratory material — NOT production-authorized
 
-Do not enable Globalping active measurements on an Internet-facing deployment without a server-only control key, reverse-proxy access controls and an explicit operational reason. Passive Globalping inventory does not require active mode.
+Files under `deploy/fleet-stage1-lab/` exist to validate sandbox/egress requirements in an isolated Linux laboratory. They are not permission to enable an Iran probe.
 
-RIPE RIS Live is unrelated to Globalping active measurements: it is a passive public routing stream and does not send probes into Iran.
+Before any real Iran pilot, all of these external gates are mandatory:
+
+1. run the systemd units on an isolated Linux host and verify actual kernel/cgroup privilege, filesystem, listener and negative-egress enforcement;
+2. deploy real project-controlled benign Class-A control/measurement endpoints and a bounded collection edge;
+3. provision scheduler/probe keys and SPKI pins out of band; exercise rotation and revocation;
+4. execute and record the rollback procedure against a known-safe version;
+5. obtain voluntary informed operator consent outside the repository and prove local withdrawal works without central connectivity;
+6. receive explicit authorization before enabling the pilot.
+
+Repository code deliberately keeps `deploymentAuthorized:false`. CI, PR approval, tagging or a release never override this boundary.
+
+### Fleet network/evidence restrictions
+
+- no remote shell or generic plugin execution;
+- no arbitrary scheduler-supplied endpoint;
+- no blocked-site lists, DPI trigger strings/fuzzing or throughput stress testing;
+- no WireGuard/OpenVPN/V2Ray/Outline activation during the current Stage-1 Class-A pilot design;
+- no province inference from source IP/ASN/latency;
+- no white-SIM/ordinary-SIM inference or sensitive subscriber identifiers;
+- no NIN-vs-global claim until a separately reviewed target taxonomy and paired design are approved;
+- per-probe fleet output cannot automatically become a national/province availability or censorship badge.
+
+See `MEASUREMENT_FLEET.md`, `FLEET_STAGE1_PREDEPLOYMENT.md`, `FLEET_STAGE1_SANDBOX.md`, `FLEET_STAGE1_TRUST.md`, `FLEET_STAGE1_CONSENT.md` and `FLEET_STAGE1_ROLLBACK.md`.
+
+## Reverse proxy / operational requirements
+
+- TLS 1.2+ / TLS 1.3;
+- preserve/strengthen application security headers;
+- authentication/SSO/IP allowlisting where appropriate;
+- request-rate limits for Internet-facing paths;
+- never expose operator data directories or secrets;
+- distinguish monitor failure from legitimate source-specific `no_data`, `partial`, token-required or rate-limited states.
+
+Active Globalping remains disabled by default and should not be enabled without an explicit operational reason and the documented controls.
