@@ -3,7 +3,7 @@ name: Live public source acceptance
 on:
   workflow_dispatch:
   push:
-    branches: [develop/v1.3]
+    branches: [develop/v1.4]
     paths:
       - '.github/workflows/live-source-acceptance.yml'
       - 'scripts/verify-public-sources.mjs'

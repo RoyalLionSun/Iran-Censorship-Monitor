@@ -6,6 +6,7 @@ import { promisify } from 'node:util';
 const execFileAsync = promisify(execFile);
 const v11Source = await readFile(new URL('../public/v11-context.js', import.meta.url), 'utf8');
 const v13Source = await readFile(new URL('../public/v13-context.js', import.meta.url), 'utf8');
+const v14Source = await readFile(new URL('../public/v14-context.js', import.meta.url), 'utf8');
 
 function findBrowser() {
   for (const candidate of ['google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser']) {
@@ -16,6 +17,7 @@ function findBrowser() {
 }
 
 const overview = {
+  input: { country: 'IR', asn: 'AS58224', since: '2026-09-01', until: '2026-09-09' },
   mlab: {
     ok: true, status: 'observed', asn: 'AS58224', sourceUrls: ['https://www.measurementlab.net/'],
     latest: { downloadMedianMbps: 42.5, uploadMedianMbps: 11.2, downloadMinRttMedianMs: 37.4 },
@@ -27,6 +29,18 @@ const overview = {
     latest: { raw: { capablePercent: 35.5, preferredPercent: 22.25, seen: 640 } },
     coverage: { observedDays: 7, dailySamplesMedian: 610 },
     points: [{ date: '2026-09-08', raw: { capablePercent: 35.5, preferredPercent: 22.25, seen: 640 }, smoothed30: { capablePercent: 34.1 } }],
+  },
+  tor: {
+    ok: true, status: 'observed', sourceFamily: 'tor', evidenceRole: 'circumvention-context', independentCensorshipVote: false,
+    transports: [{
+      transport: 'obfs4', latestDate: '2026-09-05', latestLow: 140, latestHigh: 160,
+      rows: [
+        { date: '2026-09-04', low: 100, high: 120, frac: 74 },
+        { date: '2026-09-05', low: 140, high: 160, frac: 79 },
+      ],
+    }],
+    coverage: { bridgeDbGlobal: 'no_data' },
+    bridgeDemandGlobal: { geographicScope: 'global', iranSpecific: false, transports: [] },
   },
   asrank: {
     ok: true, status: 'observed', asn: 'AS58224', independentCensorshipVote: false,
@@ -48,9 +62,9 @@ const intelligence = {
     coverageWarning: 'Fixture coverage warning.',
     dashboardUrl: 'https://www.accessnow.org/keepiton-data-dashboard/',
     incidents: [{
-      startDate: '2025-06-20', event: 'Fixture incident', areaName: 'Iran', shutdownType: 'Internet shutdown',
+      id: 'fixture-stop-1', startDate: '2026-09-05', endDate: '2026-09-06', event: 'Fixture incident', areaName: 'Iran', shutdownType: 'Internet shutdown',
       shutdownExtent: 'National context', status: 'Ended', evidenceLineage: [{ source: 'OONI' }],
-      evidenceUrls: ['https://ooni.org/'], accessNowUrls: [],
+      evidenceUrls: ['https://ooni.org/'], accessNowUrls: [], independentTechnicalVote: false,
     }],
   },
 };
@@ -59,6 +73,7 @@ const fixture = `<!doctype html><html><body>
 <span id="header-source-state">pending</span>
 <button id="export-button" type="button">Export</button>
 <input id="since-input" value="2026-09-01"><input id="until-input" value="2026-09-09">
+<article id="tor-panel"></article>
 <article id="ripe-panel"></article>
 <article id="intelligence-panel"><p class="panel-note"></p><div id="intelligence-source-grid"></div></article>
 <span id="footer-version"></span>
@@ -74,9 +89,10 @@ window.fetch = async (input) => {
 <script type="module">
 await import('/v11-context.js');
 await import('/v13-context.js');
+await import('/v14-context.js');
 await window.fetch('/api/overview?fixture=1');
 await window.fetch('/api/intelligence?fixture=1');
-await new Promise((resolve) => setTimeout(resolve, 80));
+await new Promise((resolve) => setTimeout(resolve, 100));
 document.body.dataset.fixtureReady = '1';
 </script>
 </body></html>`;
@@ -95,6 +111,11 @@ const server = http.createServer((request, response) => {
   if (request.url === '/v13-context.js') {
     response.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8', 'Cache-Control': 'no-store' });
     response.end(v13Source);
+    return;
+  }
+  if (request.url === '/v14-context.js') {
+    response.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8', 'Cache-Control': 'no-store' });
+    response.end(v14Source);
     return;
   }
   response.writeHead(404).end();
@@ -124,10 +145,12 @@ try {
   const dom = stdout;
   const required = [
     'data-fixture-ready="1"', 'id="mlab-panel"', 'id="apnic-panel"', 'id="stop-context"',
-    'id="asrank-panel"', 'id="rpki-panel"',
+    'id="asrank-panel"', 'id="rpki-panel"', 'id="v14-tor-context-panel"',
     '42.5 Mbps', '35.5%', 'Fixture incident', 'Independent sensor votes',
     'Customer-cone ASNs', 'AS12880', '2.144.0.0/13', 'invalid_length',
     '2/13 source families observed · assessment votes remain separate',
+    'GLOBAL · not Iran-specific', '100–120', '140–160',
+    'higher non-overlapping estimate interval', 'temporal context only · no causal attribution',
   ];
   for (const token of required) {
     if (!dom.includes(token)) throw new Error(`Headless UI gate missing rendered token: ${token}`);
@@ -135,8 +158,9 @@ try {
   const exportTag = dom.match(/<button id="export-context-button"[^>]*>/)?.[0];
   if (!exportTag || /\bdisabled\b/.test(exportTag)) throw new Error('Context CSV export button was not enabled after overview rendering.');
   if (/national[^<]{0,20}(blocked|available)/i.test(dom)) throw new Error('Fixture unexpectedly rendered a national blocked/available verdict.');
+  if (/exact (users|client|change)/i.test(dom)) throw new Error('Fixture unexpectedly rendered exact-user/change language for bounded Tor estimates.');
 
-  console.log(`UI PRESENTATION PASS · ${browser} · M-Lab/APNIC/STOP + ASRank/RPKI rendered in a real headless browser`);
+  console.log(`UI PRESENTATION PASS · ${browser} · M-Lab/APNIC/STOP + ASRank/RPKI + bounded Tor/BridgeDB context rendered in a real headless browser`);
 } finally {
   await new Promise((resolve) => server.close(resolve));
 }

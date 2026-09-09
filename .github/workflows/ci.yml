@@ -34,6 +34,9 @@ jobs:
       - name: Run tests and checks
         run: npm run check
 
+      - name: Release notes gate
+        run: npm run verify:release-notes
+
       - name: Build production bundle
         run: npm run build
 

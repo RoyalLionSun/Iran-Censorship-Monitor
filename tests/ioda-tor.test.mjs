@@ -1,7 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { parseIodaEvents, parseIodaSeries } from '../lib/ioda.mjs';
-import { parseTorBridgeStats, parseTorUserStats } from '../lib/tor.mjs';
+import {
+  TOR_BRIDGEDB_SCOPE,
+  TOR_EVIDENCE_POLICY,
+  buildTorMetricUrls,
+  parseTorBridgeDbTransportStats,
+  parseTorBridgeStats,
+  parseTorBridgeTransportStats,
+  parseTorUserStats,
+} from '../lib/tor.mjs';
 
 test('IODA raw series parser accepts enveloped v2-style data', () => {
   const payload = { data: [{ entityType:'country', entityCode:'IR', datasource:'ping-slash24', from:1788739200, until:1788739380, step:60, values:[10,8,5,7] }] };
@@ -38,12 +46,38 @@ test('Tor bridge CSV parser accepts country usage series', () => {
   assert.deepEqual(rows[0], { date:'2026-09-01', country:'ir', users:300, frac:92 });
 });
 
-import { parseTorBridgeTransportStats } from '../lib/tor.mjs';
-
 test('Tor country by transport parser keeps low/high bounds instead of inventing exact users', () => {
   const rows = parseTorBridgeTransportStats('date,country,transport,low,high,frac\n2026-09-08,ir,obfs4,1000,1400,80\n');
   assert.equal(rows[0].transport, 'obfs4');
   assert.equal(rows[0].low, 1000);
   assert.equal(rows[0].high, 1400);
   assert.equal('users' in rows[0], false);
+});
+
+test('Tor metric URLs keep Iran scope separate from global BridgeDB demand', () => {
+  const urls = buildTorMetricUrls({ since:'2026-09-01', until:'2026-09-08' });
+  for (const key of ['relay', 'bridge', 'transports']) {
+    const url = new URL(urls[key]);
+    assert.equal(url.hostname, 'metrics.torproject.org');
+    assert.equal(url.searchParams.get('country'), 'ir');
+  }
+  const bridgeDb = new URL(urls.bridgeDbGlobal);
+  assert.equal(bridgeDb.pathname, '/bridgedb-transport.csv');
+  assert.equal(bridgeDb.searchParams.has('country'), false);
+});
+
+test('BridgeDB requested-transport parser preserves approximate global demand without country inference', () => {
+  const rows = parseTorBridgeDbTransportStats('date,transport,requests\n2026-09-07,obfs4,12345\n2026-09-08,snowflake,2500\n');
+  assert.deepEqual(rows[0], { date:'2026-09-07', transport:'obfs4', requestsApprox:12345 });
+  assert.equal('country' in rows[0], false);
+  assert.equal(TOR_BRIDGEDB_SCOPE.iranSpecific, false);
+  assert.equal(TOR_BRIDGEDB_SCOPE.geographicScope, 'global');
+});
+
+test('Tor circumvention telemetry is context and never an independent censorship vote', () => {
+  assert.deepEqual(TOR_EVIDENCE_POLICY, {
+    sourceFamily: 'tor',
+    evidenceRole: 'circumvention-context',
+    independentCensorshipVote: false,
+  });
 });
