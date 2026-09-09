@@ -2,9 +2,9 @@
 
 Iran-focused censorship-intelligence dashboard for technical measurements, routing/control-plane state, data-plane performance, protocol context, circumvention telemetry and curated shutdown/OSINT evidence.
 
-**Status:** `v1.1.0-dev` on `develop/v1.1`.
-
-Verified runtime baseline before this documentation-only release pass: `fc59d4be80a49a84a1ea221b28ad3310617c0439`.
+**Release:** `v1.1.0`  
+**Production branch:** `main`  
+**Release merge:** `8a66e32947c0d4f82612f03ad72555c87fd56fe6`
 
 The application does **not** ship simulated monitoring values. Missing, unavailable, rate-limited or unconfigured sources remain explicit no-data/error states. Contextual reports never become independent technical sensor votes merely because they repeat an underlying measurement.
 
@@ -26,14 +26,14 @@ The dashboard keeps observation families separate:
 
 A dedicated control/data-plane divergence classifier can flag high BGP visibility coexisting with severe user-path disruption. It reports that pattern as compatible with selective isolation/filtering/throttling/whitelisting, never as proof of mechanism or intent.
 
-## Key integrity rules
+## Integrity rules
 
 1. No missing metric is replaced by a fabricated value.
 2. BGP visibility is not treated as proof that users can reach the global Internet.
 3. OONI/Censored Planet anomalies are investigation signals, not automatic proof of censorship.
 4. Traffic or performance degradation alone is not automatically attributed to state censorship or throttling intent.
 5. M-Lab and APNIC preserve sample/coverage metadata and are contextual, not additional censorship votes.
-6. Access Now STOP, Pulse, GDELT and other OSINT remain contextual; their underlying evidence lineage must be reviewed before claiming independent corroboration.
+6. Access Now STOP, Pulse, GDELT and other OSINT remain contextual; root evidence lineage must be reviewed before claiming independent corroboration.
 7. Tor/circumvention usage is contextual and excluded from automatic disruption scoring.
 8. Province-level or nationwide VPN success rates are not shown without a defensible measurement fleet.
 9. Active Globalping measurements remain disabled by default and protected by server-side controls.
@@ -75,9 +75,9 @@ npm run verify:ris-live
 npm run verify:radar   # optional; requires configured token + outbound DNS/HTTPS
 ```
 
-`npm run check` performs server/client/operator-script syntax checks and the complete deterministic offline suite. On the verified runtime baseline the suite is **73/73 passing**. Permanent GitHub Actions additionally performs committed-secret checks, local runtime/404/traversal smoke tests and a live public-source acceptance workflow.
+The verified v1.1 release suite contains **73 deterministic tests**. Permanent GitHub Actions additionally performs committed-secret/private-key checks, `.env` absence checks and local runtime/404/traversal smoke tests.
 
-The verified live gate on `fc59d4be…` passed the public server adapters and a passive RIPE RIS Live subscription handshake. A source may legitimately return `no_data` or `partial`; those states are not converted into zero impact or full corroboration.
+The latest code-state live acceptance before release passed the public server adapters and a passive RIPE RIS Live subscription handshake. A source may legitimately return `no_data` or `partial`; those states are not converted into zero impact or full corroboration.
 
 ## Passive RIPE RIS Live collection
 
