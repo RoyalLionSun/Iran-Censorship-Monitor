@@ -57,25 +57,26 @@ test('Route Views parser refuses to mix RIPE or archive projects into the indepe
   assert.throws(() => parseRouteViewsBgpReaderLine('U|A|1602281859|routeviews|route-views2||||64496|192.0.2.1|203.0.113.0/24|192.0.2.1|64496 58224|58224||||'), /refusing to mix/i);
 });
 
-test('CAIDA broker request is bounded to current Route Views update stream resources', () => {
-  const url = new URL(buildRouteViewsBrokerUrl({ now: new Date('2026-09-09T12:00:00Z'), windowSeconds: 600 }));
+test('CAIDA broker live request mirrors libBGPStream now-to-FOREVER interval semantics', () => {
+  const url = new URL(buildRouteViewsBrokerUrl({ now: new Date('2026-09-09T12:00:00Z') }));
   assert.equal(url.origin, 'https://broker.bgpstream.caida.org');
   assert.equal(url.pathname, '/v2/data');
   assert.deepEqual(url.searchParams.getAll('projects[]'), ['routeviews-stream']);
   assert.deepEqual(url.searchParams.getAll('resourceTypes[]'), ['stream']);
   assert.deepEqual(url.searchParams.getAll('types[]'), ['updates']);
-  assert.deepEqual(url.searchParams.getAll('intervals[]'), ['1788954600,1788955200']);
-  assert.throws(() => buildRouteViewsBrokerUrl({ windowSeconds: 10 }), /between 60 and 3600/);
+  assert.deepEqual(url.searchParams.getAll('intervals[]'), ['1788955200,0']);
+  assert.throws(() => buildRouteViewsBrokerUrl({ now: 'invalid' }), /Invalid BGPStream broker timestamp/);
 });
 
 test('CAIDA broker parser keeps only Route Views stream resources', () => {
   const parsed = parseRouteViewsBrokerPayload({ error: null, data: { resources: [
-    { project: 'routeviews-stream', collector: 'is-ah-bmp1', router: 'amsix', type: 'updates', format: 'bmp', transport: 'http', url: 'https://example.invalid/routeviews' },
+    { project: 'routeviews-stream', collector: 'is-ah-bmp1', router: 'amsix', type: 'updates', format: 'bmp', transport: 'http', url: 'https://example.invalid/routeviews', duration: 0 },
     { project: 'ris-live', collector: 'rrc00', url: 'https://example.invalid/ris' },
   ] } });
   assert.equal(parsed.status, 'observed');
   assert.equal(parsed.resourceCount, 1);
   assert.equal(parsed.resources[0].project, 'routeviews-stream');
+  assert.equal(parsed.resources[0].duration, 0);
   assert.equal(parseRouteViewsBrokerPayload({ error: null, data: { resources: [] } }).status, 'no_data');
   assert.throws(() => parseRouteViewsBrokerPayload({ error: 'bad query' }), /bad query/);
 });
