@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.1.0 — development — 2026-09-09
+## 1.1.0 — 2026-09-09
 
 ### Evidence architecture
 
@@ -75,17 +75,18 @@
 - no risky in-country trigger/fuzzing workflow is included;
 - M-Lab slowdown and APNIC IPv6 changes remain contextual rather than automatic censorship/throttling claims;
 - RIPE RIS Live routing events remain control-plane evidence only;
-- source review rejected scraping Google Transparency Traffic because Google does not provide a supported data download for that feature;
+- source review rejected scraping Google Transparency Traffic because no supported downloadable feed is available for the Traffic feature;
 - Proton/Psiphon/Filterwatch/ASL19/NetBlocks remain high-value contextual sources where no stable continuous public feed was established.
 
-### Verification / maintenance
+### Verification / release
 
-- deterministic suite expanded to **73 tests**, all passing on verified runtime baseline `fc59d4be80a49a84a1ea221b28ad3310617c0439`;
-- normal GitHub CI run `34323940265` passed syntax checks, 73/73 tests, production build, committed-secret/private-key scan and runtime/404/traversal smoke tests;
-- public live-source acceptance run `34323940251` passed the real server API gate and passive RIPE RIS Live handshake;
-- live-source states preserve valid `observed`, `partial`, `no_data`, `token_required`, rate-limited and hard-error distinctions;
+- deterministic suite expanded to **73 tests**;
+- code-state live public-source acceptance run `34323940251` passed, including the passive RIPE RIS Live handshake;
+- PR CI run `34334883650` passed;
+- v1.1 was merged to `main` in merge commit `8a66e32947c0d4f82612f03ad72555c87fd56fe6`;
+- post-merge `main` CI run `34337684528` passed all tests/checks, production build, secret/private-key scan and runtime smoke tests;
 - GitHub Actions dependencies use exact pinned action commits rather than floating major tags;
-- release documentation updated to reflect the optional collector's intentional local JSONL persistence while keeping the ordinary dashboard server database-free and memory-cached.
+- release documentation reflects the collector's intentional local JSONL persistence while keeping the ordinary dashboard server database-free and memory-cached.
 
 ## 1.0.1 — 2026-09-08
 
