@@ -20,6 +20,7 @@ import { getPulseShutdowns } from './lib/pulse.mjs';
 import { getGdeltIranIntelligence } from './lib/osint.mjs';
 import { getMlabPerformance } from './lib/mlab.mjs';
 import { getAccessNowStopIncidents } from './lib/accessnow.mjs';
+import { getApnicIpv6 } from './lib/apnic.mjs';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
 
@@ -134,6 +135,7 @@ async function handleApi(req, res, url) {
         liveIoda: true,
         liveTorMetrics: true,
         mlabNdtPerformance: true,
+        apnicIpv6Context: true,
         accessNowStopIncidents: true,
         ripeStatRouting: true,
         censoredPlanet: true,
@@ -152,13 +154,14 @@ async function handleApi(req, res, url) {
 
   if (url.pathname === '/api/overview') {
     const input = queryInput(url);
-    const [ooni, ripe, radar, ioda, tor, mlab, ripestat, globalping, censoredPlanet, peeringdb, ihr, pulse] = await Promise.all([
+    const [ooni, ripe, radar, ioda, tor, mlab, apnic, ripestat, globalping, censoredPlanet, peeringdb, ihr, pulse] = await Promise.all([
       safeSource('OONI', () => getOoniTimeline(input)),
       safeSource('RIPE Atlas', () => getRipeSignals(input)),
       safeSource('Cloudflare Radar', () => getRadarSignals(input)),
       safeSource('IODA', () => getIodaSignals(input)),
       safeSource('Tor Metrics', () => getTorMetrics(input)),
       safeSource('M-Lab NDT', () => getMlabPerformance(input)),
+      safeSource('APNIC Labs IPv6', () => getApnicIpv6(input)),
       input.asn ? safeSource('RIPEstat / RIPE RIS', () => getRipeStatSignals(input)) : Promise.resolve(scopeRequired('RIPEstat / RIPE RIS', input)),
       safeSource('Globalping', () => getGlobalpingIranProbes(input)),
       safeSource('Censored Planet', () => getCensoredPlanetSignals(input)),
@@ -168,7 +171,7 @@ async function handleApi(req, res, url) {
     ]);
     const scopeLabel = input.asn ? `${input.asn} / Iran` : 'Iran / all measured networks';
     const assessment = buildAssessment({ ooni, ripe, radar, ioda, ripestat, scopeLabel });
-    jsonResponse(res, 200, { ok: true, input, fetchedAt: new Date().toISOString(), assessment, ooni, ripe, radar, ioda, tor, mlab, ripestat, globalping, censoredPlanet, peeringdb, ihr, pulse });
+    jsonResponse(res, 200, { ok: true, input, fetchedAt: new Date().toISOString(), assessment, ooni, ripe, radar, ioda, tor, mlab, apnic, ripestat, globalping, censoredPlanet, peeringdb, ihr, pulse });
     return true;
   }
 
@@ -304,7 +307,7 @@ function safeStaticPath(pathname) {
 }
 
 async function serveStatic(res, pathname) {
-  let file = safeStaticPath(pathname);
+  const file = safeStaticPath(pathname);
   if (!file) return false;
   if (!existsSync(file)) return false;
   const extension = extname(file).toLowerCase();
