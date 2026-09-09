@@ -2,9 +2,9 @@
 
 ## Supported release state
 
-The v1.2 feature line is merged to `main` at `9dac687bc9bf83282ad3aa650255cafbb372160c`. Final `v1.2.0` release metadata is prepared on `release/v1.2.0`; tag/Release publication follows final metadata CI/merge.
+The v1.3 feature line is merged to `main` at `4f6615c309c1797f3cbcdaae2700d0d79159ca59`. Final `v1.3.0` release metadata is prepared on `release/v1.3.0`; tag/Release publication follows final metadata CI/merge.
 
-The Fleet Stage-1 material shipped in v1.2 is **laboratory architecture**, not authorization to enable an Iran production probe. Release publication does not override `deploymentAuthorized:false` or the external predeployment gates.
+The Fleet Stage-1 material remains **laboratory architecture**, not authorization to enable an Iran production probe. Release publication does not override `deploymentAuthorized:false` or the external predeployment gates.
 
 ## Dashboard topology
 
@@ -20,9 +20,10 @@ Reverse proxy (TLS, access control, rate limit)
 Iran Censorship Monitor / Node.js
         |
         +--> OONI / Censored Planet
-        +--> RIPE Atlas / RIPEstat / IODA
+        +--> RIPE Atlas / RIPEstat / RPKI / IODA
         +--> M-Lab / APNIC / Tor / Globalping
-        +--> PeeringDB / IHR / Access Now / Citizen Lab / GDELT
+        +--> PeeringDB / IHR / CAIDA ASRank
+        +--> Access Now / Citizen Lab / GDELT
         \--> Cloudflare Radar / Internet Society Pulse (optional tokens)
 
 Optional passive operator processes
@@ -45,7 +46,7 @@ npm run verify:ui
 npm run verify:radar       # optional token
 ```
 
-The v1.2 deterministic suite is **203/203 tests**, plus production build, secret/private-key checks, runtime smoke testing and real headless-Chrome rendering. These repository gates do not supersede the external Fleet deployment gates.
+The v1.3 deterministic suite is **211/211 tests**, plus production build, secret/private-key checks, runtime smoke testing and real headless-Chrome rendering. The live-source acceptance gate also verifies the public ASRank/RPKI adapters plus RIS Live and Route Views broker connectivity. These repository gates do not supersede the external Fleet deployment gates.
 
 ## Dashboard service
 
@@ -84,6 +85,15 @@ npm run collect:routeviews -- --asn AS58224
 ```
 
 This is also a separate optional operator process. It must remain restricted to Route Views resources and validated prefix scope. BGPStream must not be used to relabel RIPE data as a second independent routing source. Route events remain control-plane context only.
+
+## Topology / route-security context
+
+CAIDA ASRank and RIPEstat RPKI are passive dashboard-side API contexts. Neither starts active in-country measurement and neither creates a censorship vote.
+
+- ASRank describes macroscopic topology and has known derivation overlap with Route Views/RIPE inputs;
+- RPKI validates route-origin authorization for a bounded current prefix set and exposes bounded history;
+- `partial`/`unknown` states remain explicit;
+- no RPKI result is automatically interpreted as censorship, hijack or political intent.
 
 ## Fleet Stage-1 laboratory material — NOT production-authorized
 

@@ -2,10 +2,10 @@
 
 Iran-focused censorship-intelligence dashboard for technical measurements, routing/control-plane state, data-plane performance, protocol context, circumvention telemetry and curated shutdown/OSINT evidence.
 
-**Release line:** `v1.2.0`  
+**Release line:** `v1.3.0`  
 **Production branch:** `main`  
-**v1.2 feature merge:** `9dac687bc9bf83282ad3aa650255cafbb372160c`  
-**Release metadata branch:** `release/v1.2.0` (tag/Release publication follows final metadata CI)
+**v1.3 feature merge:** `4f6615c309c1797f3cbcdaae2700d0d79159ca59`  
+**Release metadata branch:** `release/v1.3.0` (tag/Release publication follows final metadata CI/merge)
 
 The application does **not** ship simulated monitoring values. Missing, unavailable, rate-limited or unconfigured sources remain explicit no-data/error states. Contextual reports never become independent technical sensor votes merely because they repeat an underlying measurement.
 
@@ -15,26 +15,27 @@ The application does **not** ship simulated monitoring values. Missing, unavaila
 - **data plane/connectivity:** RIPE Atlas + IODA + Cloudflare Radar;
 - **performance:** M-Lab NDT with sample-aware interpretation;
 - **control plane:** RIPEstat / RIPE RIS, passive RIPE RIS Live, and optional passive Route Views live collection through CAIDA BGPStream tooling;
+- **route-origin integrity:** RIPEstat RPKI validation/history, context only;
 - **protocol/deployment context:** Cloudflare Radar protocol distributions + APNIC Labs IPv6;
 - **Iran vantage coverage:** Globalping passive inventory; active mode remains disabled by default;
 - **circumvention:** Tor plus contextual Psiphon/Proton/Ceno reporting;
-- **topology:** PeeringDB + Internet Health Report AS Hegemony;
+- **topology:** PeeringDB + Internet Health Report AS Hegemony + CAIDA ASRank;
 - **targets:** Citizen Lab Iran list;
 - **shutdown/OSINT:** Internet Society Pulse, Access Now #KeepItOn STOP and curated/GDELT discovery.
 
-RIPE and Route Views routing observations are control-plane evidence. BGPStream is an access/normalization framework, not a separate sensor; RIPE data accessed through BGPStream remains RIPE evidence and is never double-counted.
+RIPE and Route Views routing observations are control-plane evidence. BGPStream is an access/normalization framework, not a separate sensor; RIPE data accessed through BGPStream remains RIPE evidence and is never double-counted. ASRank adds topology context but derives partly from routing inputs that overlap existing sources, so it also does not inflate independent-source counts.
 
-## v1.2 additions
+## v1.3 additions
 
-- bounded passive Route Views/BGPStream collection with provenance separation from RIPE RIS;
-- security-reviewed owned-probe laboratory architecture for Class-A DNS/TCP/TLS/HTTPS observations;
-- signed short-lived manifests, local target resolution, authenticated results, replay/rate/size limits and memory-only buffering;
-- consent/withdrawal, trust, retention, sandbox, predeployment and rollback gates;
-- fail-closed evidence rules for VPN transports and NIN-vs-global comparisons;
-- explicit NO-GO/deferred decisions for province publication and white-SIM/ordinary-SIM segmentation;
-- real headless-Chrome presentation gate for M-Lab/APNIC/STOP context.
+- CAIDA ASRank selected-ASN topology context for rank, customer cone, degree and inferred relationships;
+- explicit ASRank provenance/overlap handling with `independentCensorshipVote:false`;
+- RIPEstat RPKI validation of a bounded announced-prefix set plus bounded monthly IPv4/IPv6 VRP history;
+- RPKI `valid`, `invalid_asn`, `invalid_length` and `unknown` states preserved without censorship/hijack attribution;
+- dedicated ASRank/RPKI context panels excluded from censorship assessment voting;
+- Psiphon and Ceno/eQualitie re-reviewed as context-only because no stable supported public machine-readable Iran time-series API was established;
+- expanded real headless-Chrome presentation gate covering M-Lab/APNIC/STOP plus ASRank/RPKI.
 
-**Important:** releasing v1.2 does not authorize an Iran probe deployment. `deploymentAuthorized` remains false. A real Iran pilot still requires the external host, endpoint, key, consent and rollback gates documented in the repository plus explicit authorization.
+The v1.2 Fleet Stage-1 laboratory architecture remains included but **not production-authorized**. Releasing v1.3 does not authorize an Iran probe deployment. `deploymentAuthorized` remains false and a real pilot still requires the external host, endpoint, key, consent and rollback gates documented in the repository plus explicit authorization.
 
 ## Integrity rules
 
@@ -43,12 +44,13 @@ RIPE and Route Views routing observations are control-plane evidence. BGPStream 
 3. OONI/Censored Planet anomalies are investigation signals, not automatic proof of censorship.
 4. Performance degradation alone is not attributed to state throttling or intent.
 5. Context sources do not inflate independent technical corroboration.
-6. Multiple owned probes remain one owned-probe source family.
-7. A VPN-provider website result is not a WireGuard/OpenVPN/V2Ray/Outline transport result.
-8. Province is not inferred from source IP, ASN, latency or reverse DNS.
-9. White-SIM/ordinary-SIM status is not inferred or collected from sensitive subscriber identifiers.
-10. NIN-vs-global claims require separately reviewed target classes and paired same-probe observations.
-11. Active Globalping remains disabled by default; no risky in-country trigger/fuzzing workflow is included.
+6. ASRank topology and RPKI validity do not create censorship votes.
+7. Multiple owned probes remain one owned-probe source family.
+8. A VPN-provider website result is not a WireGuard/OpenVPN/V2Ray/Outline transport result.
+9. Province is not inferred from source IP, ASN, latency or reverse DNS.
+10. White-SIM/ordinary-SIM status is not inferred or collected from sensitive subscriber identifiers.
+11. NIN-vs-global claims require separately reviewed target classes and paired same-probe observations.
+12. Active Globalping remains disabled by default; no risky in-country trigger/fuzzing workflow is included.
 
 ## Requirements
 
@@ -80,15 +82,16 @@ npm run verify:ui
 npm run verify:radar   # optional; requires configured Radar token
 ```
 
-The v1.2 deterministic suite contains **203 tests**. CI additionally runs the production build, committed-secret/private-key checks, runtime/404/traversal smoke tests and a real local headless-browser presentation gate.
+The v1.3 deterministic suite contains **211 tests**. CI additionally runs the production build, committed-secret/private-key checks, runtime/404/traversal smoke tests and a real local headless-browser presentation gate.
 
 Verified release-line gates:
 
-- development/readiness CI `34366466998` — success;
-- PR #6 CI `34368934884` — success;
-- post-feature-merge `main` CI `34369377194` — success;
-- latest runtime/UI live-source acceptance before the docs-only release metadata pass: `34365369630` — success;
-- headless Chrome output: `UI PRESENTATION PASS · google-chrome · M-Lab/APNIC/STOP rendered in a real headless browser`.
+- feature PR #9 CI `34375070768` — success;
+- post-feature-merge `main` CI `34382084051` — success, 211/211 tests;
+- live-source acceptance `34374634682` — success;
+- CAIDA ASRank and RIPEstat RPKI both returned valid `partial` coverage states during live acceptance;
+- RIPE RIS Live and Route Views/CAIDA BGPStream acceptance — success;
+- headless Chrome output: `UI PRESENTATION PASS · google-chrome · M-Lab/APNIC/STOP + ASRank/RPKI rendered in a real headless browser`.
 
 ## Optional passive routing collectors
 
@@ -111,6 +114,7 @@ Both are separate operator processes, passive, bounded to validated prefix scope
 - [CURRENT_STATE.md](CURRENT_STATE.md)
 - [ARCHITECTURE.md](ARCHITECTURE.md)
 - [DATA_SOURCES.md](DATA_SOURCES.md)
+- [SOURCE_REVIEW_V13.md](SOURCE_REVIEW_V13.md)
 - [VERIFICATION.md](VERIFICATION.md)
 - [SECURITY.md](SECURITY.md)
 - [PRODUCTION.md](PRODUCTION.md)

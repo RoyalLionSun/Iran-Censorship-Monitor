@@ -1,82 +1,66 @@
-# Current State — v1.2.0 release candidate
+# Current State — v1.3.0 release candidate
 
 Date: **2026-09-09**  
-Release line: **`v1.2.0`**  
+Release line: **`v1.3.0`**  
 Production branch: **`main`**  
-v1.2 feature merge: **`9dac687bc9bf83282ad3aa650255cafbb372160c`**  
-Release metadata branch: **`release/v1.2.0`**
+v1.3 feature merge: **`4f6615c309c1797f3cbcdaae2700d0d79159ca59`**  
+Release metadata branch: **`release/v1.3.0`**
 
 ## Branch / release state
 
-- PR #6 merged the complete v1.2 development line to `main` in merge commit `9dac687bc9bf83282ad3aa650255cafbb372160c`.
-- PR #6 CI `34368934884` and post-feature-merge `main` CI `34369377194` both passed.
-- `release/v1.2.0` exists only to finalize release/version metadata before tagging.
-- Tag and GitHub Release `v1.2.0` are the remaining publication operation after release-metadata CI/merge.
-- The previous `v1.1.0` tag/Release remains valid historical release state.
+- PR #9 merged the complete v1.3 feature line to `main` in merge commit `4f6615c309c1797f3cbcdaae2700d0d79159ca59`.
+- PR #9 CI `34375070768` passed.
+- Post-feature-merge `main` CI `34382084051` passed **211/211** tests plus build, headless Chrome, secret/private-key scan and runtime smoke tests.
+- `release/v1.3.0` exists only to finalize version/release metadata before tagging and GitHub Release publication.
+- The previous `v1.2.0` release remains valid historical release state.
 
-## v1.2 implemented scope
+## v1.3 implemented scope
 
-### Second routing source
+### CAIDA ASRank topology context
 
-- passive Route Views live collection through CAIDA BGPStream/bgpreader tooling;
-- prefix scope reuses validated current announced-prefix boundaries;
-- Route Views provenance remains distinct from RIPE RIS;
-- BGPStream itself is an access/normalization framework, not an independent sensor;
-- routing events remain control-plane evidence and never an independent censorship vote.
+- selected-ASN rank, customer-cone size, degree and inferred AS relationship context;
+- bounded relationship output and public API access;
+- runtime evidence role remains `topology-context`;
+- ASRank is derived in part from CAIDA Ark plus Route Views/RIPE BGP inputs, therefore it does not create an independent censorship/routing vote;
+- `independentCensorshipVote:false` is preserved.
 
-### Owned-probe laboratory architecture
+### RIPEstat RPKI integrity context
 
-Implemented fail-closed layers include:
+- validates a bounded set of currently announced selected-ASN prefixes;
+- preserves `valid`, `invalid_asn`, `invalid_length` and `unknown` states;
+- includes bounded monthly IPv4/IPv6 VRP history;
+- remains inside the RIPE routing source family;
+- an invalid/unknown RPKI state is not automatically censorship or route-hijack intent.
 
-- Ed25519-signed short-lived manifests containing target IDs only;
-- local project-controlled Class-A target registry;
-- DNS/TCP/TLS/HTTPS families only;
-- local execution compiler preventing scheduler-supplied host/URL/port/command values;
-- authenticated HMAC result envelopes;
-- sensitive/free-form metadata rejection;
-- bounded ingestion size, replay and per-probe/global rate/concurrency guards;
-- bounded memory-only result queue;
-- local enable and consent gates before transport or measurement;
-- fixed HTTPS Stage-1 control/collection contract with hostname validation and SPKI pins;
-- collection-edge normalization that does not use source IP/X-Forwarded-For as evidence or persistent identity;
-- systemd laboratory sandbox/default-deny specifications and validators;
-- key provisioning/rotation/revocation policy;
-- rollback plan with no remote shell and no automatic re-enable;
-- per-probe publication model preventing national/province status or independent-source inflation.
+### Circumvention source review
 
-### Evidence policy
+Psiphon and Ceno/eQualitie remain important Iran circumvention/resilience context. No runtime time-series adapter was admitted because the review did not establish a stable supported public machine-readable Iran telemetry API. Reports remain dated contextual evidence; unsupported chart/page scraping is prohibited.
 
-- provider website reachability is not VPN transport-protocol evidence;
-- WireGuard/OpenVPN/V2Ray/Outline evidence requires controlled transport endpoint, neutral control, paired same-probe observations, coverage, reviewed design and analyst review;
-- even a complete protocol gate is `analyst_review_ready`, not automatic `blocked`/`available`;
-- NIN-vs-global requires separately reviewed domestic/global target classes, at least two independently hosted global controls and paired observations;
-- current Class-A policy does not authorize a NIN target class, therefore NIN comparison remains non-operational;
-- province publication remains deferred/NO-GO and source-IP geography is forbidden;
-- white-SIM vs ordinary-SIM remains NO-GO because the design intentionally does not collect sensitive subscriber/entitlement identifiers.
+### Dashboard / presentation
 
-### Additional source review
+- dedicated ASRank and RPKI context panels were added;
+- neither panel contributes to the censorship assessment/source-family vote count;
+- the real headless Chrome gate now verifies M-Lab/APNIC/STOP plus ASRank/RPKI rendering;
+- `partial`, `no_data` and errors remain visible rather than being converted to success/zero states.
 
-APNIC HTTP/3/QUIC, DNS-over-IPv6 and DNS query-type/HTTPS-record views were reviewed as potentially useful protocol/deployment context. No new runtime adapter was admitted because the review did not establish a sufficiently stable supported machine-readable contract plus enough independent censorship interpretability. Unsupported visualization scraping remains prohibited.
+## Verification
 
-### UI verification
-
-CI now starts a loopback fixture and a real headless Chrome/Chromium process, loads the actual context layer, and verifies rendered M-Lab, APNIC and STOP context plus separated source-family semantics.
-
-## Release-line verification
-
-- **203/203 deterministic tests**;
-- readiness CI `34366466998` — success;
-- PR #6 CI `34368934884` — success;
-- post-feature-merge `main` CI `34369377194` — success;
+- deterministic suite: **211/211**;
+- feature PR #9 CI `34375070768` — success;
+- post-feature-merge `main` CI `34382084051` — success;
 - production build — success;
 - real headless Chrome UI presentation gate — success;
 - committed-secret/private-key gate — success;
 - runtime/root/404/traversal smoke gate — success;
-- live public-source acceptance `34365369630` — success.
+- live public-source acceptance `34374634682` — success;
+- CAIDA ASRank live state during acceptance: `partial`;
+- RIPEstat RPKI live state during acceptance: `partial`;
+- RIPE RIS Live handshake — success;
+- Route Views/CAIDA BGPStream broker — success.
 
-## Pilot deployment boundary
+## Fleet Stage-1 deployment boundary
 
-Releasing v1.2 does **not** authorize an Iran pilot. External gates still required before any real Iran pilot:
+Releasing v1.3 does **not** authorize an Iran pilot. External gates still required before any real Iran pilot:
 
 1. real isolated Linux/systemd host verification of kernel/cgroup sandbox and negative egress behavior;
 2. real project-controlled Class-A measurement/control endpoints and collection edge;
@@ -93,6 +77,8 @@ Repository policy continues to expose `deploymentAuthorized:false`.
 - no `no_data` → zero/available conversion;
 - BGP visibility ≠ end-user reachability;
 - anomaly ≠ confirmed censorship;
+- RPKI invalid/unknown ≠ censorship/hijack intent;
+- topology context ≠ reachability evidence;
 - multiple owned probes ≠ multiple independent sources;
 - no national/province badge from fleet observations;
 - no province inference from network metadata;

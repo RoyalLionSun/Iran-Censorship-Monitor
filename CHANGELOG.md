@@ -1,5 +1,38 @@
 # Changelog
 
+## 1.3.0 — 2026-09-09
+
+### Topology / route-origin integrity
+
+- added CAIDA ASRank selected-ASN topology context for rank, customer cone, degree and inferred AS relationships;
+- preserves ASRank provenance overlap with CAIDA Ark, Route Views and RIPE routing inputs so topology context cannot inflate routing-source independence;
+- added RIPEstat RPKI validation for a bounded set of currently announced prefixes plus bounded monthly IPv4/IPv6 VRP history;
+- preserves RPKI states `valid`, `invalid_asn`, `invalid_length` and `unknown` without converting them into censorship or hijack intent;
+- keeps ASRank and RPKI as context-only evidence with `independentCensorshipVote:false`.
+
+### Circumvention source review
+
+- re-reviewed Psiphon and Ceno/eQualitie as valuable Iran circumvention/resilience context;
+- did not create unsupported runtime telemetry adapters because no stable supported public machine-readable Iran time-series API was established;
+- retained the rule that reports/articles remain dated contextual evidence rather than scraped or synthetic telemetry.
+
+### Dashboard / verification
+
+- added dedicated ASRank and RPKI dashboard panels separated from censorship assessment/source-family voting;
+- expanded the real headless-Chrome gate to verify ASRank/RPKI rendering alongside M-Lab/APNIC/STOP;
+- deterministic suite expanded to **211 tests**;
+- feature PR #9 CI `34375070768` passed;
+- v1.3 feature merge to `main` completed in `4f6615c309c1797f3cbcdaae2700d0d79159ca59`;
+- post-feature-merge `main` CI `34382084051` passed **211/211** tests, production build, headless Chrome, secret/private-key scan and runtime smoke tests;
+- live public-source acceptance `34374634682` passed, including CAIDA ASRank (`partial`), RIPEstat RPKI (`partial`), RIPE RIS Live and Route Views/CAIDA BGPStream.
+
+### Deployment boundary
+
+- v1.3 does **not** authorize an Iran Fleet Stage-1 pilot;
+- `partial`, `no_data` and errors remain explicit and never become national/province availability verdicts;
+- external systemd/egress, real controlled endpoint, key-management, rollback, voluntary operator-consent and explicit authorization gates remain mandatory;
+- repository policy remains `deploymentAuthorized:false`.
+
 ## 1.2.0 — 2026-09-09
 
 ### Routing / source depth
