@@ -1,0 +1,37 @@
+name: Ensure release notes
+
+on:
+  release:
+    types: [published, edited]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-notes-${{ github.event.release.id }}
+  cancel-in-progress: false
+
+jobs:
+  ensure-release-notes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout canonical main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+
+      - name: Preserve or populate release notes
+        run: node scripts/ensure-release-notes.mjs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          RELEASE_ID: ${{ github.event.release.id }}
+          RELEASE_BODY: ${{ github.event.release.body }}
+          GITHUB_REPOSITORY: ${{ github.repository }}

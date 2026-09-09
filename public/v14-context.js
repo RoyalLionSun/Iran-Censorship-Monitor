@@ -29,7 +29,7 @@ function insertV14Panel() {
         <div><span class="section-label">TOR TRANSPORT / INCIDENT CONTEXT</span><h2>Bounded change review</h2></div>
         <span id="v14-context-state" class="micro-state">Pending</span>
       </header>
-      <p class="panel-note">Iran Tor transport values remain published lower/upper estimate bounds. Incident links are temporal context only: no exact client-count change, causal attribution, blocking verdict or additional technical sensor vote is created.</p>
+      <p class="panel-note">Iran Tor transport values remain published lower/upper estimate bounds. Incident links are temporal context only: no precise client-count delta, causal attribution, blocking verdict or additional technical sensor vote is created.</p>
       <div id="v14-context-summary" class="mini-stats">
         <div class="mini-stat"><span>Status</span><b>Awaiting overview</b></div>
         <div class="mini-stat"><span>Independent technical votes</span><b>0</b></div>
