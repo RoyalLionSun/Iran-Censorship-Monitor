@@ -1,0 +1,38 @@
+name: Live public source acceptance
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [develop/v1.1]
+    paths:
+      - '.github/workflows/live-source-acceptance.yml'
+      - 'scripts/verify-public-sources.mjs'
+      - 'package.json'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: live-source-acceptance-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  live-public-sources:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify public upstreams through the real server API
+        run: npm run verify:public
