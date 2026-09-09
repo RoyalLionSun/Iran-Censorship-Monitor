@@ -3,7 +3,7 @@ name: Live public source acceptance
 on:
   workflow_dispatch:
   push:
-    branches: [develop/v1.2]
+    branches: [develop/v1.3]
     paths:
       - '.github/workflows/live-source-acceptance.yml'
       - 'scripts/verify-public-sources.mjs'
@@ -21,6 +21,8 @@ on:
       - 'lib/ioda.mjs'
       - 'lib/tor.mjs'
       - 'lib/ripestat.mjs'
+      - 'lib/rpki.mjs'
+      - 'lib/asrank.mjs'
       - 'lib/rislive.mjs'
       - 'lib/bgpstream.mjs'
       - 'lib/peeringdb.mjs'

@@ -71,9 +71,11 @@ async function main() {
     assert(config.capabilities?.mlabNdtPerformance === true, 'M-Lab capability missing from live config.');
     assert(config.capabilities?.apnicIpv6Context === true, 'APNIC IPv6 capability missing from live config.');
     assert(config.capabilities?.accessNowStopIncidents === true, 'Access Now STOP capability missing from live config.');
+    assert(config.capabilities?.caidaAsRankTopology === true, 'CAIDA ASRank capability missing from live config.');
+    assert(config.capabilities?.ripeStatRpkiIntegrity === true, 'RIPEstat RPKI capability missing from live config.');
     assert(config.capabilities?.globalpingActiveMeasurements === false, 'Live acceptance must not enable active Globalping.');
 
-    const overview = await json(`/api/overview?${query}`, 90_000);
+    const overview = await json(`/api/overview?${query}`, 120_000);
     const required = [
       sourceState('OONI', overview.ooni),
       sourceState('RIPE Atlas', overview.ripe),
@@ -86,6 +88,8 @@ async function main() {
       sourceState('Censored Planet', overview.censoredPlanet),
       sourceState('PeeringDB', overview.peeringdb),
       sourceState('Internet Health Report', overview.ihr),
+      sourceState('CAIDA ASRank', overview.asrank),
+      sourceState('RIPEstat RPKI', overview.rpki),
     ];
 
     for (const item of required) {
@@ -98,6 +102,11 @@ async function main() {
     assert(overview.mlab?.comparison && typeof overview.mlab.comparison === 'object', 'M-Lab response missing sample-aware comparison metadata.');
     assert(Array.isArray(overview.apnic?.points), 'APNIC response missing points array.');
     assert(overview.apnic?.coverage && typeof overview.apnic.coverage === 'object', 'APNIC response missing coverage metadata.');
+    assert(overview.asrank?.independentCensorshipVote === false, 'ASRank must never become an independent censorship vote.');
+    assert(overview.asrank?.evidenceRole === 'topology-context', 'ASRank evidence role changed unexpectedly.');
+    assert(overview.rpki?.independentCensorshipVote === false, 'RPKI must never become an independent censorship vote.');
+    assert(overview.rpki?.routingSourceFamily === 'ripe', 'RPKI must remain in the RIPE routing source family.');
+    assert(overview.rpki?.coverage && typeof overview.rpki.coverage === 'object', 'RPKI response missing bounded coverage metadata.');
 
     const stopQuery = new URLSearchParams({ asn: 'AS58224', testName: 'web_connectivity', since: '2022-09-15', until: '2022-09-30' });
     const stop = await json(`/api/stop?${stopQuery}`, 60_000);
