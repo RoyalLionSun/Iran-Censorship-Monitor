@@ -83,9 +83,28 @@ test('RIPEstat Whois parser separates aut-num and organisation identity', () => 
     country: 'IR',
     authority: 'ripe',
     source: 'RIPE',
+    recordScope: 'rir-records',
     found: true
   });
   assert.equal(compareAsnIdentity(profile('AS31549'), parsed).ok, true);
+});
+
+test('RIPEstat Whois parser accepts aut-num in irr_records while preserving record scope', () => {
+  const parsed = parseRipeStatWhois({ data: {
+    authorities: ['ripe'],
+    records: [],
+    irr_records: [[
+      { key: 'aut-num', value: 'AS43754' },
+      { key: 'as-name', value: 'ASIATECH' },
+      { key: 'org', value: 'ORG-AI34-RIPE' },
+      { key: 'source', value: 'RIPE' }
+    ]]
+  } }, 'AS43754');
+  assert.equal(parsed.found, true);
+  assert.equal(parsed.recordScope, 'routing-registry');
+  assert.equal(parsed.asName, 'ASIATECH');
+  assert.equal(parsed.orgId, 'ORG-AI34-RIPE');
+  assert.equal(compareAsnIdentity(profile('AS43754'), parsed).ok, true);
 });
 
 test('registry comparator flags reassignment instead of accepting an alias', () => {
