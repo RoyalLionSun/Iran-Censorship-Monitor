@@ -1,66 +1,56 @@
-# Current State — v1.3.0 release candidate
+# Current State — v1.4.0 release candidate
 
 Date: **2026-09-09**  
-Release line: **`v1.3.0`**  
+Release line: **`v1.4.0`**  
 Production branch: **`main`**  
-v1.3 feature merge: **`4f6615c309c1797f3cbcdaae2700d0d79159ca59`**  
-Release metadata branch: **`release/v1.3.0`**
+v1.4 feature merge: **`cf121adf1cdc976c58b591b53debf1d9e987bef3`**  
+Release metadata branch: **`release/v1.4.0`**
 
 ## Branch / release state
 
-- PR #9 merged the complete v1.3 feature line to `main` in merge commit `4f6615c309c1797f3cbcdaae2700d0d79159ca59`.
-- PR #9 CI `34375070768` passed.
-- Post-feature-merge `main` CI `34382084051` passed **211/211** tests plus build, headless Chrome, secret/private-key scan and runtime smoke tests.
-- `release/v1.3.0` exists only to finalize version/release metadata before tagging and GitHub Release publication.
-- The previous `v1.2.0` release remains valid historical release state.
+- PR #12 merged the complete v1.4 feature line to `main` in merge commit `cf121adf1cdc976c58b591b53debf1d9e987bef3`.
+- PR #12 CI `34388825541` passed.
+- Post-feature-merge `main` CI `34389188256` passed.
+- The deterministic suite is **237/237** and the release-notes, production-build, headless-Chrome, committed-secret/private-key and runtime-smoke gates are green.
+- Live public-source acceptance `34388597366` passed on the v1.4 runtime/UI line.
+- `release/v1.4.0` exists only to finalize stable version and release metadata before tag/GitHub Release publication.
 
-## v1.3 implemented scope
+## v1.4 implemented scope
 
-### CAIDA ASRank topology context
+### Tor transport bounds
 
-- selected-ASN rank, customer-cone size, degree and inferred AS relationship context;
-- bounded relationship output and public API access;
-- runtime evidence role remains `topology-context`;
-- ASRank is derived in part from CAIDA Ark plus Route Views/RIPE BGP inputs, therefore it does not create an independent censorship/routing vote;
-- `independentCensorshipVote:false` is preserved.
+- Iran Tor transport observations preserve lower/upper estimate intervals rather than exact users;
+- a higher/lower direction is reported only when paired estimate intervals do not overlap;
+- overlapping/touching intervals remain explicitly indeterminate;
+- missing paired observations remain `no_data`.
 
-### RIPEstat RPKI integrity context
+### BridgeDB scope separation
 
-- validates a bounded set of currently announced selected-ASN prefixes;
-- preserves `valid`, `invalid_asn`, `invalid_length` and `unknown` states;
-- includes bounded monthly IPv4/IPv6 VRP history;
-- remains inside the RIPE routing source family;
-- an invalid/unknown RPKI state is not automatically censorship or route-hijack intent.
+- BridgeDB requested-transport demand is retained as global context only;
+- the dashboard labels it `GLOBAL · not Iran-specific`;
+- it is excluded from Iran incident correlation and cannot become an Iran usage estimate or independent technical vote.
 
-### Circumvention source review
+### STOP temporal context
 
-Psiphon and Ceno/eQualitie remain important Iran circumvention/resilience context. No runtime time-series adapter was admitted because the review did not establish a stable supported public machine-readable Iran telemetry API. Reports remain dated contextual evidence; unsupported chart/page scraping is prohibited.
+- Iran Tor transport bounds can be aligned with Access Now #KeepItOn STOP incident windows;
+- correlation is temporal context only, with no causality or blocking attribution;
+- no national availability verdict or new censorship vote is created.
 
-### Dashboard / presentation
+### Ookla Open Data feasibility
 
-- dedicated ASRank and RPKI context panels were added;
-- neither panel contributes to the censorship assessment/source-family vote count;
-- the real headless Chrome gate now verifies M-Lab/APNIC/STOP plus ASRank/RPKI rendering;
-- `partial`, `no_data` and errors remain visible rather than being converted to success/zero states.
+- the official quarterly fixed/mobile Open Data object contract is documented and tested;
+- no Iran aggregate is published without a reviewed country boundary and spatial join;
+- bounding-box shortcuts and automatic throttling/censorship attribution remain prohibited.
 
-## Verification
+### Release integrity
 
-- deterministic suite: **211/211**;
-- feature PR #9 CI `34375070768` — success;
-- post-feature-merge `main` CI `34382084051` — success;
-- production build — success;
-- real headless Chrome UI presentation gate — success;
-- committed-secret/private-key gate — success;
-- runtime/root/404/traversal smoke gate — success;
-- live public-source acceptance `34374634682` — success;
-- CAIDA ASRank live state during acceptance: `partial`;
-- RIPEstat RPKI live state during acceptance: `partial`;
-- RIPE RIS Live handshake — success;
-- Route Views/CAIDA BGPStream broker — success.
+- canonical release notes live under `release-notes/vX.Y.Z.md`;
+- stable package versions require valid release notes in CI;
+- empty GitHub Release bodies can be populated from canonical notes after publication without overwriting existing notes.
 
 ## Fleet Stage-1 deployment boundary
 
-Releasing v1.3 does **not** authorize an Iran pilot. External gates still required before any real Iran pilot:
+Releasing v1.4 does **not** authorize an Iran pilot. External gates still required before any real Iran pilot:
 
 1. real isolated Linux/systemd host verification of kernel/cgroup sandbox and negative egress behavior;
 2. real project-controlled Class-A measurement/control endpoints and collection edge;
@@ -77,10 +67,9 @@ Repository policy continues to expose `deploymentAuthorized:false`.
 - no `no_data` → zero/available conversion;
 - BGP visibility ≠ end-user reachability;
 - anomaly ≠ confirmed censorship;
-- RPKI invalid/unknown ≠ censorship/hijack intent;
-- topology context ≠ reachability evidence;
+- performance degradation ≠ automatic throttling attribution;
+- Tor/BridgeDB/STOP/Ookla context adds zero independent censorship votes;
 - multiple owned probes ≠ multiple independent sources;
-- no national/province badge from fleet observations;
 - no province inference from network metadata;
 - no SIM-class inference;
 - no NIN claim without validated paired target classes;

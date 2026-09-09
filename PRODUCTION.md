@@ -2,7 +2,7 @@
 
 ## Supported release state
 
-The v1.3 feature line is merged to `main` at `4f6615c309c1797f3cbcdaae2700d0d79159ca59`. Final `v1.3.0` release metadata is prepared on `release/v1.3.0`; tag/Release publication follows final metadata CI/merge.
+The v1.4 feature line is merged to `main` at `cf121adf1cdc976c58b591b53debf1d9e987bef3`. Final `v1.4.0` release metadata is prepared on `release/v1.4.0`; tag/Release publication follows final metadata CI/merge.
 
 The Fleet Stage-1 material remains **laboratory architecture**, not authorization to enable an Iran production probe. Release publication does not override `deploymentAuthorized:false` or the external predeployment gates.
 
@@ -38,6 +38,7 @@ Starting the dashboard does not start either routing collector.
 ```bash
 npm ci
 npm run check
+npm run verify:release-notes
 npm run build
 npm run verify:public
 npm run verify:ris-live
@@ -46,7 +47,7 @@ npm run verify:ui
 npm run verify:radar       # optional token
 ```
 
-The v1.3 deterministic suite is **211/211 tests**, plus production build, secret/private-key checks, runtime smoke testing and real headless-Chrome rendering. The live-source acceptance gate also verifies the public ASRank/RPKI adapters plus RIS Live and Route Views broker connectivity. These repository gates do not supersede the external Fleet deployment gates.
+The v1.4 deterministic suite is **237/237 tests**, plus stable release-notes validation, production build, secret/private-key checks, runtime smoke testing and real headless-Chrome rendering. Live-source acceptance verifies the public-source adapters plus RIS Live and Route Views broker connectivity. These repository gates do not supersede the external Fleet deployment gates.
 
 ## Dashboard service
 
@@ -86,14 +87,21 @@ npm run collect:routeviews -- --asn AS58224
 
 This is also a separate optional operator process. It must remain restricted to Route Views resources and validated prefix scope. BGPStream must not be used to relabel RIPE data as a second independent routing source. Route events remain control-plane context only.
 
-## Topology / route-security context
+## Circumvention context — v1.4
 
-CAIDA ASRank and RIPEstat RPKI are passive dashboard-side API contexts. Neither starts active in-country measurement and neither creates a censorship vote.
+- Iran Tor transport values remain lower/upper estimate bounds;
+- non-overlapping intervals may support only a direction, never an exact client-count delta;
+- global BridgeDB transport-demand data is explicitly not Iran-specific;
+- Tor/BridgeDB ↔ STOP matching is temporal context only and cannot create causality or a censorship vote;
+- no active VPN/circumvention protocol probing is enabled by this release.
 
-- ASRank describes macroscopic topology and has known derivation overlap with Route Views/RIPE inputs;
-- RPKI validates route-origin authorization for a bounded current prefix set and exposes bounded history;
-- `partial`/`unknown` states remain explicit;
-- no RPKI result is automatically interpreted as censorship, hijack or political intent.
+## Ookla Open Data boundary
+
+The repository includes only the reviewed official-object contract and feasibility policy. Do not publish an Iran Ookla aggregate until a reviewed country-boundary dataset and spatial join are implemented and validated. Do not use a bounding box as a country substitute and do not label performance differences as throttling/censorship without independent evidence.
+
+## Release-note integrity
+
+Stable versions require `release-notes/vX.Y.Z.md` to pass CI. The release-publication recovery workflow may populate an accidentally empty GitHub Release body from the canonical file, but it does not overwrite an existing body. Release notes do not authorize Fleet deployment.
 
 ## Fleet Stage-1 laboratory material — NOT production-authorized
 
@@ -120,8 +128,6 @@ Repository code deliberately keeps `deploymentAuthorized:false`. CI, PR approval
 - no white-SIM/ordinary-SIM inference or sensitive subscriber identifiers;
 - no NIN-vs-global claim until a separately reviewed target taxonomy and paired design are approved;
 - per-probe fleet output cannot automatically become a national/province availability or censorship badge.
-
-See `MEASUREMENT_FLEET.md`, `FLEET_STAGE1_PREDEPLOYMENT.md`, `FLEET_STAGE1_SANDBOX.md`, `FLEET_STAGE1_TRUST.md`, `FLEET_STAGE1_CONSENT.md` and `FLEET_STAGE1_ROLLBACK.md`.
 
 ## Reverse proxy / operational requirements
 

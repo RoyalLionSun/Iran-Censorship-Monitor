@@ -1,5 +1,45 @@
 # Changelog
 
+## 1.4.0 — 2026-09-09
+
+### Circumvention transport depth
+
+- preserved Iran Tor transport observations as lower/upper estimate bounds rather than exact users;
+- added directional comparison only when before/during estimate intervals do not overlap; overlapping/touching intervals remain indeterminate;
+- added global BridgeDB requested-transport demand as explicitly `GLOBAL · not Iran-specific` context;
+- BridgeDB is excluded from Iran incident correlation and contributes no independent censorship vote.
+
+### Incident context
+
+- added bounded temporal correlation between Iran Tor transport observations and Access Now #KeepItOn STOP incident windows;
+- correlation remains temporal context only and cannot create causality, blocking attribution, national availability status or an extra technical vote;
+- missing paired observations remain `no_data` and partial upstream coverage remains `partial`.
+
+### Ookla Open Data review
+
+- added a reviewed contract for official quarterly fixed/mobile Ookla Open Data objects;
+- no Iran aggregate is published without an approved country-boundary dataset and spatial join;
+- bounding-box shortcuts, fabricated country aggregates and throttling/censorship attribution remain prohibited.
+
+### Release integrity / verification
+
+- added canonical `release-notes/vX.Y.Z.md` files and a stable-version release-notes CI gate;
+- added a release-publication recovery workflow that fills an empty GitHub Release body from canonical notes without overwriting existing notes;
+- deterministic suite expanded to **237 tests**;
+- feature branch CI `34388597794` passed;
+- feature PR #12 CI `34388825541` passed;
+- v1.4 feature merge to `main` completed in `cf121adf1cdc976c58b591b53debf1d9e987bef3`;
+- post-feature-merge `main` CI `34389188256` passed;
+- live public-source acceptance `34388597366` passed;
+- production build, release-notes gate, real headless Chrome, secret/private-key scan and runtime smoke tests passed.
+
+### Deployment boundary
+
+- Tor, BridgeDB, STOP and Ookla remain context-only and add zero independent censorship votes;
+- v1.4 does **not** authorize an Iran Fleet Stage-1 pilot or active protocol/circumvention probing;
+- province/SIM inference remains prohibited and VPN/NIN claims retain their controlled-target/manual-review gates;
+- repository policy remains `deploymentAuthorized:false`.
+
 ## 1.3.0 — 2026-09-09
 
 ### Topology / route-origin integrity
