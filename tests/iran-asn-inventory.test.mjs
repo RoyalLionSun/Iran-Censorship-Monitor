@@ -98,6 +98,9 @@ test('Country ASNs parser fails closed on wrong scope, missing stats or invalid 
   assert.throws(() => parseIranAsnRoutingSummary({ data: { countries: [{ resource: 'IR' }] } }), /missing country stats/);
   assert.throws(() => parseIranAsnRoutingSummary({ data: { countries: [{ resource: 'IR', stats: { registered: -1, routed: 1 } }] } }), /invalid registered ASN count/);
   assert.throws(() => parseIranAsnRoutingSummary({ data: { countries: [{ resource: 'IR', stats: { registered: 1, routed: 'many' } }] } }), /invalid routed ASN count/);
+  for (const invalid of [null, undefined, '', '   ', false]) {
+    assert.throws(() => parseIranAsnRoutingSummary({ data: { countries: [{ resource: 'IR', stats: { registered: invalid, routed: 1 } }] } }), /invalid registered ASN count/);
+  }
 });
 
 test('Country ASNs URL requests only documented count detail and is IR-scoped', () => {
