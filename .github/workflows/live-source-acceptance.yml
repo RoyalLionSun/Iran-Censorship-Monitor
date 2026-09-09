@@ -61,7 +61,7 @@ jobs:
       - name: Verify public upstreams through the real server API
         run: npm run verify:public
 
-      - name: Verify curated ASN identities against RIPEstat Whois
+      - name: Verify curated ASN identities against RIPE Database REST
         run: npm run verify:asn-registry
 
       - name: Verify passive RIPE RIS Live subscription handshake
