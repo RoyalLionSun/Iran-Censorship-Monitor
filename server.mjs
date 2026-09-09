@@ -11,6 +11,8 @@ import { getRadarSignals } from './lib/radar.mjs';
 import { getIodaSignals } from './lib/ioda.mjs';
 import { getTorMetrics } from './lib/tor.mjs';
 import { getRipeBgpUpdates, getRipeStatSignals } from './lib/ripestat.mjs';
+import { getRpkiIntegrity } from './lib/rpki.mjs';
+import { getAsRankTopology } from './lib/asrank.mjs';
 import { authorizeGlobalpingControl, createGlobalpingMeasurement, getGlobalpingIranProbes, getGlobalpingMeasurement, globalpingRateLimit } from './lib/globalping.mjs';
 import { getCensoredPlanetSignals } from './lib/censoredplanet.mjs';
 import { getCitizenLabIranTargets } from './lib/citizenlab.mjs';
@@ -109,7 +111,7 @@ async function readJsonBody(req, maxBytes = 16_384) {
 }
 
 function scopeRequired(source, input) {
-  return { ok: true, source, status: 'scope_required', asn: null, since: input.since, until: input.until, note: 'Select a specific ASN for this control-plane analysis.' };
+  return { ok: true, source, status: 'scope_required', asn: null, since: input.since, until: input.until, note: 'Select a specific ASN for this analysis.' };
 }
 
 async function handleApi(req, res, url) {
@@ -138,6 +140,8 @@ async function handleApi(req, res, url) {
         apnicIpv6Context: true,
         accessNowStopIncidents: true,
         ripeStatRouting: true,
+        ripeStatRpkiIntegrity: true,
+        caidaAsRankTopology: true,
         censoredPlanet: true,
         globalpingProbeInventory: true,
         globalpingActiveMeasurements: process.env.GLOBALPING_ACTIVE_ENABLED === 'true' && Boolean(process.env.GLOBALPING_CONTROL_KEY),
@@ -154,7 +158,7 @@ async function handleApi(req, res, url) {
 
   if (url.pathname === '/api/overview') {
     const input = queryInput(url);
-    const [ooni, ripe, radar, ioda, tor, mlab, apnic, ripestat, globalping, censoredPlanet, peeringdb, ihr, pulse] = await Promise.all([
+    const [ooni, ripe, radar, ioda, tor, mlab, apnic, ripestat, globalping, censoredPlanet, peeringdb, ihr, asrank, rpki, pulse] = await Promise.all([
       safeSource('OONI', () => getOoniTimeline(input)),
       safeSource('RIPE Atlas', () => getRipeSignals(input)),
       safeSource('Cloudflare Radar', () => getRadarSignals(input)),
@@ -167,11 +171,13 @@ async function handleApi(req, res, url) {
       safeSource('Censored Planet', () => getCensoredPlanetSignals(input)),
       input.asn ? safeSource('PeeringDB', () => getPeeringDbTopology(input)) : Promise.resolve(scopeRequired('PeeringDB', input)),
       input.asn ? safeSource('Internet Health Report', () => getIhrDependencies(input)) : Promise.resolve(scopeRequired('Internet Health Report', input)),
+      input.asn ? safeSource('CAIDA ASRank', () => getAsRankTopology(input)) : Promise.resolve(scopeRequired('CAIDA ASRank', input)),
+      input.asn ? safeSource('RIPEstat RPKI', () => getRpkiIntegrity(input)) : Promise.resolve(scopeRequired('RIPEstat RPKI', input)),
       safeSource('Internet Society Pulse', () => getPulseShutdowns()),
     ]);
     const scopeLabel = input.asn ? `${input.asn} / Iran` : 'Iran / all measured networks';
     const assessment = buildAssessment({ ooni, ripe, radar, ioda, ripestat, scopeLabel });
-    jsonResponse(res, 200, { ok: true, input, fetchedAt: new Date().toISOString(), assessment, ooni, ripe, radar, ioda, tor, mlab, apnic, ripestat, globalping, censoredPlanet, peeringdb, ihr, pulse });
+    jsonResponse(res, 200, { ok: true, input, fetchedAt: new Date().toISOString(), assessment, ooni, ripe, radar, ioda, tor, mlab, apnic, ripestat, globalping, censoredPlanet, peeringdb, ihr, asrank, rpki, pulse });
     return true;
   }
 
