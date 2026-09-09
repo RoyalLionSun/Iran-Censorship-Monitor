@@ -2,10 +2,10 @@
 
 Iran-focused censorship-intelligence dashboard for technical measurements, routing/control-plane state, data-plane performance, protocol context, circumvention telemetry and curated shutdown/OSINT evidence.
 
-**Production release:** `v1.1.0`  
+**Release line:** `v1.2.0`  
 **Production branch:** `main`  
-**Production commit:** `9087809d6a87ae578dd590d185c35b4438319b2d`  
-**Development:** `v1.2.0-dev` on `develop/v1.2`
+**v1.2 feature merge:** `9dac687bc9bf83282ad3aa650255cafbb372160c`  
+**Release metadata branch:** `release/v1.2.0` (tag/Release publication follows final metadata CI)
 
 The application does **not** ship simulated monitoring values. Missing, unavailable, rate-limited or unconfigured sources remain explicit no-data/error states. Contextual reports never become independent technical sensor votes merely because they repeat an underlying measurement.
 
@@ -14,7 +14,7 @@ The application does **not** ship simulated monitoring values. Missing, unavaila
 - **censorship/interference:** OONI + Censored Planet;
 - **data plane/connectivity:** RIPE Atlas + IODA + Cloudflare Radar;
 - **performance:** M-Lab NDT with sample-aware interpretation;
-- **control plane:** RIPEstat / RIPE RIS, passive RIPE RIS Live, and in v1.2 an optional passive Route Views stream collector through CAIDA BGPStream tooling;
+- **control plane:** RIPEstat / RIPE RIS, passive RIPE RIS Live, and optional passive Route Views live collection through CAIDA BGPStream tooling;
 - **protocol/deployment context:** Cloudflare Radar protocol distributions + APNIC Labs IPv6;
 - **Iran vantage coverage:** Globalping passive inventory; active mode remains disabled by default;
 - **circumvention:** Tor plus contextual Psiphon/Proton/Ceno reporting;
@@ -22,21 +22,19 @@ The application does **not** ship simulated monitoring values. Missing, unavaila
 - **targets:** Citizen Lab Iran list;
 - **shutdown/OSINT:** Internet Society Pulse, Access Now #KeepItOn STOP and curated/GDELT discovery.
 
-RIPE and Route Views routing observations are control-plane evidence. Reading RIPE through BGPStream would not create an independent source; the v1.2 second routing family is restricted to Route Views infrastructure.
+RIPE and Route Views routing observations are control-plane evidence. BGPStream is an access/normalization framework, not a separate sensor; RIPE data accessed through BGPStream remains RIPE evidence and is never double-counted.
 
-## v1.2 development scope
+## v1.2 additions
 
-Repository-side v1.2 work adds:
-
-- bounded passive Route Views/BGPStream collection with explicit provenance separation from RIPE RIS;
-- a security-reviewed owned-probe laboratory architecture for Class-A DNS/TCP/TLS/HTTPS observations;
+- bounded passive Route Views/BGPStream collection with provenance separation from RIPE RIS;
+- security-reviewed owned-probe laboratory architecture for Class-A DNS/TCP/TLS/HTTPS observations;
 - signed short-lived manifests, local target resolution, authenticated results, replay/rate/size limits and memory-only buffering;
 - consent/withdrawal, trust, retention, sandbox, predeployment and rollback gates;
 - fail-closed evidence rules for VPN transports and NIN-vs-global comparisons;
 - explicit NO-GO/deferred decisions for province publication and white-SIM/ordinary-SIM segmentation;
-- a real headless-Chrome presentation gate for M-Lab/APNIC/STOP context.
+- real headless-Chrome presentation gate for M-Lab/APNIC/STOP context.
 
-**Important:** v1.2 repository/laboratory readiness is not Iran deployment authorization. `deploymentAuthorized` remains false. A real Iran pilot requires the documented external host, endpoint, key, consent and rollback gates plus explicit authorization.
+**Important:** releasing v1.2 does not authorize an Iran probe deployment. `deploymentAuthorized` remains false. A real Iran pilot still requires the external host, endpoint, key, consent and rollback gates documented in the repository plus explicit authorization.
 
 ## Integrity rules
 
@@ -69,7 +67,7 @@ npm start
 
 Open `http://127.0.0.1:4173`.
 
-## Validate development state
+## Validate
 
 ```bash
 npm ci
@@ -82,13 +80,15 @@ npm run verify:ui
 npm run verify:radar   # optional; requires configured Radar token
 ```
 
-Current v1.2 development verification contains **203 deterministic tests**. CI also runs the production build, committed-secret/private-key checks, runtime/404/traversal smoke tests and a real local headless-browser presentation gate.
+The v1.2 deterministic suite contains **203 tests**. CI additionally runs the production build, committed-secret/private-key checks, runtime/404/traversal smoke tests and a real local headless-browser presentation gate.
 
-Latest verified v1.2 runtime/UI gates before the readiness-documentation pass:
+Verified release-line gates:
 
-- normal CI `34365724780` — success;
-- live public-source acceptance `34365369630` — success;
-- real Chrome output: `UI PRESENTATION PASS · google-chrome · M-Lab/APNIC/STOP rendered in a real headless browser`.
+- development/readiness CI `34366466998` — success;
+- PR #6 CI `34368934884` — success;
+- post-feature-merge `main` CI `34369377194` — success;
+- latest runtime/UI live-source acceptance before the docs-only release metadata pass: `34365369630` — success;
+- headless Chrome output: `UI PRESENTATION PASS · google-chrome · M-Lab/APNIC/STOP rendered in a real headless browser`.
 
 ## Optional passive routing collectors
 
@@ -98,7 +98,7 @@ RIPE RIS Live:
 npm run collect:ris -- --asn AS58224
 ```
 
-Route Views / BGPStream development collector:
+Route Views / BGPStream:
 
 ```bash
 npm run collect:routeviews -- --asn AS58224

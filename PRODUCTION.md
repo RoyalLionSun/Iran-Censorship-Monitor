@@ -1,10 +1,10 @@
 # Production Deployment
 
-## Supported production state
+## Supported release state
 
-The currently published production release is **`v1.1.0`** from `main` at commit `9087809d6a87ae578dd590d185c35b4438319b2d`.
+The v1.2 feature line is merged to `main` at `9dac687bc9bf83282ad3aa650255cafbb372160c`. Final `v1.2.0` release metadata is prepared on `release/v1.2.0`; tag/Release publication follows final metadata CI/merge.
 
-`develop/v1.2` is a development/pre-release branch. Its Fleet Stage-1 laboratory material is **not** an Iran production deployment template and must not be enabled on an Iran host merely because repository CI is green.
+The Fleet Stage-1 material shipped in v1.2 is **laboratory architecture**, not authorization to enable an Iran production probe. Release publication does not override `deploymentAuthorized:false` or the external predeployment gates.
 
 ## Dashboard topology
 
@@ -27,7 +27,7 @@ Iran Censorship Monitor / Node.js
 
 Optional passive operator processes
         +--> RIPE RIS Live
-        \--> v1.2 dev: Route Views via BGPStream/bgpreader
+        \--> Route Views via BGPStream/bgpreader
 ```
 
 Starting the dashboard does not start either routing collector.
@@ -40,12 +40,12 @@ npm run check
 npm run build
 npm run verify:public
 npm run verify:ris-live
-npm run verify:bgpstream   # v1.2 development
-npm run verify:ui          # v1.2 development; loopback headless browser gate
+npm run verify:bgpstream
+npm run verify:ui
 npm run verify:radar       # optional token
 ```
 
-Current v1.2 development verification is **203/203 deterministic tests**, plus production build, secret/private-key checks, runtime smoke testing and real headless-Chrome rendering. This does not supersede the external Fleet deployment gates.
+The v1.2 deterministic suite is **203/203 tests**, plus production build, secret/private-key checks, runtime smoke testing and real headless-Chrome rendering. These repository gates do not supersede the external Fleet deployment gates.
 
 ## Dashboard service
 
@@ -77,7 +77,7 @@ npm run collect:ris -- --asn AS58224
 
 The collector is passive, validates/limits prefix scope, writes under Git-ignored `var/ris-live/` and should run as a separate service/user with write access only to its output directory.
 
-### Route Views / BGPStream — v1.2 development
+### Route Views / BGPStream
 
 ```bash
 npm run collect:routeviews -- --asn AS58224

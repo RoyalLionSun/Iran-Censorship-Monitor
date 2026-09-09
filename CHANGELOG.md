@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.2.0-dev — unreleased
+## 1.2.0 — 2026-09-09
 
 ### Routing / source depth
 
@@ -41,17 +41,19 @@
 ### UI / verification
 
 - added a real headless Chrome/Chromium presentation gate without Playwright/Puppeteer dependencies;
-- the gate loads the actual v1.1 context module through a loopback fixture and verifies M-Lab, APNIC and Access Now STOP rendering, context export and separated source-family semantics;
-- fixed an initial harness-only deadlock by changing synchronous browser launch to asynchronous execution;
+- the gate loads the actual context module through a loopback fixture and verifies M-Lab, APNIC and Access Now STOP rendering and separated source-family semantics;
 - deterministic suite expanded to **203 tests**;
-- CI `34365724780` passed 203/203 tests, production build, headless Chrome presentation, secret/private-key checks and runtime smoke tests;
+- readiness CI `34366466998` passed;
+- PR #6 CI `34368934884` passed;
+- v1.2 feature merge to `main` completed in `9dac687bc9bf83282ad3aa650255cafbb372160c`;
+- post-feature-merge `main` CI `34369377194` passed;
 - live public-source acceptance `34365369630` passed on the corresponding runtime/UI implementation.
 
-### Deployment status
+### Deployment boundary
 
-- production remains `v1.1.0` on `main`;
-- v1.2 remains development-only on `develop/v1.2`;
-- repository readiness does not authorize an Iran pilot; external systemd/egress, real endpoint, key-management, rollback and voluntary operator-consent gates remain mandatory plus explicit authorization.
+- v1.2 release code includes the Fleet Stage-1 laboratory architecture but does **not** authorize an Iran pilot;
+- external systemd/egress, real endpoint, key-management, rollback and voluntary operator-consent gates remain mandatory plus explicit authorization;
+- repository policy remains `deploymentAuthorized:false`.
 
 ## 1.1.0 — 2026-09-09
 
@@ -61,7 +63,7 @@
 - added Access Now #KeepItOn STOP structured incidents with root-evidence lineage and no independent vote;
 - exposed M-Lab/APNIC/STOP context in the dashboard with a separate context CSV export;
 - retained explicit `no_data`/`partial`/error semantics and prohibited province/VPN fabrication;
-- released from merge commit `8a66e32947c0d4f82612f03ad72555c87fd56fe6`, followed by final release-metadata commit `9087809d6a87ae578dd590d185c35b4438319b2d` and tag/Release `v1.1.0`.
+- released from final production commit `9087809d6a87ae578dd590d185c35b4438319b2d` with tag/Release `v1.1.0`.
 
 ## 1.0.1 — 2026-09-08
 
