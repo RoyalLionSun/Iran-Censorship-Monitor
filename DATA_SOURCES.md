@@ -1,8 +1,7 @@
 # Data Sources
 
 Last reviewed: **2026-09-09**  
-Production source set: **v1.1.0**  
-Additional v1.2 development source: **Route Views via CAIDA BGPStream tooling**
+Release source set: **v1.2.0**
 
 ## Source taxonomy
 
@@ -43,12 +42,12 @@ RIPE Atlas uses bounded per-probe daily `ping-stats`; partial probe coverage rem
 
 BGP visibility, prefixes, neighbours, announcements and withdrawals are control-plane evidence. The optional RIS Live collector is bounded to validated prefix scope, passive and separate from the dashboard process. BGP visibility never proves working end-user Internet.
 
-### Route Views / CAIDA BGPStream — v1.2
+### Route Views / CAIDA BGPStream
 
-The v1.2 collector uses CAIDA BGPStream tooling to access **Route Views live** resources. Methodological distinction:
+The v1.2 collector uses CAIDA BGPStream tooling to access **Route Views live** resources.
 
 - BGPStream is an access/normalization framework, not itself a sensor;
-- consuming RIPE data through BGPStream would remain RIPE evidence and must not be counted again;
+- consuming RIPE data through BGPStream remains RIPE evidence and must not be counted again;
 - only Route Views collector/peer infrastructure supplies the second routing-source family;
 - collection is passive, prefix-scoped and operator-started;
 - output remains `routing-control-plane` evidence with `independentCensorshipVote:false`.
@@ -81,11 +80,11 @@ They may provide useful deployment/protocol context, but the review did not esta
 
 See [SOURCE_REVIEW_V12.md](SOURCE_REVIEW_V12.md).
 
-## Owned-probe evidence family — development only
+## Owned-probe evidence family
 
-The v1.2 fleet is not a public external source and is not production-authorized. Accepted observations are `owned-probe` evidence and all owned probes remain one source family. They cannot inflate independent-source counts.
+The v1.2 release includes the owned-probe **laboratory architecture**, not authorization for an Iran pilot. Accepted observations are `owned-probe` evidence and all owned probes remain one source family. They cannot inflate independent-source counts.
 
-VPN transport and NIN interpretations are gated by [PROTOCOL_VPN_NIN_EVIDENCE.md](PROTOCOL_VPN_NIN_EVIDENCE.md). Province/SIM segmentation remains disabled under [PROVINCE_SIM_FEASIBILITY.md](PROVINCE_SIM_FEASIBILITY.md).
+VPN transport and NIN interpretations are gated by [PROTOCOL_VPN_NIN_EVIDENCE.md](PROTOCOL_VPN_NIN_EVIDENCE.md). Province/SIM segmentation remains disabled under [PROVINCE_SIM_FEASIBILITY.md](PROVINCE_SIM_FEASIBILITY.md). Repository policy remains `deploymentAuthorized:false` until separate external pilot gates and explicit authorization are satisfied.
 
 ## Source admission rule
 

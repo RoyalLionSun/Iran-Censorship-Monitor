@@ -1,14 +1,17 @@
-# Verification Report — v1.2.0-dev readiness
+# Verification Report — v1.2.0 release candidate
 
 Date: **2026-09-09**  
-Production: **v1.1.0 / `main` / `9087809d6a87ae578dd590d185c35b4438319b2d`**  
-Development: **`develop/v1.2`**
+Release line: **v1.2.0**  
+Feature merge: **`9dac687bc9bf83282ad3aa650255cafbb372160c`**  
+Release metadata branch: **`release/v1.2.0`**
 
-## Current v1.2 gates
+## Release-line gates
 
-Latest verified runtime/UI development head before this documentation-only readiness pass:
+Completed gates:
 
-- normal CI `34365724780` — **success**;
+- readiness CI `34366466998` — **success**;
+- PR #6 CI `34368934884` — **success**;
+- post-feature-merge `main` CI `34369377194` — **success**;
 - deterministic suite — **203/203 passed**;
 - production build — success;
 - committed-token/private-key and `.env` checks — success;
@@ -22,11 +25,11 @@ Real browser result:
 UI PRESENTATION PASS · google-chrome · M-Lab/APNIC/STOP rendered in a real headless browser
 ```
 
-The initial UI-gate run failed because `spawnSync()` blocked the same Node event loop serving the loopback fixture. That was a harness deadlock, not an application/rendering failure. Commit `330ca12a6819dc4657d60f35c164e28c01b24f1b` switched browser execution to asynchronous `execFile()`; the unchanged fixture/assertions then passed.
+The release-metadata branch/PR and final post-metadata `main` commit are required to pass the same CI before tag `v1.2.0` is published.
 
 ## Major deterministic coverage added in v1.2
 
-The suite now verifies, in addition to the v1.1 source adapters and assessment rules:
+The suite verifies, in addition to the v1.1 source adapters and assessment rules:
 
 - Route Views/BGPStream project/resource separation and bounded prefix scope;
 - CAIDA live-broker request semantics;
@@ -47,17 +50,17 @@ The suite now verifies, in addition to the v1.1 source adapters and assessment r
 - per-probe publication isolation and one-source-family semantics;
 - VPN protocol/NIN evidence readiness rules;
 - province and SIM segmentation NO-GO rules;
-- real browser rendering of the v1.1 context presentation layer.
+- real browser rendering of M-Lab/APNIC/STOP context.
 
 ## Live source acceptance
 
-The latest v1.2 runtime/UI live gate `34365369630` completed successfully. It exercises the existing public-source server adapters plus passive routing acceptance checks. Legitimate `observed`, `partial` and `no_data` states remain distinct and no source error is converted into zero impact.
+The latest v1.2 runtime/UI live gate `34365369630` completed successfully. It exercises the public-source server adapters plus passive routing acceptance checks. Legitimate `observed`, `partial` and `no_data` states remain distinct and no source error is converted into zero impact.
 
-The v1.2 Route Views/CAIDA gate establishes the supported live resource/provenance path. Route Views routing data remains control-plane evidence; using BGPStream to consume RIPE data would not create source independence.
+The Route Views/CAIDA gate establishes the supported live resource/provenance path. Route Views routing data remains control-plane evidence; using BGPStream to consume RIPE data would not create source independence.
 
 ## Security / evidence boundary
 
-Verification does **not** authorize an Iran pilot. In particular:
+Release verification does **not** authorize an Iran pilot. In particular:
 
 - owned probes remain one source family;
 - per-probe observations cannot automatically become national/province status;
@@ -68,7 +71,7 @@ Verification does **not** authorize an Iran pilot. In particular:
 - routing visibility remains separate from data-plane reachability;
 - missing/partial/error states are never promoted to complete confirmation.
 
-## External predeployment gates not reproducible in GitHub CI
+## External predeployment gates
 
 Before any Iran pilot, separate evidence is still required for:
 
@@ -81,8 +84,8 @@ Before any Iran pilot, separate evidence is still required for:
 
 A green CI, PR, tag or release cannot satisfy these external gates. Repository policy remains `deploymentAuthorized:false`.
 
-## Release-readiness conclusion
+## Release conclusion
 
-**Repository/laboratory v1.2 development: ready for pre-release review.**  
-**Iran Stage-1 pilot: NO-GO.**  
-**Merge/release: requires the normal PR/release gate and explicit authorization; this document does not authorize it.**
+**v1.2 repository/runtime release line: verified and merged to `main`.**  
+**Release metadata: being finalized on `release/v1.2.0`.**  
+**Iran Stage-1 pilot: NO-GO until the external gates and explicit authorization are satisfied.**

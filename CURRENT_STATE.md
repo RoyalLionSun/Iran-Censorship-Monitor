@@ -1,20 +1,20 @@
-# Current State — v1.2.0-dev
+# Current State — v1.2.0 release candidate
 
 Date: **2026-09-09**  
-Production release: **`v1.1.0`**  
+Release line: **`v1.2.0`**  
 Production branch: **`main`**  
-Production commit: **`9087809d6a87ae578dd590d185c35b4438319b2d`**  
-Development branch: **`develop/v1.2`**
+v1.2 feature merge: **`9dac687bc9bf83282ad3aa650255cafbb372160c`**  
+Release metadata branch: **`release/v1.2.0`**
 
 ## Branch / release state
 
-- `main` is the published v1.1.0 production source.
-- tag and GitHub Release `v1.1.0` are published and verified against the production commit.
-- old v1.1 development/release/bootstrap branches were removed after release cleanup.
-- `develop/v1.2` was created directly from the released `main` and is the only active development branch.
-- v1.2 is **not merged, tagged or released**.
+- PR #6 merged the complete v1.2 development line to `main` in merge commit `9dac687bc9bf83282ad3aa650255cafbb372160c`.
+- PR #6 CI `34368934884` and post-feature-merge `main` CI `34369377194` both passed.
+- `release/v1.2.0` exists only to finalize release/version metadata before tagging.
+- Tag and GitHub Release `v1.2.0` are the remaining publication operation after release-metadata CI/merge.
+- The previous `v1.1.0` tag/Release remains valid historical release state.
 
-## v1.2 implemented repository scope
+## v1.2 implemented scope
 
 ### Second routing source
 
@@ -56,31 +56,27 @@ Implemented fail-closed layers include:
 
 ### Additional source review
 
-APNIC HTTP/3/QUIC, DNS-over-IPv6 and DNS query-type/HTTPS-record views were reviewed as potentially useful protocol/deployment context. No new runtime adapter was admitted because the review did not establish a sufficiently stable supported machine-readable contract plus enough independent censorship interpretability to justify one. Unsupported visualization scraping remains prohibited.
+APNIC HTTP/3/QUIC, DNS-over-IPv6 and DNS query-type/HTTPS-record views were reviewed as potentially useful protocol/deployment context. No new runtime adapter was admitted because the review did not establish a sufficiently stable supported machine-readable contract plus enough independent censorship interpretability. Unsupported visualization scraping remains prohibited.
 
 ### UI verification
 
-The previous v1.1 presentation-testing limitation is closed in v1.2 development. CI now starts a loopback fixture and a real headless Chrome/Chromium process, loads the actual `public/v11-context.js`, and verifies rendered M-Lab, APNIC and STOP context plus the separate source-family semantics.
+CI now starts a loopback fixture and a real headless Chrome/Chromium process, loads the actual context layer, and verifies rendered M-Lab, APNIC and STOP context plus separated source-family semantics.
 
-## Current verification
-
-Latest verified runtime/UI head before this documentation-only readiness pass:
+## Release-line verification
 
 - **203/203 deterministic tests**;
-- CI `34365724780` — success;
+- readiness CI `34366466998` — success;
+- PR #6 CI `34368934884` — success;
+- post-feature-merge `main` CI `34369377194` — success;
 - production build — success;
 - real headless Chrome UI presentation gate — success;
 - committed-secret/private-key gate — success;
 - runtime/root/404/traversal smoke gate — success;
 - live public-source acceptance `34365369630` — success.
 
-The earlier browser-gate failure was a fixture deadlock caused by synchronous Chrome execution blocking the local Node fixture server. Commit `330ca12a6819dc4657d60f35c164e28c01b24f1b` changed the harness to asynchronous browser execution; the real UI then passed.
+## Pilot deployment boundary
 
-## Release-readiness boundary
-
-Repository/laboratory development is mature enough for a v1.2 pre-release review, but **Iran pilot deployment remains NO-GO**.
-
-External gates still required before any real Iran pilot:
+Releasing v1.2 does **not** authorize an Iran pilot. External gates still required before any real Iran pilot:
 
 1. real isolated Linux/systemd host verification of kernel/cgroup sandbox and negative egress behavior;
 2. real project-controlled Class-A measurement/control endpoints and collection edge;
@@ -89,7 +85,7 @@ External gates still required before any real Iran pilot:
 5. a real voluntary pilot operator with explicit consent outside the repository;
 6. explicit authorization before enabling the pilot.
 
-A green repository, CI result, documentation review, PR or future release never substitutes for those external gates. Repository policy continues to expose `deploymentAuthorized:false`.
+Repository policy continues to expose `deploymentAuthorized:false`.
 
 ## Methodological invariants
 
