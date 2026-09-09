@@ -1,0 +1,45 @@
+[Unit]
+Description=Iran Censorship Monitor Stage 1 probe sandbox (LAB ONLY)
+ConditionPathExists=/run/iran-censorship-monitor/stage1-lab.enable
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=iran-fleet-probe-lab
+Group=iran-fleet-probe-lab
+DynamicUser=yes
+WorkingDirectory=/opt/iran-censorship-monitor
+ExecStart=/usr/bin/node scripts/fleet-stage1-lab-egress-check.mjs probe
+Environment=NODE_ENV=production
+Environment=FLEET_STAGE1_LAB_ONLY=1
+Environment=FLEET_LAB_LOOPBACK_PORT=18443
+NoNewPrivileges=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectHostname=yes
+ProtectClock=yes
+RestrictSUIDSGID=yes
+RestrictNamespaces=yes
+RestrictRealtime=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+RemoveIPC=yes
+UMask=0077
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+IPAddressDeny=any
+IPAddressAllow=localhost
+SystemCallArchitectures=native
+RuntimeDirectory=iran-fleet-probe-lab
+RuntimeDirectoryMode=0700
+ReadWritePaths=/run/iran-fleet-probe-lab
+ProtectProc=invisible
+ProcSubset=pid
