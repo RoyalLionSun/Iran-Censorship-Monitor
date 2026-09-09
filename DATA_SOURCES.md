@@ -1,7 +1,7 @@
 # Data Sources
 
 Last reviewed: **2026-09-09**  
-Release source set: **v1.3.0**
+Release source set: **v1.4.0**
 
 ## Source taxonomy
 
@@ -18,9 +18,10 @@ Presence in the runtime does not mean an independent censorship sensor. Measurem
 | RIPE RIS Live | Public stream | passive announcements/withdrawals | control-plane context only |
 | Route Views via CAIDA BGPStream | Public broker + `bgpreader`/Route Views live resources | second passive routing collector | control-plane context only |
 | CAIDA ASRank | Public API | ASN rank, customer cone, degree and inferred AS relationships | topology context only |
-| M-Lab NDT | Public JSON aggregate | throughput/minimum-RTT | context only |
-| APNIC Labs IPv6 | Public JSON measurement | IPv6 capability/preference | context only |
-| Tor Metrics | Public CSV | direct/bridge/transport estimates | circumvention context only |
+| M-Lab NDT | Public JSON aggregate | throughput/minimum-RTT | performance context only |
+| APNIC Labs IPv6 | Public JSON measurement | IPv6 capability/preference | protocol/deployment context only |
+| Tor Metrics | Public CSV | Iran direct/bridge/transport estimate bounds plus global BridgeDB demand | circumvention context only |
+| Ookla Open Data | Public quarterly objects | reviewed object/provenance contract; Iran aggregation not yet admitted | performance context only; no censorship/throttling vote |
 | Globalping | Public API / optional token | passive inventory; protected active tests | probe presence is not a vote |
 | PeeringDB | Public API | operator-maintained topology | context only |
 | IHR AS Hegemony | Public API | dependency/chokepoints | context only |
@@ -39,41 +40,43 @@ Iran scope and mechanism/anomaly metadata remain separate. An anomaly or control
 
 RIPE Atlas uses bounded per-probe daily `ping-stats`; partial probe coverage remains visible but is excluded from automated corroboration/divergence. IODA and Radar provide connectivity/traffic context without establishing political intent. Radar credentials remain server-side.
 
-### RIPEstat / RIPE RIS / RIS Live
+### RIPEstat / RIPE RIS / RIS Live / RPKI
 
-BGP visibility, prefixes, neighbours, announcements and withdrawals are control-plane evidence. The optional RIS Live collector is bounded to validated prefix scope, passive and separate from the dashboard process. BGP visibility never proves working end-user Internet.
-
-### RIPEstat RPKI — v1.3
-
-RPKI context validates a bounded set of currently announced prefixes for the selected ASN and preserves `valid`, `invalid_asn`, `invalid_length` and `unknown` states. Bounded monthly IPv4/IPv6 VRP history is also exposed. RPKI remains part of the RIPE routing source family with `independentCensorshipVote:false`.
-
-An invalid or unknown RPKI result is not automatically censorship or route-hijack intent. Misconfiguration, ROA max-length policy, incomplete deployment and other routing causes must remain plausible alternatives.
+BGP visibility, prefixes, neighbours, announcements and withdrawals are control-plane evidence. The optional RIS Live collector is bounded to validated prefix scope, passive and separate from the dashboard process. RPKI preserves upstream route-origin authorization states. None of these alone proves working end-user Internet or censorship intent.
 
 ### Route Views / CAIDA BGPStream
 
-CAIDA BGPStream tooling accesses **Route Views live** resources.
+CAIDA BGPStream tooling accesses **Route Views live** resources. BGPStream is an access/normalization framework, not itself a sensor. Consuming RIPE data through BGPStream remains RIPE evidence and must not be counted again. Route Views events remain control-plane context only.
 
-- BGPStream is an access/normalization framework, not itself a sensor;
-- consuming RIPE data through BGPStream remains RIPE evidence and must not be counted again;
-- only Route Views collector/peer infrastructure supplies the second routing-source family;
-- collection is passive, prefix-scoped and operator-started;
-- output remains `routing-control-plane` evidence with `independentCensorshipVote:false`.
+### CAIDA ASRank
 
-### CAIDA ASRank — v1.3
-
-ASRank adds selected-ASN rank, customer-cone, degree and inferred relationship context. It is useful for macroscopic topology/dependency analysis but not for end-user reachability or censorship attribution.
-
-ASRank derives topology from CAIDA Ark active measurements plus routing inputs including Route Views and RIPE. That overlap is explicit; ASRank must not inflate routing-source independence and remains `topology-context` with `independentCensorshipVote:false`.
+ASRank adds selected-ASN rank, customer-cone, degree and inferred relationship context. It derives partly from routing inputs overlapping existing sources, so it must not inflate routing-source independence and remains `topology-context` with `independentCensorshipVote:false`.
 
 ### M-Lab / APNIC
 
-M-Lab collapses repeated histogram buckets into one daily summary and preserves sample counts. A documented missing aggregate may be `no_data`; transport/parser/server failures remain errors. Performance degradation is not automatically throttling/censorship.
+M-Lab preserves sample counts and performance context. APNIC IPv6 preserves experiment counts and capability/preference context. Performance/protocol variation is not automatically censorship or throttling attribution.
 
-APNIC IPv6 preserves raw experiment counts, capable/preferred percentages and smoothed context. It is protocol/deployment context, not censorship attribution.
+### Tor Metrics / BridgeDB — v1.4
 
-### Tor / Globalping / topology
+- Iran Tor transport observations are retained as published lower/upper estimate bounds;
+- exact client counts are not invented from those intervals;
+- directional change is supported only where paired intervals do not overlap;
+- overlapping/touching intervals remain indeterminate;
+- BridgeDB requested-transport demand is global and is labelled **GLOBAL · not Iran-specific**;
+- BridgeDB is excluded from Iran incident correlation;
+- Tor/BridgeDB remain context only with `independentCensorshipVote:false`.
 
-Tor is circumvention context only. Globalping passive inventory is the default; active measurements remain disabled by default and protected. PeeringDB, IHR and ASRank provide different topology/dependency views and remain context only.
+### Tor ↔ Access Now STOP temporal context — v1.4
+
+Tor transport bounds can be compared with STOP incident windows only as temporal context. A date-window match does not establish causality, blocking, political intent or a new independent technical vote. Missing paired observations remain `no_data`; partial upstream coverage remains `partial`.
+
+### Ookla Open Data — v1.4 feasibility contract
+
+The repository contains a bounded contract for official quarterly fixed/mobile public Ookla objects. An Iran aggregate is **not** published yet because a defensible result requires a reviewed country-boundary dataset and spatial join. Bounding-box shortcuts, fabricated national values and automatic throttling/censorship conclusions are prohibited.
+
+### Globalping / topology
+
+Globalping passive inventory is the default; active measurements remain disabled by default and protected. PeeringDB, IHR and ASRank provide topology/dependency context only.
 
 ### STOP / Pulse / GDELT / Citizen Lab
 
@@ -81,9 +84,7 @@ STOP and Pulse are curated context and can cite technical sources already presen
 
 ## Circumvention source review
 
-Psiphon and Ceno/eQualitie were re-reviewed for v1.3. Public reporting remains useful Iran circumvention/resilience context, but no stable supported public machine-readable Iran time-series API was established. Therefore no runtime telemetry adapter was admitted and unsupported chart/page scraping remains prohibited.
-
-See [SOURCE_REVIEW_V13.md](SOURCE_REVIEW_V13.md).
+Psiphon and Ceno/eQualitie remain useful Iran circumvention/resilience context, but no stable supported public machine-readable Iran time-series API was established. No unsupported runtime telemetry adapter or chart scraping is admitted.
 
 ## Owned-probe evidence family
 

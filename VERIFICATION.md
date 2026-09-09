@@ -1,75 +1,59 @@
-# Verification Report — v1.2.0 release candidate
+# Verification Report — v1.4.0 release candidate
 
 Date: **2026-09-09**  
-Release line: **v1.2.0**  
-Feature merge: **`9dac687bc9bf83282ad3aa650255cafbb372160c`**  
-Release metadata branch: **`release/v1.2.0`**
+Release line: **v1.4.0**  
+Feature merge: **`cf121adf1cdc976c58b591b53debf1d9e987bef3`**  
+Release metadata branch: **`release/v1.4.0`**
 
-## Release-line gates
+## Completed feature-line gates
 
-Completed gates:
-
-- readiness CI `34366466998` — **success**;
-- PR #6 CI `34368934884` — **success**;
-- post-feature-merge `main` CI `34369377194` — **success**;
-- deterministic suite — **203/203 passed**;
+- feature branch CI `34388597794` — **success**;
+- feature PR #12 CI `34388825541` — **success**;
+- post-feature-merge `main` CI `34389188256` — **success**;
+- deterministic suite — **237/237 passed**;
 - production build — success;
+- stable release-notes gate — success on development path and required again for the stable release branch;
 - committed-token/private-key and `.env` checks — success;
 - runtime `/api/health`, root, unknown-path and traversal smoke tests — success;
 - real headless Chrome presentation gate — success;
-- live public-source acceptance `34365369630` — **success**.
+- live public-source acceptance `34388597366` — **success**.
 
-Real browser result:
+Real browser result includes bounded Tor/BridgeDB context and preserves the GLOBAL/not-Iran-specific label for BridgeDB.
 
-```text
-UI PRESENTATION PASS · google-chrome · M-Lab/APNIC/STOP rendered in a real headless browser
-```
+The release-metadata branch/PR and final post-metadata `main` commit must pass the same CI before tag `v1.4.0` is published.
 
-The release-metadata branch/PR and final post-metadata `main` commit are required to pass the same CI before tag `v1.2.0` is published.
+## Major deterministic coverage added in v1.4
 
-## Major deterministic coverage added in v1.2
+The suite verifies, in addition to previous source adapters and assessment rules:
 
-The suite verifies, in addition to the v1.1 source adapters and assessment rules:
-
-- Route Views/BGPStream project/resource separation and bounded prefix scope;
-- CAIDA live-broker request semantics;
-- signed fleet manifest exact schemas and expiry/lifetime bounds;
-- local target resolution and rejection of scheduler-supplied endpoints/commands;
-- authenticated result envelopes and manifest binding;
-- sensitive metadata rejection;
-- replay/rate/size/concurrency guards;
-- bounded memory-only result buffering and purge behavior;
-- Class-A loopback DNS/TCP/TLS/HTTPS adapters and timeout/error semantics;
-- local enable and consent gates before any network/measurement operation;
-- real Node HTTPS handshake, hostname validation and SPKI pinning;
-- Stage-1 fixed-path/redirect/content-size transport rules;
-- collection-edge source-IP/XFF exclusion;
-- systemd laboratory sandbox/default-deny configuration and negative-policy validation;
-- key provisioning/rotation/revocation rules;
-- rollback order, no-shell and no-auto-reenable rules;
-- per-probe publication isolation and one-source-family semantics;
-- VPN protocol/NIN evidence readiness rules;
-- province and SIM segmentation NO-GO rules;
-- real browser rendering of M-Lab/APNIC/STOP context.
-
-## Live source acceptance
-
-The latest v1.2 runtime/UI live gate `34365369630` completed successfully. It exercises the public-source server adapters plus passive routing acceptance checks. Legitimate `observed`, `partial` and `no_data` states remain distinct and no source error is converted into zero impact.
-
-The Route Views/CAIDA gate establishes the supported live resource/provenance path. Route Views routing data remains control-plane evidence; using BGPStream to consume RIPE data would not create source independence.
+- Iran Tor transport lower/upper bounds are preserved;
+- non-overlapping bounds can support only a direction, not an exact client delta;
+- overlapping/touching bounds remain indeterminate;
+- missing paired Tor observations remain `no_data`;
+- global BridgeDB transport-demand scope cannot be relabelled as Iran-specific;
+- BridgeDB is excluded from Iran incident correlation;
+- Tor↔STOP temporal matching cannot add causality, blocking attribution, national status or an independent vote;
+- partial/no-data source states survive correlation unchanged;
+- Ookla Open Data object naming/quarter contracts are bounded to official public objects;
+- no Iran Ookla publication occurs without an approved country-boundary spatial join;
+- stable package versions require complete canonical release notes;
+- empty GitHub Release bodies can be recovered from canonical notes without overwriting an existing body;
+- headless browser presentation preserves the evidence/scope boundaries.
 
 ## Security / evidence boundary
 
-Release verification does **not** authorize an Iran pilot. In particular:
+Release verification does **not** authorize an Iran pilot or active protocol/circumvention probing. In particular:
 
+- Tor/BridgeDB/STOP/Ookla context adds zero independent censorship votes;
+- BridgeDB global data never becomes Iran data;
+- performance degradation alone is not throttling attribution;
 - owned probes remain one source family;
 - per-probe observations cannot automatically become national/province status;
 - website reachability cannot become VPN transport evidence;
-- complete VPN/NIN evidence gates reach analyst review only;
 - province cannot be inferred from source IP/ASN/latency;
 - SIM entitlement class is not collected or inferred;
 - routing visibility remains separate from data-plane reachability;
-- missing/partial/error states are never promoted to complete confirmation.
+- missing/partial/error states are never promoted to confirmation.
 
 ## External predeployment gates
 
@@ -86,6 +70,6 @@ A green CI, PR, tag or release cannot satisfy these external gates. Repository p
 
 ## Release conclusion
 
-**v1.2 repository/runtime release line: verified and merged to `main`.**  
-**Release metadata: being finalized on `release/v1.2.0`.**  
+**v1.4 repository/runtime feature line: verified and merged to `main`.**  
+**Release metadata: being finalized on `release/v1.4.0`.**  
 **Iran Stage-1 pilot: NO-GO until the external gates and explicit authorization are satisfied.**
