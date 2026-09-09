@@ -1,8 +1,9 @@
 import { readFile } from 'node:fs/promises';
 import http from 'node:http';
-import { spawnSync } from 'node:child_process';
-import process from 'node:process';
+import { execFile, spawnSync } from 'node:child_process';
+import { promisify } from 'node:util';
 
+const execFileAsync = promisify(execFile);
 const moduleSource = await readFile(new URL('../public/v11-context.js', import.meta.url), 'utf8');
 
 function findBrowser() {
@@ -89,14 +90,19 @@ try {
   const address = server.address();
   if (!address || typeof address === 'string') throw new Error('UI fixture server did not expose a TCP port.');
   const browser = findBrowser();
-  const run = spawnSync(browser, [
+  const args = [
     '--headless', '--disable-gpu', '--no-sandbox', '--disable-dev-shm-usage', '--virtual-time-budget=2000', '--dump-dom',
     `http://127.0.0.1:${address.port}/fixture`,
-  ], { encoding: 'utf8', timeout: 20_000, maxBuffer: 4 * 1024 * 1024 });
+  ];
+  let stdout;
+  try {
+    ({ stdout } = await execFileAsync(browser, args, { encoding: 'utf8', timeout: 20_000, maxBuffer: 4 * 1024 * 1024 }));
+  } catch (error) {
+    const detail = error?.stderr || error?.message || String(error);
+    throw new Error(`Headless browser execution failed: ${detail}`);
+  }
 
-  if (run.error) throw run.error;
-  if (run.status !== 0) throw new Error(`Headless browser exited ${run.status}: ${run.stderr || 'no stderr'}`);
-  const dom = run.stdout;
+  const dom = stdout;
   const required = [
     'data-fixture-ready="1"', 'id="mlab-panel"', 'id="apnic-panel"', 'id="stop-context"',
     '42.5 Mbps', '35.5%', 'Fixture incident', 'Independent sensor votes',
