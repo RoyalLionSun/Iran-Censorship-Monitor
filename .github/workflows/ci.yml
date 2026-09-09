@@ -20,10 +20,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22
           cache: npm
@@ -50,6 +50,14 @@ jobs:
             echo 'Potential Cloudflare API token committed to repository.' >&2
             exit 1
           fi
+          if grep -RInE \
+            --exclude-dir=.git \
+            --exclude-dir=node_modules \
+            --exclude-dir=dist \
+            -- '-----BEGIN ([A-Z0-9 ]+ )?PRIVATE KEY-----' .; then
+            echo 'Potential private key committed to repository.' >&2
+            exit 1
+          fi
           if find . -maxdepth 3 -type f -name '.env' -print -quit | grep -q .; then
             echo 'A .env file is committed or present in the CI checkout.' >&2
             exit 1
@@ -69,4 +77,6 @@ jobs:
             sleep 0.25
           done
           curl --fail --silent http://127.0.0.1:4173/ >/dev/null
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:4173/does-not-exist)" = 404
+          test "$(curl --path-as-is -s -o /dev/null -w '%{http_code}' http://127.0.0.1:4173/../server.mjs)" = 404
           cat /tmp/health.json

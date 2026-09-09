@@ -1,71 +1,19 @@
 [
-  {
-    "id": "ooni",
-    "name": "OONI",
-    "class": "live-api",
-    "access": "public",
-    "role": "Censorship and application reachability measurements",
-    "url": "https://api.ooni.io/",
-    "docs": "https://docs.ooni.org/"
-  },
-  {
-    "id": "ripe",
-    "name": "RIPE Atlas",
-    "class": "live-api",
-    "access": "public",
-    "role": "Active network measurements and probe/ASN context",
-    "url": "https://atlas.ripe.net/",
-    "docs": "https://atlas.ripe.net/docs/apis/rest-api-reference/"
-  },
-  {
-    "id": "radar",
-    "name": "Cloudflare Radar",
-    "class": "live-api",
-    "access": "token",
-    "role": "Country-level HTTP traffic, outage annotations and BGP anomaly context",
-    "url": "https://radar.cloudflare.com/",
-    "docs": "https://developers.cloudflare.com/radar/"
-  },
-  {
-    "id": "ioda",
-    "name": "IODA",
-    "class": "live-api",
-    "access": "public",
-    "role": "Country/ASN connectivity signals and outage events",
-    "url": "https://ioda.inetintel.cc.gatech.edu/",
-    "docs": "https://api.ioda.inetintel.cc.gatech.edu/v2/"
-  },
-  {
-    "id": "tor",
-    "name": "Tor Metrics",
-    "class": "live-csv",
-    "access": "public",
-    "role": "Iran Tor direct-user and bridge-user estimates",
-    "url": "https://metrics.torproject.org/",
-    "docs": "https://metrics.torproject.org/stats.html"
-  },
-  {
-    "id": "censored-planet",
-    "name": "Censored Planet",
-    "class": "context",
-    "access": "public-data",
-    "role": "Longitudinal censorship measurement datasets",
-    "url": "https://censoredplanet.org/"
-  },
-  {
-    "id": "bgpstream",
-    "name": "BGPStream / CAIDA",
-    "class": "context",
-    "access": "public",
-    "role": "BGP routing and announcement analysis",
-    "url": "https://bgpstream.caida.org/"
-  },
-  {
-    "id": "keepiton",
-    "name": "Access Now / #KeepItOn",
-    "class": "context",
-    "access": "public-dataset",
-    "role": "Verified shutdown event context",
-    "url": "https://www.accessnow.org/keepiton-data-dashboard/"
-  }
+  {"id":"ooni","name":"OONI","class":"live-api","access":"public","role":"Censorship and application reachability measurements","url":"https://api.ooni.io/","docs":"https://docs.ooni.org/"},
+  {"id":"ripe","name":"RIPE Atlas","class":"live-api","access":"public","role":"Active network measurements and probe/ASN context","url":"https://atlas.ripe.net/","docs":"https://atlas.ripe.net/docs/apis/rest-api-reference/"},
+  {"id":"radar","name":"Cloudflare Radar","class":"live-api","access":"token","role":"Country-level HTTP traffic, outage annotations and BGP anomaly context","url":"https://radar.cloudflare.com/","docs":"https://developers.cloudflare.com/radar/"},
+  {"id":"ioda","name":"IODA","class":"live-api","access":"public","role":"Country/ASN connectivity signals and outage events","url":"https://ioda.inetintel.cc.gatech.edu/","docs":"https://api.ioda.inetintel.cc.gatech.edu/v2/"},
+  {"id":"tor","name":"Tor Metrics","class":"live-csv","access":"public","role":"Iran Tor direct-user and bridge-user estimates","url":"https://metrics.torproject.org/","docs":"https://metrics.torproject.org/stats.html"},
+  {"id":"mlab","name":"M-Lab NDT","class":"live-json-aggregate","access":"public","role":"Iran/ASN NDT throughput and minimum-RTT performance context with explicit sample coverage","url":"https://www.measurementlab.net/","docs":"https://github.com/m-lab/stats-pipeline/tree/main/docs"},
+  {"id":"apnic-ipv6","name":"APNIC Labs IPv6","class":"live-json-measurement","access":"public","role":"Iran/ASN client-side IPv6 capability and preference context with raw experiment sample counts","url":"https://stats.labs.apnic.net/ipv6/IR","docs":"https://data1.labs.apnic.net/ipv6-data-format.html"},
+  {"id":"censored-planet","name":"Censored Planet","class":"live-graphql","access":"public","role":"Remote censorship measurements, interference-rate context and CenAlert signals","url":"https://censoredplanet.org/","docs":"https://github.com/censoredplanet/cp-api"},
+  {"id":"bgpstream","name":"BGPStream / CAIDA","class":"context","access":"public","role":"BGP routing and announcement analysis","url":"https://bgpstream.caida.org/"},
+  {"id":"keepiton","name":"Access Now / #KeepItOn STOP","class":"curated-incident-dataset","access":"public-dataset","role":"Iran shutdown/blocking incident context with source-lineage preservation; never an independent technical vote","url":"https://www.accessnow.org/keepiton-data-dashboard/","docs":"https://www.accessnow.org/guide/shutdown-tracker-optimization-project/"},
+  {"id":"ripestat","name":"RIPEstat / RIPE RIS","class":"live-api","access":"public","role":"BGP visibility, announced prefixes, neighbours and bounded routing updates","url":"https://stat.ripe.net/","docs":"https://stat.ripe.net/docs/data-api/"},
+  {"id":"globalping","name":"Globalping","class":"live-api","access":"public / optional token","role":"Iran probe inventory and protected operator-controlled active measurements","url":"https://globalping.io/","docs":"https://www.jsdelivr.com/docs/api.globalping.io"},
+  {"id":"citizenlab","name":"Citizen Lab Test Lists","class":"live-csv","access":"public","role":"Curated Iran censorship-test target inventory","url":"https://github.com/citizenlab/test-lists/blob/master/lists/ir.csv","docs":"https://github.com/citizenlab/test-lists"},
+  {"id":"peeringdb","name":"PeeringDB","class":"live-api","access":"public","role":"Operator-maintained ASN, exchange and facility topology context","url":"https://www.peeringdb.com/","docs":"https://docs.peeringdb.com/api_specs/"},
+  {"id":"ihr","name":"Internet Health Report","class":"live-api","access":"public","role":"AS Hegemony dependency and chokepoint context","url":"https://www.ihr.live/","docs":"https://github.com/InternetHealthReport/ihr-api"},
+  {"id":"pulse","name":"Internet Society Pulse","class":"curated-api","access":"token","role":"Curated shutdown incidents and verification levels; context only","url":"https://pulse.internetsociety.org/en/shutdowns/","docs":"https://pulse.internetsociety.org/api/docs"},
+  {"id":"gdelt","name":"GDELT DOC 2.0","class":"osint-discovery","access":"public","role":"Professional-source discovery for Iran censorship reporting; context only","url":"https://www.gdeltproject.org/","docs":"https://blog.gdeltproject.org/gdelt-doc-2-0-api-debuts/"}
 ]

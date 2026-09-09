@@ -1,0 +1,57 @@
+name: Live public source acceptance
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [develop/v1.1]
+    paths:
+      - '.github/workflows/live-source-acceptance.yml'
+      - 'scripts/verify-public-sources.mjs'
+      - 'scripts/verify-ris-live.mjs'
+      - 'package.json'
+      - 'server.mjs'
+      - 'lib/ripe.mjs'
+      - 'lib/mlab.mjs'
+      - 'lib/apnic.mjs'
+      - 'lib/accessnow.mjs'
+      - 'lib/censoredplanet.mjs'
+      - 'lib/citizenlab.mjs'
+      - 'lib/globalping.mjs'
+      - 'lib/ioda.mjs'
+      - 'lib/tor.mjs'
+      - 'lib/ripestat.mjs'
+      - 'lib/rislive.mjs'
+      - 'lib/peeringdb.mjs'
+      - 'lib/ihr.mjs'
+      - 'lib/osint.mjs'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: live-source-acceptance-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  live-public-sources:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify public upstreams through the real server API
+        run: npm run verify:public
+
+      - name: Verify passive RIPE RIS Live subscription handshake
+        run: npm run verify:ris-live

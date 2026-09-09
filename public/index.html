@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="color-scheme" content="dark" />
-  <meta name="description" content="Iran-focused internet censorship and connectivity monitoring using OONI, IODA, RIPE Atlas, Cloudflare Radar and Tor Metrics." />
-  <title>Iran Internet Monitor</title>
+  <meta name="description" content="Iran-focused censorship intelligence combining OONI, Censored Planet, RIPE, IODA, Cloudflare Radar, Globalping, Tor and routing/topology context." />
+  <title>Iran Censorship Monitor</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
@@ -14,7 +14,7 @@
       <div class="brand">
         <div class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></div>
         <div>
-          <strong>Iran Internet Monitor</strong>
+          <strong>Iran Censorship Monitor</strong>
           <small>Measurement & censorship signals</small>
         </div>
       </div>
@@ -127,9 +127,9 @@
           <small id="kpi-tor-meta">Direct + bridge estimates</small>
         </article>
         <article class="kpi-card">
-          <div class="kpi-head"><span>Data freshness</span><i class="state-dot neutral"></i></div>
-          <strong id="kpi-freshness">—</strong>
-          <small id="kpi-freshness-meta">Server fetch time</small>
+          <div class="kpi-head"><span>BGP visibility</span><i id="bgp-state-dot" class="state-dot neutral"></i></div>
+          <strong id="kpi-bgp">—</strong>
+          <small id="kpi-bgp-meta">Select an ASN for RIPE RIS control-plane visibility</small>
         </article>
       </section>
 
@@ -149,6 +149,51 @@
             <div><span class="section-label">CORROBORATION</span><h2>Independent signal review</h2></div>
           </header>
           <div id="signal-list" class="signal-list"><div class="empty-state">Load the selected period to review source agreement.</div></div>
+        </article>
+
+        <article class="panel span-4" id="divergence-panel">
+          <header class="panel-header">
+            <div><span class="section-label">IRAN-SPECIFIC POSTURE</span><h2>Control vs data-plane divergence</h2></div>
+            <span id="divergence-state" class="micro-state">Pending</span>
+          </header>
+          <p class="panel-note">High BGP visibility can coexist with severe user-level disruption. This panel flags that divergence without attributing cause or intent.</p>
+          <div id="divergence-card" class="posture-card"><div class="empty-state">Select a specific ASN to compare routing visibility with data-plane signals.</div></div>
+        </article>
+
+        <article class="panel span-8" id="routing-panel">
+          <header class="panel-header">
+            <div><span class="section-label">RIPESTAT / RIPE RIS</span><h2>BGP control-plane visibility</h2></div>
+            <button id="load-bgp-updates" class="button" type="button">Load BGP updates</button>
+          </header>
+          <p class="panel-note">Routing visibility, announced prefixes and observed neighbours describe the control plane. Raw announcements/withdrawals are loaded on demand and bounded to the last 48 hours of the selected window.</p>
+          <div id="routing-summary" class="mini-stats"></div>
+          <div class="table-wrap compact-table-wrap">
+            <table><thead><tr><th>Neighbour</th><th>Power</th><th>IPv4 peers</th><th>IPv6 peers</th></tr></thead><tbody id="routing-neighbours"><tr><td colspan="4" class="table-empty">No routing context loaded.</td></tr></tbody></table>
+          </div>
+          <div id="bgp-updates-state" class="micro-note">BGP update drilldown not requested.</div>
+          <div class="table-wrap compact-table-wrap">
+            <table><thead><tr><th>Time</th><th>Type</th><th>Prefix</th><th>AS path</th><th>Collector / peer</th></tr></thead><tbody id="bgp-updates-table"><tr><td colspan="5" class="table-empty">Load updates for a selected ASN.</td></tr></tbody></table>
+          </div>
+        </article>
+
+        <article class="panel span-6" id="censoredplanet-panel">
+          <header class="panel-header">
+            <div><span class="section-label">CENSORED PLANET / REMOTE MEASUREMENT</span><h2>Interference & CenAlert signals</h2></div>
+            <a href="https://censoredplanet.org/" target="_blank" rel="noreferrer">Censored Planet ↗</a>
+          </header>
+          <p class="panel-note">Remote measurement complements OONI's probe model. Unexpected responses and CenAlert events are investigation signals; they are not automatically classified as censorship.</p>
+          <div id="censoredplanet-summary" class="mini-stats"></div>
+          <div id="censoredplanet-events" class="event-feed"><div class="empty-state">No data loaded.</div></div>
+        </article>
+
+        <article class="panel span-6" id="globalping-panel">
+          <header class="panel-header">
+            <div><span class="section-label">GLOBALPING / IRAN VANTAGE COVERAGE</span><h2>Available in-country probes</h2></div>
+            <a href="https://globalping.io/" target="_blank" rel="noreferrer">Globalping ↗</a>
+          </header>
+          <p class="panel-note">This is passive probe inventory only. Probe presence is not a censorship signal. Active tests are disabled by default and remain operator-controlled.</p>
+          <div id="globalping-summary" class="mini-stats"></div>
+          <div class="table-wrap compact-table-wrap"><table><thead><tr><th>ASN</th><th>Network</th><th>Probes</th><th>Cities</th><th>Eyeball</th><th>Datacenter</th></tr></thead><tbody id="globalping-networks"><tr><td colspan="6" class="table-empty">No probe inventory loaded.</td></tr></tbody></table></div>
         </article>
 
         <article class="panel span-6" id="ripe-panel">
@@ -189,6 +234,7 @@
           <p class="panel-note">Tor Metrics estimates users from directory requests. Falling below its statistical lower bound may indicate a censorship-related event, but can also have non-censorship causes.</p>
           <div id="tor-chart" class="chart empty-chart"><span>No data loaded</span></div>
           <div id="tor-summary" class="mini-stats"></div>
+          <div id="tor-transports" class="transport-grid"></div>
         </article>
 
         <article class="panel span-7" id="circumvention-panel">
@@ -210,6 +256,29 @@
             <div><span class="section-label">SIGNALS / EVENTS</span><h2>Selected-window event feed</h2></div>
           </header>
           <div id="event-feed" class="event-feed"><div class="empty-state">No event data loaded.</div></div>
+        </article>
+
+        <article class="panel span-6" id="topology-panel">
+          <header class="panel-header"><div><span class="section-label">TOPOLOGY / CHOKEPOINT CONTEXT</span><h2>PeeringDB & AS Hegemony</h2></div></header>
+          <p class="panel-note">Operator topology and BGP-path dependency context help identify concentration and potential chokepoints. Neither source is a live censorship sensor.</p>
+          <div id="topology-summary" class="mini-stats"></div>
+          <div class="table-wrap compact-table-wrap"><table><thead><tr><th>Transit ASN</th><th>Name</th><th>Hegemony</th><th>AF</th></tr></thead><tbody id="hegemony-table"><tr><td colspan="4" class="table-empty">Select an ASN to load dependency context.</td></tr></tbody></table></div>
+        </article>
+
+        <article class="panel span-6" id="protocol-panel">
+          <header class="panel-header"><div><span class="section-label">CLOUDFLARE RADAR / PROTOCOL MIX</span><h2>HTTP, IP and TLS distribution</h2></div></header>
+          <p class="panel-note">Protocol shares can reveal abrupt shifts, but a change alone is not proof of filtering. Values follow the selected Iran/ASN scope.</p>
+          <div id="protocol-mix" class="distribution-grid"><div class="empty-state">No protocol distribution loaded.</div></div>
+        </article>
+
+        <article class="panel span-12" id="targets-panel">
+          <header class="panel-header">
+            <div><span class="section-label">CITIZEN LAB / IRAN TEST TARGETS</span><h2>Curated censorship-test inventory</h2></div>
+            <button id="load-targets" class="button" type="button">Load Iran targets</button>
+          </header>
+          <p class="panel-note">The Iran test list is a target inventory, not a statement that every URL is currently blocked. Use it to select defensible test targets for OONI or controlled active measurements.</p>
+          <div class="target-controls"><input id="target-search" type="text" placeholder="Search URL, category or notes" /><select id="target-category"><option value="">All categories</option></select></div>
+          <div class="table-wrap"><table><thead><tr><th>URL</th><th>Category</th><th>Description</th><th>Date added</th><th>Source / notes</th></tr></thead><tbody id="targets-table"><tr><td colspan="5" class="table-empty">Target inventory has not been requested.</td></tr></tbody></table></div>
         </article>
 
         <article class="panel span-12" id="providers-panel">
@@ -251,6 +320,17 @@
           </div>
         </details>
 
+        <article class="panel span-12" id="intelligence-panel">
+          <header class="panel-header">
+            <div><span class="section-label">IRAN INTELLIGENCE / OSINT</span><h2>Research & professional-source discovery</h2></div>
+            <button id="load-intelligence" class="button" type="button">Discover current reporting</button>
+          </header>
+          <p class="panel-note">This layer is context, not a vote in the technical assessment. GDELT discovers reporting only from a professional-domain allowlist; underlying measurement provenance must be reviewed before treating articles as corroboration.</p>
+          <div id="intelligence-source-grid" class="intelligence-source-grid"></div>
+          <div id="intelligence-state" class="micro-note">GDELT discovery has not been requested.</div>
+          <div class="table-wrap"><table><thead><tr><th>Seen</th><th>Source</th><th>Title</th><th>Language</th><th>Evidence role</th></tr></thead><tbody id="intelligence-table"><tr><td colspan="5" class="table-empty">No OSINT discovery requested.</td></tr></tbody></table></div>
+        </article>
+
         <article class="panel span-12" id="sources-panel">
           <header class="panel-header"><div><span class="section-label">DATA PROVENANCE</span><h2>Source register</h2></div></header>
           <div id="source-grid" class="source-grid"></div>
@@ -259,7 +339,7 @@
     </main>
 
     <footer>
-      <span>Iran Internet Monitor</span>
+      <span>Iran Censorship Monitor</span>
       <span>Real public measurements · transparent no-data states · no fabricated live values</span>
       <span id="footer-version">v1.0.0</span>
     </footer>
