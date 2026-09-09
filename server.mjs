@@ -13,6 +13,7 @@ import { getTorMetrics } from './lib/tor.mjs';
 import { getRipeBgpUpdates, getRipeStatSignals } from './lib/ripestat.mjs';
 import { getRpkiIntegrity } from './lib/rpki.mjs';
 import { getAsRankTopology } from './lib/asrank.mjs';
+import { compareAsnIdentity, getAsnRegistryIdentity } from './lib/asn-registry.mjs';
 import { authorizeGlobalpingControl, createGlobalpingMeasurement, getGlobalpingIranProbes, getGlobalpingMeasurement, globalpingRateLimit } from './lib/globalping.mjs';
 import { getCensoredPlanetSignals } from './lib/censoredplanet.mjs';
 import { getCitizenLabIranTargets } from './lib/citizenlab.mjs';
@@ -141,6 +142,7 @@ async function handleApi(req, res, url) {
         accessNowStopIncidents: true,
         ripeStatRouting: true,
         ripeStatRpkiIntegrity: true,
+        ripeStatAsnRegistryIdentity: true,
         caidaAsRankTopology: true,
         censoredPlanet: true,
         globalpingProbeInventory: true,
@@ -152,6 +154,20 @@ async function handleApi(req, res, url) {
         gdeltProfessionalOsintDiscovery: true,
         wireguardOrOpenvpnProbeFleet: false,
       },
+    });
+    return true;
+  }
+
+  if (url.pathname === '/api/asn-registry') {
+    const asn = normalizeAsn(url.searchParams.get('asn') || '');
+    const profile = asns.find((item) => item.asn === asn);
+    if (!profile) throw new Error('ASN is not in the curated Iran profile catalogue.');
+    const registry = await getAsnRegistryIdentity(asn);
+    jsonResponse(res, 200, {
+      ...registry,
+      profile,
+      profileMatch: compareAsnIdentity(profile, registry),
+      note: 'Registry identity is scope/topology context only and contributes zero independent censorship votes.',
     });
     return true;
   }
@@ -177,7 +193,8 @@ async function handleApi(req, res, url) {
     ]);
     const scopeLabel = input.asn ? `${input.asn} / Iran` : 'Iran / all measured networks';
     const assessment = buildAssessment({ ooni, ripe, radar, ioda, ripestat, scopeLabel });
-    jsonResponse(res, 200, { ok: true, input, fetchedAt: new Date().toISOString(), assessment, ooni, ripe, radar, ioda, tor, mlab, apnic, ripestat, globalping, censoredPlanet, peeringdb, ihr, asrank, rpki, pulse });
+    const asnProfile = input.asn ? asns.find((item) => item.asn === input.asn) || null : null;
+    jsonResponse(res, 200, { ok: true, input, asnProfile, fetchedAt: new Date().toISOString(), assessment, ooni, ripe, radar, ioda, tor, mlab, apnic, ripestat, globalping, censoredPlanet, peeringdb, ihr, asrank, rpki, pulse });
     return true;
   }
 
@@ -273,7 +290,7 @@ async function handleApi(req, res, url) {
 
   if (url.pathname === '/api/providers') {
     const base = queryInput(url);
-    const selected = asns.slice(0, 10);
+    const selected = asns.filter((network) => network.providerComparison === true);
     const rows = await mapLimit(selected, 3, async (network) => {
       const input = { ...base, asn: network.asn };
       const [ooni, ripe] = await Promise.all([

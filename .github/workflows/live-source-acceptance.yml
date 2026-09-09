@@ -3,14 +3,18 @@ name: Live public source acceptance
 on:
   workflow_dispatch:
   push:
-    branches: [develop/v1.4]
+    branches: [develop/v1.5]
     paths:
       - '.github/workflows/live-source-acceptance.yml'
+      - 'data/asns.json'
+      - 'ASN_IDENTITY_METHOD.md'
       - 'scripts/verify-public-sources.mjs'
+      - 'scripts/verify-asn-registry.mjs'
       - 'scripts/verify-ris-live.mjs'
       - 'scripts/verify-bgpstream-broker.mjs'
       - 'package.json'
       - 'server.mjs'
+      - 'lib/asn-registry.mjs'
       - 'lib/ripe.mjs'
       - 'lib/mlab.mjs'
       - 'lib/apnic.mjs'
@@ -39,7 +43,7 @@ concurrency:
 jobs:
   live-public-sources:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 10
 
     steps:
       - name: Checkout
@@ -56,6 +60,9 @@ jobs:
 
       - name: Verify public upstreams through the real server API
         run: npm run verify:public
+
+      - name: Verify curated ASN identities against RIPEstat Whois
+        run: npm run verify:asn-registry
 
       - name: Verify passive RIPE RIS Live subscription handshake
         run: npm run verify:ris-live
