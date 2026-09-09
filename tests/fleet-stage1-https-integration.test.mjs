@@ -65,7 +65,13 @@ function loopbackRealHttpsRequest(port) {
     // HTTPS/443 with servername=fleet.example.invalid; TLS identity checks retain
     // that servername while the test socket is forced to a local ephemeral port.
     port,
-    lookup: (_hostname, _options, done) => done(null, '127.0.0.1', 4),
+    lookup: (_hostname, lookupOptions, done) => {
+      if (lookupOptions?.all) {
+        done(null, [{ address: '127.0.0.1', family: 4 }]);
+        return;
+      }
+      done(null, '127.0.0.1', 4);
+    },
   }, callback);
 }
 
