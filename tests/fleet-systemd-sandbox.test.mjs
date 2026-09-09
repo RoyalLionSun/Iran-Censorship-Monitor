@@ -37,7 +37,7 @@ test('probe sandbox fails closed if privilege controls are weakened', () => {
 
 test('collector sandbox fails closed if an Internet address family or IP allowlist is added', () => {
   assert.throws(() => validateFleetCollectorLabUnit(replaceOnce(collector, 'RestrictAddressFamilies=AF_UNIX', 'RestrictAddressFamilies=AF_UNIX AF_INET')), /RestrictAddressFamilies/);
-  assert.throws(() => validateFleetCollectorLabUnit(`${collector}\nIPAddressAllow=localhost\n`), /IPAddressAllow/);
+  assert.throws(() => validateFleetCollectorLabUnit(`${collector}\nIPAddressAllow=localhost\n`), /IP destinations/);
 });
 
 test('lab units are ephemeral and not persistently enableable', () => {
