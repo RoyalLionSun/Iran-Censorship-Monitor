@@ -68,6 +68,7 @@ async function main() {
     const query = new URLSearchParams({ asn: 'AS58224', testName: 'web_connectivity', since: range.since, until: range.until });
 
     const config = await json('/api/config');
+    assert(config.capabilities?.liveTorMetrics === true, 'Tor Metrics capability missing from live config.');
     assert(config.capabilities?.mlabNdtPerformance === true, 'M-Lab capability missing from live config.');
     assert(config.capabilities?.apnicIpv6Context === true, 'APNIC IPv6 capability missing from live config.');
     assert(config.capabilities?.accessNowStopIncidents === true, 'Access Now STOP capability missing from live config.');
@@ -97,6 +98,18 @@ async function main() {
     }
     const failures = required.filter((item) => !item.ok);
     assert(!failures.length, `Public adapter live acceptance failed: ${failures.map((item) => item.name).join(', ')}`);
+
+    assert(overview.tor?.independentCensorshipVote === false, 'Tor Metrics must never become an independent censorship vote.');
+    assert(overview.tor?.evidenceRole === 'circumvention-context', 'Tor Metrics evidence role changed unexpectedly.');
+    assert(overview.tor?.sourceFamily === 'tor', 'Tor Metrics source family changed unexpectedly.');
+    assert(Array.isArray(overview.tor?.transports), 'Tor response missing country-by-transport bounds.');
+    assert(overview.tor?.bridgeDemandGlobal?.iranSpecific === false, 'BridgeDB global demand must not be labelled Iran-specific.');
+    assert(overview.tor?.bridgeDemandGlobal?.geographicScope === 'global', 'BridgeDB demand must remain globally scoped.');
+    const bridgeDbUrl = new URL(overview.tor?.sourceUrls?.bridgeDbGlobal || 'https://invalid.example/');
+    assert(bridgeDbUrl.hostname === 'metrics.torproject.org', 'BridgeDB source URL host changed unexpectedly.');
+    assert(bridgeDbUrl.searchParams.has('country') === false, 'BridgeDB global request must not add a country parameter.');
+    assert(['observed', 'no_data', 'error'].includes(overview.tor?.coverage?.bridgeDbGlobal), 'BridgeDB coverage state must remain observed/no_data/error.');
+    console.log(`PASS Tor scope: Iran transport bounds + BridgeDB ${overview.tor.coverage.bridgeDbGlobal} global-only demand context`);
 
     assert(Array.isArray(overview.mlab?.points), 'M-Lab response missing points array.');
     assert(overview.mlab?.comparison && typeof overview.mlab.comparison === 'object', 'M-Lab response missing sample-aware comparison metadata.');
