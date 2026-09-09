@@ -4,6 +4,8 @@ Iran-focused censorship-intelligence dashboard for technical measurements, routi
 
 **Status:** `v1.1.0-dev` on `develop/v1.1`.
 
+Verified runtime baseline before this documentation-only release pass: `fc59d4be80a49a84a1ea221b28ad3310617c0439`.
+
 The application does **not** ship simulated monitoring values. Missing, unavailable, rate-limited or unconfigured sources remain explicit no-data/error states. Contextual reports never become independent technical sensor votes merely because they repeat an underlying measurement.
 
 ## Evidence architecture
@@ -13,7 +15,7 @@ The dashboard keeps observation families separate:
 - **censorship/interference measurements:** OONI + Censored Planet;
 - **data plane/connectivity:** RIPE Atlas + IODA + Cloudflare Radar;
 - **performance/degradation context:** M-Lab NDT with sample-size-aware interpretation;
-- **control plane:** RIPEstat / RIPE RIS, including bounded BGP announcement/withdrawal drilldown;
+- **control plane:** RIPEstat / RIPE RIS, bounded historical update drilldown, plus an optional passive RIPE RIS Live collector;
 - **protocol/deployment context:** Cloudflare Radar protocol distributions + APNIC Labs IPv6 capability/preference;
 - **Iran vantage coverage:** Globalping probe inventory; optional active measurements are disabled by default and operator-controlled;
 - **circumvention:** Tor direct/bridge estimates and transport bounds plus contextual Psiphon/Proton/Ceno reporting;
@@ -35,11 +37,12 @@ A dedicated control/data-plane divergence classifier can flag high BGP visibilit
 7. Tor/circumvention usage is contextual and excluded from automatic disruption scoring.
 8. Province-level or nationwide VPN success rates are not shown without a defensible measurement fleet.
 9. Active Globalping measurements remain disabled by default and protected by server-side controls.
-10. No high-risk in-country trigger/fuzzing workflow is included.
+10. RIPE RIS Live route events are control-plane evidence only and never an independent censorship vote.
+11. No high-risk in-country trigger/fuzzing workflow is included.
 
 ## Requirements
 
-- Node.js **20.11 or newer**; Node.js 22 LTS is the verified CI runtime.
+- Node.js **20.11 or newer**; Node.js 22 is the verified CI runtime.
 - Outbound DNS/HTTPS from the deployment host to configured public data sources.
 - Optional Cloudflare Radar token restricted to `Account > Radar > Read`.
 - Optional Internet Society Pulse API token.
@@ -67,10 +70,26 @@ npm run dev
 npm ci
 npm run check
 npm run build
+npm run verify:public
+npm run verify:ris-live
 npm run verify:radar   # optional; requires configured token + outbound DNS/HTTPS
 ```
 
-`npm run check` performs server/client syntax checks and the complete deterministic offline suite. The permanent GitHub Actions workflow additionally performs a committed-secret check and local runtime/404/traversal smoke test.
+`npm run check` performs server/client/operator-script syntax checks and the complete deterministic offline suite. On the verified runtime baseline the suite is **73/73 passing**. Permanent GitHub Actions additionally performs committed-secret checks, local runtime/404/traversal smoke tests and a live public-source acceptance workflow.
+
+The verified live gate on `fc59d4be…` passed the public server adapters and a passive RIPE RIS Live subscription handshake. A source may legitimately return `no_data` or `partial`; those states are not converted into zero impact or full corroboration.
+
+## Passive RIPE RIS Live collection
+
+The optional collector is separate from the dashboard server and never starts automatically:
+
+```bash
+npm run collect:ris -- --asn AS58224
+```
+
+It accepts only ASNs registered in `data/asns.json`. By default it resolves currently announced prefixes through RIPEstat, refuses unscoped or oversized subscriptions, caps automatic scope at 200 prefixes, stores daily JSONL routing events under `var/ris-live/`, and retains them for seven days by default (maximum 30 days).
+
+For a deliberately narrower operator scope, use `--prefix-file`. The collector is passive: it listens to public routing updates and does not trigger measurements.
 
 ## Environment
 
@@ -96,17 +115,18 @@ cd dist
 node server.mjs
 ```
 
-For Internet-facing use, keep the Node listener private where practical and terminate HTTPS at a reverse proxy/managed ingress. See [PRODUCTION.md](PRODUCTION.md).
+For Internet-facing use, keep the Node listener private where practical and terminate HTTPS at a reverse proxy/managed ingress. Run the optional RIS Live collector as a separate operator/service process with explicit write permissions for its data directory. See [PRODUCTION.md](PRODUCTION.md).
 
 ## Project layout
 
 ```text
-public/               Dashboard UI
+public/               Dashboard UI and v1.1 context presentation
 server.mjs            HTTP server and internal API routes
-lib/                   Upstream adapters and assessment logic
+lib/                   Upstream adapters and assessment/collector logic
 data/                  Iran ASN/source registries
 tests/                 Deterministic offline tests
-scripts/               Build/verification tooling
+scripts/               Build, verification and optional RIS Live collector tooling
+var/                   Local runtime collector data; ignored by Git
 dist/                  Generated production bundle
 legacy/prototype-export/   Audit-only original prototype export
 ```

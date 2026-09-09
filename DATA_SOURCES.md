@@ -4,16 +4,17 @@ Last professionally reviewed: **2026-09-09**
 
 ## Source taxonomy
 
-A source being present in the runtime does not mean it is an independent censorship sensor. The application distinguishes measurement, performance/protocol context, topology, circumvention and curated/OSINT context.
+A source being present in the runtime does not mean it is an independent censorship sensor. The application distinguishes measurement, performance/protocol context, topology, circumvention, routing/control-plane evidence and curated/OSINT context.
 
 | Source | Access | Runtime role | Assessment role |
 |---|---|---|---|
 | OONI | Public API | censorship/application measurements | eligible technical signal |
 | Censored Planet | Public GraphQL | remote interference + CenAlert | investigation/technical context |
-| RIPE Atlas | Public API | active-probe RTT/loss | eligible data-plane signal |
+| RIPE Atlas | Public API | active-probe RTT/loss | eligible data-plane signal when complete enough |
 | IODA | Public API | connectivity/outage signals | eligible data-plane signal |
 | Cloudflare Radar | Radar Read token | traffic/outages/anomalies/BGP/protocol mix | eligible where assessment logic explicitly permits |
 | RIPEstat / RIPE RIS | Public API | BGP visibility/prefix/neighbour/update context | control-plane/divergence context |
+| RIPE RIS Live | Public HTTP JSON stream | passive continuous announcements/withdrawals | control-plane context only |
 | M-Lab NDT | Public JSON aggregate | throughput/minimum-RTT degradation context | context only |
 | APNIC Labs IPv6 | Public JSON measurement | client-side IPv6 capability/preference | context only |
 | Tor Metrics | Public CSV | direct/bridge/transport estimates | circumvention context only |
@@ -49,7 +50,11 @@ The GraphQL adapter loads Iran interference-rate context and CenAlert time serie
 
 Base: `https://atlas.ripe.net/api/v2/`
 
-The dashboard discovers active Iran probes, optionally by ASN, and uses built-in measurement `1001` for RTT/loss path context. Probe pagination is followed with a bounded safety cap. The result does not represent complete national availability.
+The dashboard discovers active Iran probes, optionally by ASN, and uses built-in measurement `1001` for RTT/loss path context. Probe pagination is followed with a bounded safety cap. Historical daily observations are loaded from the measurement `ping-stats` interface rather than the heavy raw-results stream.
+
+Live acceptance exposed that the service currently returns HTTP 400 `Please specify only one probe` when multiple probe IDs are sent to the `ping-stats` endpoint. The adapter therefore performs one bounded request per selected probe with limited concurrency. Individual failures produce `partial` coverage; partial RIPE data remains visible but is excluded from automatic corroboration and control/data-plane divergence classification.
+
+A `no_data` result means no usable observations were returned for the selected scope/window; it is not a zero-loss measurement and does not represent complete national availability.
 
 ## IODA
 
@@ -79,6 +84,28 @@ Selected ASN context includes routing visibility, announced prefixes, neighbours
 
 BGP visibility is control-plane evidence and must not be interpreted as functioning end-user Internet access.
 
+## RIPE RIS Live
+
+Stream base: `https://ris-live.ripe.net/v1/stream/`
+
+The optional collector uses the public JSON firehose with an `X-RIS-Subscribe` header and subscribes only to `UPDATE` messages for an explicit prefix set. It is not started by the dashboard server.
+
+Default scope is derived from the currently announced RIPEstat prefixes of an allowlisted Iran ASN. Safety controls include:
+
+- selected ASN must exist in `data/asns.json`;
+- at least one valid IPv4/IPv6 CIDR is required;
+- automatic scope is capped at 200 prefixes;
+- subscription header is capped at 12,000 bytes;
+- oversized scope fails closed instead of being silently truncated;
+- an operator can provide an explicit narrower prefix file;
+- announcements and withdrawals are emitted as separate route events;
+- route events preserve RRC/peer/AS-path/next-hop provenance where the upstream message contains it;
+- every event is `routing-control-plane` evidence and `independentCensorshipVote: false`.
+
+Local output is daily JSONL under `var/ris-live/`, plus a status file. Default retention is seven days and maximum configured retention is 30 days.
+
+The verified live gate successfully established a passive subscription for `AS58224` and prefix `217.218.96.0/20` with HTTP 200. That handshake validates the public subscription path, not the completeness of every ASN's production prefix set.
+
 ## M-Lab NDT
 
 Public statistics base: `https://statistics.measurementlab.net/v0/`
@@ -89,6 +116,8 @@ Used aggregates:
 - Iran + ASN: `/AS/IR/asn/AS<number>/<year>/histogram_daily_stats.json`
 
 M-Lab's daily histogram file repeats daily summary statistics across eight speed buckets. The adapter collapses those buckets to one daily point and preserves daily sample counts. Relative performance context uses only days meeting the adapter's explicit sample gate.
+
+A concrete GCS `404 NoSuchKey` for a documented aggregate object is represented as `no_data` for that exact scope. DNS/TLS/network/parser/5xx failures remain errors and there is no silent ASN-to-country fallback.
 
 M-Lab throughput/RTT changes are not independent censorship votes and do not by themselves establish intentional throttling.
 
@@ -154,6 +183,8 @@ GDELT DOC 2.0 is on-demand professional-report discovery filtered to a curated d
 
 The separate intelligence registry contains specialist sources such as ASL19, Miaan/Filterwatch, Access Now, NetBlocks, Psiphon, Proton, Ceno and ARTICLE 19.
 
+During the verified live gate GDELT returned HTTP 429. This remains an informational/rate-limited discovery failure and is not release-blocking because GDELT is not a technical sensor.
+
 ## 2026-09-09 source-review decisions
 
 ### Integrated
@@ -177,9 +208,13 @@ These sources remain contextual rather than being scraped into pseudo-telemetry.
 
 APNIC exposes additional DNS/protocol measurements. They are not integrated in v1.1 merely to increase source count; independence, provenance overlap and Iran-specific interpretability must be reviewed before adding them.
 
+CAIDA BGPStream remains a possible additional control-plane collector family; it is not required to claim the current RIPE RIS Live implementation complete.
+
 ## Caching and failure behavior
 
 - Default shared in-memory cache: 120 seconds unless an adapter uses a longer source-appropriate TTL.
-- Default external timeout: 12 seconds; individual large public datasets may use bounded larger timeouts.
+- Default external timeout: 12 seconds; individual sources use bounded source-specific limits where required.
+- RIPE Atlas large historical responses are avoided through bounded per-probe daily stats requests rather than unbounded timeout increases.
 - Source failures remain isolated.
+- `partial`, `no_data`, `token_required` and hard `error` remain distinct states.
 - No upstream failure is converted into a zero measurement.
