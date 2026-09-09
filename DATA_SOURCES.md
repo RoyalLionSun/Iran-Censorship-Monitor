@@ -1,7 +1,7 @@
 # Data Sources
 
 Last reviewed: **2026-09-09**  
-Release source set: **v1.2.0**
+Release source set: **v1.3.0**
 
 ## Source taxonomy
 
@@ -14,14 +14,15 @@ Presence in the runtime does not mean an independent censorship sensor. Measurem
 | RIPE Atlas | Public API | active-probe RTT/loss | eligible data-plane signal only with sufficient coverage |
 | IODA | Public API | connectivity/outage signals | eligible data-plane signal |
 | Cloudflare Radar | Radar Read token | traffic/outages/anomalies/BGP/protocol mix | only where assessment explicitly permits |
-| RIPEstat / RIPE RIS | Public API | BGP visibility/prefix/neighbour/update | control-plane/divergence context |
+| RIPEstat / RIPE RIS / RPKI | Public API | BGP visibility/prefix/neighbour/update plus route-origin authorization context | control-plane/divergence + route-integrity context |
 | RIPE RIS Live | Public stream | passive announcements/withdrawals | control-plane context only |
 | Route Views via CAIDA BGPStream | Public broker + `bgpreader`/Route Views live resources | second passive routing collector | control-plane context only |
+| CAIDA ASRank | Public API | ASN rank, customer cone, degree and inferred AS relationships | topology context only |
 | M-Lab NDT | Public JSON aggregate | throughput/minimum-RTT | context only |
 | APNIC Labs IPv6 | Public JSON measurement | IPv6 capability/preference | context only |
 | Tor Metrics | Public CSV | direct/bridge/transport estimates | circumvention context only |
 | Globalping | Public API / optional token | passive inventory; protected active tests | probe presence is not a vote |
-| PeeringDB | Public API | topology | context only |
+| PeeringDB | Public API | operator-maintained topology | context only |
 | IHR AS Hegemony | Public API | dependency/chokepoints | context only |
 | Citizen Lab Test Lists | Public CSV | Iran target inventory | inventory only |
 | Internet Society Pulse | Token API | curated shutdown context | context only |
@@ -42,9 +43,15 @@ RIPE Atlas uses bounded per-probe daily `ping-stats`; partial probe coverage rem
 
 BGP visibility, prefixes, neighbours, announcements and withdrawals are control-plane evidence. The optional RIS Live collector is bounded to validated prefix scope, passive and separate from the dashboard process. BGP visibility never proves working end-user Internet.
 
+### RIPEstat RPKI — v1.3
+
+RPKI context validates a bounded set of currently announced prefixes for the selected ASN and preserves `valid`, `invalid_asn`, `invalid_length` and `unknown` states. Bounded monthly IPv4/IPv6 VRP history is also exposed. RPKI remains part of the RIPE routing source family with `independentCensorshipVote:false`.
+
+An invalid or unknown RPKI result is not automatically censorship or route-hijack intent. Misconfiguration, ROA max-length policy, incomplete deployment and other routing causes must remain plausible alternatives.
+
 ### Route Views / CAIDA BGPStream
 
-The v1.2 collector uses CAIDA BGPStream tooling to access **Route Views live** resources.
+CAIDA BGPStream tooling accesses **Route Views live** resources.
 
 - BGPStream is an access/normalization framework, not itself a sensor;
 - consuming RIPE data through BGPStream remains RIPE evidence and must not be counted again;
@@ -52,7 +59,11 @@ The v1.2 collector uses CAIDA BGPStream tooling to access **Route Views live** r
 - collection is passive, prefix-scoped and operator-started;
 - output remains `routing-control-plane` evidence with `independentCensorshipVote:false`.
 
-The CAIDA broker live gate verified the Route Views stream resource path using the live/FOREVER semantics required by libBGPStream.
+### CAIDA ASRank — v1.3
+
+ASRank adds selected-ASN rank, customer-cone, degree and inferred relationship context. It is useful for macroscopic topology/dependency analysis but not for end-user reachability or censorship attribution.
+
+ASRank derives topology from CAIDA Ark active measurements plus routing inputs including Route Views and RIPE. That overlap is explicit; ASRank must not inflate routing-source independence and remains `topology-context` with `independentCensorshipVote:false`.
 
 ### M-Lab / APNIC
 
@@ -62,27 +73,21 @@ APNIC IPv6 preserves raw experiment counts, capable/preferred percentages and sm
 
 ### Tor / Globalping / topology
 
-Tor is circumvention context only. Globalping passive inventory is the default; active measurements remain disabled by default and protected. PeeringDB/IHR provide topology/dependency context only.
+Tor is circumvention context only. Globalping passive inventory is the default; active measurements remain disabled by default and protected. PeeringDB, IHR and ASRank provide different topology/dependency views and remain context only.
 
 ### STOP / Pulse / GDELT / Citizen Lab
 
 STOP and Pulse are curated context and can cite technical sources already present; they never automatically add an independent vote. GDELT is discovery context. Citizen Lab is a target inventory, not current blocking evidence.
 
-## v1.2 additional APNIC/DNS/protocol review
+## Circumvention source review
 
-Reviewed but **not admitted as new runtime adapters**:
+Psiphon and Ceno/eQualitie were re-reviewed for v1.3. Public reporting remains useful Iran circumvention/resilience context, but no stable supported public machine-readable Iran time-series API was established. Therefore no runtime telemetry adapter was admitted and unsupported chart/page scraping remains prohibited.
 
-- APNIC HTTP/3 / QUIC;
-- APNIC DNS over IPv6;
-- APNIC DNS query-type / HTTPS-record dashboards.
-
-They may provide useful deployment/protocol context, but the review did not establish a sufficiently stable supported machine-readable interface plus enough independent censorship interpretability to justify runtime integration. Visualization scraping or reverse-engineered pseudo-APIs remain prohibited.
-
-See [SOURCE_REVIEW_V12.md](SOURCE_REVIEW_V12.md).
+See [SOURCE_REVIEW_V13.md](SOURCE_REVIEW_V13.md).
 
 ## Owned-probe evidence family
 
-The v1.2 release includes the owned-probe **laboratory architecture**, not authorization for an Iran pilot. Accepted observations are `owned-probe` evidence and all owned probes remain one source family. They cannot inflate independent-source counts.
+The release includes the owned-probe **laboratory architecture**, not authorization for an Iran pilot. Accepted observations are `owned-probe` evidence and all owned probes remain one source family. They cannot inflate independent-source counts.
 
 VPN transport and NIN interpretations are gated by [PROTOCOL_VPN_NIN_EVIDENCE.md](PROTOCOL_VPN_NIN_EVIDENCE.md). Province/SIM segmentation remains disabled under [PROVINCE_SIM_FEASIBILITY.md](PROVINCE_SIM_FEASIBILITY.md). Repository policy remains `deploymentAuthorized:false` until separate external pilot gates and explicit authorization are satisfied.
 
