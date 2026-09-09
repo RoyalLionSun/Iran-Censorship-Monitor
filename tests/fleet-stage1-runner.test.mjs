@@ -5,6 +5,10 @@ import { mkdtempSync, rmSync, writeFileSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { FLEET_POLICY_VERSION, signFleetManifest } from '../lib/fleet.mjs';
+import {
+  FLEET_STAGE1_CONSENT_VERSION,
+  FLEET_STAGE1_REQUIRED_ACKNOWLEDGEMENTS,
+} from '../lib/fleet-stage1-consent.mjs';
 import { createFleetStage1MemoryQueue } from '../lib/fleet-stage1-transport.mjs';
 import {
   FLEET_STAGE1_ENABLE_MARKER,
@@ -16,11 +20,25 @@ const PROBE_ID = 'p_1234567890abcdef';
 const PROBE_SECRET = Buffer.alloc(32, 61);
 const CONFIG = { origin: 'https://fleet.example.invalid', pollIntervalMs: 15 * 60_000 };
 
-function localGate(content = FLEET_STAGE1_ENABLE_MARKER) {
+function consentRecord(overrides = {}) {
+  return {
+    consentVersion: FLEET_STAGE1_CONSENT_VERSION,
+    probeId: PROBE_ID,
+    consentRecordId: 'cons_1234567890abcdef',
+    issuedAt: '2026-09-09T12:00:00.000Z',
+    expiresAt: '2026-09-10T12:00:00.000Z',
+    acknowledgements: [...FLEET_STAGE1_REQUIRED_ACKNOWLEDGEMENTS],
+    ...overrides,
+  };
+}
+
+function localGate(content = FLEET_STAGE1_ENABLE_MARKER, consent = consentRecord()) {
   const dir = mkdtempSync(join(tmpdir(), 'iran-monitor-stage1-gate-'));
   const path = join(dir, 'stage1.enabled');
+  const consentPath = join(dir, 'stage1.consent.json');
   if (content != null) writeFileSync(path, content, 'utf8');
-  return { path, cleanup: () => rmSync(dir, { recursive: true, force: true }) };
+  if (consent != null) writeFileSync(consentPath, typeof consent === 'string' ? consent : JSON.stringify(consent), 'utf8');
+  return { path, consentPath, cleanup: () => rmSync(dir, { recursive: true, force: true }) };
 }
 
 function targets() {
@@ -82,6 +100,7 @@ function common({ gate, publicKey, transport, queue, adapters } = {}) {
     schedulerPublicKey: publicKey,
     targets: targets(),
     localEnableFile: gate.path,
+    localConsentFile: gate.consentPath,
     config: CONFIG,
     queue: queue ?? createFleetStage1MemoryQueue(),
     transport,
@@ -90,7 +109,7 @@ function common({ gate, publicKey, transport, queue, adapters } = {}) {
   };
 }
 
-test('Stage 1 missing local enable marker disables before transport or scheduler inputs are required', async () => {
+test('Stage 1 missing local enable marker disables before consent transport or scheduler inputs are required', async () => {
   const gate = localGate(null);
   try {
     const result = await runFleetStage1OfflineCycle({
@@ -101,13 +120,63 @@ test('Stage 1 missing local enable marker disables before transport or scheduler
     assert.equal(result.status, 'disabled');
     assert.equal(result.reason, 'local_marker_unavailable');
     assert.equal(result.measurements, 0);
+    assert.equal(result.purged, 0);
     assert.equal(result.independentCensorshipVote, false);
   } finally {
     gate.cleanup();
   }
 });
 
-test('Stage 1 offline cycle performs poll verify local compile execute queue submit in order', async () => {
+test('Stage 1 missing local consent disables before transport and purges pending memory results', async () => {
+  const gate = localGate(FLEET_STAGE1_ENABLE_MARKER, null);
+  const queue = createFleetStage1MemoryQueue();
+  queue.enqueue({ pending: 'local-only' }, NOW);
+  let transportCalls = 0;
+  try {
+    const result = await runFleetStage1OfflineCycle({
+      probeId: PROBE_ID,
+      localEnableFile: gate.path,
+      localConsentFile: gate.consentPath,
+      queue,
+      transport: async () => { transportCalls += 1; throw new Error('must not be called'); },
+      now: () => new Date(NOW),
+    });
+    assert.equal(result.status, 'disabled');
+    assert.equal(result.reason, 'consent_unavailable');
+    assert.equal(result.measurements, 0);
+    assert.equal(result.submitted, 0);
+    assert.equal(result.purged, 1);
+    assert.equal(queue.size(NOW), 0);
+    assert.equal(transportCalls, 0);
+  } finally {
+    gate.cleanup();
+  }
+});
+
+test('Stage 1 expired local consent disables before transport without requiring central connectivity', async () => {
+  const gate = localGate(FLEET_STAGE1_ENABLE_MARKER, consentRecord({
+    issuedAt: '2026-09-08T12:00:00.000Z',
+    expiresAt: '2026-09-09T12:00:00.000Z',
+  }));
+  let transportCalls = 0;
+  try {
+    const result = await runFleetStage1OfflineCycle({
+      probeId: PROBE_ID,
+      localEnableFile: gate.path,
+      localConsentFile: gate.consentPath,
+      transport: async () => { transportCalls += 1; throw new Error('must not be called'); },
+      now: () => new Date(NOW),
+    });
+    assert.equal(result.status, 'disabled');
+    assert.equal(result.reason, 'consent_expired');
+    assert.equal(result.measurements, 0);
+    assert.equal(transportCalls, 0);
+  } finally {
+    gate.cleanup();
+  }
+});
+
+test('Stage 1 offline cycle performs consent poll verify local compile execute queue submit in order', async () => {
   const gate = localGate();
   const { publicKey, privateKey } = generateKeyPairSync('ed25519');
   const envelope = signedManifest(privateKey);
@@ -149,6 +218,7 @@ test('Stage 1 offline cycle performs poll verify local compile execute queue sub
     assert.equal(result.submitted, 1);
     assert.equal(result.duplicates, 0);
     assert.equal(result.dropped, 0);
+    assert.equal(result.purged, 0);
     assert.equal(result.queued, 0);
     assert.equal(result.etag, '"stage1-m1"');
     assert.equal(result.independentCensorshipVote, false);
@@ -208,7 +278,7 @@ test('Stage 1 no-work response performs zero measurements and remains non-eviden
   }
 });
 
-test('Stage 1 result transport failure keeps one memory result and next cycle drains it without polling new work', async () => {
+test('Stage 1 result transport failure keeps one memory result and next consented cycle drains it without polling new work', async () => {
   const gate = localGate();
   const { publicKey, privateKey } = generateKeyPairSync('ed25519');
   const envelope = signedManifest(privateKey);
@@ -284,4 +354,5 @@ test('Stage 1 offline runner contains no built-in HTTP socket DNS or fetch clien
   assert.doesNotMatch(source, /node:(?:http|https|net|tls|dns)/);
   assert.doesNotMatch(source, /\bfetch\s*\(/);
   assert.match(source, /injected transport adapter/);
+  assert.match(source, /readFleetStage1LocalConsent/);
 });
