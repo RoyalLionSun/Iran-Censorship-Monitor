@@ -7,6 +7,7 @@ on:
     paths:
       - '.github/workflows/live-source-acceptance.yml'
       - 'scripts/verify-public-sources.mjs'
+      - 'scripts/verify-ris-live.mjs'
       - 'package.json'
       - 'server.mjs'
       - 'lib/ripe.mjs'
@@ -19,6 +20,7 @@ on:
       - 'lib/ioda.mjs'
       - 'lib/tor.mjs'
       - 'lib/ripestat.mjs'
+      - 'lib/rislive.mjs'
       - 'lib/peeringdb.mjs'
       - 'lib/ihr.mjs'
       - 'lib/osint.mjs'
@@ -50,3 +52,6 @@ jobs:
 
       - name: Verify public upstreams through the real server API
         run: npm run verify:public
+
+      - name: Verify passive RIPE RIS Live subscription handshake
+        run: npm run verify:ris-live
