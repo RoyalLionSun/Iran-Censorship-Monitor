@@ -37,6 +37,9 @@ jobs:
       - name: Build production bundle
         run: npm run build
 
+      - name: Headless browser presentation gate
+        run: npm run verify:ui
+
       - name: Reject committed secrets
         shell: bash
         run: |
