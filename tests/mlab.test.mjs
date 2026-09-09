@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildMlabComparison, buildMlabStatsUrls, MLAB_MIN_DAILY_SAMPLES, parseMlabStats } from '../lib/mlab.mjs';
+import { buildMlabComparison, buildMlabStatsUrls, getMlabPerformance, isMissingMlabAggregate, MLAB_MIN_DAILY_SAMPLES, parseMlabStats } from '../lib/mlab.mjs';
 
 test('M-Lab URLs are Iran scoped and optionally ASN scoped', () => {
   assert.deepEqual(buildMlabStatsUrls({ since: '2026-09-01', until: '2026-09-08', asn: '' }), [
@@ -58,4 +58,33 @@ test('M-Lab comparison returns insufficient-data rather than inventing a trend',
   const comparison = buildMlabComparison(points);
   assert.equal(comparison.status, 'insufficient-data');
   assert.equal(comparison.metrics.downloadMedianMbps.status, 'insufficient-data');
+});
+
+test('M-Lab recognizes GCS missing-object response as an absent aggregate, not a zero measurement', () => {
+  assert.equal(isMissingMlabAggregate(new Error('404 Not Found: <Error><Code>NoSuchKey</Code><Message>The specified key does not exist.</Message></Error>')), true);
+  assert.equal(isMissingMlabAggregate(new Error('503 Service Unavailable')), false);
+  assert.equal(isMissingMlabAggregate(new Error('This operation was aborted')), false);
+});
+
+test('M-Lab returns explicit no_data when the documented ASN aggregate object is not published', async () => {
+  const result = await getMlabPerformance(
+    { since: '2026-09-01', until: '2026-09-08', asn: 'AS58224' },
+    async () => { throw new Error('404 Not Found: <Error><Code>NoSuchKey</Code><Message>The specified key does not exist.</Message></Error>'); },
+  );
+  assert.equal(result.ok, true);
+  assert.equal(result.status, 'no_data');
+  assert.equal(result.points.length, 0);
+  assert.equal(result.missingAggregates.length, 1);
+  assert.match(result.noDataReason, /did not publish/);
+  assert.match(result.methodology.missingAggregate, /never falls back silently/);
+});
+
+test('M-Lab still fails on transport/server errors instead of misreporting no data', async () => {
+  await assert.rejects(
+    () => getMlabPerformance(
+      { since: '2026-09-01', until: '2026-09-08', asn: 'AS58224' },
+      async () => { throw new Error('503 Service Unavailable'); },
+    ),
+    /upstream request failed/,
+  );
 });

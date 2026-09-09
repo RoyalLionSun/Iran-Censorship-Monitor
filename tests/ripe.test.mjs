@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readProbePages } from '../lib/ripe.mjs';
+import { readProbePages, RIPE_ATLAS_PROBE_TIMEOUT_MS, RIPE_ATLAS_RESULT_TIMEOUT_MS } from '../lib/ripe.mjs';
 
 test('RIPE probe pagination follows next links and preserves declared count', async () => {
   const pages = new Map([
@@ -29,4 +29,11 @@ test('RIPE probe pagination reports safety-cap truncation', async () => {
   assert.equal(result.truncated, true);
   assert.equal(result.rows.length, 2);
   assert.match(result.nextUrl, /p3$/);
+});
+
+test('RIPE Atlas uses bounded source-specific timeouts for live inventory and streamed result history', () => {
+  assert.equal(RIPE_ATLAS_PROBE_TIMEOUT_MS, 20_000);
+  assert.equal(RIPE_ATLAS_RESULT_TIMEOUT_MS, 30_000);
+  assert.ok(RIPE_ATLAS_RESULT_TIMEOUT_MS > RIPE_ATLAS_PROBE_TIMEOUT_MS);
+  assert.ok(RIPE_ATLAS_RESULT_TIMEOUT_MS <= 30_000);
 });

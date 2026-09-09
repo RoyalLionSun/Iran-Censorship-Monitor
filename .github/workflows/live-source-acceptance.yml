@@ -8,6 +8,20 @@ on:
       - '.github/workflows/live-source-acceptance.yml'
       - 'scripts/verify-public-sources.mjs'
       - 'package.json'
+      - 'server.mjs'
+      - 'lib/ripe.mjs'
+      - 'lib/mlab.mjs'
+      - 'lib/apnic.mjs'
+      - 'lib/accessnow.mjs'
+      - 'lib/censoredplanet.mjs'
+      - 'lib/citizenlab.mjs'
+      - 'lib/globalping.mjs'
+      - 'lib/ioda.mjs'
+      - 'lib/tor.mjs'
+      - 'lib/ripestat.mjs'
+      - 'lib/peeringdb.mjs'
+      - 'lib/ihr.mjs'
+      - 'lib/osint.mjs'
 
 permissions:
   contents: read
