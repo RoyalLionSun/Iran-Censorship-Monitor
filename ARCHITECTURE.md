@@ -1,10 +1,10 @@
 # Architecture
 
-Last verified: **2026-09-08**
+Last verified: **2026-09-09**
 
 ## Design goal
 
-The application is a monitoring/work surface, not an editorial or campaign page. It prioritizes state, scope, source agreement, measurement provenance, and uncertainty above decorative content.
+Iran Censorship Monitor is a measurement/intelligence work surface, not an editorial page and not a generic uptime monitor. It keeps control plane, data plane, censorship measurements, performance/protocol context, circumvention and human-rights/OSINT context separable so uncertainty and source lineage remain visible.
 
 ## Runtime
 
@@ -19,165 +19,131 @@ Node.js HTTP server (server.mjs)
   |      +--> OONI
   |      +--> RIPE Atlas
   |      +--> IODA
-  |      +--> Tor Metrics
   |      +--> Cloudflare Radar (token gated)
-  |      \--> multi-source assessment
+  |      +--> Tor Metrics
+  |      +--> M-Lab NDT
+  |      +--> APNIC Labs IPv6
+  |      +--> RIPEstat / RIPE RIS
+  |      +--> Globalping passive inventory
+  |      +--> Censored Planet
+  |      +--> PeeringDB
+  |      +--> Internet Health Report
+  |      +--> Internet Society Pulse (token gated)
+  |      \--> assessment from approved technical corroboration inputs only
   |
-  +--> /api/circumvention --> OONI Tor/Psiphon/Signal/WhatsApp/Telegram
-  +--> /api/ooni/*        --> OONI explorer/detail support
-  +--> /api/providers     --> OONI + RIPE Atlas per selected Iranian ASN
-  +--> /api/config        --> static source/ASN registry and capabilities
-  \--> static files       --> public/
+  +--> /api/circumvention       --> OONI Tor/Psiphon/Signal/WhatsApp/Telegram
+  +--> /api/routing-updates     --> bounded RIPEstat BGP update drilldown
+  +--> /api/globalping/probes   --> passive Iran probe inventory
+  +--> /api/globalping/measure  --> protected active measurement (disabled by default)
+  +--> /api/globalping/measurement/:id
+  +--> /api/targets             --> Citizen Lab Iran list
+  +--> /api/stop                --> Access Now #KeepItOn STOP Iran incident context
+  +--> /api/intelligence        --> STOP + curated registry + GDELT discovery
+  +--> /api/providers           --> bounded provider comparison
+  +--> /api/ooni/*              --> raw measurement explorer
+  +--> /api/config
+  +--> /api/health
+  \--> static files in public/
 ```
 
 ## Why the browser does not call upstream APIs directly
 
-All external API requests are made server-side. This provides:
+External requests are server-side to provide:
 
-- one place for input validation and Iran-only scoping;
-- an in-memory cache and request timeout;
-- protection of the optional Radar token;
-- a strict browser Content-Security-Policy using `connect-src 'self'`;
-- normalized API payloads for the UI;
-- explicit partial-source failure handling.
+- Iran-only input scoping and validation;
+- consistent timeout/cache/failure behavior;
+- optional credential protection;
+- strict browser `connect-src 'self'` CSP;
+- normalized payloads and explicit source-specific no-data/error states;
+- bounded concurrency/rate controls;
+- one place to enforce provenance and measurement safety boundaries.
 
-## Frontend
+## Evidence families
 
-`public/index.html`, `public/styles.css`, and `public/app.js` form a dependency-free client.
+```text
+Censorship/interference      OONI, Censored Planet
+Data plane/connectivity      RIPE Atlas, IODA, Cloudflare Radar
+Performance context          M-Lab NDT
+Protocol/deployment context  Radar protocol distributions, APNIC IPv6
+Control plane                RIPEstat / RIPE RIS
+Vantage inventory            Globalping
+Circumvention context        Tor Metrics + contextual specialist reporting
+Topology/chokepoints         PeeringDB, IHR AS Hegemony
+Test inventory               Citizen Lab
+Curated shutdown incidents   Access Now STOP, Internet Society Pulse
+OSINT discovery              curated source registry, GDELT
+```
 
-Primary areas:
-
-1. sticky monitoring header;
-2. scope/date/test filters;
-3. multi-source assessment strip;
-4. compact KPI grid;
-5. OONI anomaly timeline;
-6. corroboration/source review;
-7. RIPE Atlas RTT/loss chart;
-8. Cloudflare Radar Iran/ASN traffic, outage, traffic-anomaly and BGP context;
-9. IODA routing/probing signals;
-10. Tor direct/bridge estimates;
-11. OONI circumvention/messaging matrix;
-12. event feed;
-13. provider/ASN comparison;
-14. local VPN field-measurement calculator;
-15. OONI raw measurement explorer;
-16. source provenance register.
-
-The layout uses a 12-column responsive grid and compact typography suitable for 1920×1080 and 2560×1440 monitoring workstations.
-
-## Internal API
-
-### `GET /api/health`
-
-Process health, current timestamp, Radar configuration state.
-
-### `GET /api/config`
-
-Country restriction, monitored ASN registry, source registry, default date range, supported OONI tests, and live-capability flags.
-
-### `GET /api/overview`
-
-Query parameters:
-
-- `asn=AS...` or `ALL`
-- `since=YYYY-MM-DD`
-- `until=YYYY-MM-DD`
-- `testName=<supported OONI test>`
-- optional `target=https://...` for `web_connectivity`
-
-Returns OONI, RIPE Atlas, IODA, Tor Metrics, optional Cloudflare Radar, and a derived corroboration assessment. Sources fail independently.
-
-Radar query scope is enforced server-side: HTTP/outage/traffic-anomaly requests use `location=IR` plus the selected ASN when present; BGP hijack queries use `involvedAsn` for ASN scope or `involvedCountry=IR` for country scope.
-
-### `GET /api/circumvention`
-
-Queries OONI Tor, Psiphon, Signal, WhatsApp, and Telegram test observations for the selected scope.
-
-### `GET /api/providers`
-
-Runs OONI and RIPE Atlas collection for the ten curated Iranian networks. Concurrency is capped at three providers to avoid unnecessary upstream load.
-
-### `GET /api/ooni/measurements`
-
-Loads a small list of OONI measurement IDs for inspection.
-
-### `GET /api/ooni/measurement/:uid`
-
-Loads one OONI measurement using the current singular measurement endpoint, with metadata endpoint fallback.
-
-## Validation boundaries
-
-- Date ranges are ISO dates and capped by adapter-specific limits.
-- This deployment is hard-restricted to country code `IR`.
-- ASN input is normalized and validated.
-- OONI target input accepts only absolute `http:`/`https:` URLs.
-- OONI list requests are capped at 1000 rows and truncation is surfaced.
-- RIPE probe discovery follows API pagination with a 10-page/5000-probe safety cap; if that cap is reached, `probeListTruncated` is surfaced.
-- External requests have a 12-second timeout and shared in-memory cache.
+These labels are architectural boundaries, not confidence rankings.
 
 ## Assessment model
 
-`lib/assessment.mjs` combines only independent sources suitable for disruption corroboration:
+`lib/assessment.mjs` combines only source observations explicitly approved for disruption corroboration. Existing inputs include OONI, RIPE Atlas, IODA and eligible Cloudflare Radar observations, with RIPEstat used for the separate control/data-plane divergence analysis.
 
-- OONI
-- RIPE Atlas
-- Cloudflare Radar (when configured; country/ASN scope aligned with the selected dashboard scope)
-- IODA
+The following are intentionally **not** additional independent censorship votes:
 
-Tor Metrics is deliberately excluded from automated disruption scoring and shown as contextual evidence only.
+- M-Lab throughput/RTT;
+- APNIC IPv6 capability/preference;
+- Tor/circumvention usage;
+- PeeringDB/IHR topology;
+- Globalping probe presence;
+- Access Now STOP;
+- Internet Society Pulse;
+- GDELT/articles;
+- contextual specialist reports.
 
-Possible states:
+STOP may cite OONI, Radar, IODA or other sensors already present. The adapter therefore preserves evidence URLs and maps recognized root-source lineage rather than double-counting the incident record.
 
-- `insufficient-data`
-- `observed`
-- `elevated`
-- `corroborated`
-- `strongly-corroborated`
+## Iran scoping and validation
 
-The output is explicitly a **measurement-signal assessment**, not political attribution, intent determination, or proof of national-scale impact beyond the selected scope.
+- Country is fixed to `IR` for runtime measurement adapters.
+- ASN input is normalized and validated.
+- General query ranges are ISO dates and capped at 120 days; individual adapters may apply stricter windows.
+- OONI target filters accept absolute HTTP/HTTPS URLs only.
+- OONI list truncation is surfaced and truncated anomaly rates are excluded from assessment.
+- RIPE Atlas probe discovery follows pagination with a safety cap.
+- RIPEstat BGP update drilldown is limited to the final 48 hours and 250 records and exposes historical horizon limitations.
+- M-Lab requests use only Iran country or Iran+selected-ASN aggregate paths.
+- APNIC requests use Iran economy or Iran+selected-ASN IPv6 datasets; raw sample counts are retained.
+- Access Now STOP is filtered to Iran and selected-window overlap; `Ongoing` and `Unknown` status are not conflated.
+
+## Performance and protocol context
+
+### M-Lab
+
+M-Lab NDT daily aggregate statistics contain repeated daily summary fields across histogram buckets. `lib/mlab.mjs` collapses those buckets into one daily point and only calculates a relative recent-vs-baseline comparison when its sample gate is met. The result remains performance context.
+
+### APNIC Labs IPv6
+
+`lib/apnic.mjs` exposes raw IPv6 experiment counts and raw capability/preference percentages plus 30-day smoothed context. The raw `seen` count is never replaced by a smoothing-derived pseudo-sample count. A protocol shift alone is not a censorship classification.
+
+## Contextual incident ingestion
+
+`lib/accessnow.mjs` parses the official public STOP spreadsheet export. Required schema fields are validated before ingestion. Records include source URLs, shutdown type/extent, status, affected platforms/networks and contextual metadata. Records are explicitly marked `independentTechnicalVote: false`.
+
+The currently published STOP corpus covers records through 2025. Later selected windows can include genuinely `Ongoing` historical records but must not be interpreted as complete coverage of newly starting post-2025 incidents.
+
+## Active measurement safety
+
+Globalping active measurements are disabled unless both explicit enablement and a server-only operator key are configured. Requests are Iran-vantage-only, type-limited, probe-count-limited and server-rate-limited. Private/loopback/link-local/CGNAT/reserved/documentation destinations and URL credentials are rejected.
 
 ## State and storage
 
-The server has no database and stores no user submissions. Upstream payloads are cached only in process memory for the configured TTL.
+The server has no database. Upstream responses are cached only in process memory for bounded TTLs.
 
-Manually entered VPN field measurements are stored exclusively in the browser's `localStorage`. They are not uploaded to the server and are not mixed into national monitoring signals.
+Manually entered VPN field measurements remain in browser `localStorage`; they are not uploaded and never become national telemetry.
 
-## Build
+## Build and CI
 
-`npm run build` creates `dist/` containing only the runtime files:
+`npm run build` copies the dependency-free runtime into `dist/`.
 
-- `public/`
-- `lib/`
-- `data/`
-- `server.mjs`
-- `package.json`
-- `.env.example`
-- build metadata
+Permanent GitHub CI performs:
 
-## v1.1 evidence architecture
+- `npm ci`;
+- `npm run check`;
+- production build;
+- committed-secret and `.env` checks;
+- local `/api/health` and root smoke tests;
+- unknown/traversal path 404 checks.
 
-The runtime deliberately keeps these evidence families distinct:
-
-```text
-OONI + Censored Planet                 censorship/interference measurements
-RIPE Atlas + IODA + Cloudflare Radar   data-plane/connectivity signals
-RIPEstat / RIPE RIS                    BGP control plane
-Globalping                             Iran vantage inventory / protected active probing
-Tor Metrics                            circumvention context and transport bounds
-PeeringDB + IHR AS Hegemony            topology/dependency context
-Citizen Lab                            test-target inventory
-Pulse + curated OSINT + GDELT          contextual intelligence, never sensor votes
-```
-
-The correlation layer may identify **control/data-plane divergence**, but contextual sources do not increase the independent-technical-source count. This prevents double counting when an article or curated shutdown record ultimately derives from OONI, Cloudflare, IODA or another sensor already present.
-
-### Additional internal API (v1.1)
-
-- `GET /api/routing-updates` — selected-ASN RIPEstat BGP drilldown, max 48 h effective window and 250 records.
-- `GET /api/globalping/probes` — passive Iran probe inventory.
-- `POST /api/globalping/measure` — disabled-by-default, authenticated/rate-limited Iran-only active test.
-- `GET /api/globalping/measurement/:id` — read active-measurement result.
-- `GET /api/targets` — Citizen Lab Iran target inventory/search.
-- `GET /api/intelligence` — curated source registry plus professional-domain GDELT discovery.
-
+GitHub Actions dependencies are pinned to verified commit SHAs in `.github/workflows/ci.yml`.

@@ -1,56 +1,88 @@
 # Security
 
+Last reviewed: **2026-09-09**
+
 ## Secrets
 
-No credentials are committed. `.env` is ignored. Cloudflare Radar is the only integrated source that requires a credential in v1.0.0.
+No credentials are committed. `.env` is ignored and excluded from production build artifacts.
 
-Use a narrowly scoped token with **Radar Read** permission only. Do not use a Global API Key.
+Credential-bearing integrations:
+
+- `CLOUDFLARE_RADAR_API_TOKEN` — server-side only; use `Account > Radar > Read`, never a Global API Key;
+- `INTERNET_SOCIETY_PULSE_API_TOKEN` — server-side only;
+- optional `GLOBALPING_API_TOKEN` — server-side only;
+- `GLOBALPING_CONTROL_KEY` — server-only operator control for active measurements and must never be exposed to the browser.
+
+M-Lab, APNIC, Access Now STOP, OONI, RIPE, IODA, Tor, Censored Planet, Citizen Lab, PeeringDB, IHR and GDELT integration paths do not require stored credentials in the current design.
 
 ## Network exposure
 
 Default bind address is `127.0.0.1`. For production Internet exposure:
 
-1. keep Node on loopback/private interface where possible;
-2. place an HTTPS reverse proxy in front;
-3. restrict administrative network access if this is an internal intelligence dashboard;
-4. rate-limit external requests at the proxy;
-5. log only operational metadata needed for diagnosis.
+1. keep Node on loopback/private networking where practical;
+2. terminate HTTPS at a maintained reverse proxy/managed ingress;
+3. apply access control if the dashboard is operationally sensitive;
+4. rate-limit public requests at the proxy;
+5. log only metadata needed for operations and avoid credentials/raw sensitive probe identities.
 
 ## Browser security headers
 
-Static responses currently set:
+Static responses set:
 
-- `Content-Security-Policy` with same-origin scripts/styles/connections;
+- same-origin Content-Security-Policy including `connect-src 'self'`;
+- `frame-ancestors 'none'`;
+- `base-uri 'self'`;
+- `form-action 'self'`;
 - `X-Content-Type-Options: nosniff`;
-- `Referrer-Policy: strict-origin-when-cross-origin`;
-- `frame-ancestors 'none'` via CSP.
+- `Referrer-Policy: strict-origin-when-cross-origin`.
 
-## Data sensitivity
+## External-fetch boundary
 
-The server does not persist user measurements or upstream responses to disk. Manually entered VPN field measurements remain in browser `localStorage` only.
+The browser does not fetch measurement providers directly. Server adapters use fixed upstream hosts and validated scoped parameters.
 
-If a future probe fleet is deployed inside Iran, treat probe operators, IP addresses, location, tunnel endpoints, and raw logs as sensitive operational data. Do not expose probe identifiers publicly by default.
+Examples:
 
-## SSRF controls
+- OONI target input is passed only as an API filter after absolute HTTP/HTTPS validation; the local server does not fetch the user-supplied target itself.
+- M-Lab paths are built only from fixed Iran country scope, validated ASN and selected year.
+- APNIC paths are built only from fixed Iran economy scope and validated ASN.
+- Access Now STOP uses one fixed public spreadsheet export URL and filters returned rows server-side.
 
-The user-provided OONI `target` is not fetched by this server. It is passed only as an `input` filter to OONI's API after requiring an absolute `http:` or `https:` URL. External server fetch destinations themselves are fixed in source code.
+## Active-measurement safety
 
-## Dependency risk
+Globalping active measurements are disabled by default. Enabling them requires `GLOBALPING_ACTIVE_ENABLED=true` and a server-only `GLOBALPING_CONTROL_KEY`.
 
-The runtime has no third-party npm dependencies. Node.js itself and the reverse proxy/host remain patch-management responsibilities.
+Controls include:
 
-## Radar credential handling (v1.0.1)
+- Iran vantage restriction;
+- maximum five probes;
+- measurement-type allowlist;
+- server-side hourly rate limit;
+- rejection of localhost/private/link-local/CGNAT/reserved/documentation destinations;
+- rejection of URL credentials;
+- control-key requirement for create/read active measurement routes.
 
-- `CLOUDFLARE_RADAR_API_TOKEN` is read only server-side.
-- `.env` is ignored by Git and is not copied by the production build.
-- Radar URLs never contain the credential.
-- `scripts/verify-radar.mjs` prints only source states/counts/errors and never the token.
-- Use a dedicated token restricted to **Account > Radar > Read**.
+Do not enable active mode on an Internet-facing service without reverse-proxy access controls and an explicit operational reason.
 
-## Active-measurement safety (v1.1)
+## In-country operational safety
 
-Globalping active measurements are `false` by default. Enabling them requires both `GLOBALPING_ACTIVE_ENABLED=true` and a server-only `GLOBALPING_CONTROL_KEY`. Requests are server-rate-limited, Iran-vantage-only, capped to five probes, restricted to an allowlist of measurement types and reject localhost/private/reserved/CGNAT/link-local/documentation targets and URL credentials. The browser UI does not store or expose the control key.
+This project does not include high-risk in-country trigger/fuzzing or censorship-evasion experiments. A future owned probe fleet must treat operator identity, source addresses, physical location, endpoints, timestamps and raw logs as sensitive security data. Public probe identifiers must be minimized.
 
-## OSINT integrity
+## OSINT / incident integrity
 
-GDELT and curated reports are explicitly contextual. They do not become additional technical votes simply because multiple articles repeat the same upstream measurement. Evidence provenance must be traced to the root sensor before corroboration.
+Context is not promoted to technical corroboration merely by repetition.
+
+Access Now STOP may cite OONI, Radar, IODA or other existing sensors. `lib/accessnow.mjs` retains source URLs and maps recognized root lineage while marking every STOP record `independentTechnicalVote: false`.
+
+GDELT and professional reporting are discovery/context only. Any future correlation claiming independent corroboration must trace the evidence to root measurement sources first.
+
+## Data sensitivity and persistence
+
+The Node service has no database and does not persist upstream payloads to disk. Caches are in process memory.
+
+Manually entered local VPN field measurements remain in browser `localStorage` and are not uploaded.
+
+## Dependency and CI supply-chain controls
+
+The runtime has no third-party npm dependencies. Node.js and the host/reverse proxy remain patch-management responsibilities.
+
+GitHub Actions used in permanent CI are pinned to exact verified commit SHAs instead of floating major tags. CI uses read-only repository contents permission, checks for committed secrets/`.env`, builds the production artifact and runs local security smoke tests.
