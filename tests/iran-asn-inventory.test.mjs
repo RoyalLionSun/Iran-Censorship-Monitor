@@ -1,7 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { buildIranAsnInventoryUrl, compareCuratedAsnCoverage, parseIranAsnInventory } from '../lib/iran-asn-inventory.mjs';
+import {
+  buildIranAsnInventoryUrl,
+  buildIranAsnRoutingSummaryUrl,
+  compareCuratedAsnCoverage,
+  parseIranAsnInventory,
+  parseIranAsnRoutingSummary
+} from '../lib/iran-asn-inventory.mjs';
 
 const profiles = JSON.parse(await readFile(new URL('../data/asns.json', import.meta.url), 'utf8'));
 const byAsn = new Map(profiles.map((profile) => [profile.asn, profile]));
@@ -58,4 +64,48 @@ test('inventory URL is explicitly IR-scoped and identifies the application', () 
   assert.equal(url.pathname, '/data/country-resource-list/data.json');
   assert.equal(url.searchParams.get('resource'), 'IR');
   assert.equal(url.searchParams.get('sourceapp'), 'iran-censorship-monitor');
+});
+
+test('Country ASNs parser preserves registered-vs-routed count semantics', () => {
+  const summary = parseIranAsnRoutingSummary({
+    data: {
+      countries: [{ resource: 'IR', stats: { registered: 100, routed: 80 } }],
+      resource: ['IR'],
+      query_time: '2026-09-09T16:00:00',
+      latest_time: '2026-09-09T16:00:00',
+      lod: ['0']
+    }
+  });
+  assert.deepEqual(summary, {
+    country: 'IR',
+    queryTime: '2026-09-09T16:00:00',
+    latestTime: '2026-09-09T16:00:00',
+    registeredCount: 100,
+    routedCount: 80,
+    registeredMinusRouted: 20,
+    detailLevel: ['0'],
+    source: 'RIPEstat Country ASNs',
+    registrationBasis: 'public RIR registration information',
+    routingBasis: 'RIPE RIS',
+    evidenceRole: 'scope-routing-summary',
+    independentCensorshipVote: false,
+    note: 'These are country-level counts, not an ASN-by-ASN classification. A routed count is control-plane visibility in RIPE RIS and is not proof of end-user reachability.'
+  });
+});
+
+test('Country ASNs parser fails closed on wrong scope, missing stats or invalid counts', () => {
+  assert.throws(() => parseIranAsnRoutingSummary({ data: { countries: [{ resource: 'DE', stats: { registered: 1, routed: 1 } }] } }), /not scoped to IR/);
+  assert.throws(() => parseIranAsnRoutingSummary({ data: { countries: [{ resource: 'IR' }] } }), /missing country stats/);
+  assert.throws(() => parseIranAsnRoutingSummary({ data: { countries: [{ resource: 'IR', stats: { registered: -1, routed: 1 } }] } }), /invalid registered ASN count/);
+  assert.throws(() => parseIranAsnRoutingSummary({ data: { countries: [{ resource: 'IR', stats: { registered: 1, routed: 'many' } }] } }), /invalid routed ASN count/);
+});
+
+test('Country ASNs URL requests only documented count detail and is IR-scoped', () => {
+  const url = new URL(buildIranAsnRoutingSummaryUrl({ queryTime: '2026-09-09T16:00:00Z' }));
+  assert.equal(url.origin, 'https://stat.ripe.net');
+  assert.equal(url.pathname, '/data/country-asns/data.json');
+  assert.equal(url.searchParams.get('resource'), 'IR');
+  assert.equal(url.searchParams.get('lod'), '0');
+  assert.equal(url.searchParams.get('sourceapp'), 'iran-censorship-monitor');
+  assert.equal(url.searchParams.get('query_time'), '2026-09-09T16:00:00Z');
 });
