@@ -1,143 +1,105 @@
-# Current State — v1.1.0 release
+# Current State — v1.2.0-dev
 
-Version: **1.1.0**  
-Release date: **2026-09-09**  
+Date: **2026-09-09**  
+Production release: **`v1.1.0`**  
 Production branch: **`main`**  
-Release merge commit: **`8a66e32947c0d4f82612f03ad72555c87fd56fe6`**
+Production commit: **`9087809d6a87ae578dd590d185c35b4438319b2d`**  
+Development branch: **`develop/v1.2`**
 
-## Canonical branch model
+## Branch / release state
 
-- `main` is the production source for v1.1.0.
-- `develop/v1.1` remains preserved as development history for the v1.1 implementation.
-- `release/v1.1.0` is used only for final release metadata/status alignment before tagging.
-- Historical bootstrap/transport branches and ZIP/prototype snapshots are audit material only.
+- `main` is the published v1.1.0 production source.
+- tag and GitHub Release `v1.1.0` are published and verified against the production commit.
+- old v1.1 development/release/bootstrap branches were removed after release cleanup.
+- `develop/v1.2` was created directly from the released `main` and is the only active development branch.
+- v1.2 is **not merged, tagged or released**.
 
-## Implemented measurement and intelligence layers
+## v1.2 implemented repository scope
 
-### Censorship/interference
+### Second routing source
 
-- OONI Iran-scoped measurements, raw explorer and circumvention/messaging tests;
-- Censored Planet GraphQL interference-rate context and CenAlert events.
+- passive Route Views live collection through CAIDA BGPStream/bgpreader tooling;
+- prefix scope reuses validated current announced-prefix boundaries;
+- Route Views provenance remains distinct from RIPE RIS;
+- BGPStream itself is an access/normalization framework, not an independent sensor;
+- routing events remain control-plane evidence and never an independent censorship vote.
 
-### Data plane / connectivity
+### Owned-probe laboratory architecture
 
-- RIPE Atlas public-probe RTT/loss context using bounded per-probe `ping-stats` requests;
-- RIPE Atlas partial coverage remains visible but is excluded from automatic corroboration/divergence decisions;
-- IODA routing/active-probing signals and outage events;
-- Cloudflare Radar traffic, anomalies and outage annotations when a Radar Read token is configured.
+Implemented fail-closed layers include:
 
-### Performance/degradation context
+- Ed25519-signed short-lived manifests containing target IDs only;
+- local project-controlled Class-A target registry;
+- DNS/TCP/TLS/HTTPS families only;
+- local execution compiler preventing scheduler-supplied host/URL/port/command values;
+- authenticated HMAC result envelopes;
+- sensitive/free-form metadata rejection;
+- bounded ingestion size, replay and per-probe/global rate/concurrency guards;
+- bounded memory-only result queue;
+- local enable and consent gates before transport or measurement;
+- fixed HTTPS Stage-1 control/collection contract with hostname validation and SPKI pins;
+- collection-edge normalization that does not use source IP/X-Forwarded-For as evidence or persistent identity;
+- systemd laboratory sandbox/default-deny specifications and validators;
+- key provisioning/rotation/revocation policy;
+- rollback plan with no remote shell and no automatic re-enable;
+- per-probe publication model preventing national/province status or independent-source inflation.
 
-- M-Lab NDT country/ASN daily aggregate throughput and minimum-RTT data;
-- histogram buckets collapsed to one daily summary point rather than counted as independent observations;
-- sample-size gate before relative degradation context is calculated;
-- a concrete M-Lab GCS `404 NoSuchKey` for an unpublished aggregate is represented as `no_data`, while transport/server/parser failures remain errors;
-- no M-Lab performance change is automatically labeled censorship or intentional throttling.
+### Evidence policy
 
-### Control plane
+- provider website reachability is not VPN transport-protocol evidence;
+- WireGuard/OpenVPN/V2Ray/Outline evidence requires controlled transport endpoint, neutral control, paired same-probe observations, coverage, reviewed design and analyst review;
+- even a complete protocol gate is `analyst_review_ready`, not automatic `blocked`/`available`;
+- NIN-vs-global requires separately reviewed domestic/global target classes, at least two independently hosted global controls and paired observations;
+- current Class-A policy does not authorize a NIN target class, therefore NIN comparison remains non-operational;
+- province publication remains deferred/NO-GO and source-IP geography is forbidden;
+- white-SIM vs ordinary-SIM remains NO-GO because the design intentionally does not collect sensitive subscriber/entitlement identifiers.
 
-- RIPEstat / RIPE RIS visibility, announced prefixes and observed neighbours;
-- bounded on-demand BGP announcement/withdrawal drilldown with AS paths and collector metadata;
-- pre-January-2024 drilldown horizon reported as unavailable rather than zero events;
-- optional passive RIPE RIS Live collector for continuous prefix-scoped announcements/withdrawals;
-- RIS Live starts only by explicit operator command, uses registered Iran ASNs and refuses unscoped or silently truncated prefix sets;
-- route events are explicitly control-plane evidence and never an independent censorship vote.
+### Additional source review
 
-### Protocol/deployment context
+APNIC HTTP/3/QUIC, DNS-over-IPv6 and DNS query-type/HTTPS-record views were reviewed as potentially useful protocol/deployment context. No new runtime adapter was admitted because the review did not establish a sufficiently stable supported machine-readable contract plus enough independent censorship interpretability to justify one. Unsupported visualization scraping remains prohibited.
 
-- Cloudflare Radar HTTP version, IP version and TLS-version distributions;
-- APNIC Labs Iran/ASN IPv6 capability and preference time series;
-- APNIC raw experiment sample counts retained alongside raw percentages and 30-day smoothed context;
-- APNIC protocol changes are not an independent censorship vote.
+### UI verification
 
-### Vantage / circumvention / topology
+The previous v1.1 presentation-testing limitation is closed in v1.2 development. CI now starts a loopback fixture and a real headless Chrome/Chromium process, loads the actual `public/v11-context.js`, and verifies rendered M-Lab, APNIC and STOP context plus the separate source-family semantics.
 
-- Globalping Iran passive probe inventory;
-- protected, disabled-by-default Globalping active measurement endpoint;
-- Tor direct/bridge estimates and bridge-transport low/high bounds;
-- PeeringDB topology context;
-- Internet Health Report AS-Hegemony dependency/chokepoint context.
+## Current verification
 
-### Targets / shutdown incidents / OSINT
+Latest verified runtime/UI head before this documentation-only readiness pass:
 
-- Citizen Lab Iran test-target inventory;
-- Internet Society Pulse token-gated shutdown context;
-- Access Now #KeepItOn STOP structured Iran incident ingestion;
-- STOP evidence links retained and mapped to known root technical sources when possible;
-- STOP records explicitly never count as independent technical votes;
-- curated Iran-intelligence source registry and allowlisted GDELT discovery.
+- **203/203 deterministic tests**;
+- CI `34365724780` — success;
+- production build — success;
+- real headless Chrome UI presentation gate — success;
+- committed-secret/private-key gate — success;
+- runtime/root/404/traversal smoke gate — success;
+- live public-source acceptance `34365369630` — success.
 
-### Dashboard presentation
+The earlier browser-gate failure was a fixture deadlock caused by synchronous Chrome execution blocking the local Node fixture server. Commit `330ca12a6819dc4657d60f35c164e28c01b24f1b` changed the harness to asynchronous browser execution; the real UI then passed.
 
-- M-Lab performance context is visible without entering the censorship assessment;
-- APNIC IPv6/sample context is visible without entering the censorship assessment;
-- Access Now STOP incidents and evidence lineage are exposed in the intelligence view;
-- a separate context CSV export avoids conflating contextual evidence with the existing technical export;
-- the established dashboard core is preserved as `public/app-core.js`; the v1.1 context layer observes the same API responses instead of generating duplicate upstream requests.
+## Release-readiness boundary
 
-## Methodological rules enforced
+Repository/laboratory development is mature enough for a v1.2 pre-release review, but **Iran pilot deployment remains NO-GO**.
 
-- No fabricated measurement values or synthetic no-data replacements.
-- BGP control-plane visibility is separate from user-path/data-plane reachability.
-- OONI/Censored Planet anomalies do not automatically equal confirmed censorship.
-- Traffic/performance degradation does not automatically establish government action or throttling intent.
-- Context sources do not increase independent-source counts when they cite measurements already present in the dashboard.
-- Missing province/VPN/NIN measurements remain missing rather than inferred from country/ASN telemetry.
-- Control/data-plane divergence is an inference label with explicit boundaries, not a measured censorship mechanism.
-- `partial` or `no_data` source states are never promoted into full technical corroboration.
+External gates still required before any real Iran pilot:
 
-## Source-review result
+1. real isolated Linux/systemd host verification of kernel/cgroup sandbox and negative egress behavior;
+2. real project-controlled Class-A measurement/control endpoints and collection edge;
+3. out-of-band key provisioning, rotation and revocation exercise;
+4. rollback exercise against a known-safe version;
+5. a real voluntary pilot operator with explicit consent outside the repository;
+6. explicit authorization before enabling the pilot.
 
-**Integrated:** APNIC Labs IPv6 because it adds a distinct client-side protocol-deployment measurement, exposes raw sample counts, supports Iran and ASN granularity, and provides a stable public machine-readable JSON path.
+A green repository, CI result, documentation review, PR or future release never substitutes for those external gates. Repository policy continues to expose `deploymentAuthorized:false`.
 
-**Retained as context rather than runtime sensors:** Proton VPN Observatory, Psiphon operational reporting, Miaan/Filterwatch, ASL19 and NetBlocks. They remain valuable Iran/circumvention/incident sources, but no stable continuous public machine-readable feed was established that justifies presenting them as live sensors.
+## Methodological invariants
 
-**Not scraped:** Google Transparency Report traffic graphs. The project does not reverse-engineer or scrape unsupported visualization data as a pseudo-API.
-
-Additional APNIC DNS/protocol datasets remain future candidates only after provenance overlap and interpretability review.
-
-## Active-measurement safety
-
-Globalping active measurements require explicit server configuration and a server-only control key. Targets are restricted by type/scope and private, loopback, link-local, CGNAT, reserved/documentation destinations and URL credentials are rejected. Passive probe inventory remains the default.
-
-RIPE RIS Live is passive routing collection, not active probing. Automatic scope is derived from current RIPEstat announced prefixes for a selected allowlisted ASN; the collector refuses empty/oversized scope instead of falling back to an unscoped firehose.
-
-## Release verification
-
-The v1.1 code state passed:
-
-- **73/73 deterministic tests**;
-- `npm ci` with zero reported package vulnerabilities;
-- production build;
-- committed-token/private-key scan;
-- `.env` absence check;
-- `/api/health` runtime smoke test;
-- root HTTP 200;
-- unknown-path HTTP 404;
-- traversal-style HTTP 404;
-- code-state live public-source acceptance run **`34323940251`** — success;
-- passive RIPE RIS Live handshake: **AS58224 / `217.218.96.0/20` / HTTP 200**;
-- PR CI run **`34334883650`** — success;
-- post-merge `main` CI run **`34337684528`** — success.
-
-The live acceptance window `2026-08-27..2026-09-09`, scope `AS58224`, returned valid source states including OONI `ok`, RIPE Atlas `no_data`, IODA observed, Tor observed, M-Lab `no_data`, APNIC observed, RIPEstat observed, Globalping passive `no_data`, Censored Planet partial, PeeringDB observed, IHR observed, five matching STOP incidents and Citizen Lab targets. GDELT HTTP 429 remained optional rate-limited discovery context rather than a release blocker.
-
-## Operational boundary
-
-The ordinary Node dashboard server has no database and persists no upstream payloads to disk; its caches are in memory.
-
-The separately invoked RIS Live collector intentionally persists routing events to `var/ris-live/` as daily JSONL plus an ASN status file. Default retention is seven days and the configured maximum is 30 days. `var/` is ignored by Git and is not served by the dashboard.
-
-## Intentionally deferred beyond v1.1
-
-- CAIDA BGPStream collector integration;
-- owned security-reviewed in-country Iran probe mesh;
-- trustworthy province-level continuous telemetry;
-- national live WireGuard/OpenVPN/V2Ray/Outline availability;
-- white-SIM versus ordinary-SIM measurement;
-- robust continuous NIN-versus-global end-user reachability;
-- automatic ingestion of contextual providers without a stable/defensible machine-readable feed.
-
-## Release status
-
-v1.1.0 is promoted to `main`. The remaining release operation is to tag the final release-metadata commit as `v1.1.0` and publish the corresponding GitHub Release entry.
+- no fabricated values;
+- no `no_data` → zero/available conversion;
+- BGP visibility ≠ end-user reachability;
+- anomaly ≠ confirmed censorship;
+- multiple owned probes ≠ multiple independent sources;
+- no national/province badge from fleet observations;
+- no province inference from network metadata;
+- no SIM-class inference;
+- no NIN claim without validated paired target classes;
+- no VPN protocol claim from a website-only test.

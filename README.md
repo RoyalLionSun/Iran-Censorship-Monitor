@@ -2,50 +2,61 @@
 
 Iran-focused censorship-intelligence dashboard for technical measurements, routing/control-plane state, data-plane performance, protocol context, circumvention telemetry and curated shutdown/OSINT evidence.
 
-**Release:** `v1.1.0`  
+**Production release:** `v1.1.0`  
 **Production branch:** `main`  
-**Release merge:** `8a66e32947c0d4f82612f03ad72555c87fd56fe6`
+**Production commit:** `9087809d6a87ae578dd590d185c35b4438319b2d`  
+**Development:** `v1.2.0-dev` on `develop/v1.2`
 
 The application does **not** ship simulated monitoring values. Missing, unavailable, rate-limited or unconfigured sources remain explicit no-data/error states. Contextual reports never become independent technical sensor votes merely because they repeat an underlying measurement.
 
 ## Evidence architecture
 
-The dashboard keeps observation families separate:
-
-- **censorship/interference measurements:** OONI + Censored Planet;
+- **censorship/interference:** OONI + Censored Planet;
 - **data plane/connectivity:** RIPE Atlas + IODA + Cloudflare Radar;
-- **performance/degradation context:** M-Lab NDT with sample-size-aware interpretation;
-- **control plane:** RIPEstat / RIPE RIS, bounded historical update drilldown, plus an optional passive RIPE RIS Live collector;
-- **protocol/deployment context:** Cloudflare Radar protocol distributions + APNIC Labs IPv6 capability/preference;
-- **Iran vantage coverage:** Globalping probe inventory; optional active measurements are disabled by default and operator-controlled;
-- **circumvention:** Tor direct/bridge estimates and transport bounds plus contextual Psiphon/Proton/Ceno reporting;
-- **topology/chokepoints:** PeeringDB + Internet Health Report AS Hegemony;
-- **test inventory:** Citizen Lab Iran list;
-- **curated shutdown incidents:** Internet Society Pulse when configured + Access Now #KeepItOn STOP;
-- **OSINT discovery:** curated Iran-specialist/professional source registry + GDELT DOC 2.0.
+- **performance:** M-Lab NDT with sample-aware interpretation;
+- **control plane:** RIPEstat / RIPE RIS, passive RIPE RIS Live, and in v1.2 an optional passive Route Views stream collector through CAIDA BGPStream tooling;
+- **protocol/deployment context:** Cloudflare Radar protocol distributions + APNIC Labs IPv6;
+- **Iran vantage coverage:** Globalping passive inventory; active mode remains disabled by default;
+- **circumvention:** Tor plus contextual Psiphon/Proton/Ceno reporting;
+- **topology:** PeeringDB + Internet Health Report AS Hegemony;
+- **targets:** Citizen Lab Iran list;
+- **shutdown/OSINT:** Internet Society Pulse, Access Now #KeepItOn STOP and curated/GDELT discovery.
 
-A dedicated control/data-plane divergence classifier can flag high BGP visibility coexisting with severe user-path disruption. It reports that pattern as compatible with selective isolation/filtering/throttling/whitelisting, never as proof of mechanism or intent.
+RIPE and Route Views routing observations are control-plane evidence. Reading RIPE through BGPStream would not create an independent source; the v1.2 second routing family is restricted to Route Views infrastructure.
+
+## v1.2 development scope
+
+Repository-side v1.2 work adds:
+
+- bounded passive Route Views/BGPStream collection with explicit provenance separation from RIPE RIS;
+- a security-reviewed owned-probe laboratory architecture for Class-A DNS/TCP/TLS/HTTPS observations;
+- signed short-lived manifests, local target resolution, authenticated results, replay/rate/size limits and memory-only buffering;
+- consent/withdrawal, trust, retention, sandbox, predeployment and rollback gates;
+- fail-closed evidence rules for VPN transports and NIN-vs-global comparisons;
+- explicit NO-GO/deferred decisions for province publication and white-SIM/ordinary-SIM segmentation;
+- a real headless-Chrome presentation gate for M-Lab/APNIC/STOP context.
+
+**Important:** v1.2 repository/laboratory readiness is not Iran deployment authorization. `deploymentAuthorized` remains false. A real Iran pilot requires the documented external host, endpoint, key, consent and rollback gates plus explicit authorization.
 
 ## Integrity rules
 
-1. No missing metric is replaced by a fabricated value.
-2. BGP visibility is not treated as proof that users can reach the global Internet.
+1. No fabricated values or synthetic replacements for missing data.
+2. BGP visibility is not proof of working end-user Internet.
 3. OONI/Censored Planet anomalies are investigation signals, not automatic proof of censorship.
-4. Traffic or performance degradation alone is not automatically attributed to state censorship or throttling intent.
-5. M-Lab and APNIC preserve sample/coverage metadata and are contextual, not additional censorship votes.
-6. Access Now STOP, Pulse, GDELT and other OSINT remain contextual; root evidence lineage must be reviewed before claiming independent corroboration.
-7. Tor/circumvention usage is contextual and excluded from automatic disruption scoring.
-8. Province-level or nationwide VPN success rates are not shown without a defensible measurement fleet.
-9. Active Globalping measurements remain disabled by default and protected by server-side controls.
-10. RIPE RIS Live route events are control-plane evidence only and never an independent censorship vote.
-11. No high-risk in-country trigger/fuzzing workflow is included.
+4. Performance degradation alone is not attributed to state throttling or intent.
+5. Context sources do not inflate independent technical corroboration.
+6. Multiple owned probes remain one owned-probe source family.
+7. A VPN-provider website result is not a WireGuard/OpenVPN/V2Ray/Outline transport result.
+8. Province is not inferred from source IP, ASN, latency or reverse DNS.
+9. White-SIM/ordinary-SIM status is not inferred or collected from sensitive subscriber identifiers.
+10. NIN-vs-global claims require separately reviewed target classes and paired same-probe observations.
+11. Active Globalping remains disabled by default; no risky in-country trigger/fuzzing workflow is included.
 
 ## Requirements
 
-- Node.js **20.11 or newer**; Node.js 22 is the verified CI runtime.
-- Outbound DNS/HTTPS from the deployment host to configured public data sources.
-- Optional Cloudflare Radar token restricted to `Account > Radar > Read`.
-- Optional Internet Society Pulse API token.
+- Node.js **20.11+**; Node.js 22 is the verified CI runtime.
+- Outbound DNS/HTTPS from the dashboard host to configured public sources.
+- Optional Cloudflare Radar Read token and Internet Society Pulse token.
 
 The runtime has no third-party npm dependencies.
 
@@ -58,13 +69,7 @@ npm start
 
 Open `http://127.0.0.1:4173`.
 
-Development mode:
-
-```bash
-npm run dev
-```
-
-## Validate
+## Validate development state
 
 ```bash
 npm ci
@@ -72,66 +77,36 @@ npm run check
 npm run build
 npm run verify:public
 npm run verify:ris-live
-npm run verify:radar   # optional; requires configured token + outbound DNS/HTTPS
+npm run verify:bgpstream
+npm run verify:ui
+npm run verify:radar   # optional; requires configured Radar token
 ```
 
-The verified v1.1 release suite contains **73 deterministic tests**. Permanent GitHub Actions additionally performs committed-secret/private-key checks, `.env` absence checks and local runtime/404/traversal smoke tests.
+Current v1.2 development verification contains **203 deterministic tests**. CI also runs the production build, committed-secret/private-key checks, runtime/404/traversal smoke tests and a real local headless-browser presentation gate.
 
-The latest code-state live acceptance before release passed the public server adapters and a passive RIPE RIS Live subscription handshake. A source may legitimately return `no_data` or `partial`; those states are not converted into zero impact or full corroboration.
+Latest verified v1.2 runtime/UI gates before the readiness-documentation pass:
 
-## Passive RIPE RIS Live collection
+- normal CI `34365724780` — success;
+- live public-source acceptance `34365369630` — success;
+- real Chrome output: `UI PRESENTATION PASS · google-chrome · M-Lab/APNIC/STOP rendered in a real headless browser`.
 
-The optional collector is separate from the dashboard server and never starts automatically:
+## Optional passive routing collectors
+
+RIPE RIS Live:
 
 ```bash
 npm run collect:ris -- --asn AS58224
 ```
 
-It accepts only ASNs registered in `data/asns.json`. By default it resolves currently announced prefixes through RIPEstat, refuses unscoped or oversized subscriptions, caps automatic scope at 200 prefixes, stores daily JSONL routing events under `var/ris-live/`, and retains them for seven days by default (maximum 30 days).
-
-For a deliberately narrower operator scope, use `--prefix-file`. The collector is passive: it listens to public routing updates and does not trigger measurements.
-
-## Environment
-
-| Variable | Required | Purpose |
-|---|---:|---|
-| `CLOUDFLARE_RADAR_API_TOKEN` | No | Enables Cloudflare Radar. Server-side only. |
-| `INTERNET_SOCIETY_PULSE_API_TOKEN` | No | Enables Internet Society Pulse shutdown context. Server-side only. |
-| `GLOBALPING_API_TOKEN` | No | Optional higher Globalping upstream limits. |
-| `GLOBALPING_ACTIVE_ENABLED` | No | Must explicitly be `true` before active Globalping can run. Default `false`. |
-| `GLOBALPING_CONTROL_KEY` | No | Server-only operator key required for active Globalping. |
-| `GLOBALPING_SERVER_RUNS_PER_HOUR` | No | Server-side active-run cap. |
-| `HOST` | No | Bind address. Default `127.0.0.1`. |
-| `PORT` | No | HTTP port. Default `4173`. |
-| `CACHE_TTL_MS` | No | Default upstream in-memory cache TTL. |
-
-The server loads `.env` without overwriting environment variables already provided by the process/service manager. `.env` is excluded from Git and production build artifacts.
-
-## Production deployment
+Route Views / BGPStream development collector:
 
 ```bash
-npm run build
-cd dist
-node server.mjs
+npm run collect:routeviews -- --asn AS58224
 ```
 
-For Internet-facing use, keep the Node listener private where practical and terminate HTTPS at a reverse proxy/managed ingress. Run the optional RIS Live collector as a separate operator/service process with explicit write permissions for its data directory. See [PRODUCTION.md](PRODUCTION.md).
+Both are separate operator processes, passive, bounded to validated prefix scope and excluded from censorship votes. See [DATA_SOURCES.md](DATA_SOURCES.md) and [PRODUCTION.md](PRODUCTION.md).
 
-## Project layout
-
-```text
-public/               Dashboard UI and v1.1 context presentation
-server.mjs            HTTP server and internal API routes
-lib/                   Upstream adapters and assessment/collector logic
-data/                  Iran ASN/source registries
-tests/                 Deterministic offline tests
-scripts/               Build, verification and optional RIS Live collector tooling
-var/                   Local runtime collector data; ignored by Git
-dist/                  Generated production bundle
-legacy/prototype-export/   Audit-only original prototype export
-```
-
-Detailed state and methodological boundaries:
+## Project documentation
 
 - [CURRENT_STATE.md](CURRENT_STATE.md)
 - [ARCHITECTURE.md](ARCHITECTURE.md)
@@ -140,7 +115,9 @@ Detailed state and methodological boundaries:
 - [SECURITY.md](SECURITY.md)
 - [PRODUCTION.md](PRODUCTION.md)
 - [CHANGELOG.md](CHANGELOG.md)
+- [MEASUREMENT_FLEET.md](MEASUREMENT_FLEET.md)
+- [FLEET_STAGE1_PREDEPLOYMENT.md](FLEET_STAGE1_PREDEPLOYMENT.md)
+- [PROTOCOL_VPN_NIN_EVIDENCE.md](PROTOCOL_VPN_NIN_EVIDENCE.md)
+- [PROVINCE_SIM_FEASIBILITY.md](PROVINCE_SIM_FEASIBILITY.md)
 
-## Historical source material
-
-The original prototype export remains under `legacy/prototype-export/` for audit/reference only. It is not the development basis and the production runtime does not depend on prototype-specific modules.
+The original prototype export remains under `legacy/prototype-export/` for audit/reference only and is not the development basis.

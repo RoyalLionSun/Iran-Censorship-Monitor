@@ -3,11 +3,12 @@ name: Live public source acceptance
 on:
   workflow_dispatch:
   push:
-    branches: [develop/v1.1]
+    branches: [develop/v1.2]
     paths:
       - '.github/workflows/live-source-acceptance.yml'
       - 'scripts/verify-public-sources.mjs'
       - 'scripts/verify-ris-live.mjs'
+      - 'scripts/verify-bgpstream-broker.mjs'
       - 'package.json'
       - 'server.mjs'
       - 'lib/ripe.mjs'
@@ -21,6 +22,7 @@ on:
       - 'lib/tor.mjs'
       - 'lib/ripestat.mjs'
       - 'lib/rislive.mjs'
+      - 'lib/bgpstream.mjs'
       - 'lib/peeringdb.mjs'
       - 'lib/ihr.mjs'
       - 'lib/osint.mjs'
@@ -55,3 +57,6 @@ jobs:
 
       - name: Verify passive RIPE RIS Live subscription handshake
         run: npm run verify:ris-live
+
+      - name: Verify CAIDA BGPStream Route Views broker resource
+        run: npm run verify:bgpstream
