@@ -19,6 +19,7 @@ import { getIhrDependencies } from './lib/ihr.mjs';
 import { getPulseShutdowns } from './lib/pulse.mjs';
 import { getGdeltIranIntelligence } from './lib/osint.mjs';
 import { getMlabPerformance } from './lib/mlab.mjs';
+import { getAccessNowStopIncidents } from './lib/accessnow.mjs';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
 
@@ -133,6 +134,7 @@ async function handleApi(req, res, url) {
         liveIoda: true,
         liveTorMetrics: true,
         mlabNdtPerformance: true,
+        accessNowStopIncidents: true,
         ripeStatRouting: true,
         censoredPlanet: true,
         globalpingProbeInventory: true,
@@ -226,10 +228,28 @@ async function handleApi(req, res, url) {
     return true;
   }
 
+  if (url.pathname === '/api/stop') {
+    const input = queryInput(url);
+    const result = await safeSource('Access Now #KeepItOn / STOP', () => getAccessNowStopIncidents(input));
+    jsonResponse(res, 200, result);
+    return true;
+  }
+
   if (url.pathname === '/api/intelligence') {
     const input = queryInput(url);
-    const gdelt = await safeSource('GDELT DOC 2.0', () => getGdeltIranIntelligence(input));
-    jsonResponse(res, 200, { ok: true, input: { since: input.since, until: input.until }, fetchedAt: new Date().toISOString(), sources: intelligenceSources, gdelt, note: 'Intelligence sources and GDELT articles are contextual research/discovery. They are not counted as independent technical sensor votes without provenance review.' });
+    const [accessNow, gdelt] = await Promise.all([
+      safeSource('Access Now #KeepItOn / STOP', () => getAccessNowStopIncidents(input)),
+      safeSource('GDELT DOC 2.0', () => getGdeltIranIntelligence(input)),
+    ]);
+    jsonResponse(res, 200, {
+      ok: true,
+      input: { since: input.since, until: input.until },
+      fetchedAt: new Date().toISOString(),
+      sources: intelligenceSources,
+      accessNow,
+      gdelt,
+      note: 'Access Now STOP incidents and GDELT articles are contextual intelligence. STOP may incorporate evidence from technical sensors already present in this application, so neither source creates an additional independent technical vote without root-evidence review.',
+    });
     return true;
   }
 
