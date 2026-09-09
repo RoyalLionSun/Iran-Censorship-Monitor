@@ -133,7 +133,7 @@ test('bounded backoff never undercuts local floor or exceeds one hour', () => {
   assert.equal(computeFleetStage1Backoff({ attempt: 0, jitter: 0.25 }), 75_000);
 });
 
-test('memory-only queue is bounded expires entries and has no persistence API', () => {
+test('memory-only queue is bounded, locally purgeable, expires entries and has no persistence API', () => {
   const queue = createFleetStage1MemoryQueue({ maxEntries: 2, ttlMs: 60_000 });
   const first = envelope();
   const second = { ...envelope(), mac: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' };
@@ -142,7 +142,12 @@ test('memory-only queue is bounded expires entries and has no persistence API', 
   assert.deepEqual(queue.enqueue(envelope(), NOW), { accepted: false, reason: 'queue_full' });
   assert.equal(queue.size(NOW), 2);
   assert.equal(queue.peek(NOW), first);
+  assert.equal(queue.clear(NOW), 2);
+  assert.equal(queue.size(NOW), 0);
+  assert.equal(queue.clear(NOW), 0);
   assert.equal('save' in queue, false);
+  assert.equal('load' in queue, false);
+  assert.equal(queue.enqueue(first, NOW).accepted, true);
   assert.equal(queue.size(new Date(NOW.getTime() + 60_001)), 0);
   assert.equal(queue.peek(new Date(NOW.getTime() + 60_001)), null);
 });
