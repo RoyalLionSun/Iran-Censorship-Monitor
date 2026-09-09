@@ -1,6 +1,8 @@
 # Iran measurement fleet — v1.2 safety and evidence specification
 
-Status: **architecture/design only**. This document does not authorize deployment of probes or enable active protocol/circumvention testing.
+Status: **Stage 0 implemented and laboratory-validated on `develop/v1.2`; deployment remains unauthorized.** Stage 0 permits only local/loopback Class A validation. No Iran probe, external target, VPN/circumvention test, Class B/C/D measurement or national/provincial fleet status is authorized by this document.
+
+The canonical Stage 0 implementation review is `FLEET_STAGE0_REVIEW.md`.
 
 ## Purpose
 
@@ -61,11 +63,13 @@ The initial fleet must not:
 
 The probe should:
 
-- initiate outbound TLS connections only;
+- initiate outbound TLS connections only in a future deployed transport;
 - expose no inbound control, SSH, HTTP or debug listener in normal operation;
 - run with a dedicated unprivileged service identity where the platform permits it;
 - use an egress allowlist for collection/control infrastructure where practical;
 - never accept arbitrary command strings, shell fragments or arbitrary target URLs from the server.
+
+Stage 0 goes further: the implemented Class A adapter is hard-coded to refuse every non-loopback destination before DNS/socket activity. Its source contains client primitives only; listeners exist solely in test fixtures.
 
 ### Control model
 
@@ -78,15 +82,17 @@ A test definition contains bounded parameters such as:
 - address family;
 - maximum attempts;
 - timeout;
-- rate/jitter window.
+- rate/jitter window where a future policy explicitly adds it.
 
 The central service must not be able to transform a safe test ID into an arbitrary scanner through free-form hostnames, IP addresses, ports or command-line arguments.
 
-Future remote manifests should be cryptographically signed. A probe must reject an unsigned, expired or unknown test definition. Updating the set of permitted measurement classes is a software/policy update, not an ordinary scheduler action.
+Stage 0 implements cryptographically signed manifests using Ed25519. A probe rejects unsigned/tampered, expired, unknown or policy-incompatible test definitions. Host and port are absent from the scheduler manifest and are resolved only from the local target registry. Updating the set of permitted measurement classes is a software/policy update, not an ordinary scheduler action.
 
 ### Kill switch
 
 Every probe requires a local operator-controlled disable mechanism that stops measurements without requiring contact with the central service.
+
+Stage 0 implements a default-deny local gate: without an exact marker in an absolute local file, the runner returns `disabled` with zero measurements before scheduler credentials or manifests are required.
 
 Loss of contact with the server must fail closed: no queued expansion of test scope and no fallback to additional targets.
 
@@ -94,7 +100,7 @@ Loss of contact with the server must fail closed: no queued expansion of test sc
 
 ### Class A — low-risk controlled reachability
 
-Eligible for the first pilot after operator review:
+Eligible for a future first pilot only after a separate Stage 1 operator/security approval:
 
 - DNS A/AAAA lookup of project-controlled benign hostnames;
 - TCP connection to project-controlled service endpoints;
@@ -102,11 +108,13 @@ Eligible for the first pilot after operator review:
 - HTTP(S) GET/HEAD of a small static project-controlled object;
 - basic IPv4/IPv6 reachability where the target is explicitly controlled/approved.
 
+Stage 0 currently implements DNS/TCP/TLS/HTTPS only against loopback laboratory fixtures. The HTTPS adapter sends `HEAD /`; it does not follow redirects. Transport failures remain typed errors/timeouts and never become a censorship verdict.
+
 These measurements establish transport/reachability behavior; they do not by themselves prove censorship or intent.
 
 ### Class B — controlled path/performance context
 
-Possible after the Class A pilot:
+Possible only after a successful Class A pilot and a separate review:
 
 - bounded RTT/loss sampling to approved targets;
 - small fixed-size throughput objects with strict transfer caps;
@@ -149,7 +157,7 @@ Class D requires a separate research/safety process and is outside the normal da
 
 Targets must be versioned records, not free-form scheduler input.
 
-Each target should include:
+Each future deployed target record should include:
 
 - stable `targetId`;
 - owner/operator;
@@ -157,12 +165,14 @@ Each target should include:
 - expected address family;
 - expected service/port;
 - maximum request size;
-- geographic/network classification evidence;
+- geographic/network classification evidence where relevant;
 - activation and retirement timestamps.
+
+The Stage 0 code already requires a stable `targetId`, Class A safety class, project ownership, explicit approval/enabled state, allowed families, host and port in the **local** registry. It intentionally does not yet establish any external/production target registry.
 
 ### Global control targets
 
-Use more than one independently hosted project-controlled global endpoint so a single hosting/provider failure cannot be misread as Iranian filtering.
+A future pilot must use more than one independently hosted project-controlled global endpoint so a single hosting/provider failure cannot be misread as Iranian filtering.
 
 ### Domestic/NIN targets
 
@@ -176,11 +186,13 @@ A future NIN-vs-global result is a **paired observation** from the same probe an
 
 Use a random project-specific identifier with no embedded identity, phone number, device serial, geographic code or ASN.
 
+Stage 0 validates pseudonymous IDs matching the project schema and rejects identity-bearing result fields.
+
 ### Source IP
 
-The ingestion edge may need the source IP transiently for abuse protection and ASN derivation. The application dataset should store the derived ASN/network context and discard the full source IP as early as operationally practical.
+A future ingestion edge may need the source IP transiently for abuse protection and ASN derivation. The application dataset should store only explicitly approved derived network context and discard the full source IP as early as operationally practical.
 
-If temporary infrastructure logs contain source IPs, their retention and access controls must be documented separately before an Iran deployment.
+If temporary infrastructure logs contain source IPs, their retention and access controls must be documented separately before an Iran deployment. This remains a Stage 1 blocker.
 
 ### Geography
 
@@ -196,32 +208,40 @@ Allowed future categorical metadata may include operator-declared access type su
 
 ## Result schema requirements
 
-Every fleet result should preserve at least:
+The Stage 0 result schema currently preserves:
 
 - pseudonymous `probeId`;
-- probe software/policy version;
+- policy version;
+- signed-manifest nonce;
+- test ID;
+- target ID, not target host/port;
 - UTC measurement timestamp;
-- test definition/version;
-- target ID/version;
-- ASN/network context;
-- optional coarse province/access category;
 - protocol/address family;
 - individual DNS/TCP/TLS/HTTP outcomes where applicable;
-- timing/sample counts;
-- explicit timeout/error class;
-- collection timestamp;
+- bounded timing data;
+- explicit controlled timeout/error class;
 - evidence role;
-- coverage metadata.
+- explicit `independentCensorshipVote:false` after validation.
 
-Missing fields remain missing. A timeout is not converted to `blocked`; an error is not converted to zero throughput; an offline probe is not a successful observation.
+Future network/geography/access metadata requires a separate schema revision and privacy review; it is not silently inferred from the current result.
+
+Missing fields remain missing. A timeout is not converted to `blocked`; an error is not converted to zero throughput; a missing result is not converted to an offline observation.
 
 ## Evidence and display gates
 
 A single probe result is an observation from one vantage only.
 
-Before the dashboard publishes country-, province-, ISP- or protocol-level summaries, a **coverage policy must be calibrated and versioned**. Until that policy exists, fleet results may be inspected per-probe/per-network but must not produce a national/provincial availability badge.
+Before the dashboard publishes country-, province-, ISP- or protocol-level summaries, a **coverage policy must be calibrated and versioned**. Until that policy exists, fleet results must not produce a national/provincial availability badge.
 
-The coverage policy must account for at least:
+The Stage 0 coverage implementation explicitly enforces:
+
+- `aggregatePublicationAllowed:false`;
+- `nationalStatus:null`;
+- `provinceStatus:null`;
+- `offlineInferenceAllowed:false` without an explicit heartbeat;
+- `independentCensorshipVote:false` for the owned-fleet source family.
+
+The future coverage policy must account for at least:
 
 - number of distinct probes;
 - number of distinct ASNs/networks;
@@ -252,24 +272,34 @@ A contextual article or STOP/Pulse incident that cites those measurements does n
 
 ## Ingestion security requirements
 
-Before accepting Iran probe data, the server-side ingestion path must provide:
+Stage 0 already implements, as a laboratory boundary:
 
-- per-probe revocable credentials;
-- authenticated TLS transport;
-- strict request-size limits;
-- schema validation before persistence;
-- replay protection or bounded timestamp/nonce validation;
-- per-probe and global rate limits;
-- no arbitrary filesystem path supplied by the probe;
-- no executable content or remote code path;
+- per-probe revocable credentials via a separate secret resolver;
+- immediate credential rotation/revocation semantics;
+- strict request-envelope size limit;
+- exact schema validation;
+- HMAC authentication;
+- signed-manifest semantic binding;
+- result timestamp binding to the signed manifest window;
+- bounded replay protection;
+- bounded per-probe in-memory rate control;
+- no executable content or arbitrary filesystem path in results;
+- no HTTP ingestion route and no persistence.
+
+Before accepting Iran probe data, Stage 1 still requires:
+
+- authenticated outbound transport between probe and control/collection infrastructure;
+- global as well as per-probe infrastructure rate limiting;
+- a defined persistence/retention boundary;
 - audit logging that does not unnecessarily retain sensitive source metadata;
-- immediate probe credential revocation.
+- a documented source-IP/log policy;
+- deployment hardening and key provisioning/rotation procedures.
 
 The dashboard server should consume normalized results from this ingestion boundary rather than sharing a generic command channel with probes.
 
 ## Data retention
 
-Initial deployment should minimize raw data by default.
+Stage 0 persists no fleet results in the dashboard runtime.
 
 Before pilot activation, the project must define and document:
 
@@ -283,18 +313,27 @@ No indefinite raw retention is implied by this design.
 
 ## Deployment stages
 
-### Stage 0 — laboratory validation outside Iran
+### Stage 0 — laboratory validation outside Iran — **IMPLEMENTED / VERIFIED**
 
-- implement probe and ingestion protocol;
-- validate outbound-only posture;
-- verify target allowlist enforcement;
-- verify that arbitrary targets/ports/commands are impossible;
-- test credential rotation/revocation;
-- test no-data/offline semantics.
+- [x] implement signed probe/result protocol;
+- [x] implement bounded offline ingestion boundary;
+- [x] validate outbound-only client posture;
+- [x] verify local target allowlist enforcement;
+- [x] verify arbitrary scheduler targets/ports/commands are impossible;
+- [x] test credential rotation/revocation;
+- [x] test explicit no-data/offline semantics;
+- [x] implement default-deny local operator gate;
+- [x] verify real local DNS/TCP/TLS/HTTPS Class A execution;
+- [x] verify signed-manifest → measurement → HMAC result → ingestion end-to-end;
+- [x] verify result timestamp is inside the signed manifest authorization window.
 
-### Stage 1 — one explicitly consenting Iran pilot probe
+Latest Stage 0 CI evidence is recorded in `FLEET_STAGE0_REVIEW.md` and Issue #4.
+
+### Stage 1 — one explicitly consenting Iran pilot probe — **NOT AUTHORIZED**
 
 Only Class A tests. No VPN/circumvention/blocked-site testing. Results remain per-probe and are not presented as national status.
+
+Stage 1 must not start until every blocker in `FLEET_STAGE0_REVIEW.md` is explicitly closed and an operator/security approval is recorded.
 
 ### Stage 2 — controlled multi-network pilot
 
@@ -310,20 +349,29 @@ Class C remains a separate opt-in release gate with explicit risk review. It is 
 
 ## Release blockers
 
+### Stage 0 implementation blockers
+
+All Stage 0 implementation blockers are closed by the verified laboratory code/tests described in `FLEET_STAGE0_REVIEW.md`.
+
+### Stage 1 deployment blockers
+
 The owned Iran probe fleet must remain **not deployed / no_data** until all of the following are true:
 
-- probe threat model reviewed;
-- outbound-only implementation verified;
-- arbitrary-target/command injection prevented and tested;
-- target registry established;
-- ingestion authentication/revocation implemented;
-- source-IP/log retention policy decided;
-- operator consent/withdrawal procedure documented;
-- Stage 0 tests green;
-- dashboard cannot convert insufficient coverage into national/provincial claims.
+- [ ] explicit operator/security deployment review completed;
+- [ ] one consenting operator and withdrawal procedure documented;
+- [ ] production project-controlled Class A target registry reviewed;
+- [ ] authenticated outbound control/collection transport implemented and reviewed;
+- [ ] deployed service identity/sandbox/egress policy defined and tested;
+- [ ] probe and scheduler key provisioning/rotation/recovery procedure documented;
+- [ ] source-IP and infrastructure-log retention/access policy decided;
+- [ ] raw-result persistence/retention/deletion policy decided;
+- [ ] collection-endpoint abuse/global rate limiting designed and tested;
+- [ ] deployment rollback and emergency revocation procedure tested;
+- [ ] dashboard path still cannot convert insufficient fleet coverage into national/provincial claims;
+- [ ] explicit Stage 1 authorization recorded.
 
-Protocol/VPN/NIN claims have additional blockers described above.
+Protocol/VPN/NIN claims have additional blockers described above and are not part of Stage 1.
 
 ## Current v1.2 decision
 
-This specification intentionally stops before deployment. The next engineering step is a **local/laboratory-only ingestion and probe protocol** implementing Class A with synthetic/local test fixtures. Iran deployment is not a prerequisite for developing or testing that code.
+Stage 0 is technically complete and green in CI, but this is **not a deployment approval**. The current safe next engineering phase is Stage 1 architecture/security preparation: transport, retention, consent, key provisioning, service hardening and rollback design. No Iran probe should be activated and no non-loopback target capability should be enabled until those controls are reviewed and explicitly authorized.
