@@ -2,7 +2,7 @@
 
 Iran-focused censorship-intelligence dashboard for technical measurements, routing/control-plane state, data-plane performance, protocol and circumvention context, ASN topology/inventory, and curated shutdown/OSINT evidence.
 
-**Release line:** `v1.7.0`  
+**Release line:** `v1.8.0`  
 **Production branch:** `main`
 
 The application does **not** fabricate monitoring values or convert missing access into positive/negative observations. `no_data`, `partial`, `token_required`, rate-limited and hard-error states remain explicit. Contextual reports never become independent technical sensor votes merely because they cite or repeat underlying measurements.
@@ -22,9 +22,21 @@ The application does **not** fabricate monitoring values or convert missing acce
 - **targets:** Citizen Lab Iran list;
 - **shutdown/OSINT:** Internet Society Pulse + Access Now #KeepItOn STOP + curated/GDELT discovery.
 
+## v1.8.0 — current situation and English/Farsi UX
+
+v1.8.0 adds a plain-language presentation layer without changing the underlying measurement assessment, source independence or deployment policy.
+
+The dashboard now includes a prominent **Current Situation** summary derived from the existing reviewed assessment. It distinguishes insufficient data, no corroborated major disruption, one-source elevation, corroborated disruption and strong multi-source disruption. The summary also states what the evidence does **not** establish: BGP visibility is not end-user availability, absence of a detected major disruption is not proof that Internet access is fully normal, and the current model does not make an automatic complete-nationwide-shutdown claim.
+
+High-value panels include concise **What this means** explanations while preserving raw values, provenance and technical drill-down.
+
+The UI now has a persistent `EN | فارسی` switch with deterministic English/LTR and Farsi/RTL behavior. Controlled static and dynamic UI text is translated through versioned local dictionaries; arbitrary external-source content is deliberately preserved verbatim. ASN identifiers, IP addresses/prefixes, BGP paths, URLs, timestamps and other technical values remain direction-safe/LTR where appropriate. There is no runtime Google/DeepL/AI translation dependency.
+
+v1.8.0 contains **301 deterministic tests** plus real Headless Chrome coverage for EN → FA/RTL → EN switching, persistence, translated runtime text, technical LTR fields and preservation of external-source content. No new censorship sensor or independent vote is introduced, and `deploymentAuthorized:false` remains unchanged.
+
 ## v1.7.0 — operational ASN coverage
 
-v1.7.0 makes the existing ASN inventory/enrichment operationally visible without turning the dashboard into a new upstream crawler or censorship sensor.
+v1.7.0 made the existing ASN inventory/enrichment operationally visible without turning the dashboard into a new upstream crawler or censorship sensor.
 
 Generate/update the bounded local snapshot from the same deployment tree as the server:
 
@@ -121,7 +133,7 @@ npm run verify:ui
 npm run verify:radar   # optional token
 ```
 
-v1.7.0 contains **287 deterministic tests** and retains the production build, real Headless Chrome presentation, committed-secret/private-key leakage and runtime/404/traversal gates.
+v1.8.0 contains **301 deterministic tests** and retains the production build, real Headless Chrome presentation, committed-secret/private-key leakage and runtime/404/traversal gates.
 
 ## Optional passive routing collectors
 

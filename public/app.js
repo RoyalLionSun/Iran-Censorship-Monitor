@@ -10,4 +10,4 @@ import './v18-i18n-ui.js';
 
 // Production release marker.
 const footerVersion = document.querySelector('#footer-version');
-if (footerVersion) footerVersion.textContent = 'v1.7.0';
+if (footerVersion) footerVersion.textContent = 'v1.8.0';

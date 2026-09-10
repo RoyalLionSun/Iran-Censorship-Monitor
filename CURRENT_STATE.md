@@ -1,44 +1,78 @@
-# Current State — v1.7.0 release line
+# Current State — v1.8.0 release line
 
 Date: **2026-09-10**  
-Current release line: **`v1.7.0`**  
+Current release line: **`v1.8.0`**  
 Production branch: **`main`**  
-Previous published release: **`v1.6.0`** at `8da70a85aa61fc064292330b4eaca83238abf3a3`
+Previous published release: **`v1.7.0`** at `2af215401c963542e7bfc1d9e23c90c0ad2f01aa`
 
-## v1.7.0 release state
+## v1.8.0 release state
 
-- Issue #23 is completed and feature PR #24 is merged.
-- RIPEstat live-schema hotfix Issue #25 is completed and PR #26 is merged.
-- Current pre-release `main` before release metadata: `2a5b48854296d33bded64cf9ba023d33adb94c49`.
-- v1.7 feature PR CI `34465799214` — success.
-- v1.7 post-feature `main` CI `34465863148` — success.
-- hotfix PR CI `34469766079` — success.
-- hotfix post-merge `main` CI `34469839475` — success.
-- Current deterministic suite: **287/287 tests passed**.
+- Issue #28, `v1.8 — plain-language current situation and English/Farsi UX foundation`, is completed.
+- The v1.8 feature work is merged to `main`; current pre-release `main` before release metadata is `a8c7ba4e522b9b05404658408a714c3a87c12a4c`.
+- Feature PR #29 CI `34521384028` passed before merge.
+- A recurring legacy Headless Chrome fixture-readiness timing flake was stabilized by PR #30; PR CI `34521917702` and post-merge `main` CI `34522031963` passed.
+- The post-merge completeness audit found remaining controlled runtime English text under Farsi mode; Issue #28 was deliberately reopened until that gap was closed.
+- Completion PR #31 added versioned runtime/context locale layers and deterministic coverage. Its first CI correctly caught one untranslated Farsi topology template; the corrected PR CI `34523935503` passed.
+- Final v1.8 feature `main` CI `34524065320` passed the full gate.
+- Current deterministic suite: **301/301 tests passed**.
 - Repository policy remains `deploymentAuthorized:false`.
 
-## v1.7.0 — operational ASN coverage
+## Plain-language current situation
 
-The existing operator-only Iran ASN inventory/enrichment is now available as a bounded local coverage snapshot that can be inspected through the API and dashboard without downloading the large ipverse world dataset during normal runtime or routine CI.
+v1.8 adds a prominent public-facing summary derived only from the existing reviewed assessment object. It does not introduce another score or independent evidence path.
+
+The summary distinguishes:
+
+- insufficient data;
+- no corroborated major disruption;
+- an elevated signal in one source;
+- corroborated disruption signals;
+- strong multi-source disruption signals.
+
+The presentation preserves the evidence boundary explicitly:
+
+- BGP control-plane visibility is not proof of working end-user Internet;
+- absence of a detected major disruption is not proof that Internet access is fully normal;
+- source anomalies or performance degradation do not establish censorship mechanism, political intent or attribution by themselves;
+- the current assessment does not automatically assert a complete nationwide shutdown;
+- translated presentation text cannot create or increase an evidence vote.
+
+High-value panels also expose concise `What this means` explanations while keeping source-specific measurements, provenance and technical drill-down visible.
+
+## English/Farsi and RTL
+
+The dashboard now has a central versioned English/Farsi translation architecture with a persistent `EN | فارسی` switch.
 
 Implemented contract:
 
-- `node scripts/fetch-iran-asn-inventory.mjs --write` persists `var/asn-coverage/latest.json`;
-- snapshot contains bounded coverage/provenance fields plus at most 100 uncurated review candidates, not the complete world dataset or full enrichment record set;
-- local snapshot parser fails closed on schema/country/count/provenance/vote inconsistencies;
-- freshness remains explicit: `observed`, `stale`, `no_data`, and `error` are distinct states;
-- `/api/asn-coverage` reads only the fixed local snapshot and performs no RIPE/ipverse network request;
-- dashboard displays RIR-associated inventory count, curated coverage, RIPE registered/routed country-level counts, ipverse metadata coverage, snapshot age and a bounded review queue;
-- review classes remain analyst-prioritization hints, never censorship scores;
-- clean CI expects `/api/asn-coverage` to return `no_data`, proving that absence is not converted to zero Iran ASNs;
-- the large ipverse download remains operator-triggered only;
-- routine feature-branch push CI is disabled; PR, `main`, tag and manual CI remain available.
+- English applies `lang=en` and `dir=ltr`; Farsi applies `lang=fa` and `dir=rtl`;
+- static UI, controlled status text, explanatory text, historical v11-v17 context panels and whitelisted dynamic runtime sentence frames have paired EN/FA locale entries;
+- arbitrary external-source titles and narrative content remain verbatim unless an explicit translated companion exists;
+- no runtime Google, DeepL, AI or other machine-translation dependency is used;
+- ASN identifiers, IP/prefix values, BGP paths, URLs, timestamps and other technical values remain direction-safe/LTR where appropriate;
+- dynamic templates translate only the controlled framing and preserve their technical values;
+- browser-local language persistence is verified in a real Chrome/Chromium gate.
 
-## Live runtime acceptance — 2026-09-10
+## Verification
 
-The release path was exercised on a real Node.js runtime using the current repository code and public upstreams.
+The final v1.8 feature state has passed:
 
-Observed snapshot:
+- **301/301 deterministic tests**;
+- syntax checks for application, assessment, i18n, locale, verification and collector modules;
+- canonical release-note gate on the then-current stable line;
+- production build;
+- legacy presentation Headless Chrome gate;
+- EN → FA/RTL → EN Headless Chrome gate, including persistence, Farsi runtime text, LTR technical fields and external-content preservation;
+- committed-secret/private-key rejection;
+- production runtime smoke test.
+
+No v1.8 live-source acceptance was added because v1.8 changes presentation/i18n behavior only. It does not change upstream collection, source parsing, source semantics, censorship voting, ASN inventory generation or public-source acceptance contracts.
+
+## Inherited v1.7 operational ASN acceptance
+
+The v1.7 release path was exercised on a real Node.js runtime using public upstreams. That acceptance remains the applicable runtime baseline because v1.8 does not modify the ASN collection path.
+
+Observed snapshot on 2026-09-10:
 
 - country: `IR`;
 - RIR-associated inventory: **856 ASNs**;
@@ -48,23 +82,11 @@ Observed snapshot:
 - ipverse metadata matches: **856/856**;
 - secondary metadata missing: **0**;
 - secondary country mismatch: **0**;
-- persisted review queue: **100** candidates, matching the configured bound;
+- persisted review queue: **100** candidates;
 - snapshot state through `/api/asn-coverage`: **`observed`**;
 - root and candidate semantics retain `independentCensorshipVote:false`.
 
-The acceptance values above are runtime observations, not hard-coded release constants. RIPE `routedCount` remains a country-level RIPE RIS control-plane count and is not an ASN-by-ASN reachability classification.
-
-## RIPEstat live-schema compatibility
-
-During live acceptance, RIPEstat `country-resource-list` returned `data.query_time` and `data.resources` without the documented `data.resource` echo. The request itself remained explicitly scoped with `resource=IR`.
-
-The hotfix therefore:
-
-- accepts an omitted `data.resource` echo;
-- continues to reject every explicit non-IR `data.resource`;
-- continues to require `data.resources.asn`;
-- adds deterministic regression coverage for the observed live response shape;
-- does not add a new upstream, vote, workflow or measurement interpretation.
+These are acceptance observations, not hard-coded release constants. RIPE `routedCount` remains a country-level RIPE RIS control-plane count and is not an ASN-by-ASN reachability classification.
 
 ## Evidence invariants
 
@@ -86,4 +108,4 @@ The hotfix therefore:
 
 ## Fleet deployment boundary
 
-v1.7.0 does not authorize an Iran pilot. Real isolated Linux/systemd sandbox and negative-egress validation, project-controlled endpoints/collection edge, out-of-band key lifecycle testing, rollback testing, voluntary operator consent/withdrawal and explicit deployment authorization remain external mandatory gates.
+v1.8.0 does not authorize an Iran pilot. Real isolated Linux/systemd sandbox and negative-egress validation, project-controlled endpoints/collection edge, out-of-band key lifecycle testing, rollback testing, voluntary operator consent/withdrawal and explicit deployment authorization remain external mandatory gates.

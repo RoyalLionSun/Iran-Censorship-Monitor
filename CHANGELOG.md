@@ -1,5 +1,32 @@
 # Changelog
 
+## 1.8.0 — 2026-09-10
+
+### Plain-language current situation
+
+- added a prominent current-situation summary derived only from the existing reviewed assessment/public-summary contract rather than introducing a second scoring system;
+- distinguishes insufficient data, no corroborated major disruption, one-source elevation, corroborated disruption and strong multi-source disruption;
+- exposes supporting signals and control-plane/data-plane divergence while explicitly preserving that BGP visibility is not end-user Internet availability;
+- states that absence of a detected major disruption is not proof that Internet access is fully normal and does not automatically claim a complete nationwide shutdown;
+- added concise `What this means` explanations to high-value panels while preserving raw values, provenance and technical drill-down.
+
+### English/Farsi UX and RTL
+
+- added a central versioned English/Farsi locale architecture and persistent `EN | فارسی` language switch;
+- applies deterministic `en/ltr` and `fa/rtl` document direction;
+- translates controlled static text, status text, historical v11-v17 context panels and whitelisted dynamic runtime sentence frames;
+- preserves arbitrary external-source content verbatim and adds no runtime Google/DeepL/AI translation dependency;
+- keeps ASN, IP/prefix, BGP path, URL, timestamp and other technical values direction-safe/LTR where appropriate;
+- added locale-key parity and runtime-translation tests, including technical-token preservation and external-content non-translation.
+
+### Verification / release integrity
+
+- stabilized the recurring legacy Headless Chrome fixture-readiness flake by increasing only virtual-time/process timeout budgets without weakening fixture assertions;
+- completion PR #31 CI `34523935503` passed after its deterministic test caught and corrected one untranslated Farsi topology-template value;
+- final v1.8 feature `main` CI `34524065320` passed **301/301 tests**, production build, both real Headless Chrome presentation gates, committed-secret/private-key scan and production runtime smoke testing;
+- v1.8 changes presentation/i18n behavior only, so no new live-source acceptance or upstream workflow is introduced;
+- no new censorship sensor, independent vote or deployment authorization is added; `deploymentAuthorized:false` remains unchanged.
+
 ## 1.7.0 — 2026-09-10
 
 ### Operational ASN coverage
