@@ -40,9 +40,18 @@ test('Iran inventory parser normalizes, deduplicates and numerically sorts RIR A
   assert.equal(inventory.independentCensorshipVote, false);
 });
 
-test('Iran inventory parser fails closed on wrong country or missing ASN list', () => {
+test('Iran inventory parser accepts live RIPEstat 0.2 shape when resource echo is omitted', () => {
+  const inventory = parseIranAsnInventory({ data: { query_time: '2026-09-09T00:00:00', resources: { asn: ['1756', '58224'] } } });
+  assert.deepEqual(inventory.asns, ['AS1756', 'AS58224']);
+  assert.equal(inventory.country, 'IR');
+  assert.equal(inventory.queryTime, '2026-09-09T00:00:00');
+  assert.equal(inventory.independentCensorshipVote, false);
+});
+
+test('Iran inventory parser fails closed on wrong explicit country or missing ASN list', () => {
   assert.throws(() => parseIranAsnInventory({ data: { resource: 'DE', resources: { asn: [] } } }), /not scoped to IR/);
   assert.throws(() => parseIranAsnInventory({ data: { resource: 'IR', resources: {} } }), /resources\.asn/);
+  assert.throws(() => parseIranAsnInventory({}), /missing data/);
 });
 
 test('curated coverage remains distinct from the complete RIR-associated inventory', () => {
