@@ -16,6 +16,15 @@ test('Pulse filters Iran and selected window while retaining ongoing events', ()
   assert.equal(events[0].independentTechnicalVote, false);
 });
 
+test('Pulse parser remains backward compatible without an explicit selected window', () => {
+  const events = parsePulseShutdowns({ data: [
+    { country: 'Iran', start_date: '2024-01-08T16:30:00Z', type: 'National shutdown', verification_level: 'confirmed' },
+    { country: 'France', start_date: '2024-01-08T16:30:00Z' },
+  ] });
+  assert.equal(events.length, 1);
+  assert.equal(events[0].verificationLevel, 'confirmed');
+});
+
 test('Pulse accepts IR country code', () => {
   assert.equal(parsePulseShutdowns({ data: [{ country: 'IR', start_date: '2026-01-08T00:00:00Z' }] }, window).length, 1);
 });
