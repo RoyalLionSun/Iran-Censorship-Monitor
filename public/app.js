@@ -5,4 +5,4 @@ import './app-core.js';
 
 // Production release marker.
 const footerVersion = document.querySelector('#footer-version');
-if (footerVersion) footerVersion.textContent = 'v1.4.0';
+if (footerVersion) footerVersion.textContent = 'v1.5.0';

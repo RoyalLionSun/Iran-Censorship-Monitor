@@ -1,6 +1,6 @@
 {
   "name": "iran-censorship-monitor",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "private": true,
   "type": "module",
   "description": "Iran-focused censorship intelligence monitor combining technical measurements, routing analysis, circumvention context and OSINT.",

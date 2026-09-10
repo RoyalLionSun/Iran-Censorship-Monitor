@@ -1,7 +1,7 @@
 # Data Sources
 
-Last reviewed: **2026-09-09**  
-Release source set: **v1.4.0**
+Last reviewed: **2026-09-10**  
+Release source set: **v1.5.0**
 
 ## Source taxonomy
 
@@ -62,6 +62,8 @@ The public CC0 `ipverse/as-metadata` JSON dataset is downloaded only by the oper
 The enrichment preserves registry labels, `category`, `networkRole`, prefix counts, provider/customer/peer topology, degree, reach, `lastAnnounced` and change timestamps. The exact downloaded bytes are SHA-256 anchored and subject to a bounded download ceiling.
 
 ipverse country fields never add or remove an ASN from the Iran base population. Country disagreements are surfaced as data-quality findings. `category` and `networkRole` are prioritization hints; the source documents those classifications as multi-signal/opinionated and potentially imperfect. ipverse remains `independentCensorshipVote:false`.
+
+The smaller ipverse CSV format is not substituted for this enrichment because it contains only ASN, handle, description and country code; the topology/classification fields required for the review queue are JSON-only.
 
 ### M-Lab / APNIC
 
