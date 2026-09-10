@@ -14,6 +14,7 @@ import { getRipeBgpUpdates, getRipeStatSignals } from './lib/ripestat.mjs';
 import { getRpkiIntegrity } from './lib/rpki.mjs';
 import { getAsRankTopology } from './lib/asrank.mjs';
 import { compareAsnIdentity, getAsnRegistryIdentity } from './lib/asn-registry.mjs';
+import { readAsnCoverageSnapshot } from './lib/asn-coverage-snapshot.mjs';
 import { authorizeGlobalpingControl, createGlobalpingMeasurement, getGlobalpingIranProbes, getGlobalpingMeasurement, globalpingRateLimit } from './lib/globalping.mjs';
 import { getCensoredPlanetSignals } from './lib/censoredplanet.mjs';
 import { getCitizenLabIranTargets } from './lib/citizenlab.mjs';
@@ -47,6 +48,7 @@ async function loadDotEnv() {
 
 await loadDotEnv();
 const publicRoot = resolve(root, 'public');
+const asnCoverageSnapshotPath = join(root, 'var/asn-coverage/latest.json');
 const asns = JSON.parse(await readFile(join(root, 'data/asns.json'), 'utf8'));
 const sources = JSON.parse(await readFile(join(root, 'data/sources.json'), 'utf8'));
 const intelligenceSources = JSON.parse(await readFile(join(root, 'data/intelligence-sources.json'), 'utf8'));
@@ -145,6 +147,7 @@ async function handleApi(req, res, url) {
         ripeStatRouting: true,
         ripeStatRpkiIntegrity: true,
         ripeStatAsnRegistryIdentity: true,
+        localAsnCoverageSnapshot: true,
         caidaAsRankTopology: true,
         censoredPlanet: true,
         globalpingProbeInventory: true,
@@ -171,6 +174,13 @@ async function handleApi(req, res, url) {
       profileMatch: compareAsnIdentity(profile, registry),
       note: 'Registry identity is scope/topology context only and contributes zero independent censorship votes.',
     });
+    return true;
+  }
+
+  if (url.pathname === '/api/asn-coverage') {
+    const maxAgeHours = Number(process.env.ASN_COVERAGE_MAX_AGE_HOURS || 168);
+    const result = await readAsnCoverageSnapshot({ path: asnCoverageSnapshotPath, maxAgeHours });
+    jsonResponse(res, result.ok ? 200 : 500, result);
     return true;
   }
 

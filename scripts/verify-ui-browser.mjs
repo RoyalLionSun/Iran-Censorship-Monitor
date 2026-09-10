@@ -9,6 +9,7 @@ const v13Source = await readFile(new URL('../public/v13-context.js', import.meta
 const v14Source = await readFile(new URL('../public/v14-context.js', import.meta.url), 'utf8');
 const v16ExportSource = await readFile(new URL('../public/v16-context-export.js', import.meta.url), 'utf8');
 const v16Source = await readFile(new URL('../public/v16-shutdown-context.js', import.meta.url), 'utf8');
+const v17Source = await readFile(new URL('../public/v17-asn-coverage.js', import.meta.url), 'utf8');
 
 function findBrowser() {
   for (const candidate of ['google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser']) {
@@ -90,20 +91,47 @@ const intelligence = {
   },
 };
 
+const asnCoverage = {
+  ok: true,
+  source: 'Local Iran ASN coverage snapshot',
+  status: 'observed',
+  ageHours: 2.5,
+  maxAgeHours: 168,
+  schemaVersion: 1,
+  generatedAt: '2026-09-10T08:30:00.000Z',
+  country: 'IR',
+  inventory: { total: 854 },
+  routingSummary: { registeredCount: 854, routedCount: 742 },
+  curatedCoverage: { inventoryCount: 854, curatedCount: 23, curatedInInventoryCount: 23, coveragePercent: 2.69, uncuratedCount: 831 },
+  secondaryMetadata: { source: 'ipverse/as-metadata', matchedInventoryAsnCount: 850 },
+  enrichment: { secondaryCoverageCount: 850, secondaryMissingCount: 4, secondaryCountryMismatchCount: 2 },
+  candidateQueue: [{
+    asn: 'AS12345', displayName: 'Fixture Access Network', operatorFamily: null, candidateClass: 'access_review',
+    priorityReasons: ['class:access_review'],
+    quality: { secondaryMetadataMissing: false, secondaryCountryMismatch: false, secondaryCountryCode: 'IR', secondaryOrigin: 'RIPE' },
+    secondary: { networkRole: 'access_provider', category: 'isp', lastAnnounced: '2026-09-09T00:00:00.000Z', reach: 12, customers: 3, degree: 9 },
+    evidenceRole: 'scope-topology-prioritization', independentCensorshipVote: false,
+  }],
+  evidenceRole: 'scope-topology-prioritization',
+  independentCensorshipVote: false,
+};
+
 const fixture = `<!doctype html><html><body>
 <span id="header-source-state">pending</span>
 <button id="export-button" type="button">Export</button>
 <input id="since-input" value="2026-09-01"><input id="until-input" value="2026-09-09">
 <article id="tor-panel"></article>
 <article id="ripe-panel"></article>
+<article id="globalping-panel"></article>
 <article id="intelligence-panel"><p class="panel-note"></p><div id="intelligence-source-grid"></div></article>
 <span id="footer-version"></span>
 <script>
 const overview = ${JSON.stringify(overview)};
 const intelligence = ${JSON.stringify(intelligence)};
+const asnCoverage = ${JSON.stringify(asnCoverage)};
 window.fetch = async (input) => {
   const url = typeof input === 'string' ? input : input.url;
-  const payload = url.startsWith('/api/overview?') ? overview : intelligence;
+  const payload = url.startsWith('/api/overview?') ? overview : url.startsWith('/api/intelligence?') ? intelligence : url === '/api/asn-coverage' ? asnCoverage : { ok: false, status: 'error', error: 'Unexpected fixture URL' };
   return new Response(JSON.stringify(payload), { status: 200, headers: { 'Content-Type': 'application/json' } });
 };
 </script>
@@ -112,9 +140,10 @@ await import('/v11-context.js');
 await import('/v13-context.js');
 await import('/v14-context.js');
 await import('/v16-shutdown-context.js');
+await import('/v17-asn-coverage.js');
 await window.fetch('/api/overview?fixture=1');
 await window.fetch('/api/intelligence?fixture=1');
-await new Promise((resolve) => setTimeout(resolve, 100));
+await new Promise((resolve) => setTimeout(resolve, 150));
 document.body.dataset.fixtureReady = '1';
 </script>
 </body></html>`;
@@ -150,6 +179,11 @@ const server = http.createServer((request, response) => {
     response.end(v16Source);
     return;
   }
+  if (request.url === '/v17-asn-coverage.js') {
+    response.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8', 'Cache-Control': 'no-store' });
+    response.end(v17Source);
+    return;
+  }
   response.writeHead(404).end();
 });
 
@@ -177,11 +211,12 @@ try {
   const dom = stdout;
   const required = [
     'data-fixture-ready="1"', 'id="mlab-panel"', 'id="apnic-panel"', 'id="stop-context"',
-    'id="pulse-context"', 'id="shutdown-correlation-context"',
+    'id="pulse-context"', 'id="shutdown-correlation-context"', 'id="asn-coverage-panel"',
     'id="asrank-panel"', 'id="rpki-panel"', 'id="v14-tor-context-panel"',
     '42.5 Mbps', '35.5%', 'Fixture incident', 'Independent sensor votes',
     'Current Iran shutdown context', 'National shutdown', 'Confirmed', 'Fixture cause', 'ongoing / open-ended',
     'Possible incident correlation', 'fixture-stop-1', 'pulse-fixture-1', 'temporal_scope_overlap', 'never auto-merged', 'Auto-merged',
+    'Coverage and review queue', 'RIR-associated ASNs', '854', '2.69%', 'AS12345', 'Fixture Access Network', 'access review', 'analyst priority only', 'reach 12 · customers 3 · degree 9',
     'Customer-cone ASNs', 'AS12880', '2.144.0.0/13', 'invalid_length',
     '2/13 source families observed · assessment votes remain separate',
     'GLOBAL · not Iran-specific', '100–120', '140–160',
@@ -194,8 +229,9 @@ try {
   if (!exportTag || /\bdisabled\b/.test(exportTag)) throw new Error('Context CSV export button was not enabled after overview rendering.');
   if (/national[^<]{0,20}(blocked|available)/i.test(dom)) throw new Error('Fixture unexpectedly rendered a national blocked/available verdict.');
   if (/exact (users|client|change)/i.test(dom)) throw new Error('Fixture unexpectedly rendered exact-user/change language for bounded Tor estimates.');
+  if (/asn[^<]{0,40}censorship score/i.test(dom)) throw new Error('Fixture unexpectedly rendered ASN review priority as a censorship score.');
 
-  console.log(`UI PRESENTATION PASS · ${browser} · M-Lab/APNIC/STOP/Pulse shutdown context + ASRank/RPKI + bounded Tor/BridgeDB context rendered in a real headless browser`);
+  console.log(`UI PRESENTATION PASS · ${browser} · M-Lab/APNIC/STOP/Pulse + ASN coverage/review + ASRank/RPKI + bounded Tor/BridgeDB context rendered in a real headless browser`);
 } finally {
   await new Promise((resolve) => server.close(resolve));
 }

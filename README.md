@@ -2,9 +2,9 @@
 
 Iran-focused censorship-intelligence dashboard for technical measurements, routing/control-plane state, data-plane performance, protocol and circumvention context, ASN topology/inventory, and curated shutdown/OSINT evidence.
 
-**Release line:** `v1.6.0`  
+**Published release:** `v1.6.0`  
 **Production branch:** `main`  
-**Release branch:** `release/v1.6.0`
+**Development branch:** `develop/v1.7`
 
 The application does **not** fabricate monitoring values or convert missing access into positive/negative observations. `no_data`, `partial`, `token_required`, rate-limited and hard-error states remain explicit. Contextual reports never become independent technical sensor votes merely because they cite or repeat underlying measurements.
 
@@ -25,7 +25,7 @@ The application does **not** fabricate monitoring values or convert missing acce
 
 ## v1.6.0
 
-v1.6.0 is the next published release after v1.4.0 and includes the repository work from the unpublished v1.5 line.
+v1.6.0 is published at commit `8da70a85aa61fc064292330b4eaca83238abf3a3` and includes the repository work from the unpublished v1.5 line.
 
 ### ASN scope included from v1.5 development
 
@@ -35,7 +35,7 @@ v1.6.0 is the next published release after v1.4.0 and includes the repository wo
 - RIPEstat registered/routed country counts kept separate from per-ASN routing claims;
 - operator-triggered CC0 ipverse enrichment with byte ceiling, SHA-256 provenance and transparent review classes.
 
-For an operator-triggered inventory:
+For a full operator-triggered inventory printed to stdout:
 
 ```bash
 node scripts/fetch-iran-asn-inventory.mjs
@@ -52,6 +52,20 @@ The large ipverse world dataset is intentionally not downloaded by routine GitHu
 - correlation emits analyst candidates only: `possibleSameIncident:true`, `automaticMerge:false`, `independentTechnicalVote:false`;
 - Pulse and correlation are visible in the dashboard and included in context CSV export with separate provenance.
 
+## v1.7 development — operational ASN coverage
+
+v1.7 makes the existing ASN inventory/enrichment operationally visible without turning the dashboard into a new upstream crawler.
+
+Generate/update the bounded local snapshot from the same deployment tree as the server:
+
+```bash
+node scripts/fetch-iran-asn-inventory.mjs --write
+```
+
+The snapshot is written to `var/asn-coverage/latest.json`. `GET /api/asn-coverage` reads only that local file; normal dashboard loading therefore does not download the RIPE inventory or the ipverse world dataset. Missing, stale and invalid snapshots remain explicit states. The dashboard shows bounded coverage statistics and review candidates only; candidate priority remains topology/inventory context and creates zero censorship votes.
+
+See [ASN_COVERAGE_RUNTIME.md](ASN_COVERAGE_RUNTIME.md).
+
 ## Integrity rules
 
 1. No fabricated values or synthetic substitutes for missing data.
@@ -63,7 +77,7 @@ The large ipverse world dataset is intentionally not downloaded by routine GitHu
 7. Multiple ASNs in one operator family do not become independent censorship sources.
 8. ASRank, ipverse and RPKI metadata create no censorship votes.
 9. Tor, BridgeDB, STOP, Pulse and shutdown correlation create zero independent censorship votes.
-10. `token_required` and source failure are never reinterpreted as zero incidents or availability.
+10. `token_required`, `no_data`, stale data and source failure are never reinterpreted as zero incidents, zero inventory or availability.
 11. Multiple owned probes remain one owned-probe source family.
 12. Website reachability is not VPN-transport evidence.
 13. Province and SIM entitlement class are not inferred.
@@ -102,7 +116,7 @@ npm run verify:ui
 npm run verify:radar   # optional token
 ```
 
-The v1.6.0 release candidate contains **277 deterministic tests** after the final context-export regression tests. CI also checks canonical release notes, production build, real Headless Chrome presentation, committed-secret/private-key leakage and runtime/404/traversal behavior.
+The published v1.6.0 release contains **277 deterministic tests**. v1.7 adds deterministic local-snapshot validation while retaining the production build, real Headless Chrome presentation, committed-secret/private-key leakage and runtime/404/traversal gates.
 
 ## Optional passive routing collectors
 
@@ -118,6 +132,7 @@ Both are separate bounded operator processes and remain control-plane context on
 - [CURRENT_STATE.md](CURRENT_STATE.md)
 - [ARCHITECTURE.md](ARCHITECTURE.md)
 - [DATA_SOURCES.md](DATA_SOURCES.md)
+- [ASN_COVERAGE_RUNTIME.md](ASN_COVERAGE_RUNTIME.md)
 - [SHUTDOWN_CONTEXT.md](SHUTDOWN_CONTEXT.md)
 - [ASN_IDENTITY_METHOD.md](ASN_IDENTITY_METHOD.md)
 - [ASN_INVENTORY_METHOD.md](ASN_INVENTORY_METHOD.md)

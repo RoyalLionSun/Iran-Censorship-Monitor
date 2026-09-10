@@ -1,6 +1,13 @@
 import { readFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 import { compareCuratedAsnCoverage, getIranAsnInventory, getIranAsnRoutingSummary } from '../lib/iran-asn-inventory.mjs';
 import { buildIranAsnCandidateQueue, enrichIranAsnInventory, getIpverseAsMetadata } from '../lib/ipverse-as-metadata.mjs';
+import { buildAsnCoverageSnapshot, writeAsnCoverageSnapshot } from '../lib/asn-coverage-snapshot.mjs';
+
+const args = new Set(process.argv.slice(2));
+for (const arg of args) {
+  if (arg !== '--write') throw new Error(`Unsupported argument: ${arg}`);
+}
 
 const curated = JSON.parse(await readFile(new URL('../data/asns.json', import.meta.url), 'utf8'));
 const [inventory, routingSummary] = await Promise.all([
@@ -13,9 +20,10 @@ const enrichment = enrichIranAsnInventory(inventory, curated, secondaryMetadata.
 const candidateQueue = buildIranAsnCandidateQueue(enrichment, {
   limit: Number(process.env.ASN_CANDIDATE_LIMIT || 100)
 });
+const generatedAt = new Date().toISOString();
 
-process.stdout.write(`${JSON.stringify({
-  generatedAt: new Date().toISOString(),
+const result = {
+  generatedAt,
   inventory,
   routingSummary,
   curatedCoverage: coverage,
@@ -41,4 +49,13 @@ process.stdout.write(`${JSON.stringify({
     curatedMeaning: 'Reviewed monitoring/topology profiles in data/asns.json.',
     independentCensorshipVote: false
   }
-}, null, 2)}\n`);
+};
+
+if (args.has('--write')) {
+  const snapshot = buildAsnCoverageSnapshot(result);
+  const snapshotPath = fileURLToPath(new URL('../var/asn-coverage/latest.json', import.meta.url));
+  await writeAsnCoverageSnapshot(snapshotPath, snapshot);
+  process.stdout.write(`${JSON.stringify(snapshot, null, 2)}\n`);
+} else {
+  process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+}

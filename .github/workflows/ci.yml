@@ -2,6 +2,8 @@ name: CI
 
 on:
   push:
+    branches: [main]
+    tags: ['v*']
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -82,7 +84,10 @@ jobs:
             fi
             sleep 0.25
           done
+          curl --fail --silent http://127.0.0.1:4173/api/asn-coverage >/tmp/asn-coverage.json
+          node -e "const fs=require('fs'); const x=JSON.parse(fs.readFileSync('/tmp/asn-coverage.json','utf8')); if (x.ok !== true || x.status !== 'no_data' || x.independentCensorshipVote !== false) process.exit(1);"
           curl --fail --silent http://127.0.0.1:4173/ >/dev/null
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:4173/does-not-exist)" = 404
           test "$(curl --path-as-is -s -o /dev/null -w '%{http_code}' http://127.0.0.1:4173/../server.mjs)" = 404
           cat /tmp/health.json
+          cat /tmp/asn-coverage.json

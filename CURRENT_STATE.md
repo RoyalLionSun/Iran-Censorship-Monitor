@@ -1,67 +1,54 @@
-# Current State — v1.6.0 release candidate
+# Current State — v1.7 development
 
 Date: **2026-09-10**  
-Release line: **`v1.6.0`**  
+Published release: **`v1.6.0`**  
 Production branch: **`main`**  
-Pre-release main head: **`42e8775cfd7a51f882a78172caee181ed613e23f`**  
-Release branch: **`release/v1.6.0`**
+Published release commit: **`8da70a85aa61fc064292330b4eaca83238abf3a3`**  
+Development branch: **`develop/v1.7`**
 
-## Release state
+## Published production state
 
-- v1.4.0 is the latest previously published GitHub Release.
-- v1.5.0 changes were merged and verified in the repository but were not tagged/published as a GitHub Release.
-- v1.6.0 is therefore the next publication and includes the v1.5 ASN identity/inventory hardening plus v1.6 current-shutdown context.
-- v1.6 shutdown backend and dashboard are merged to `main`; the final release branch adds context-export coverage and stable release metadata only.
-- Pre-release deterministic suite: **275/275**. Two final export regression tests raise the release candidate to **277 tests**.
+- `v1.6.0` is published and tagged at `8da70a85aa61fc064292330b4eaca83238abf3a3`.
+- Tag CI `34463483758` — success.
+- Release-notes workflow `34463484183` — success.
+- Final v1.6.0 deterministic suite: **277/277 tests passed**.
+- v1.5.0 was never separately tagged/published; its ASN identity/inventory work is included in v1.6.0.
+- Repository policy remains `deploymentAuthorized:false`.
 
-## v1.5 content included in v1.6.0
+## v1.7 active work — operational ASN coverage
 
-- registry-qualified curated Iran ASN catalogue with canonical identity separate from aliases;
-- explicit `operatorFamily` grouping to prevent related ASNs from being treated as independent operators/evidence;
-- Fanap Telecom / ZiTEL AS206065 and AS24631 retained as distinct routing identities in one operator family;
-- RIR-associated Iran ASN inventory through RIPEstat `country-resource-list` kept separate from the curated catalogue;
-- separate registered/routed country-level counts through RIPEstat `country-asns` without fabricating an ASN-by-ASN routed set;
-- optional ipverse/as-metadata enrichment with bounded download, SHA-256 provenance, data-quality findings and transparent review classes.
+Issue #23 turns the existing operator-only Iran ASN inventory/enrichment into a bounded local coverage snapshot that can be inspected in the dashboard without downloading the large ipverse world dataset during normal runtime or routine CI.
 
-## v1.6 content
+Planned/implemented contract on `develop/v1.7`:
 
-- hardened Internet Society Pulse Iran shutdown parsing and selected-window semantics;
-- explicit distinction between `token_required`, `no_data`, observed and error states;
-- Pulse verification level, cause, type, affected regions and provenance preserved;
-- Access Now STOP documented as a curated historical corpus currently published through 2025;
-- STOP/Pulse correlation requires temporal overlap plus matching broad scope and always remains an analyst candidate;
-- no correlation is auto-merged or counted as an independent technical vote;
-- Pulse and correlation context rendered in the dashboard;
-- Pulse events and STOP/Pulse candidates included in context CSV with provenance and zero-vote semantics.
-
-## Verified gates before final release commit
-
-- v1.5 feature PR #15 CI `34440814125` — success;
-- v1.5 post-feature `main` CI `34440868635` — success;
-- latest applicable live public-source acceptance `34399378248` — success, including 23/23 curated RIPE identities across 18 operator families, RIS Live and Route Views/BGPStream;
-- v1.6 shutdown backend post-merge `main` CI `34442988321` — success;
-- v1.6 dashboard branch CI `34443294299` — success;
-- v1.6 dashboard PR CI `34443351394` — success;
-- current pre-release `main` CI `34443425466` — success, 275/275 tests plus build/browser/security/runtime gates.
-
-The final `release/v1.6.0` commit must pass the same deterministic CI with **277 tests**, canonical v1.6.0 release notes, production build, real Headless Chrome presentation, committed-secret/private-key scan and runtime smoke test before merge/tag/publication.
+- operator command can persist a schema-versioned snapshot under `var/asn-coverage/latest.json`;
+- snapshot contains bounded coverage/provenance fields plus at most 100 uncurated review candidates, not the complete world dataset or full enrichment record set;
+- local snapshot parser fails closed on schema/country/count/provenance/vote inconsistencies;
+- freshness is explicit: `observed`, `stale`, `no_data`, and `error` remain distinct;
+- `/api/asn-coverage` reads only the fixed local snapshot and performs no RIPE/ipverse network request;
+- dashboard displays RIR-associated inventory count, curated coverage, RIPE registered/routed country-level counts, ipverse metadata coverage, snapshot age and a bounded review queue;
+- review classes remain analyst-prioritization hints, never censorship scores;
+- clean CI expects `/api/asn-coverage` to return `no_data`, proving that absence is not converted to zero Iran ASNs;
+- the large ipverse download remains operator-triggered only.
 
 ## Evidence invariants
 
 - no fabricated values or silent replacement of missing data;
-- RIR association ≠ current routing; BGP visibility ≠ end-user reachability;
-- anomaly/performance degradation ≠ automatic censorship or throttling attribution;
-- topology/registry metadata ≠ censorship evidence;
-- multiple ASNs in one operator family ≠ independent sources;
+- RIR association != current routing; BGP visibility != end-user reachability;
+- RIPE country-level routed counts are not an ASN-by-ASN routed set;
+- ipverse metadata is secondary topology/review context and cannot override RIR country scope;
+- candidate priority != censorship likelihood or political importance;
+- topology/registry/inventory metadata create zero independent censorship votes;
+- anomaly/performance degradation != automatic censorship or throttling attribution;
 - STOP and Pulse are curated context, not raw independent sensors;
-- temporal/scope correlation ≠ incident identity or causality;
-- `token_required` ≠ zero incidents;
+- temporal/scope correlation != incident identity or causality;
+- `token_required`, `no_data`, `partial`, stale data and source errors stay explicit;
 - no province or SIM-class inference;
-- no VPN-transport claim from website reachability;
-- no NIN claim without reviewed paired target classes;
+- website reachability is not VPN-transport evidence;
+- NIN claims require reviewed paired target classes;
 - active Globalping remains disabled by default;
-- repository policy remains `deploymentAuthorized:false`.
+- `deploymentAuthorized:false` remains authoritative.
 
 ## Fleet deployment boundary
 
-A v1.6.0 release does not authorize an Iran pilot. Real isolated Linux/systemd sandbox and negative-egress validation, project-controlled endpoints/collection edge, out-of-band key lifecycle testing, rollback testing, voluntary operator consent/withdrawal and explicit deployment authorization remain external mandatory gates.
+Neither v1.6.0 nor v1.7 development authorizes an Iran pilot. Real isolated Linux/systemd sandbox and negative-egress validation, project-controlled endpoints/collection edge, out-of-band key lifecycle testing, rollback testing, voluntary operator consent/withdrawal and explicit deployment authorization remain external mandatory gates.
