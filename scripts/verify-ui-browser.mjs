@@ -7,6 +7,7 @@ const execFileAsync = promisify(execFile);
 const v11Source = await readFile(new URL('../public/v11-context.js', import.meta.url), 'utf8');
 const v13Source = await readFile(new URL('../public/v13-context.js', import.meta.url), 'utf8');
 const v14Source = await readFile(new URL('../public/v14-context.js', import.meta.url), 'utf8');
+const v16Source = await readFile(new URL('../public/v16-shutdown-context.js', import.meta.url), 'utf8');
 
 function findBrowser() {
   for (const candidate of ['google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser']) {
@@ -67,6 +68,25 @@ const intelligence = {
       evidenceUrls: ['https://ooni.org/'], accessNowUrls: [], independentTechnicalVote: false,
     }],
   },
+  pulse: {
+    ok: true, source: 'Internet Society Pulse', status: 'observed', totalMatched: 1,
+    methodologyUrl: 'https://pulse.internetsociety.org/en/shutdowns/', independentTechnicalVote: false,
+    events: [{
+      id: 'pulse-fixture-1', country: 'Iran', startTime: '2026-09-05T12:00:00.000Z', endTime: null,
+      startDate: '2026-09-05', endDate: null, type: 'National shutdown', verificationLevel: 'Confirmed',
+      cause: 'Fixture cause', affectedRegions: 'Nationwide', independentTechnicalVote: false,
+    }],
+  },
+  shutdownContext: {
+    ok: true, status: 'complete_context', stop: { available: true, count: 1, datasetThroughYear: 2025 },
+    pulse: { available: true, configured: true, count: 1 }, possibleSameIncidentCount: 1, automaticMergedCount: 0,
+    independentTechnicalVote: false,
+    correlations: [{
+      stopId: 'fixture-stop-1', pulseId: 'pulse-fixture-1', relation: 'temporal_scope_overlap', scopeClass: 'national',
+      possibleSameIncident: true, automaticMerge: false, independentTechnicalVote: false,
+    }],
+    note: 'Fixture correlation remains analyst context only.',
+  },
 };
 
 const fixture = `<!doctype html><html><body>
@@ -90,6 +110,7 @@ window.fetch = async (input) => {
 await import('/v11-context.js');
 await import('/v13-context.js');
 await import('/v14-context.js');
+await import('/v16-shutdown-context.js');
 await window.fetch('/api/overview?fixture=1');
 await window.fetch('/api/intelligence?fixture=1');
 await new Promise((resolve) => setTimeout(resolve, 100));
@@ -116,6 +137,11 @@ const server = http.createServer((request, response) => {
   if (request.url === '/v14-context.js') {
     response.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8', 'Cache-Control': 'no-store' });
     response.end(v14Source);
+    return;
+  }
+  if (request.url === '/v16-shutdown-context.js') {
+    response.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8', 'Cache-Control': 'no-store' });
+    response.end(v16Source);
     return;
   }
   response.writeHead(404).end();
@@ -145,8 +171,11 @@ try {
   const dom = stdout;
   const required = [
     'data-fixture-ready="1"', 'id="mlab-panel"', 'id="apnic-panel"', 'id="stop-context"',
+    'id="pulse-context"', 'id="shutdown-correlation-context"',
     'id="asrank-panel"', 'id="rpki-panel"', 'id="v14-tor-context-panel"',
     '42.5 Mbps', '35.5%', 'Fixture incident', 'Independent sensor votes',
+    'Current Iran shutdown context', 'National shutdown', 'Confirmed', 'Fixture cause', 'ongoing / open-ended',
+    'Possible incident correlation', 'fixture-stop-1', 'pulse-fixture-1', 'temporal_scope_overlap', 'never auto-merged', 'Auto-merged',
     'Customer-cone ASNs', 'AS12880', '2.144.0.0/13', 'invalid_length',
     '2/13 source families observed · assessment votes remain separate',
     'GLOBAL · not Iran-specific', '100–120', '140–160',
@@ -160,7 +189,7 @@ try {
   if (/national[^<]{0,20}(blocked|available)/i.test(dom)) throw new Error('Fixture unexpectedly rendered a national blocked/available verdict.');
   if (/exact (users|client|change)/i.test(dom)) throw new Error('Fixture unexpectedly rendered exact-user/change language for bounded Tor estimates.');
 
-  console.log(`UI PRESENTATION PASS · ${browser} · M-Lab/APNIC/STOP + ASRank/RPKI + bounded Tor/BridgeDB context rendered in a real headless browser`);
+  console.log(`UI PRESENTATION PASS · ${browser} · M-Lab/APNIC/STOP/Pulse shutdown context + ASRank/RPKI + bounded Tor/BridgeDB context rendered in a real headless browser`);
 } finally {
   await new Promise((resolve) => server.close(resolve));
 }
