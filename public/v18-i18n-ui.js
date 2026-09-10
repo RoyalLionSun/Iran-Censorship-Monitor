@@ -1,12 +1,13 @@
 import { directionFor, getLanguage, setLanguage, t, translateKnownText } from './i18n.js';
+import { translateRuntimeText } from './i18n-runtime.js';
 
 const dynamicOriginal = new WeakMap();
 const technicalSelectors = [
-  '.technical-ltr', '.mono-cell', '.scope-chip', '.chart', 'svg', 'pre', 'code',
+  '.technical-ltr', '.mono-cell', '.scope-chip', '.chart', 'svg', 'pre', 'code', '.event-time', '.route-type',
   '#asn-select', '#since-input', '#until-input', '#measurement-select',
   '#routing-neighbours td:first-child', '#bgp-updates-table td:nth-child(3)', '#bgp-updates-table td:nth-child(4)', '#bgp-updates-table td:nth-child(5)',
   '#asn-coverage-table td:first-child', '#asrank-table td:first-child', '#rpki-table td:first-child', '#hegemony-table td:first-child',
-  '#providers-table td:first-child', '#targets-table td:first-child'
+  '#providers-table td:first-child', '#targets-table td:first-child', '#situation-scope'
 ].join(',');
 
 const meaningPanels = Object.freeze({
@@ -32,27 +33,10 @@ function preserveWhitespace(original, replacement) {
 }
 
 function translateDynamic(text, node) {
-  const language = getLanguage();
-  if (language === 'en') return dynamicOriginal.get(node) || text;
-  const patterns = [
-    [/^Updated (.+) ago$/, (m) => `به‌روزرسانی: ${m[1]} پیش`],
-    [/^(\d+)\/(\d+) source families observed(?: · assessment votes remain separate)?$/, (m) => `${m[1]}/${m[2]} خانواده منبع مشاهده‌شده · رأی‌های ارزیابی جدا می‌مانند`],
-    [/^(\d+) allowlisted articles discovered · context only · no sensor vote$/, (m) => `${m[1]} گزارش از دامنه‌های مجاز یافت شد · فقط زمینه · بدون رأی حسگر`],
-    [/^(\d+) updates · (.+)$/, (m) => `${m[1]} به‌روزرسانی · ${m[2]}`],
-    [/^(\d+) UTC days · (\d+) confirmed( · truncated)?$/, (m) => `${m[1]} روز UTC · ${m[2]} تأییدشده${m[3] ? ' · نمونه ناقص' : ''}`],
-    [/^(\d+) observed · (\d+) samples$/, (m) => `${m[1]} مشاهده‌شده · ${m[2]} نمونه`],
-    [/^(\d+) raw signal series · (.+)$/, (m) => `${m[1]} سری خام سیگنال · ${m[2]}`],
-    [/^(\d+) traffic anomalies · (\d+) outages · (\d+) BGP events$/, (m) => `${m[1]} ناهنجاری ترافیک · ${m[2]} قطعی · ${m[3]} رویداد BGP`],
-    [/^(\d+) bridge users · direct estimate shown above$/, (m) => `${m[1]} کاربر بریج · برآورد مستقیم در بالا`],
-    [/^(\d+) \/ (\d+) RIS peers$/, (m) => `${m[1]} / ${m[2]} همتای RIS`]
-  ];
-  for (const [pattern, renderer] of patterns) {
-    const match = text.match(pattern);
-    if (!match) continue;
-    dynamicOriginal.set(node, text);
-    return renderer(match);
-  }
-  return text;
+  if (getLanguage() === 'en') return dynamicOriginal.get(node) || text;
+  const translated = translateRuntimeText(text);
+  if (translated !== text) dynamicOriginal.set(node, text);
+  return translated;
 }
 
 function translateTextNode(node) {

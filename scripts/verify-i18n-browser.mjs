@@ -7,10 +7,15 @@ const execFileAsync = promisify(execFile);
 const files = new Map();
 for (const path of [
   'public/i18n.js',
+  'public/i18n-runtime.js',
   'public/locales/en.js',
   'public/locales/fa.js',
   'public/locales/en-extra.js',
   'public/locales/fa-extra.js',
+  'public/locales/en-runtime.js',
+  'public/locales/fa-runtime.js',
+  'public/locales/en-context.js',
+  'public/locales/fa-context.js',
   'public/v18-situation.js',
   'public/v18-i18n-ui.js',
   'public/v18.css',
@@ -47,6 +52,12 @@ const fixture = `<!doctype html><html lang="en"><head><meta charset="utf-8"></he
 <article class="panel" id="radar-panel"><header class="panel-header"><h2>Traffic and annotated events</h2></header></article>
 <article class="panel" id="tor-panel"><header class="panel-header"><h2>Direct and bridge user estimates</h2></header></article>
 <article class="panel" id="censoredplanet-panel"></article><article class="panel" id="globalping-panel"></article>
+<div id="runtime-fixed">Requesting live sources</div>
+<div id="runtime-assessment">No corroborated major disruption signal</div>
+<div id="runtime-context">No operator snapshot is available. No inventory count is inferred.</div>
+<div id="runtime-status">observed</div>
+<div id="runtime-dynamic">7 rows · 3 days</div>
+<div id="runtime-routing">Radar HTTP series · AS58224 · 1h · confidence L2</div>
 <div data-i18n-external id="external-title">External incident title should stay English</div>
 <div id="technical-value" class="technical-ltr">AS58224 · 2.144.0.0/13</div>
 </main>
@@ -67,6 +78,12 @@ document.body.dataset.faLang = document.documentElement.lang;
 document.body.dataset.faHeadline = /[\u0600-\u06FF]/.test(document.querySelector('#situation-headline')?.textContent || '') ? 'yes' : 'no';
 document.body.dataset.faKpi = /[\u0600-\u06FF]/.test(document.querySelector('.kpi-grid')?.textContent || '') ? 'yes' : 'no';
 document.body.dataset.meaning = /این چه معنایی دارد/.test(document.querySelector('#ooni-panel')?.textContent || '') ? 'yes' : 'no';
+document.body.dataset.faRuntimeFixed = /[\u0600-\u06FF]/.test(document.querySelector('#runtime-fixed')?.textContent || '') ? 'yes' : 'no';
+document.body.dataset.faRuntimeAssessment = /[\u0600-\u06FF]/.test(document.querySelector('#runtime-assessment')?.textContent || '') ? 'yes' : 'no';
+document.body.dataset.faRuntimeContext = /[\u0600-\u06FF]/.test(document.querySelector('#runtime-context')?.textContent || '') ? 'yes' : 'no';
+document.body.dataset.faRuntimeStatus = /[\u0600-\u06FF]/.test(document.querySelector('#runtime-status')?.textContent || '') ? 'yes' : 'no';
+document.body.dataset.faRuntimeDynamic = /[\u0600-\u06FF]/.test(document.querySelector('#runtime-dynamic')?.textContent || '') && document.querySelector('#runtime-dynamic')?.textContent.includes('7') ? 'yes' : 'no';
+document.body.dataset.faRuntimeRouting = /[\u0600-\u06FF]/.test(document.querySelector('#runtime-routing')?.textContent || '') && document.querySelector('#runtime-routing')?.textContent.includes('AS58224') && document.querySelector('#runtime-routing')?.textContent.includes('L2') ? 'yes' : 'no';
 document.body.dataset.techLtr = document.querySelector('#technical-value')?.getAttribute('dir') || '';
 document.body.dataset.externalPreserved = document.querySelector('#external-title')?.textContent === 'External incident title should stay English' ? 'yes' : 'no';
 const en = document.querySelector('[data-lang="en"]');
@@ -74,6 +91,7 @@ en.click();
 await new Promise((resolve) => setTimeout(resolve, 80));
 document.body.dataset.enDir = document.documentElement.dir;
 document.body.dataset.enKpi = document.querySelector('.kpi-grid')?.textContent.includes('OONI anomaly rate') ? 'yes' : 'no';
+document.body.dataset.enRuntimeRestored = document.querySelector('#runtime-dynamic')?.textContent === '7 rows · 3 days' && document.querySelector('#runtime-assessment')?.textContent === 'No corroborated major disruption signal' ? 'yes' : 'no';
 fa.click();
 await new Promise((resolve) => setTimeout(resolve, 80));
 document.body.dataset.persisted = localStorage.getItem('iran-monitor-language') || '';
@@ -101,17 +119,19 @@ try {
   if (!address || typeof address === 'string') throw new Error('i18n fixture server did not expose a TCP port.');
   const browser = findBrowser();
   const { stdout } = await execFileAsync(browser, [
-    '--headless', '--disable-gpu', '--no-sandbox', '--disable-dev-shm-usage', '--virtual-time-budget=2500', '--dump-dom',
+    '--headless', '--disable-gpu', '--no-sandbox', '--disable-dev-shm-usage', '--virtual-time-budget=3500', '--dump-dom',
     `http://127.0.0.1:${address.port}/fixture`,
-  ], { encoding: 'utf8', timeout: 20_000, maxBuffer: 4 * 1024 * 1024 });
+  ], { encoding: 'utf8', timeout: 25_000, maxBuffer: 4 * 1024 * 1024 });
   const required = [
     'data-fixture-ready="1"', 'data-fa-dir="rtl"', 'data-fa-lang="fa"', 'data-fa-headline="yes"', 'data-fa-kpi="yes"',
-    'data-meaning="yes"', 'data-tech-ltr="ltr"', 'data-external-preserved="yes"', 'data-en-dir="ltr"', 'data-en-kpi="yes"',
+    'data-meaning="yes"', 'data-fa-runtime-fixed="yes"', 'data-fa-runtime-assessment="yes"', 'data-fa-runtime-context="yes"',
+    'data-fa-runtime-status="yes"', 'data-fa-runtime-dynamic="yes"', 'data-fa-runtime-routing="yes"',
+    'data-tech-ltr="ltr"', 'data-external-preserved="yes"', 'data-en-dir="ltr"', 'data-en-kpi="yes"', 'data-en-runtime-restored="yes"',
     'data-persisted="fa"', 'id="language-switch"', 'وضعیت فعلی اینترنت — ایران', 'این چه معنایی دارد', 'AS58224 · 2.144.0.0/13'
   ];
   const missing = required.filter((needle) => !stdout.includes(needle));
   if (missing.length) throw new Error(`i18n browser gate missing: ${missing.join(', ')}`);
-  console.log('i18n browser presentation gate passed for EN/LTR and FA/RTL.');
+  console.log('i18n browser presentation gate passed for EN/LTR, FA/RTL, controlled runtime text, restoration, persistence and technical direction safety.');
 } finally {
   server.close();
 }
