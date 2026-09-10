@@ -18,6 +18,7 @@ Presence in the runtime does not mean an independent censorship sensor. Measurem
 | RIPE RIS Live | Public stream | passive announcements/withdrawals | control-plane context only |
 | Route Views via CAIDA BGPStream | Public broker + `bgpreader`/Route Views live resources | second passive routing collector | control-plane context only |
 | CAIDA ASRank | Public API | ASN rank, customer cone, degree and inferred AS relationships | topology context only |
+| ipverse/as-metadata | Public CC0 dataset | on-demand ASN registry/topology enrichment and review prioritization | secondary topology context only; never country authority or censorship vote |
 | M-Lab NDT | Public JSON aggregate | throughput/minimum-RTT | performance context only |
 | APNIC Labs IPv6 | Public JSON measurement | IPv6 capability/preference | protocol/deployment context only |
 | Tor Metrics | Public CSV | Iran direct/bridge/transport estimate bounds plus global BridgeDB demand | circumvention context only |
@@ -44,6 +45,8 @@ RIPE Atlas uses bounded per-probe daily `ping-stats`; partial probe coverage rem
 
 BGP visibility, prefixes, neighbours, announcements and withdrawals are control-plane evidence. The optional RIS Live collector is bounded to validated prefix scope, passive and separate from the dashboard process. RPKI preserves upstream route-origin authorization states. None of these alone proves working end-user Internet or censorship intent.
 
+RIPEstat `country-resource-list` is also the canonical RIR-statistics base population for the Iran ASN inventory. `country-asns` supplies separate country-level registered/routed counts from RIPE RIS and is not used to invent an ASN-by-ASN active set.
+
 ### Route Views / CAIDA BGPStream
 
 CAIDA BGPStream tooling accesses **Route Views live** resources. BGPStream is an access/normalization framework, not itself a sensor. Consuming RIPE data through BGPStream remains RIPE evidence and must not be counted again. Route Views events remain control-plane context only.
@@ -51,6 +54,14 @@ CAIDA BGPStream tooling accesses **Route Views live** resources. BGPStream is an
 ### CAIDA ASRank
 
 ASRank adds selected-ASN rank, customer-cone, degree and inferred relationship context. It derives partly from routing inputs overlapping existing sources, so it must not inflate routing-source independence and remains `topology-context` with `independentCensorshipVote:false`.
+
+### ipverse/as-metadata — v1.5 inventory enrichment
+
+The public CC0 `ipverse/as-metadata` JSON dataset is downloaded only by the operator-triggered Iran ASN inventory command. The project first establishes the Iran scope from RIPE/RIR data and then filters ipverse to that ASN set.
+
+The enrichment preserves registry labels, `category`, `networkRole`, prefix counts, provider/customer/peer topology, degree, reach, `lastAnnounced` and change timestamps. The exact downloaded bytes are SHA-256 anchored and subject to a bounded download ceiling.
+
+ipverse country fields never add or remove an ASN from the Iran base population. Country disagreements are surfaced as data-quality findings. `category` and `networkRole` are prioritization hints; the source documents those classifications as multi-signal/opinionated and potentially imperfect. ipverse remains `independentCensorshipVote:false`.
 
 ### M-Lab / APNIC
 
