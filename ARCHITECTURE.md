@@ -1,6 +1,6 @@
 # Architecture
 
-Last verified: **2026-09-09**
+Last verified: **2026-09-10**
 
 ## Design goal
 
@@ -28,7 +28,7 @@ Node.js HTTP server (server.mjs)
   |      +--> Censored Planet
   |      +--> PeeringDB
   |      +--> Internet Health Report
-  |      +--> Internet Society Pulse (token gated)
+  |      +--> Internet Society Pulse (token gated, selected-window context)
   |      \--> assessment from approved technical corroboration inputs only
   |
   +--> /api/circumvention       --> OONI Tor/Psiphon/Signal/WhatsApp/Telegram
@@ -38,7 +38,7 @@ Node.js HTTP server (server.mjs)
   +--> /api/globalping/measurement/:id
   +--> /api/targets             --> Citizen Lab Iran list
   +--> /api/stop                --> Access Now #KeepItOn STOP Iran incident context
-  +--> /api/intelligence        --> STOP + curated registry + GDELT discovery
+  +--> /api/intelligence        --> STOP + Pulse + conservative shutdown correlation + GDELT discovery
   +--> /api/providers           --> bounded provider comparison
   +--> /api/ooni/*              --> raw measurement explorer
   +--> /api/config
@@ -105,10 +105,11 @@ The following are intentionally **not** additional independent censorship votes:
 - Globalping probe presence;
 - Access Now STOP;
 - Internet Society Pulse;
+- STOP/Pulse correlation candidates;
 - GDELT/articles;
 - contextual specialist reports.
 
-STOP may cite OONI, Radar, IODA or other sensors already present. The adapter therefore preserves evidence URLs and maps recognized root-source lineage rather than double-counting the incident record.
+STOP may cite OONI, Radar, IODA or other sensors already present. The adapter therefore preserves evidence URLs and maps recognized root-source lineage rather than double-counting the incident record. Pulse is likewise contextual; a STOP/Pulse overlap never creates a new independent vote.
 
 ## Iran scoping and validation
 
@@ -124,6 +125,7 @@ STOP may cite OONI, Radar, IODA or other sensors already present. The adapter th
 - M-Lab requests use only Iran country or Iran+selected-ASN aggregate paths.
 - APNIC requests use Iran economy or Iran+selected-ASN IPv6 datasets; raw sample counts are retained.
 - Access Now STOP is filtered to Iran and selected-window overlap; `Ongoing` and `Unknown` status are not conflated.
+- Internet Society Pulse accepts only explicit Iran identifiers (`IR`, `Iran`, `Iran (Islamic Republic of)`), validates required start timestamps and selected-window overlap, and fails closed on malformed Iran records or invalid intervals.
 - RIPE RIS Live accepts only an explicitly selected ASN from the Iran ASN registry. Default scope is that ASN's currently announced RIPEstat prefixes; empty or oversized scope fails closed. Automatic subscriptions are capped at 200 prefixes and 12,000 encoded header bytes.
 
 ## Performance and protocol context
@@ -143,6 +145,10 @@ A concrete missing aggregate object returned as GCS `404 NoSuchKey` is represent
 `lib/accessnow.mjs` parses the official public STOP spreadsheet export. Required schema fields are validated before ingestion. Records include source URLs, shutdown type/extent, status, affected platforms/networks and contextual metadata. Records are explicitly marked `independentTechnicalVote: false`.
 
 The currently published STOP corpus covers records through 2025. Later selected windows can include genuinely `Ongoing` historical records but must not be interpreted as complete coverage of newly starting post-2025 incidents.
+
+`lib/pulse.mjs` provides the token-gated current Internet Society Pulse shutdown context for the same selected window. It preserves verification level, cause, type and affected-region context, rejects malformed Iran records, deduplicates identical normalized records and marks every event `independentTechnicalVote: false`.
+
+`lib/shutdown-context.mjs` compares STOP and Pulse only as analyst context. It emits `possibleSameIncident:true` only when date intervals overlap and both records normalize to the same broad scope class (`national`, `regional`, or `service`). It always emits `automaticMerge:false`; unknown/conflicting scope or date non-overlap does not correlate. The detailed contract is documented in `SHUTDOWN_CONTEXT.md`.
 
 ## Passive continuous routing collection
 

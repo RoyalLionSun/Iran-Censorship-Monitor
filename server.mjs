@@ -20,6 +20,7 @@ import { getCitizenLabIranTargets } from './lib/citizenlab.mjs';
 import { getPeeringDbTopology } from './lib/peeringdb.mjs';
 import { getIhrDependencies } from './lib/ihr.mjs';
 import { getPulseShutdowns } from './lib/pulse.mjs';
+import { correlateShutdownContext } from './lib/shutdown-context.mjs';
 import { getGdeltIranIntelligence } from './lib/osint.mjs';
 import { getMlabPerformance } from './lib/mlab.mjs';
 import { getAccessNowStopIncidents } from './lib/accessnow.mjs';
@@ -140,6 +141,7 @@ async function handleApi(req, res, url) {
         mlabNdtPerformance: true,
         apnicIpv6Context: true,
         accessNowStopIncidents: true,
+        shutdownContextCorrelation: true,
         ripeStatRouting: true,
         ripeStatRpkiIntegrity: true,
         ripeStatAsnRegistryIdentity: true,
@@ -189,7 +191,7 @@ async function handleApi(req, res, url) {
       input.asn ? safeSource('Internet Health Report', () => getIhrDependencies(input)) : Promise.resolve(scopeRequired('Internet Health Report', input)),
       input.asn ? safeSource('CAIDA ASRank', () => getAsRankTopology(input)) : Promise.resolve(scopeRequired('CAIDA ASRank', input)),
       input.asn ? safeSource('RIPEstat RPKI', () => getRpkiIntegrity(input)) : Promise.resolve(scopeRequired('RIPEstat RPKI', input)),
-      safeSource('Internet Society Pulse', () => getPulseShutdowns()),
+      safeSource('Internet Society Pulse', () => getPulseShutdowns(input)),
     ]);
     const scopeLabel = input.asn ? `${input.asn} / Iran` : 'Iran / all measured networks';
     const assessment = buildAssessment({ ooni, ripe, radar, ioda, ripestat, scopeLabel });
@@ -263,18 +265,22 @@ async function handleApi(req, res, url) {
 
   if (url.pathname === '/api/intelligence') {
     const input = queryInput(url);
-    const [accessNow, gdelt] = await Promise.all([
+    const [accessNow, pulse, gdelt] = await Promise.all([
       safeSource('Access Now #KeepItOn / STOP', () => getAccessNowStopIncidents(input)),
+      safeSource('Internet Society Pulse', () => getPulseShutdowns(input)),
       safeSource('GDELT DOC 2.0', () => getGdeltIranIntelligence(input)),
     ]);
+    const shutdownContext = correlateShutdownContext({ accessNow, pulse, since: input.since, until: input.until });
     jsonResponse(res, 200, {
       ok: true,
       input: { since: input.since, until: input.until },
       fetchedAt: new Date().toISOString(),
       sources: intelligenceSources,
       accessNow,
+      pulse,
+      shutdownContext,
       gdelt,
-      note: 'Access Now STOP incidents and GDELT articles are contextual intelligence. STOP may incorporate evidence from technical sensors already present in this application, so neither source creates an additional independent technical vote without root-evidence review.',
+      note: 'Access Now STOP and Internet Society Pulse are separate curated contextual incident sources; GDELT is discovery context. Temporal/scope correlation never auto-merges incidents or creates an additional independent technical vote. Root-evidence lineage must be reviewed before any corroboration claim.',
     });
     return true;
   }

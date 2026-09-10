@@ -1,7 +1,7 @@
 # Data Sources
 
 Last reviewed: **2026-09-10**  
-Release source set: **v1.5.0**
+Release source set: **v1.5.0 + v1.6 development**
 
 ## Source taxonomy
 
@@ -27,8 +27,8 @@ Presence in the runtime does not mean an independent censorship sensor. Measurem
 | PeeringDB | Public API | operator-maintained topology | context only |
 | IHR AS Hegemony | Public API | dependency/chokepoints | context only |
 | Citizen Lab Test Lists | Public CSV | Iran target inventory | inventory only |
-| Internet Society Pulse | Token API | curated shutdown context | context only |
-| Access Now #KeepItOn STOP | Public dataset | curated shutdown incidents | context only; lineage preserved |
+| Internet Society Pulse | Token API | current curated shutdown context in selected window | context only; verification preserved; no technical vote |
+| Access Now #KeepItOn STOP | Public dataset | curated shutdown incidents, currently published through 2025 | context only; lineage preserved |
 | GDELT DOC 2.0 | Public API | professional-source discovery | OSINT context only |
 
 ## Core source semantics
@@ -91,9 +91,17 @@ The repository contains a bounded contract for official quarterly fixed/mobile p
 
 Globalping passive inventory is the default; active measurements remain disabled by default and protected. PeeringDB, IHR and ASRank provide topology/dependency context only.
 
+### STOP ↔ Pulse shutdown context — v1.6
+
+Access Now STOP remains the historical curated incident corpus currently published through 2025. Internet Society Pulse supplies token-gated current shutdown context and preserves the provider's verification level, type, cause and affected-region metadata.
+
+Both sources are filtered to the selected Iran date window. Pulse requires a valid Iran identifier and a valid start timestamp; malformed Iran records and inverted time intervals fail closed. Open-ended Pulse events can overlap later windows and are not silently treated as ended.
+
+`lib/shutdown-context.mjs` keeps STOP and Pulse as separate provenance objects. A `possibleSameIncident` candidate is emitted only when date intervals overlap **and** both records normalize to the same broad scope class (`national`, `regional`, or `service`). Even then `automaticMerge:false` and `independentTechnicalVote:false` are mandatory. Temporal overlap alone, unknown scope, conflicting scope or a missing Pulse token cannot become a corroboration vote. See `SHUTDOWN_CONTEXT.md`.
+
 ### STOP / Pulse / GDELT / Citizen Lab
 
-STOP and Pulse are curated context and can cite technical sources already present; they never automatically add an independent vote. GDELT is discovery context. Citizen Lab is a target inventory, not current blocking evidence.
+STOP and Pulse are curated context and can cite or derive from technical sources already present; they never automatically add an independent vote. GDELT is discovery context. Citizen Lab is a target inventory, not current blocking evidence.
 
 ## Circumvention source review
 
