@@ -2,9 +2,8 @@
 
 Iran-focused censorship-intelligence dashboard for technical measurements, routing/control-plane state, data-plane performance, protocol and circumvention context, ASN topology/inventory, and curated shutdown/OSINT evidence.
 
-**Published release:** `v1.6.0`  
-**Production branch:** `main`  
-**Development branch:** `develop/v1.7`
+**Release line:** `v1.7.0`  
+**Production branch:** `main`
 
 The application does **not** fabricate monitoring values or convert missing access into positive/negative observations. `no_data`, `partial`, `token_required`, rate-limited and hard-error states remain explicit. Contextual reports never become independent technical sensor votes merely because they cite or repeat underlying measurements.
 
@@ -22,6 +21,26 @@ The application does **not** fabricate monitoring values or convert missing acce
 - **ASN identity/inventory:** reviewed registry-qualified catalogue + RIPE/RIR country inventory + optional ipverse enrichment;
 - **targets:** Citizen Lab Iran list;
 - **shutdown/OSINT:** Internet Society Pulse + Access Now #KeepItOn STOP + curated/GDELT discovery.
+
+## v1.7.0 — operational ASN coverage
+
+v1.7.0 makes the existing ASN inventory/enrichment operationally visible without turning the dashboard into a new upstream crawler or censorship sensor.
+
+Generate/update the bounded local snapshot from the same deployment tree as the server:
+
+```bash
+node scripts/fetch-iran-asn-inventory.mjs --write
+```
+
+The snapshot is written to `var/asn-coverage/latest.json`. `GET /api/asn-coverage` reads only that local file; normal dashboard loading therefore does not download the RIPE inventory or the ipverse world dataset. Missing, stale and invalid snapshots remain explicit states. The dashboard shows bounded coverage statistics and review candidates only; candidate priority remains topology/inventory context and creates zero censorship votes.
+
+The 2026-09-10 live runtime acceptance successfully generated, persisted and served an `observed` Iran snapshot. It observed 856 RIR-associated ASNs, 856 registered / 593 RIPE-RIS-routed country-level ASNs, 23/23 curated ASNs inside inventory, 856/856 ipverse metadata matches, zero secondary metadata misses, zero secondary country mismatches and a bounded 100-entry review queue. These values are observations from that acceptance run, not hard-coded release constants.
+
+The live acceptance also exposed a RIPEstat `country-resource-list` response variant that omitted the documented `data.resource` echo. The v1.7 hotfix keeps the request explicitly scoped to `resource=IR`, tolerates only the omitted echo, still rejects an explicit non-IR resource, and retains `resources.asn` structural validation.
+
+Routine CI no longer runs for feature-branch pushes. Pull-request CI, `main` CI and `v*` tag CI remain enabled; the operator-triggered large ipverse download stays outside routine Actions.
+
+See [ASN_COVERAGE_RUNTIME.md](ASN_COVERAGE_RUNTIME.md).
 
 ## v1.6.0
 
@@ -51,20 +70,6 @@ The large ipverse world dataset is intentionally not downloaded by routine GitHu
 - STOP/Pulse correlation requires both temporal overlap and a matching broad scope class;
 - correlation emits analyst candidates only: `possibleSameIncident:true`, `automaticMerge:false`, `independentTechnicalVote:false`;
 - Pulse and correlation are visible in the dashboard and included in context CSV export with separate provenance.
-
-## v1.7 development — operational ASN coverage
-
-v1.7 makes the existing ASN inventory/enrichment operationally visible without turning the dashboard into a new upstream crawler.
-
-Generate/update the bounded local snapshot from the same deployment tree as the server:
-
-```bash
-node scripts/fetch-iran-asn-inventory.mjs --write
-```
-
-The snapshot is written to `var/asn-coverage/latest.json`. `GET /api/asn-coverage` reads only that local file; normal dashboard loading therefore does not download the RIPE inventory or the ipverse world dataset. Missing, stale and invalid snapshots remain explicit states. The dashboard shows bounded coverage statistics and review candidates only; candidate priority remains topology/inventory context and creates zero censorship votes.
-
-See [ASN_COVERAGE_RUNTIME.md](ASN_COVERAGE_RUNTIME.md).
 
 ## Integrity rules
 
@@ -116,7 +121,7 @@ npm run verify:ui
 npm run verify:radar   # optional token
 ```
 
-The published v1.6.0 release contains **277 deterministic tests**. v1.7 adds deterministic local-snapshot validation while retaining the production build, real Headless Chrome presentation, committed-secret/private-key leakage and runtime/404/traversal gates.
+v1.7.0 contains **287 deterministic tests** and retains the production build, real Headless Chrome presentation, committed-secret/private-key leakage and runtime/404/traversal gates.
 
 ## Optional passive routing collectors
 

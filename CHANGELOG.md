@@ -1,5 +1,34 @@
 # Changelog
 
+## 1.7.0 — 2026-09-10
+
+### Operational ASN coverage
+
+- added operator-triggered persistence of the existing RIPE/RIR Iran ASN inventory and ipverse enrichment to the bounded local `var/asn-coverage/latest.json` snapshot;
+- added fail-closed snapshot validation for schema, IR scope, timestamps, internal counts, SHA-256 provenance, candidate bounds/uniqueness and zero-vote semantics;
+- added explicit `observed`, `stale`, `no_data` and `error` states so absence or invalid data cannot become zero Iran ASNs;
+- added `GET /api/asn-coverage`, which reads only the local snapshot and performs no dashboard-time RIPE/ipverse network request;
+- added the `Coverage and review queue` dashboard panel with bounded analyst-priority rows and preserved context-only semantics;
+- kept RIPE/RIR country scope authoritative and ipverse secondary, with no ASN inventory/topology field promoted to censorship evidence.
+
+### Live runtime acceptance / RIPEstat compatibility
+
+- completed a real 2026-09-10 operator acceptance from public upstreams through snapshot persistence, server parsing, `/api/asn-coverage` and browser rendering;
+- observed 856 RIR-associated ASNs, 856 registered / 593 RIPE-RIS-routed country-level ASNs, 23/23 curated ASNs inside inventory, 856/856 ipverse metadata matches, zero secondary metadata misses, zero secondary country mismatches and a bounded 100-entry review queue;
+- treated those counts as acceptance observations rather than release constants or per-ASN reachability claims;
+- fixed live RIPEstat `country-resource-list` compatibility when a valid IR-scoped response omitted the documented `data.resource` echo;
+- retained the hard-scoped `resource=IR` request, explicit non-IR rejection and mandatory `data.resources.asn` validation;
+- added a deterministic regression test for the observed live response shape.
+
+### CI / release integrity
+
+- disabled redundant routine CI on feature-branch pushes while retaining PR-to-main, `main`, `v*` tag and manual CI triggers;
+- kept the large ipverse world download out of routine GitHub Actions;
+- v1.7 feature PR #24 CI `34465799214` and post-merge `main` CI `34465863148` passed;
+- RIPEstat hotfix PR #26 CI `34469766079` and post-merge `main` CI `34469839475` passed;
+- deterministic suite reached **287/287 tests**, with production build, real Headless Chrome presentation, secret/private-key scan and runtime smoke tests passing;
+- v1.7.0 does **not** authorize an Iran Fleet Stage-1 pilot; `deploymentAuthorized:false` remains unchanged.
+
 ## 1.6.0 — 2026-09-10
 
 ### Publication scope
