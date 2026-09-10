@@ -2,7 +2,7 @@
 
 ## Supported release state
 
-The v1.4 feature line is merged to `main` at `cf121adf1cdc976c58b591b53debf1d9e987bef3`. Final `v1.4.0` release metadata is prepared on `release/v1.4.0`; tag/Release publication follows final metadata CI/merge.
+The v1.5 feature line is merged to `main` at `7821cf56233308f177755d1c92d838e307fac6d2`. Final `v1.5.0` release metadata is prepared on `release/v1.5.0`; tag/Release publication follows final metadata CI/merge.
 
 The Fleet Stage-1 material remains **laboratory architecture**, not authorization to enable an Iran production probe. Release publication does not override `deploymentAuthorized:false` or the external predeployment gates.
 
@@ -29,9 +29,13 @@ Iran Censorship Monitor / Node.js
 Optional passive operator processes
         +--> RIPE RIS Live
         \--> Route Views via BGPStream/bgpreader
+
+Optional operator inventory job
+        +--> RIPEstat country-resource-list / country-asns
+        \--> ipverse/as-metadata JSON enrichment
 ```
 
-Starting the dashboard does not start either routing collector.
+Starting the dashboard does not start either routing collector or the ASN inventory/enrichment job.
 
 ## Build / validation
 
@@ -47,7 +51,7 @@ npm run verify:ui
 npm run verify:radar       # optional token
 ```
 
-The v1.4 deterministic suite is **237/237 tests**, plus stable release-notes validation, production build, secret/private-key checks, runtime smoke testing and real headless-Chrome rendering. Live-source acceptance verifies the public-source adapters plus RIS Live and Route Views broker connectivity. These repository gates do not supersede the external Fleet deployment gates.
+The v1.5 deterministic suite is **264/264 tests**, plus stable release-notes validation, production build, secret/private-key checks, runtime smoke testing and real headless-Chrome rendering. The latest applicable live-source acceptance verifies the bounded public-source adapters plus RIPE registry identity, RIS Live and Route Views broker connectivity. These repository gates do not supersede the external Fleet deployment gates.
 
 ## Dashboard service
 
@@ -69,6 +73,28 @@ GLOBALPING_SERVER_RUNS_PER_HOUR=10
 
 Protect environment/secret files outside Git. Do not expose tokens to browser JavaScript.
 
+## ASN identity and inventory — v1.5
+
+`data/asns.json` is the reviewed dashboard/monitoring catalogue; it is not the complete Iran ASN universe.
+
+The operator-triggered inventory command is:
+
+```bash
+node scripts/fetch-iran-asn-inventory.mjs
+```
+
+It obtains the canonical RIR-associated Iran ASN base population from RIPEstat `country-resource-list`, keeps RIPEstat `country-asns` registered/routed country counts separate, compares the complete inventory with curated profiles and may enrich the selected Iran ASNs from the public CC0 `ipverse/as-metadata` JSON dataset.
+
+Operational rules:
+
+- country membership comes from the RIPE/RIR inventory, not from ipverse classification;
+- registry identity, routing visibility, topology metrics and censorship evidence remain separate dimensions;
+- the ipverse world dataset is byte bounded and its exact downloaded bytes are SHA-256 anchored;
+- secondary country disagreement is surfaced as a quality finding rather than silently overriding scope;
+- the candidate queue is an analyst-review priority list, not a censorship score;
+- the full world metadata download is intentionally **not** part of routine GitHub Actions;
+- upstream/download/format failures remain explicit hard errors.
+
 ## Passive routing collectors
 
 ### RIPE RIS Live
@@ -87,7 +113,7 @@ npm run collect:routeviews -- --asn AS58224
 
 This is also a separate optional operator process. It must remain restricted to Route Views resources and validated prefix scope. BGPStream must not be used to relabel RIPE data as a second independent routing source. Route events remain control-plane context only.
 
-## Circumvention context — v1.4
+## Circumvention context
 
 - Iran Tor transport values remain lower/upper estimate bounds;
 - non-overlapping intervals may support only a direction, never an exact client-count delta;

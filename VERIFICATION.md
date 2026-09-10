@@ -1,58 +1,81 @@
-# Verification Report — v1.4.0 release candidate
+# Verification Report — v1.5.0 release candidate
 
-Date: **2026-09-09**  
-Release line: **v1.4.0**  
-Feature merge: **`cf121adf1cdc976c58b591b53debf1d9e987bef3`**  
-Release metadata branch: **`release/v1.4.0`**
+Date: **2026-09-10**  
+Release line: **v1.5.0**  
+Feature merge: **`7821cf56233308f177755d1c92d838e307fac6d2`**  
+Release metadata branch: **`release/v1.5.0`**
 
 ## Completed feature-line gates
 
-- feature branch CI `34388597794` — **success**;
-- feature PR #12 CI `34388825541` — **success**;
-- post-feature-merge `main` CI `34389188256` — **success**;
-- deterministic suite — **237/237 passed**;
+- feature head CI `34403372561` — **success**, **264/264 tests**;
+- feature PR #15 CI `34440814125` — **success**;
+- post-feature-merge `main` CI `34440868635` — **success**;
+- deterministic suite — **264/264 passed**;
 - production build — success;
-- stable release-notes gate — success on development path and required again for the stable release branch;
+- release-notes gate — success on the feature-line package state and required again for stable `1.5.0` metadata;
 - committed-token/private-key and `.env` checks — success;
 - runtime `/api/health`, root, unknown-path and traversal smoke tests — success;
 - real headless Chrome presentation gate — success;
-- live public-source acceptance `34388597366` — **success**.
+- latest applicable full live public-source acceptance `34399378248` — **success** on the latest registry/runtime commit requiring that gate.
 
-Real browser result includes bounded Tor/BridgeDB context and preserves the GLOBAL/not-Iran-specific label for BridgeDB.
+The release-metadata branch/PR and final post-metadata `main` commit must pass the same deterministic CI before tag `v1.5.0` is published.
 
-The release-metadata branch/PR and final post-metadata `main` commit must pass the same CI before tag `v1.4.0` is published.
+## Live registry / routing acceptance
 
-## Major deterministic coverage added in v1.4
+Live public-source acceptance `34399378248` verified the v1.5 registry/runtime line before the later inventory-only commits:
 
-The suite verifies, in addition to previous source adapters and assessment rules:
+- direct RIPE Database registry identities: **23/23 curated profiles passed**;
+- those profiles represented **18 operator families**;
+- AS206065 (`FDI`) and AS24631 (`FANAPTELECOM-FCP`) both passed under `ORG-PNEV1-RIPE`;
+- RIPE RIS Live passive subscription handshake — success;
+- Route Views/CAIDA BGPStream broker — success.
 
-- Iran Tor transport lower/upper bounds are preserved;
-- non-overlapping bounds can support only a direction, not an exact client delta;
-- overlapping/touching bounds remain indeterminate;
-- missing paired Tor observations remain `no_data`;
-- global BridgeDB transport-demand scope cannot be relabelled as Iran-specific;
-- BridgeDB is excluded from Iran incident correlation;
-- Tor↔STOP temporal matching cannot add causality, blocking attribution, national status or an independent vote;
-- partial/no-data source states survive correlation unchanged;
-- Ookla Open Data object naming/quarter contracts are bounded to official public objects;
-- no Iran Ookla publication occurs without an approved country-boundary spatial join;
-- stable package versions require complete canonical release notes;
-- empty GitHub Release bodies can be recovered from canonical notes without overwriting an existing body;
-- headless browser presentation preserves the evidence/scope boundaries.
+Later commits added separated RIR inventory, registered/routed country summary and ipverse prioritization code only and did not match the bounded live-source workflow paths.
+
+## Major deterministic coverage added in v1.5
+
+The suite verifies, in addition to previous source adapters and evidence rules:
+
+- known stale/non-Iran ASN entries are corrected or excluded;
+- canonical registry identity and operational aliases remain separate;
+- TCI vs TIC/Zirsakht and ITCO/DCI family boundaries are explicit;
+- related ASNs stay in one operator family and cannot create independent censorship votes;
+- provider comparison uses an exact reviewed ASN set rather than array position;
+- direct RIPE Database REST `aut-num` parsing fails closed on missing/mismatched hard identity keys;
+- non-authoritative/missing ASN status fails closed;
+- Fanap AS206065 and AS24631 remain one operator family while retaining distinct routing identities;
+- RIPEstat country-resource inventory is IR-scoped, normalized, deduplicated and numerically sorted;
+- curated coverage remains distinct from the complete RIR-associated inventory;
+- curated profiles outside the current RIR inventory are surfaced as drift;
+- RIPEstat country-ASN registered/routed counts preserve their separate semantics and reject malformed/blank/boolean counts;
+- no undocumented ASN-by-ASN routed set is inferred from country-level statistics;
+- ipverse enrichment filters to the RIR-selected ASN set, preserves source-qualified topology fields and fails closed on malformed selected entries;
+- ipverse country disagreement is reported without changing RIR country membership;
+- exact ipverse bytes are SHA-256 anchored and byte bounded;
+- candidate ordering is deterministic, excludes curated profiles and uses transparent review classes rather than a censorship score.
+
+## Full-dataset execution boundary
+
+The public ipverse JSON dataset is a large world dataset and is intentionally operator/on-demand input rather than a routine GitHub Actions dependency. The release verifies its parser, byte ceiling, exact-byte hashing, filtering, prioritization and failure behavior deterministically.
+
+This report does **not** claim that release CI downloaded and processed the current complete ipverse world dataset. An operator live run is separate source observation and any upstream/network failure remains explicit rather than becoming successful or zero-valued evidence.
 
 ## Security / evidence boundary
 
 Release verification does **not** authorize an Iran pilot or active protocol/circumvention probing. In particular:
 
+- RIR country association, registry identity, routing visibility and topology classifications are separate dimensions;
+- registry/topology/inventory metadata adds zero independent censorship votes;
+- multiple ASNs under one operator family do not count as independent evidence;
+- BGP/RIS visibility does not prove end-user Internet reachability;
+- secondary ipverse classification cannot override RIR country scope;
 - Tor/BridgeDB/STOP/Ookla context adds zero independent censorship votes;
-- BridgeDB global data never becomes Iran data;
 - performance degradation alone is not throttling attribution;
 - owned probes remain one source family;
 - per-probe observations cannot automatically become national/province status;
 - website reachability cannot become VPN transport evidence;
 - province cannot be inferred from source IP/ASN/latency;
 - SIM entitlement class is not collected or inferred;
-- routing visibility remains separate from data-plane reachability;
 - missing/partial/error states are never promoted to confirmation.
 
 ## External predeployment gates
@@ -70,6 +93,6 @@ A green CI, PR, tag or release cannot satisfy these external gates. Repository p
 
 ## Release conclusion
 
-**v1.4 repository/runtime feature line: verified and merged to `main`.**  
-**Release metadata: being finalized on `release/v1.4.0`.**  
+**v1.5 repository/runtime feature line: verified and merged to `main`.**  
+**Release metadata: being finalized on `release/v1.5.0`.**  
 **Iran Stage-1 pilot: NO-GO until the external gates and explicit authorization are satisfied.**

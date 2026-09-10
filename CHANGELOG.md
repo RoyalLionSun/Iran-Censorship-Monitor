@@ -1,5 +1,49 @@
 # Changelog
 
+## 1.5.0 — 2026-09-10
+
+### Registry-qualified Iran ASN scope
+
+- corrected stale/misleading curated ASN identities against current RIPE registry objects and removed AS35718 from Iran scope;
+- separated canonical registry identity from operational/business aliases;
+- introduced explicit `operatorFamily` grouping so related ASNs cannot be mistaken for independent operators or censorship evidence;
+- distinguished TCI from TIC/Zirsakht and ITCO/DCI from TIC;
+- expanded reviewed Iran access/backbone/cloud/topology coverage;
+- added Fanap Telecom / ZiTEL AS206065 (`FDI`) and AS24631 (`FANAPTELECOM-FCP`) under one operator family.
+
+### Registry drift / provider selection
+
+- added direct RIPE Database REST `aut-num` validation for curated ASN, `as-name`, organization handle and authoritative `ASSIGNED`/`LEGACY` status;
+- replaced positional provider comparison selection with an explicit reviewed profile set;
+- validated 23/23 curated profiles across 18 operator families in the latest applicable live registry gate.
+
+### Complete country inventory boundary
+
+- documented `data/asns.json` as a curated monitoring/topology catalogue rather than a complete Iran ASN universe;
+- added operator-triggered RIPEstat `country-resource-list` inventory based on RIR Statistics country association;
+- added separate RIPEstat `country-asns` registered/routed country-level counts with RIS timestamps;
+- preserves curated coverage/drift without inferring an undocumented ASN-by-ASN routed set.
+
+### Secondary topology prioritization
+
+- added on-demand CC0 `ipverse/as-metadata` JSON enrichment only after RIPE/RIR establishes Iran scope;
+- preserves classification, network-role, prefix/connectivity, provider/customer/peer, degree, reach, `lastAnnounced` and change metadata with source-qualified semantics;
+- byte-bounds the world dataset and SHA-256 anchors the exact downloaded bytes;
+- surfaces ipverse/RIR country disagreement as a data-quality finding rather than silently changing country scope;
+- builds a deterministic analyst review queue using transparent review classes instead of an invented censorship-likelihood score;
+- keeps the large world-dataset download out of routine GitHub Actions.
+
+### Verification / deployment boundary
+
+- deterministic suite expanded to **264 tests**;
+- feature head CI `34403372561` passed;
+- feature PR #15 CI `34440814125` passed;
+- v1.5 feature merge to `main` completed in `7821cf56233308f177755d1c92d838e307fac6d2`;
+- post-feature-merge `main` CI `34440868635` passed;
+- latest applicable full live-source acceptance `34399378248` passed, including direct RIPE registry validation, RIPE RIS Live and Route Views/CAIDA BGPStream broker checks;
+- ASN registry/inventory/topology metadata adds zero independent censorship votes;
+- v1.5 does **not** authorize an Iran Fleet Stage-1 pilot; repository policy remains `deploymentAuthorized:false`.
+
 ## 1.4.0 — 2026-09-09
 
 ### Circumvention transport depth
