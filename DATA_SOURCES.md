@@ -1,132 +1,82 @@
 # Data Sources
 
 Last reviewed: **2026-09-10**  
-Release source set: **v1.5.0 + v1.6 development**
+Release source set: **v1.6.0**
 
-## Source taxonomy
-
-Presence in the runtime does not mean an independent censorship sensor. Measurement, data plane, performance/protocol context, topology, circumvention, routing/control-plane evidence and curated/OSINT context remain separate.
+Presence in the runtime does not make a source an independent censorship sensor. Measurement, data-plane, performance/protocol, routing/control-plane, topology, circumvention, inventory and curated/OSINT context remain separate evidence dimensions.
 
 | Source | Access | Runtime role | Assessment role |
 |---|---|---|---|
 | OONI | Public API | censorship/application measurements | eligible technical signal |
 | Censored Planet | Public GraphQL | remote interference + CenAlert | investigation/technical context |
-| RIPE Atlas | Public API | active-probe RTT/loss | eligible data-plane signal only with sufficient coverage |
+| RIPE Atlas | Public API | active-probe RTT/loss | eligible data-plane signal with sufficient coverage |
 | IODA | Public API | connectivity/outage signals | eligible data-plane signal |
-| Cloudflare Radar | Radar Read token | traffic/outages/anomalies/BGP/protocol mix | only where assessment explicitly permits |
-| RIPEstat / RIPE RIS / RPKI | Public API | BGP visibility/prefix/neighbour/update plus route-origin authorization context | control-plane/divergence + route-integrity context |
+| Cloudflare Radar | Radar Read token | traffic/outages/anomalies/BGP/protocol mix | only where explicitly permitted |
+| RIPEstat / RIPE RIS / RPKI | Public API | BGP visibility/prefix/neighbour/update + route-origin authorization | control-plane / route-integrity context |
 | RIPE RIS Live | Public stream | passive announcements/withdrawals | control-plane context only |
-| Route Views via CAIDA BGPStream | Public broker + `bgpreader`/Route Views live resources | second passive routing collector | control-plane context only |
-| CAIDA ASRank | Public API | ASN rank, customer cone, degree and inferred AS relationships | topology context only |
-| ipverse/as-metadata | Public CC0 dataset | on-demand ASN registry/topology enrichment and review prioritization | secondary topology context only; never country authority or censorship vote |
-| M-Lab NDT | Public JSON aggregate | throughput/minimum-RTT | performance context only |
-| APNIC Labs IPv6 | Public JSON measurement | IPv6 capability/preference | protocol/deployment context only |
-| Tor Metrics | Public CSV | Iran direct/bridge/transport estimate bounds plus global BridgeDB demand | circumvention context only |
-| Ookla Open Data | Public quarterly objects | reviewed object/provenance contract; Iran aggregation not yet admitted | performance context only; no censorship/throttling vote |
+| Route Views via CAIDA BGPStream | Public broker + `bgpreader` | second passive routing collector | control-plane context only |
+| CAIDA ASRank | Public API | rank/customer cone/degree/AS relationships | topology context only |
+| ipverse/as-metadata | Public CC0 dataset | on-demand ASN enrichment/review prioritization | secondary context only |
+| M-Lab NDT | Public aggregate | throughput/minimum RTT | performance context only |
+| APNIC Labs IPv6 | Public measurement | IPv6 capability/preference | protocol/deployment context only |
+| Tor Metrics / BridgeDB | Public data | Iran Tor estimate bounds + global demand context | circumvention context only |
+| Ookla Open Data | Public quarterly objects | reviewed object contract; Iran aggregate not admitted | context only |
 | Globalping | Public API / optional token | passive inventory; protected active tests | probe presence is not a vote |
 | PeeringDB | Public API | operator-maintained topology | context only |
 | IHR AS Hegemony | Public API | dependency/chokepoints | context only |
 | Citizen Lab Test Lists | Public CSV | Iran target inventory | inventory only |
-| Internet Society Pulse | Token API | current curated shutdown context in selected window | context only; verification preserved; no technical vote |
+| Internet Society Pulse | Token API | current curated Iran shutdown context | context only; no technical vote |
 | Access Now #KeepItOn STOP | Public dataset | curated shutdown incidents, currently published through 2025 | context only; lineage preserved |
 | GDELT DOC 2.0 | Public API | professional-source discovery | OSINT context only |
 
-## Core source semantics
+## Core semantics
 
 ### OONI / Censored Planet
 
-Iran scope and mechanism/anomaly metadata remain separate. An anomaly or control failure is not automatically confirmed censorship. OONI website/circumvention-site reachability is not reinterpreted as WireGuard/OpenVPN/V2Ray/Outline transport evidence.
+An anomaly, failed control or remote interference signal is an investigation input, not automatic proof of censorship. Website reachability is not reinterpreted as WireGuard/OpenVPN/V2Ray/Outline transport evidence.
 
 ### RIPE Atlas / IODA / Radar
 
-RIPE Atlas uses bounded per-probe daily `ping-stats`; partial probe coverage remains visible but is excluded from automated corroboration/divergence. IODA and Radar provide connectivity/traffic context without establishing political intent. Radar credentials remain server-side.
+RIPE Atlas preserves per-probe coverage; partial coverage remains visible and is not promoted to national confirmation. IODA and Radar provide connectivity/traffic context without establishing political intent. Radar credentials remain server-side.
 
-### RIPEstat / RIPE RIS / RIS Live / RPKI
+### RIPE / routing / RPKI
 
-BGP visibility, prefixes, neighbours, announcements and withdrawals are control-plane evidence. The optional RIS Live collector is bounded to validated prefix scope, passive and separate from the dashboard process. RPKI preserves upstream route-origin authorization states. None of these alone proves working end-user Internet or censorship intent.
+BGP visibility, prefixes, neighbours, announcements, withdrawals and RPKI states are control-plane/route-integrity evidence. They do not prove working end-user Internet or censorship intent. BGPStream is an access/normalization framework, not itself another sensor; Route Views and RIPE observations keep their root provenance.
 
-RIPEstat `country-resource-list` is also the canonical RIR-statistics base population for the Iran ASN inventory. `country-asns` supplies separate country-level registered/routed counts from RIPE RIS and is not used to invent an ASN-by-ASN active set.
+### ASN identity / inventory — included from v1.5 development
 
-### Route Views / CAIDA BGPStream
+`data/asns.json` is a reviewed monitoring/topology catalogue, not the complete Iran ASN universe. RIPEstat `country-resource-list` establishes the RIR-statistics country population; `country-asns` supplies separate country-level registered/routed counts. The project does not invent an ASN-by-ASN routed set from aggregate counts.
 
-CAIDA BGPStream tooling accesses **Route Views live** resources. BGPStream is an access/normalization framework, not itself a sensor. Consuming RIPE data through BGPStream remains RIPE evidence and must not be counted again. Route Views events remain control-plane context only.
+Optional `ipverse/as-metadata` enrichment runs only after RIR scope is established. Exact downloaded bytes are SHA-256 anchored and byte bounded. Secondary country/category/network-role data cannot override canonical RIR country scope and cannot create censorship evidence.
 
-### CAIDA ASRank
+### M-Lab / APNIC / Ookla
 
-ASRank adds selected-ASN rank, customer-cone, degree and inferred relationship context. It derives partly from routing inputs overlapping existing sources, so it must not inflate routing-source independence and remains `topology-context` with `independentCensorshipVote:false`.
+M-Lab and APNIC preserve sample/coverage context. Performance or protocol variation is not automatic censorship or throttling attribution. Ookla remains behind the reviewed spatial-country aggregation gate; no bounding-box shortcut is published as Iran data.
 
-### ipverse/as-metadata — v1.5 inventory enrichment
+### Tor / BridgeDB
 
-The public CC0 `ipverse/as-metadata` JSON dataset is downloaded only by the operator-triggered Iran ASN inventory command. The project first establishes the Iran scope from RIPE/RIR data and then filters ipverse to that ASN set.
+Iran Tor transport observations remain published lower/upper estimate bounds; exact users are not invented. Directional change is supported only where paired intervals do not overlap. BridgeDB demand is global and explicitly not Iran-specific. These sources remain context only.
 
-The enrichment preserves registry labels, `category`, `networkRole`, prefix counts, provider/customer/peer topology, degree, reach, `lastAnnounced` and change timestamps. The exact downloaded bytes are SHA-256 anchored and subject to a bounded download ceiling.
+### STOP ↔ Pulse — v1.6
 
-ipverse country fields never add or remove an ASN from the Iran base population. Country disagreements are surfaced as data-quality findings. `category` and `networkRole` are prioritization hints; the source documents those classifications as multi-signal/opinionated and potentially imperfect. ipverse remains `independentCensorshipVote:false`.
+Access Now STOP is retained as a historical curated incident corpus currently published through 2025. Internet Society Pulse supplies token-gated current shutdown context for the selected Iran window and preserves verification level, type, cause and affected regions.
 
-The smaller ipverse CSV format is not substituted for this enrichment because it contains only ASN, handle, description and country code; the topology/classification fields required for the review queue are JSON-only.
+Pulse accepts only explicit Iran identifiers, validates required timestamps and selected-window overlap, preserves open-ended events and fails closed on malformed Iran records or invalid intervals. Missing credentials remain `token_required`; they are never interpreted as zero incidents.
 
-### M-Lab / APNIC
+`lib/shutdown-context.mjs` keeps STOP and Pulse as separate provenance records. A `possibleSameIncident` candidate exists only when date intervals overlap **and** both records normalize to the same broad scope (`national`, `regional` or `service`). Every candidate remains `automaticMerge:false` and `independentTechnicalVote:false`. Correlation does not establish identity, causality, filtering mechanism or censorship intent.
 
-M-Lab preserves sample counts and performance context. APNIC IPv6 preserves experiment counts and capability/preference context. Performance/protocol variation is not automatically censorship or throttling attribution.
+The dashboard and context CSV preserve these semantics. CSV exports token-required Pulse coverage as `matched=not_inferred`, not zero.
 
-### Tor Metrics / BridgeDB — v1.4
+### GDELT / Citizen Lab
 
-- Iran Tor transport observations are retained as published lower/upper estimate bounds;
-- exact client counts are not invented from those intervals;
-- directional change is supported only where paired intervals do not overlap;
-- overlapping/touching intervals remain indeterminate;
-- BridgeDB requested-transport demand is global and is labelled **GLOBAL · not Iran-specific**;
-- BridgeDB is excluded from Iran incident correlation;
-- Tor/BridgeDB remain context only with `independentCensorshipVote:false`.
-
-### Tor ↔ Access Now STOP temporal context — v1.4
-
-Tor transport bounds can be compared with STOP incident windows only as temporal context. A date-window match does not establish causality, blocking, political intent or a new independent technical vote. Missing paired observations remain `no_data`; partial upstream coverage remains `partial`.
-
-### Ookla Open Data — v1.4 feasibility contract
-
-The repository contains a bounded contract for official quarterly fixed/mobile public Ookla objects. An Iran aggregate is **not** published yet because a defensible result requires a reviewed country-boundary dataset and spatial join. Bounding-box shortcuts, fabricated national values and automatic throttling/censorship conclusions are prohibited.
-
-### Globalping / topology
-
-Globalping passive inventory is the default; active measurements remain disabled by default and protected. PeeringDB, IHR and ASRank provide topology/dependency context only.
-
-### STOP ↔ Pulse shutdown context — v1.6
-
-Access Now STOP remains the historical curated incident corpus currently published through 2025. Internet Society Pulse supplies token-gated current shutdown context and preserves the provider's verification level, type, cause and affected-region metadata.
-
-Both sources are filtered to the selected Iran date window. Pulse requires a valid Iran identifier and a valid start timestamp; malformed Iran records and inverted time intervals fail closed. Open-ended Pulse events can overlap later windows and are not silently treated as ended.
-
-`lib/shutdown-context.mjs` keeps STOP and Pulse as separate provenance objects. A `possibleSameIncident` candidate is emitted only when date intervals overlap **and** both records normalize to the same broad scope class (`national`, `regional`, or `service`). Even then `automaticMerge:false` and `independentTechnicalVote:false` are mandatory. Temporal overlap alone, unknown scope, conflicting scope or a missing Pulse token cannot become a corroboration vote. See `SHUTDOWN_CONTEXT.md`.
-
-### STOP / Pulse / GDELT / Citizen Lab
-
-STOP and Pulse are curated context and can cite or derive from technical sources already present; they never automatically add an independent vote. GDELT is discovery context. Citizen Lab is a target inventory, not current blocking evidence.
-
-## Circumvention source review
-
-Psiphon and Ceno/eQualitie remain useful Iran circumvention/resilience context, but no stable supported public machine-readable Iran time-series API was established. No unsupported runtime telemetry adapter or chart scraping is admitted.
-
-## Owned-probe evidence family
-
-The release includes the owned-probe **laboratory architecture**, not authorization for an Iran pilot. Accepted observations are `owned-probe` evidence and all owned probes remain one source family. They cannot inflate independent-source counts.
-
-VPN transport and NIN interpretations are gated by [PROTOCOL_VPN_NIN_EVIDENCE.md](PROTOCOL_VPN_NIN_EVIDENCE.md). Province/SIM segmentation remains disabled under [PROVINCE_SIM_FEASIBILITY.md](PROVINCE_SIM_FEASIBILITY.md). Repository policy remains `deploymentAuthorized:false` until separate external pilot gates and explicit authorization are satisfied.
+GDELT is discovery context, not a technical measurement source. Citizen Lab supplies target inventory, not current blocking evidence.
 
 ## Source admission rule
 
-A new continuous source must provide:
-
-1. identifiable root provider/provenance;
-2. stable supported machine-readable access;
-3. Iran-relevant scope and explicit sample/coverage semantics;
-4. explicit failure/no-data behavior;
-5. interpretable relation to the claimed measurement dimension;
-6. independence/overlap review against existing sources;
-7. no hidden inflation of assessment source count.
-
-Unsupported scraping, duplicated provenance or correlation-only telemetry is preferable as absent/contextual rather than promoted to a sensor.
+A continuous source must have identifiable root provenance, stable supported machine-readable access, Iran-relevant scope, explicit sample/coverage semantics, explicit no-data/failure behavior, an interpretable relationship to the claimed dimension and an independence/overlap review. Unsupported scraping or duplicate provenance stays absent/contextual rather than being promoted to a sensor.
 
 ## Failure behavior
 
-`observed`, `partial`, `no_data`, `token_required`, rate-limited and hard `error` remain distinct states. No upstream failure is converted into a zero measurement or successful national status.
+`observed`, `partial`, `no_data`, `token_required`, rate-limited and hard `error` remain distinct. Upstream failure is never converted into zero measurement, zero incidents or successful national status.
+
+Owned-probe laboratory material remains non-production-authorized. `deploymentAuthorized:false` is unchanged.

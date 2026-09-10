@@ -1,5 +1,38 @@
 # Changelog
 
+## 1.6.0 — 2026-09-10
+
+### Publication scope
+
+- v1.6.0 is the next published release after v1.4.0; v1.5.0 was repository-verified but was not tagged or published as a GitHub Release;
+- the v1.6.0 publication therefore includes both the v1.5 ASN identity/inventory work and the v1.6 shutdown-context work.
+
+### Current shutdown intelligence
+
+- hardened Internet Society Pulse Iran scoping, timestamp validation, selected-window overlap and open-ended-event semantics;
+- preserved Pulse verification level, type, cause, affected regions and provenance while keeping `token_required`, `no_data`, observed and error states distinct;
+- documented Access Now #KeepItOn STOP as a separate historical curated corpus currently published through 2025;
+- added conservative STOP/Pulse correlation requiring temporal overlap plus matching broad scope;
+- every correlation remains an analyst candidate with `possibleSameIncident:true`, `automaticMerge:false` and `independentTechnicalVote:false`;
+- exposed Pulse and correlation context in `/api/intelligence` and the dashboard without creating a second technical vote or duplicate upstream request.
+
+### Context export / release integrity
+
+- extended context CSV export with Pulse status/events and STOP/Pulse candidate correlations while preserving separate provenance;
+- missing Pulse credentials export as `matched=not_inferred`, never zero incidents;
+- added two deterministic export regression tests, raising the stable candidate from 275 to **277 tests**;
+- added the v1.6 export and shutdown presentation modules to the early syntax gate;
+- added canonical `release-notes/v1.6.0.md` and aligned release/version documentation;
+- no new periodic workflow or live-source CI dependency was introduced.
+
+### Verification / deployment boundary
+
+- v1.6 backend post-merge `main` CI `34442988321` passed;
+- v1.6 dashboard branch CI `34443294299`, PR CI `34443351394` and post-merge `main` CI `34443425466` passed;
+- the final release branch must pass the 277-test deterministic suite, release-notes gate, production build, real Headless Chrome, committed-secret/private-key scan and runtime smoke test before publication;
+- STOP, Pulse, their correlation, registry/inventory/topology metadata and other contextual sources add zero independent censorship votes;
+- v1.6.0 does **not** authorize an Iran Fleet Stage-1 pilot; `deploymentAuthorized:false` remains unchanged.
+
 ## 1.5.0 — 2026-09-10
 
 ### Registry-qualified Iran ASN scope

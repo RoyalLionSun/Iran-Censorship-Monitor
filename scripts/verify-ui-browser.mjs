@@ -7,6 +7,7 @@ const execFileAsync = promisify(execFile);
 const v11Source = await readFile(new URL('../public/v11-context.js', import.meta.url), 'utf8');
 const v13Source = await readFile(new URL('../public/v13-context.js', import.meta.url), 'utf8');
 const v14Source = await readFile(new URL('../public/v14-context.js', import.meta.url), 'utf8');
+const v16ExportSource = await readFile(new URL('../public/v16-context-export.js', import.meta.url), 'utf8');
 const v16Source = await readFile(new URL('../public/v16-shutdown-context.js', import.meta.url), 'utf8');
 
 function findBrowser() {
@@ -137,6 +138,11 @@ const server = http.createServer((request, response) => {
   if (request.url === '/v14-context.js') {
     response.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8', 'Cache-Control': 'no-store' });
     response.end(v14Source);
+    return;
+  }
+  if (request.url === '/v16-context-export.js') {
+    response.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8', 'Cache-Control': 'no-store' });
+    response.end(v16ExportSource);
     return;
   }
   if (request.url === '/v16-shutdown-context.js') {
