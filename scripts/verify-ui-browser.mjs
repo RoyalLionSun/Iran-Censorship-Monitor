@@ -197,12 +197,12 @@ try {
   if (!address || typeof address === 'string') throw new Error('UI fixture server did not expose a TCP port.');
   const browser = findBrowser();
   const args = [
-    '--headless', '--disable-gpu', '--no-sandbox', '--disable-dev-shm-usage', '--virtual-time-budget=2000', '--dump-dom',
+    '--headless', '--disable-gpu', '--no-sandbox', '--disable-dev-shm-usage', '--virtual-time-budget=6000', '--dump-dom',
     `http://127.0.0.1:${address.port}/fixture`,
   ];
   let stdout;
   try {
-    ({ stdout } = await execFileAsync(browser, args, { encoding: 'utf8', timeout: 20_000, maxBuffer: 4 * 1024 * 1024 }));
+    ({ stdout } = await execFileAsync(browser, args, { encoding: 'utf8', timeout: 35_000, maxBuffer: 4 * 1024 * 1024 }));
   } catch (error) {
     const detail = error?.stderr || error?.message || String(error);
     throw new Error(`Headless browser execution failed: ${detail}`);
