@@ -1,87 +1,83 @@
 # Iran Censorship Monitor
 
-Iran-focused censorship-intelligence dashboard for technical measurements, routing/control-plane state, data-plane performance, protocol context, circumvention telemetry and curated shutdown/OSINT evidence.
+Iran-focused censorship-intelligence dashboard for technical measurements, routing/control-plane state, data-plane performance, protocol and circumvention context, ASN topology/inventory, and curated shutdown/OSINT evidence.
 
-**Release line:** `v1.5.0`  
+**Release line:** `v1.6.0`  
 **Production branch:** `main`  
-**v1.5 feature merge:** `7821cf56233308f177755d1c92d838e307fac6d2`  
-**Release metadata branch:** `release/v1.5.0`
+**Release branch:** `release/v1.6.0`
 
-The application does **not** ship simulated monitoring values. Missing, unavailable, rate-limited or unconfigured sources remain explicit no-data/error states. Contextual reports never become independent technical sensor votes merely because they repeat an underlying measurement.
+The application does **not** fabricate monitoring values or convert missing access into positive/negative observations. `no_data`, `partial`, `token_required`, rate-limited and hard-error states remain explicit. Contextual reports never become independent technical sensor votes merely because they cite or repeat underlying measurements.
 
 ## Evidence architecture
 
 - **censorship/interference:** OONI + Censored Planet;
 - **data plane/connectivity:** RIPE Atlas + IODA + Cloudflare Radar;
-- **performance:** M-Lab NDT, with Ookla Open Data currently limited to a reviewed feasibility/contract layer until a defensible Iran spatial aggregation is implemented;
-- **control plane:** RIPEstat / RIPE RIS, passive RIPE RIS Live, and optional passive Route Views live collection through CAIDA BGPStream tooling;
-- **route-origin integrity:** RIPEstat RPKI validation/history, context only;
-- **protocol/deployment context:** Cloudflare Radar protocol distributions + APNIC Labs IPv6;
-- **Iran vantage coverage:** Globalping passive inventory; active mode remains disabled by default;
-- **circumvention:** Iran Tor direct/bridge/transport estimates plus contextual Psiphon/Proton/Ceno reporting;
-- **topology:** PeeringDB + Internet Health Report AS Hegemony + CAIDA ASRank;
-- **ASN identity/inventory:** reviewed registry-qualified ASN catalogue + RIPE/RIR country inventory + secondary ipverse review enrichment;
+- **performance:** M-Lab NDT; Ookla remains behind the reviewed country-aggregation feasibility boundary;
+- **control plane:** RIPEstat / RIPE RIS, passive RIPE RIS Live and optional Route Views live collection through CAIDA BGPStream tooling;
+- **route-origin integrity:** RIPEstat RPKI, context only;
+- **protocol/deployment:** Cloudflare Radar protocol distributions + APNIC Labs IPv6;
+- **Iran vantage coverage:** Globalping passive inventory, with protected active mode disabled by default;
+- **circumvention:** Iran Tor direct/bridge/transport estimate bounds plus contextual Psiphon/Proton/Ceno reporting;
+- **topology:** PeeringDB + IHR AS Hegemony + CAIDA ASRank;
+- **ASN identity/inventory:** reviewed registry-qualified catalogue + RIPE/RIR country inventory + optional ipverse enrichment;
 - **targets:** Citizen Lab Iran list;
-- **shutdown/OSINT:** Internet Society Pulse, Access Now #KeepItOn STOP and curated/GDELT discovery.
+- **shutdown/OSINT:** Internet Society Pulse + Access Now #KeepItOn STOP + curated/GDELT discovery.
 
-RIPE and Route Views routing observations are control-plane evidence. BGPStream is an access/normalization framework, not a separate sensor. ASRank and ipverse add topology/review context but do not inflate independent censorship-source counts.
+## v1.6.0
 
-## v1.5 additions
+v1.6.0 is the next published release after v1.4.0 and includes the repository work from the unpublished v1.5 line.
 
-- replaces ad-hoc ASN labels with registry-qualified identity records, aliases, roles and explicit operator families;
-- corrects known stale/misclassified entries and removes AS35718 from Iran scope;
-- distinguishes TCI from TIC/Zirsakht and ITCO/DCI from TIC;
-- adds Fanap Telecom / ZiTEL as one operator family with AS206065 and AS24631 retained as distinct routing identities;
-- expands reviewed Iran access/backbone/cloud/topology coverage;
-- validates curated ASN hard identity keys through direct RIPE Database REST `aut-num` objects;
-- makes provider comparison an explicit reviewed set rather than an array-position assumption;
-- separates the curated monitoring catalogue from the complete RIR-associated Iran ASN population;
-- adds RIPEstat registered-vs-routed country-level ASN counts without fabricating an ASN-by-ASN routed set;
-- adds on-demand CC0 ipverse enrichment with byte ceiling, SHA-256 provenance and a transparent deterministic analyst review queue;
-- keeps all registry/inventory/topology metadata at `independentCensorshipVote:false`.
+### ASN scope included from v1.5 development
 
-The Fleet Stage-1 laboratory architecture remains included but **not production-authorized**. Releasing v1.5 does not authorize an Iran probe deployment. `deploymentAuthorized` remains false.
+- registry-qualified identities and explicit operator-family grouping;
+- Fanap Telecom / ZiTEL AS206065 and AS24631 retained as separate routing identities under one family;
+- curated monitoring catalogue explicitly separated from the complete RIR-associated Iran ASN population;
+- RIPEstat registered/routed country counts kept separate from per-ASN routing claims;
+- operator-triggered CC0 ipverse enrichment with byte ceiling, SHA-256 provenance and transparent review classes.
 
-## ASN inventory / prioritization
-
-`data/asns.json` is a reviewed monitoring/topology catalogue, **not** a claim of complete Iran ASN coverage.
-
-For an operator-triggered current inventory:
+For an operator-triggered inventory:
 
 ```bash
 node scripts/fetch-iran-asn-inventory.mjs
 ```
 
-The command establishes country scope from RIPEstat/RIR statistics, keeps country-level registered/routed RIPE RIS counts separate, compares the full inventory with curated profiles, and enriches only the RIR-selected Iran ASNs from `ipverse/as-metadata`.
+The large ipverse world dataset is intentionally not downloaded by routine GitHub Actions.
 
-The ipverse world JSON is intentionally not downloaded by routine GitHub Actions. Its exact downloaded bytes are SHA-256 anchored and byte bounded. Secondary country/classification fields cannot override the canonical RIR country scope and never become censorship evidence.
+### Current shutdown context
+
+- Internet Society Pulse parsing is Iran-scoped, range validated and preserves verification/type/cause/affected-region context;
+- missing Pulse credentials remain `token_required`, never zero incidents;
+- Access Now STOP remains a separate historical curated source, currently documented through 2025;
+- STOP/Pulse correlation requires both temporal overlap and a matching broad scope class;
+- correlation emits analyst candidates only: `possibleSameIncident:true`, `automaticMerge:false`, `independentTechnicalVote:false`;
+- Pulse and correlation are visible in the dashboard and included in context CSV export with separate provenance.
 
 ## Integrity rules
 
-1. No fabricated values or synthetic replacements for missing data.
-2. RIR country association is not the same as current routing visibility.
+1. No fabricated values or synthetic substitutes for missing data.
+2. RIR country association is not current routing visibility.
 3. BGP visibility is not proof of working end-user Internet.
-4. OONI/Censored Planet anomalies are investigation signals, not automatic proof of censorship.
-5. Performance degradation alone is not attributed to state throttling or intent.
+4. Measurement anomalies are investigation signals, not automatic censorship proof.
+5. Performance degradation alone is not attributed to throttling or political intent.
 6. Context sources do not inflate independent technical corroboration.
 7. Multiple ASNs in one operator family do not become independent censorship sources.
-8. ASRank, ipverse topology and RPKI validity do not create censorship votes.
-9. Tor, BridgeDB, STOP and Ookla context add zero independent censorship votes.
-10. BridgeDB global demand is never relabelled as Iran-specific.
+8. ASRank, ipverse and RPKI metadata create no censorship votes.
+9. Tor, BridgeDB, STOP, Pulse and shutdown correlation create zero independent censorship votes.
+10. `token_required` and source failure are never reinterpreted as zero incidents or availability.
 11. Multiple owned probes remain one owned-probe source family.
-12. A VPN-provider website result is not a WireGuard/OpenVPN/V2Ray/Outline transport result.
-13. Province is not inferred from source IP, ASN, latency or reverse DNS.
-14. White-SIM/ordinary-SIM status is not inferred or collected from sensitive subscriber identifiers.
-15. NIN-vs-global claims require separately reviewed target classes and paired same-probe observations.
-16. Active Globalping remains disabled by default.
+12. Website reachability is not VPN-transport evidence.
+13. Province and SIM entitlement class are not inferred.
+14. NIN-vs-global claims require reviewed target classes and paired same-probe observations.
+15. Active Globalping remains disabled by default.
+16. `deploymentAuthorized:false` remains authoritative.
 
 ## Requirements
 
-- Node.js **20.11+**; Node.js 22 is the verified CI runtime.
-- Outbound DNS/HTTPS from the dashboard host to configured public sources.
-- Optional Cloudflare Radar Read token and Internet Society Pulse token.
+- Node.js **20.11+**; Node.js 22 is the CI runtime.
+- Outbound DNS/HTTPS to configured public sources.
+- Optional Cloudflare Radar Read token and Internet Society Pulse API token.
 
-The runtime has no third-party npm dependencies.
+There are no third-party npm runtime dependencies.
 
 ## Start locally
 
@@ -103,40 +99,26 @@ npm run verify:public
 npm run verify:ris-live
 npm run verify:bgpstream
 npm run verify:ui
-npm run verify:radar   # optional; requires configured Radar token
+npm run verify:radar   # optional token
 ```
 
-The v1.5 deterministic suite contains **264 tests**. CI additionally runs the stable-release-notes gate, production build, committed-secret/private-key checks, runtime/404/traversal smoke tests and a real local headless-browser presentation gate.
-
-Verified v1.5 feature-line gates:
-
-- feature head CI `34403372561` — success, 264/264;
-- feature PR #15 CI `34440814125` — success;
-- feature merge `7821cf56233308f177755d1c92d838e307fac6d2`;
-- post-feature-merge `main` CI `34440868635` — success;
-- latest applicable live-source acceptance `34399378248` — success, including 23/23 curated RIPE registry identities.
+The v1.6.0 release candidate contains **277 deterministic tests** after the final context-export regression tests. CI also checks canonical release notes, production build, real Headless Chrome presentation, committed-secret/private-key leakage and runtime/404/traversal behavior.
 
 ## Optional passive routing collectors
 
-RIPE RIS Live:
-
 ```bash
 npm run collect:ris -- --asn AS58224
-```
-
-Route Views / BGPStream:
-
-```bash
 npm run collect:routeviews -- --asn AS58224
 ```
 
-Both are separate operator processes, passive, bounded to validated prefix scope and excluded from censorship votes.
+Both are separate bounded operator processes and remain control-plane context only.
 
 ## Project documentation
 
 - [CURRENT_STATE.md](CURRENT_STATE.md)
 - [ARCHITECTURE.md](ARCHITECTURE.md)
 - [DATA_SOURCES.md](DATA_SOURCES.md)
+- [SHUTDOWN_CONTEXT.md](SHUTDOWN_CONTEXT.md)
 - [ASN_IDENTITY_METHOD.md](ASN_IDENTITY_METHOD.md)
 - [ASN_INVENTORY_METHOD.md](ASN_INVENTORY_METHOD.md)
 - [SOURCE_REVIEW_V13.md](SOURCE_REVIEW_V13.md)
@@ -152,4 +134,4 @@ Both are separate operator processes, passive, bounded to validated prefix scope
 - [PROTOCOL_VPN_NIN_EVIDENCE.md](PROTOCOL_VPN_NIN_EVIDENCE.md)
 - [PROVINCE_SIM_FEASIBILITY.md](PROVINCE_SIM_FEASIBILITY.md)
 
-The original prototype export remains under `legacy/prototype-export/` for audit/reference only and is not the development basis.
+The original prototype export under `legacy/prototype-export/` is audit/reference material only and is not the development basis.

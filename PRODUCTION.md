@@ -2,9 +2,9 @@
 
 ## Supported release state
 
-The v1.5 feature line is merged to `main` at `7821cf56233308f177755d1c92d838e307fac6d2`. Final `v1.5.0` release metadata is prepared on `release/v1.5.0`; tag/Release publication follows final metadata CI/merge.
+The release candidate is **v1.6.0** on `release/v1.6.0`, based on pre-release `main` commit `42e8775cfd7a51f882a78172caee181ed613e23f`. v1.4.0 is the latest previously published GitHub Release; the repository-verified v1.5 line was not tagged/published, so v1.6.0 is the next publication and includes both v1.5 ASN/inventory work and v1.6 shutdown-context work.
 
-The Fleet Stage-1 material remains **laboratory architecture**, not authorization to enable an Iran production probe. Release publication does not override `deploymentAuthorized:false` or the external predeployment gates.
+Release publication does not authorize an Iran probe deployment. Repository policy remains `deploymentAuthorized:false` and the Fleet Stage-1 material remains laboratory architecture.
 
 ## Dashboard topology
 
@@ -32,10 +32,10 @@ Optional passive operator processes
 
 Optional operator inventory job
         +--> RIPEstat country-resource-list / country-asns
-        \--> ipverse/as-metadata JSON enrichment
+        \--> ipverse/as-metadata enrichment
 ```
 
-Starting the dashboard does not start either routing collector or the ASN inventory/enrichment job.
+Starting the dashboard does not start the passive routing collectors or the ASN inventory/enrichment job.
 
 ## Build / validation
 
@@ -51,11 +51,11 @@ npm run verify:ui
 npm run verify:radar       # optional token
 ```
 
-The v1.5 deterministic suite is **264/264 tests**, plus stable release-notes validation, production build, secret/private-key checks, runtime smoke testing and real headless-Chrome rendering. The latest applicable live-source acceptance verifies the bounded public-source adapters plus RIPE registry identity, RIS Live and Route Views broker connectivity. These repository gates do not supersede the external Fleet deployment gates.
+The v1.6.0 release candidate contains **277 deterministic tests** after the final context-export regressions. Routine CI also validates syntax, canonical release notes, production build, real Headless Chrome presentation, committed-secret/private-key leakage and runtime/404/traversal behavior.
 
 ## Dashboard service
 
-Keep the Node listener private where practical and terminate HTTPS at a reverse proxy. A hardened systemd service should use an unprivileged account, `NoNewPrivileges=true`, private temporary space and read-only system/home protections appropriate to the distribution.
+Keep the Node listener private where practical and terminate HTTPS at a reverse proxy. Run the service as an unprivileged account with appropriate systemd hardening (`NoNewPrivileges`, private temporary space and read-only system/home protections appropriate to the distribution).
 
 Typical environment values:
 
@@ -71,97 +71,52 @@ GLOBALPING_CONTROL_KEY=
 GLOBALPING_SERVER_RUNS_PER_HOUR=10
 ```
 
-Protect environment/secret files outside Git. Do not expose tokens to browser JavaScript.
+Protect environment/secret files outside Git and never expose tokens to browser JavaScript.
 
-## ASN identity and inventory — v1.5
+## ASN identity and inventory
 
-`data/asns.json` is the reviewed dashboard/monitoring catalogue; it is not the complete Iran ASN universe.
-
-The operator-triggered inventory command is:
+`data/asns.json` is a reviewed monitoring/topology catalogue, not the complete Iran ASN universe.
 
 ```bash
 node scripts/fetch-iran-asn-inventory.mjs
 ```
 
-It obtains the canonical RIR-associated Iran ASN base population from RIPEstat `country-resource-list`, keeps RIPEstat `country-asns` registered/routed country counts separate, compares the complete inventory with curated profiles and may enrich the selected Iran ASNs from the public CC0 `ipverse/as-metadata` JSON dataset.
+The operator-triggered command establishes country scope from RIPE/RIR data, keeps aggregate registered/routed statistics separate, compares the complete country inventory with curated profiles and can enrich the selected Iran ASN set from `ipverse/as-metadata`.
 
-Operational rules:
-
-- country membership comes from the RIPE/RIR inventory, not from ipverse classification;
-- registry identity, routing visibility, topology metrics and censorship evidence remain separate dimensions;
-- the ipverse world dataset is byte bounded and its exact downloaded bytes are SHA-256 anchored;
-- secondary country disagreement is surfaced as a quality finding rather than silently overriding scope;
-- the candidate queue is an analyst-review priority list, not a censorship score;
-- the full world metadata download is intentionally **not** part of routine GitHub Actions;
-- upstream/download/format failures remain explicit hard errors.
+Country identity, routing visibility, topology and censorship evidence remain separate dimensions. The large world dataset is byte bounded, exact-byte SHA-256 anchored and intentionally excluded from routine GitHub Actions.
 
 ## Passive routing collectors
 
-### RIPE RIS Live
-
 ```bash
 npm run collect:ris -- --asn AS58224
-```
-
-The collector is passive, validates/limits prefix scope, writes under Git-ignored `var/ris-live/` and should run as a separate service/user with write access only to its output directory.
-
-### Route Views / BGPStream
-
-```bash
 npm run collect:routeviews -- --asn AS58224
 ```
 
-This is also a separate optional operator process. It must remain restricted to Route Views resources and validated prefix scope. BGPStream must not be used to relabel RIPE data as a second independent routing source. Route events remain control-plane context only.
+Both are separate optional operator processes, bounded to validated scope. BGPStream is not a separate sensor when it transports another provider's data. Routing observations remain control-plane context only.
 
-## Circumvention context
+## Shutdown context — v1.6
 
-- Iran Tor transport values remain lower/upper estimate bounds;
-- non-overlapping intervals may support only a direction, never an exact client-count delta;
-- global BridgeDB transport-demand data is explicitly not Iran-specific;
-- Tor/BridgeDB ↔ STOP matching is temporal context only and cannot create causality or a censorship vote;
-- no active VPN/circumvention protocol probing is enabled by this release.
+Internet Society Pulse is an optional token-gated curated source. The runtime preserves explicit `token_required`, `no_data`, observed and error states. Missing Pulse access is never treated as zero incidents.
 
-## Ookla Open Data boundary
+Access Now STOP and Pulse remain separate provenance records. STOP/Pulse correlation requires temporal overlap plus matching broad scope and remains analyst navigation only: `possibleSameIncident:true`, `automaticMerge:false`, `independentTechnicalVote:false`.
 
-The repository includes only the reviewed official-object contract and feasibility policy. Do not publish an Iran Ookla aggregate until a reviewed country-boundary dataset and spatial join are implemented and validated. Do not use a bounding box as a country substitute and do not label performance differences as throttling/censorship without independent evidence.
+The dashboard and context CSV preserve Pulse verification/type/cause/affected-region context. CSV exports unavailable token coverage as `matched=not_inferred`.
 
 ## Release-note integrity
 
-Stable versions require `release-notes/vX.Y.Z.md` to pass CI. The release-publication recovery workflow may populate an accidentally empty GitHub Release body from the canonical file, but it does not overwrite an existing body. Release notes do not authorize Fleet deployment.
+Stable package versions require `release-notes/vX.Y.Z.md`. The release-publication recovery workflow can populate an accidentally empty GitHub Release body from the canonical file but does not overwrite an existing release body. Tagging or release publication does not satisfy deployment gates.
 
-## Fleet Stage-1 laboratory material — NOT production-authorized
+## Fleet Stage-1 — NOT production-authorized
 
-Files under `deploy/fleet-stage1-lab/` exist to validate sandbox/egress requirements in an isolated Linux laboratory. They are not permission to enable an Iran probe.
+Before any real Iran pilot, all external gates remain mandatory:
 
-Before any real Iran pilot, all of these external gates are mandatory:
-
-1. run the systemd units on an isolated Linux host and verify actual kernel/cgroup privilege, filesystem, listener and negative-egress enforcement;
+1. validate actual Linux/systemd kernel/cgroup sandbox and negative egress on an isolated host;
 2. deploy real project-controlled benign Class-A control/measurement endpoints and a bounded collection edge;
-3. provision scheduler/probe keys and SPKI pins out of band; exercise rotation and revocation;
-4. execute and record the rollback procedure against a known-safe version;
-5. obtain voluntary informed operator consent outside the repository and prove local withdrawal works without central connectivity;
+3. provision scheduler/probe keys and pins out of band and exercise rotation/revocation;
+4. execute rollback against a known-safe version;
+5. obtain voluntary informed operator consent and prove withdrawal works without central connectivity;
 6. receive explicit authorization before enabling the pilot.
 
-Repository code deliberately keeps `deploymentAuthorized:false`. CI, PR approval, tagging or a release never override this boundary.
+Current restrictions remain: no remote shell/generic plugin execution, no arbitrary scheduler-supplied endpoints, no DPI trigger strings/fuzzing or throughput stress testing, no active VPN/circumvention transport probing in Stage 1, no province inference, no SIM entitlement inference and no NIN-vs-global claim without the separately reviewed paired-target design.
 
-### Fleet network/evidence restrictions
-
-- no remote shell or generic plugin execution;
-- no arbitrary scheduler-supplied endpoint;
-- no blocked-site lists, DPI trigger strings/fuzzing or throughput stress testing;
-- no WireGuard/OpenVPN/V2Ray/Outline activation during the current Stage-1 Class-A pilot design;
-- no province inference from source IP/ASN/latency;
-- no white-SIM/ordinary-SIM inference or sensitive subscriber identifiers;
-- no NIN-vs-global claim until a separately reviewed target taxonomy and paired design are approved;
-- per-probe fleet output cannot automatically become a national/province availability or censorship badge.
-
-## Reverse proxy / operational requirements
-
-- TLS 1.2+ / TLS 1.3;
-- preserve/strengthen application security headers;
-- authentication/SSO/IP allowlisting where appropriate;
-- request-rate limits for Internet-facing paths;
-- never expose operator data directories or secrets;
-- distinguish monitor failure from legitimate source-specific `no_data`, `partial`, token-required or rate-limited states.
-
-Active Globalping remains disabled by default and should not be enabled without an explicit operational reason and the documented controls.
+A green CI, PR, tag or release never overrides `deploymentAuthorized:false`.

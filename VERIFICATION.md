@@ -1,98 +1,86 @@
-# Verification Report — v1.5.0 release candidate
+# Verification Report — v1.6.0 release candidate
 
 Date: **2026-09-10**  
-Release line: **v1.5.0**  
-Feature merge: **`7821cf56233308f177755d1c92d838e307fac6d2`**  
-Release metadata branch: **`release/v1.5.0`**
+Release line: **v1.6.0**  
+Pre-release main head: **`42e8775cfd7a51f882a78172caee181ed613e23f`**  
+Release branch: **`release/v1.6.0`**
 
-## Completed feature-line gates
+## Previously completed gates
 
-- feature head CI `34403372561` — **success**, **264/264 tests**;
-- feature PR #15 CI `34440814125` — **success**;
-- post-feature-merge `main` CI `34440868635` — **success**;
-- deterministic suite — **264/264 passed**;
-- production build — success;
-- release-notes gate — success on the feature-line package state and required again for stable `1.5.0` metadata;
-- committed-token/private-key and `.env` checks — success;
-- runtime `/api/health`, root, unknown-path and traversal smoke tests — success;
-- real headless Chrome presentation gate — success;
-- latest applicable full live public-source acceptance `34399378248` — **success** on the latest registry/runtime commit requiring that gate.
+### ASN identity/inventory line
 
-The release-metadata branch/PR and final post-metadata `main` commit must pass the same deterministic CI before tag `v1.5.0` is published.
+- v1.5 feature PR #15 CI `34440814125` — **success**;
+- v1.5 post-feature-merge `main` CI `34440868635` — **success**;
+- latest applicable live public-source acceptance `34399378248` — **success**;
+- direct RIPE Database identities: **23/23 curated profiles**, **18 operator families**;
+- both Fanap-family ASNs AS206065 and AS24631 passed current registry validation;
+- RIPE RIS Live and Route Views/CAIDA BGPStream broker acceptance passed.
 
-## Live registry / routing acceptance
+### v1.6 shutdown-context line
 
-Live public-source acceptance `34399378248` verified the v1.5 registry/runtime line before the later inventory-only commits:
+- backend/correlation post-merge `main` CI `34442988321` — **success**;
+- dashboard branch CI `34443294299` — **success**;
+- dashboard PR CI `34443351394` — **success**;
+- dashboard post-merge `main` CI `34443425466` — **success**;
+- pre-release deterministic suite — **275/275 passed**;
+- production build, real Headless Chrome presentation, committed-secret/private-key scan and runtime smoke checks passed.
 
-- direct RIPE Database registry identities: **23/23 curated profiles passed**;
-- those profiles represented **18 operator families**;
-- AS206065 (`FDI`) and AS24631 (`FANAPTELECOM-FCP`) both passed under `ORG-PNEV1-RIPE`;
-- RIPE RIS Live passive subscription handshake — success;
-- Route Views/CAIDA BGPStream broker — success.
+No v1.6 feature change triggered the separate live-source acceptance workflow because its current push trigger is restricted to `develop/v1.5`. No live-source result is fabricated for v1.6.
 
-Later commits added separated RIR inventory, registered/routed country summary and ipverse prioritization code only and did not match the bounded live-source workflow paths.
+## Final v1.6.0 release gate
 
-## Major deterministic coverage added in v1.5
+The release-finalization branch adds two deterministic context-export tests. The expected stable release suite is therefore **277 tests** and must pass before merge/tag/publication together with:
 
-The suite verifies, in addition to previous source adapters and evidence rules:
+- syntax checks, including the v1.6 shutdown UI and export helper;
+- canonical `release-notes/v1.6.0.md` validation;
+- production bundle creation;
+- real Headless Chrome rendering of M-Lab/APNIC/STOP/Pulse/STOP↔Pulse plus existing ASRank/RPKI/Tor context;
+- committed token/private-key and `.env` rejection;
+- runtime health/root/404/path-traversal smoke testing.
 
-- known stale/non-Iran ASN entries are corrected or excluded;
-- canonical registry identity and operational aliases remain separate;
-- TCI vs TIC/Zirsakht and ITCO/DCI family boundaries are explicit;
-- related ASNs stay in one operator family and cannot create independent censorship votes;
-- provider comparison uses an exact reviewed ASN set rather than array position;
-- direct RIPE Database REST `aut-num` parsing fails closed on missing/mismatched hard identity keys;
-- non-authoritative/missing ASN status fails closed;
-- Fanap AS206065 and AS24631 remain one operator family while retaining distinct routing identities;
-- RIPEstat country-resource inventory is IR-scoped, normalized, deduplicated and numerically sorted;
-- curated coverage remains distinct from the complete RIR-associated inventory;
-- curated profiles outside the current RIR inventory are surfaced as drift;
-- RIPEstat country-ASN registered/routed counts preserve their separate semantics and reject malformed/blank/boolean counts;
-- no undocumented ASN-by-ASN routed set is inferred from country-level statistics;
-- ipverse enrichment filters to the RIR-selected ASN set, preserves source-qualified topology fields and fails closed on malformed selected entries;
-- ipverse country disagreement is reported without changing RIR country membership;
-- exact ipverse bytes are SHA-256 anchored and byte bounded;
-- candidate ordering is deterministic, excludes curated profiles and uses transparent review classes rather than a censorship score.
+## Deterministic v1.6 coverage
 
-## Full-dataset execution boundary
+The release verifies that:
 
-The public ipverse JSON dataset is a large world dataset and is intentionally operator/on-demand input rather than a routine GitHub Actions dependency. The release verifies its parser, byte ceiling, exact-byte hashing, filtering, prioritization and failure behavior deterministically.
+- Pulse accepts only explicit Iran identifiers and validates required timestamps/ranges;
+- open-ended events overlap later selected windows without being silently ended;
+- malformed Iran Pulse records fail closed;
+- missing Pulse credentials remain `token_required`, not zero incidents;
+- STOP and Pulse remain separate provenance objects;
+- correlation requires time overlap plus a matching broad scope class;
+- candidates remain `possibleSameIncident:true`, `automaticMerge:false`, `independentTechnicalVote:false`;
+- dashboard presentation preserves verification, cause, type and affected-region context;
+- context CSV exports Pulse status/events and correlation candidates without losing zero-vote/provenance semantics;
+- the export represents token-required Pulse coverage as `matched=not_inferred` rather than zero.
 
-This report does **not** claim that release CI downloaded and processed the current complete ipverse world dataset. An operator live run is separate source observation and any upstream/network failure remains explicit rather than becoming successful or zero-valued evidence.
+## Evidence / security boundary
 
-## Security / evidence boundary
+Release verification does not turn registry identity, RIR country association, BGP visibility, topology, performance, curated shutdown reports or source correlation into censorship attribution.
 
-Release verification does **not** authorize an Iran pilot or active protocol/circumvention probing. In particular:
+In particular:
 
-- RIR country association, registry identity, routing visibility and topology classifications are separate dimensions;
-- registry/topology/inventory metadata adds zero independent censorship votes;
-- multiple ASNs under one operator family do not count as independent evidence;
-- BGP/RIS visibility does not prove end-user Internet reachability;
+- BGP visibility does not establish end-user reachability;
+- multiple related ASNs do not create independent evidence;
 - secondary ipverse classification cannot override RIR country scope;
-- Tor/BridgeDB/STOP/Ookla context adds zero independent censorship votes;
-- performance degradation alone is not throttling attribution;
-- owned probes remain one source family;
-- per-probe observations cannot automatically become national/province status;
-- website reachability cannot become VPN transport evidence;
-- province cannot be inferred from source IP/ASN/latency;
-- SIM entitlement class is not collected or inferred;
-- missing/partial/error states are never promoted to confirmation.
+- STOP/Pulse/Tor/BridgeDB/Ookla context creates no independent censorship vote;
+- temporal/scope correlation does not establish incident identity, causality, mechanism or political intent;
+- missing/partial/error/token-required states are never promoted to confirmation;
+- province and SIM entitlement are not inferred;
+- website reachability is not VPN-transport evidence.
 
 ## External predeployment gates
 
-Before any Iran pilot, separate evidence is still required for:
+A green release is still **NO-GO** for an Iran Fleet Stage-1 pilot until separate evidence exists for:
 
-1. actual Linux/systemd kernel/cgroup sandbox and negative egress enforcement on an isolated host;
-2. real project-controlled Class-A endpoints and real collection edge;
-3. out-of-band key provisioning/rotation/revocation exercise;
-4. rollback exercise against a known-safe version;
-5. real voluntary operator consent and withdrawal capability;
-6. explicit authorization to deploy the pilot.
+1. real isolated Linux/systemd sandbox and negative-egress enforcement;
+2. real project-controlled Class-A measurement/control endpoints and collection edge;
+3. out-of-band key provisioning, rotation and revocation;
+4. rollback against a known-safe version;
+5. voluntary informed operator consent and withdrawal;
+6. explicit authorization to deploy.
 
-A green CI, PR, tag or release cannot satisfy these external gates. Repository policy remains `deploymentAuthorized:false`.
+Repository policy remains `deploymentAuthorized:false`.
 
-## Release conclusion
+## Publication history note
 
-**v1.5 repository/runtime feature line: verified and merged to `main`.**  
-**Release metadata: being finalized on `release/v1.5.0`.**  
-**Iran Stage-1 pilot: NO-GO until the external gates and explicit authorization are satisfied.**
+v1.5.0 was developed and repository-verified but was not tagged or published as a GitHub Release. v1.6.0 is intentionally the next published release after v1.4.0 and therefore includes the accumulated v1.5 ASN/inventory work as well as v1.6 shutdown-context work.

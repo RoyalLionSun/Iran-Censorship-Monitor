@@ -1,3 +1,5 @@
+import { buildV16ShutdownContextExportRows } from './v16-context-export.js';
+
 const contextState = { overview: null, intelligence: null };
 
 function contextEscape(value) {
@@ -214,6 +216,7 @@ function exportContextCsv() {
   for (const incident of contextState.intelligence?.accessNow?.incidents || []) {
     rows.push(['Access Now STOP', 'IR', 'shutdown_incident', incident.startDate, [incident.shutdownType, incident.shutdownExtent].filter(Boolean).join(' / '), 'context event', `${incident.event || ''} · status=${incident.status || 'unknown'} · lineage=${stopEvidenceLabel(incident)} · independentTechnicalVote=false`]);
   }
+  rows.push(...buildV16ShutdownContextExportRows(contextState.intelligence));
   const csv = rows.map((row) => row.map(contextCsvCell).join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
   const url = URL.createObjectURL(blob);
