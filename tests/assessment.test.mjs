@@ -24,13 +24,16 @@ function radar({ eligible=true, outages=[], anomalies=[], outageStatus='no_data'
 test('one elevated source is not called corroborated', () => {
   const result = buildAssessment({ ooni:ooni({rate:45}), ripe:ripe({loss:1}), radar:{status:'token_required'}, scopeLabel:'AS58224 / Iran' });
   assert.equal(result.status, 'elevated');
-  assert.equal(result.confidence, 'medium');
+  assert.equal(result.confidence, 'low');
+  assert.deepEqual(result.supportingSources, ['OONI']);
 });
 
 test('two independent elevated sources produce corroborated signal', () => {
   const result = buildAssessment({ ooni:ooni({rate:45}), ripe:ripe({loss:30}), radar:{status:'token_required'}, scopeLabel:'AS58224 / Iran' });
   assert.equal(result.status, 'corroborated');
   assert.equal(result.severity, 'critical');
+  assert.equal(result.confidence, 'medium');
+  assert.deepEqual(result.supportingSources, ['OONI','RIPE Atlas']);
 });
 
 test('truncated OONI response is excluded from automated anomaly classification', () => {
@@ -67,6 +70,7 @@ test('partial RIPE Atlas loss cannot create control/data-plane divergence', () =
 test('Radar outage plus OONI elevation can corroborate disruption without making connectivity a censorship claim', () => {
   const result = buildAssessment({ ooni:ooni({rate:40}), ripe:null, radar:radar({outages:[{}]}), scopeLabel:'Iran' });
   assert.equal(result.status, 'corroborated');
+  assert.equal(result.confidence, 'medium');
   assert.equal(result.channels.interference.status, 'elevated');
   assert.equal(result.channels.connectivity.status, 'elevated');
 });
@@ -85,7 +89,7 @@ test('Radar with a failed required event channel is excluded from confidence and
   assert.deepEqual(result.availableSources, ['OONI']);
 });
 
-test('Radar with valid no-data event channels can contribute availability without fabricating an event', () => {
+test('Radar with valid no-data event channels stays available but does not raise positive confidence', () => {
   const result = buildAssessment({
     ooni:ooni({rate:40}),
     radar:radar(),
@@ -95,8 +99,26 @@ test('Radar with valid no-data event channels can contribute availability withou
   assert.equal(signal.usableForAssessment, true);
   assert.equal(signal.elevated, false);
   assert.equal(result.status, 'elevated');
-  assert.equal(result.confidence, 'medium');
+  assert.equal(result.confidence, 'low');
   assert.deepEqual(result.availableSources, ['OONI','Cloudflare Radar']);
+  assert.deepEqual(result.supportingSources, ['OONI']);
+  assert.equal(result.publicSummary.sourceCount, 1);
+  assert.equal(result.publicSummary.availableSourceCount, 2);
+});
+
+test('non-elevated Radar does not turn two-source corroboration into high confidence', () => {
+  const result = buildAssessment({
+    ooni:ooni({rate:43}),
+    radar:radar(),
+    ioda:{ ok:true, status:'observed', series:[{sampleCount:10}], events:[{datasource:'ping-slash24'}] },
+    scopeLabel:'AS58224 / Iran',
+  });
+  assert.equal(result.status, 'corroborated');
+  assert.equal(result.confidence, 'medium');
+  assert.deepEqual(result.availableSources, ['OONI','Cloudflare Radar','IODA']);
+  assert.deepEqual(result.supportingSources, ['OONI','IODA']);
+  assert.equal(result.publicSummary.sourceCount, 2);
+  assert.equal(result.publicSummary.availableSourceCount, 3);
 });
 
 test('high BGP visibility plus severe data-plane loss is flagged as divergence, not as proof of censorship', () => {
@@ -134,6 +156,7 @@ test('OONI elevation plus a Censored Planet CenAlert event corroborates the inte
     scopeLabel:'Iran',
   });
   assert.equal(result.status, 'corroborated');
+  assert.equal(result.confidence, 'medium');
   assert.equal(result.channels.interference.status, 'corroborated');
   const cpSignal = result.signals.find((item) => item.source === 'Censored Planet');
   assert.equal(cpSignal.elevated, true);
@@ -148,6 +171,7 @@ test('connectivity disruption alone does not create corroborated interference ev
     scopeLabel:'Iran',
   });
   assert.equal(result.status, 'corroborated');
+  assert.equal(result.confidence, 'medium');
   assert.equal(result.channels.connectivity.status, 'corroborated');
   assert.equal(result.channels.interference.status, 'insufficient-data');
   assert.match(result.methodologicalBoundary, /connectivity degradation alone does not establish censorship intent/i);

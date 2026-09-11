@@ -32,7 +32,7 @@ test('observed state means no major disruption corroborated, not proof of full a
 
 test('corroborated disruption exposes only elevated usable drivers and preserves raw source identity', () => {
   const result = buildSituationSummary({
-    status: 'corroborated', confidence: 'high', scope: 'Iran', availableSources: ['OONI', 'RIPE Atlas', 'IODA'],
+    status: 'corroborated', confidence: 'medium', scope: 'Iran', availableSources: ['OONI', 'RIPE Atlas', 'IODA'],
     signals: [
       { source: 'OONI', dimension:'interference', elevated: true, strong: false, value: 42.5, unit: '% anomalies', sample: 120 },
       { source: 'RIPE Atlas', dimension:'connectivity', elevated: true, strong: true, value: 55, unit: '% missing ping packets', sample: 30 },
@@ -46,7 +46,9 @@ test('corroborated disruption exposes only elevated usable drivers and preserves
   assert.equal(result.state, 'significant-disruption-signals');
   assert.deepEqual(result.drivers.map((row) => row.source), ['OONI', 'RIPE Atlas']);
   assert.deepEqual(result.drivers.map((row) => row.dimension), ['interference', 'connectivity']);
-  assert.equal(result.sourceCount, 3);
+  assert.equal(result.sourceCount, 2);
+  assert.equal(result.availableSourceCount, 3);
+  assert.deepEqual(result.supportingSources, ['OONI', 'RIPE Atlas']);
   assert.equal(result.channels.interference.status, 'elevated');
   assert.equal(result.channels.connectivity.status, 'elevated');
 });
@@ -83,7 +85,10 @@ test('buildAssessment exposes channel-aware plain-language summary without chang
     scopeLabel: 'AS58224 / Iran',
   });
   assert.equal(result.status, 'corroborated');
+  assert.equal(result.confidence, 'medium');
+  assert.deepEqual(result.supportingSources, ['OONI', 'RIPE Atlas']);
   assert.equal(result.publicSummary.state, 'significant-disruption-signals');
+  assert.equal(result.publicSummary.sourceCount, 2);
   assert.equal(result.publicSummary.channels.interference.status, 'elevated');
   assert.equal(result.publicSummary.channels.connectivity.status, 'elevated');
   assert.equal(result.publicSummary.completeShutdownVerdict, 'not-established');
