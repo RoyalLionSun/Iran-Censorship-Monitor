@@ -29,6 +29,7 @@ const patterns = [
   [/^Radar HTTP series · (.+?) · (.+?) · confidence (.+)$/, (m) => render('runtime.template.radarLegend', { scope: m[1], interval: m[2], confidence: m[3] })],
   [/^(.+) latest \/ window median$/, (m) => render('runtime.template.latestMedian', { source: m[1] })],
   [/^reach (.+) · customers (.+) · degree (.+)$/, (m) => render('runtime.template.topology', { reach: m[1], customers: m[2], degree: m[3] })],
+  [/^Probes exist, but Built-in Ping (\d+) returned no daily ping-stat buckets in the selected period\.$/, (m) => render('runtime.template.ripeNoPingBuckets', { measurement: m[1] })],
   [/^Dashboard query failed: (.+)$/, (m) => render('runtime.template.dashboardFailure', { message: m[1] })],
   [/^Initialization failed: (.+)$/, (m) => render('runtime.template.initFailure', { message: m[1] })],
   [/^Error: (.+)$/, (m) => render('runtime.template.error', { message: m[1] })],

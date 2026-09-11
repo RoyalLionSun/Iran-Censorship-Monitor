@@ -19,5 +19,9 @@ export default Object.freeze({
   'sourceHealth.detail.no_data': 'در دسترس · بدون داده در انتخاب فعلی',
   'sourceHealth.detail.scope_required': 'درخواست نشده · ASN لازم است',
   'sourceHealth.detail.healthy': 'در دسترس',
-  'sourceHealth.detail.error': 'خطا'
+  'sourceHealth.detail.error': 'خطا',
+  'runtime.assessment.boundary': 'وضعیت کلی اختلال از اندازه‌گیری‌های مستقلِ تداخل و اتصال ترکیب می‌شود. فقط کانال تداخل به شواهد سانسور یا مداخله شبکه‌ای می‌پردازد؛ افت اتصال به‌تنهایی نیت، سازوکار یا انتساب سانسور را اثبات نمی‌کند.',
+  'runtime.assessment.radarNote': 'اعلان‌های Radar شاخص‌های اتصال یا رویداد هستند و به‌خودیِ خود انتسابی درباره نیت سانسور نیستند.',
+  'runtime.mlabNoAggregate': 'M-Lab برای محدوده سالانه انتخاب‌شده ایران/ASN هیچ شیء تجمیعی stats-pipeline منتشر نکرده است.',
+  'runtime.template.ripeNoPingBuckets': 'پروب‌ها وجود دارند، اما Built-in Ping {measurement} در بازه انتخاب‌شده هیچ داده آماری روزانه ping بازنگرداند.'
 });

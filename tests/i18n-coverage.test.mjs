@@ -4,16 +4,20 @@ import enRuntime from '../public/locales/en-runtime.js';
 import faRuntime from '../public/locales/fa-runtime.js';
 import enContext from '../public/locales/en-context.js';
 import faContext from '../public/locales/fa-context.js';
+import enV19 from '../public/locales/en-v19.js';
+import faV19 from '../public/locales/fa-v19.js';
 import { setLanguage, translateKnownText } from '../public/i18n.js';
 import { translateRuntimeText } from '../public/i18n-runtime.js';
 
 const hasPersian = (value) => /[\u0600-\u06FF]/.test(String(value));
 
-test('runtime and context locale layers have exact English/Farsi key parity', () => {
+test('runtime, context and v1.9 locale layers have exact English/Farsi key parity', () => {
   assert.deepEqual(Object.keys(faRuntime).sort(), Object.keys(enRuntime).sort());
   assert.deepEqual(Object.keys(faContext).sort(), Object.keys(enContext).sort());
+  assert.deepEqual(Object.keys(faV19).sort(), Object.keys(enV19).sort());
   assert.ok(Object.values(faRuntime).every((value) => String(value).trim()));
   assert.ok(Object.values(faContext).every((value) => String(value).trim()));
+  assert.ok(Object.values(faV19).every((value) => String(value).trim()));
 });
 
 test('representative controlled runtime UI phrases translate to Farsi', () => {
@@ -28,6 +32,9 @@ test('representative controlled runtime UI phrases translate to Farsi', () => {
     'No independent measurement source returned usable observations.',
     'Pulse shutdown context unavailable; no incident count is inferred.',
     'No operator snapshot is available. No inventory count is inferred.',
+    'Overall disruption status combines independent interference and connectivity measurements. Only the interference channel addresses censorship/interference evidence; connectivity degradation alone does not establish censorship intent, mechanism or attribution.',
+    'Radar annotations are connectivity/event indicators, not an attribution of censorship intent.',
+    'M-Lab did not publish a stats-pipeline aggregate object for the selected Iran/ASN year scope.',
     'access review',
     'observed',
   ];
@@ -47,6 +54,7 @@ test('controlled dynamic sentence frames translate while preserving technical va
     ['12 / 18 RIS peers', ['12', '18', 'RIS']],
     ['Radar HTTP series · AS58224 · 1h · confidence L2', ['AS58224', '1h', 'L2']],
     ['reach 12 · customers 3 · degree 9', ['12', '3', '9']],
+    ['Probes exist, but Built-in Ping 1001 returned no daily ping-stat buckets in the selected period.', ['1001', 'Built-in Ping']],
     ['Dashboard query failed: fixture failure', ['fixture failure']],
     ['Generated 10 Sep 2026, 11:25 UTC. RIR inventory is country-scope metadata; routed is a country-level RIPE RIS count, not an ASN-by-ASN routed classification.', ['10 Sep 2026, 11:25 UTC', 'RIR', 'RIPE RIS', 'ASN']],
   ];

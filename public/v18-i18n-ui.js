@@ -7,7 +7,7 @@ const technicalSelectors = [
   '#asn-select', '#since-input', '#until-input', '#measurement-select',
   '#routing-neighbours td:first-child', '#bgp-updates-table td:nth-child(3)', '#bgp-updates-table td:nth-child(4)', '#bgp-updates-table td:nth-child(5)',
   '#asn-coverage-table td:first-child', '#asrank-table td:first-child', '#rpki-table td:first-child', '#hegemony-table td:first-child',
-  '#providers-table td:first-child', '#targets-table td:first-child', '#situation-scope'
+  '#providers-table td:first-child', '#targets-table td:first-child', '#situation-scope', '#assessment-scope'
 ].join(',');
 
 const meaningPanels = Object.freeze({
@@ -20,6 +20,8 @@ const meaningPanels = Object.freeze({
   'censoredplanet-panel': 'meaning.cp',
   'globalping-panel': 'meaning.globalping'
 });
+
+let lastAssessment = null;
 
 function shouldSkip(node) {
   const element = node?.parentElement;
@@ -108,6 +110,23 @@ function markTechnicalFields() {
   });
 }
 
+function syncAssessmentStrip(assessment = lastAssessment) {
+  if (assessment !== lastAssessment) lastAssessment = assessment || null;
+  const current = lastAssessment;
+  if (!current) return;
+  const sourceCount = current.publicSummary?.sourceCount
+    ?? current.supportingSources?.length
+    ?? current.availableSources?.length
+    ?? 0;
+  const sourceElement = document.querySelector('#assessment-sources');
+  if (sourceElement) sourceElement.textContent = String(sourceCount);
+  const confidenceElement = document.querySelector('#assessment-confidence');
+  if (confidenceElement) {
+    const confidence = current.confidence || 'none';
+    confidenceElement.textContent = getLanguage() === 'fa' ? t(`confidence.${confidence}`) : String(confidence).toUpperCase();
+  }
+}
+
 function applyLanguage() {
   const language = getLanguage();
   document.documentElement.lang = language;
@@ -125,6 +144,7 @@ function applyLanguage() {
   }
   renderMeanings();
   translateTree(document.body);
+  syncAssessmentStrip();
   markTechnicalFields();
 }
 
@@ -149,6 +169,10 @@ const observer = new MutationObserver((mutations) => {
 ensureLanguageSwitch();
 applyLanguage();
 if (document.body) observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+window.addEventListener('iran-monitor-overview', (event) => {
+  syncAssessmentStrip(event.detail?.assessment || null);
+  scheduleApply();
+});
 window.addEventListener('iran-monitor-languagechange', scheduleApply);
 
 export { applyLanguage, renderMeanings };

@@ -19,5 +19,9 @@ export default Object.freeze({
   'sourceHealth.detail.no_data': 'reachable · no data in selection',
   'sourceHealth.detail.scope_required': 'not queried · ASN required',
   'sourceHealth.detail.healthy': 'reachable',
-  'sourceHealth.detail.error': 'error'
+  'sourceHealth.detail.error': 'error',
+  'runtime.assessment.boundary': 'Overall disruption status combines independent interference and connectivity measurements. Only the interference channel addresses censorship/interference evidence; connectivity degradation alone does not establish censorship intent, mechanism or attribution.',
+  'runtime.assessment.radarNote': 'Radar annotations are connectivity/event indicators, not an attribution of censorship intent.',
+  'runtime.mlabNoAggregate': 'M-Lab did not publish a stats-pipeline aggregate object for the selected Iran/ASN year scope.',
+  'runtime.template.ripeNoPingBuckets': 'Probes exist, but Built-in Ping {measurement} returned no daily ping-stat buckets in the selected period.'
 });
