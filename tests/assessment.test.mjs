@@ -11,6 +11,15 @@ function ripe({ loss=1, samples=20, status='observed' }={}) {
 function cp({ status='observed', rate=12.5, events=[] }={}) {
   return { ok:true, status, iranUnexpectedRate:rate, timeseries:[{date:'2026-09-07',value:.5}], events };
 }
+function radar({ eligible=true, outages=[], anomalies=[], outageStatus='no_data', anomalyStatus='no_data', status='observed' }={}) {
+  return {
+    ok:true,
+    status,
+    assessmentEligible:eligible,
+    outages:{status:outages.length ? 'observed' : outageStatus,annotations:outages},
+    trafficAnomalies:{status:anomalies.length ? 'observed' : anomalyStatus,events:anomalies},
+  };
+}
 
 test('one elevated source is not called corroborated', () => {
   const result = buildAssessment({ ooni:ooni({rate:45}), ripe:ripe({loss:1}), radar:{status:'token_required'}, scopeLabel:'AS58224 / Iran' });
@@ -56,10 +65,38 @@ test('partial RIPE Atlas loss cannot create control/data-plane divergence', () =
 });
 
 test('Radar outage plus OONI elevation can corroborate disruption without making connectivity a censorship claim', () => {
-  const result = buildAssessment({ ooni:ooni({rate:40}), ripe:null, radar:{status:'observed',outages:{annotations:[{}]},trafficAnomalies:{events:[]}}, scopeLabel:'Iran' });
+  const result = buildAssessment({ ooni:ooni({rate:40}), ripe:null, radar:radar({outages:[{}]}), scopeLabel:'Iran' });
   assert.equal(result.status, 'corroborated');
   assert.equal(result.channels.interference.status, 'elevated');
   assert.equal(result.channels.connectivity.status, 'elevated');
+});
+
+test('Radar with a failed required event channel is excluded from confidence and corroboration', () => {
+  const result = buildAssessment({
+    ooni:ooni({rate:40}),
+    radar:radar({eligible:false, anomalyStatus:'error'}),
+    scopeLabel:'Iran',
+  });
+  const signal = result.signals.find((item)=>item.source==='Cloudflare Radar');
+  assert.equal(signal.usableForAssessment, false);
+  assert.equal(signal.elevated, false);
+  assert.equal(result.status, 'elevated');
+  assert.equal(result.confidence, 'low');
+  assert.deepEqual(result.availableSources, ['OONI']);
+});
+
+test('Radar with valid no-data event channels can contribute availability without fabricating an event', () => {
+  const result = buildAssessment({
+    ooni:ooni({rate:40}),
+    radar:radar(),
+    scopeLabel:'Iran',
+  });
+  const signal = result.signals.find((item)=>item.source==='Cloudflare Radar');
+  assert.equal(signal.usableForAssessment, true);
+  assert.equal(signal.elevated, false);
+  assert.equal(result.status, 'elevated');
+  assert.equal(result.confidence, 'medium');
+  assert.deepEqual(result.availableSources, ['OONI','Cloudflare Radar']);
 });
 
 test('high BGP visibility plus severe data-plane loss is flagged as divergence, not as proof of censorship', () => {

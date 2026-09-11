@@ -36,7 +36,7 @@ test('Radar rejects a selected end day that has not started in UTC', () => {
   );
 });
 
-test('Radar URLs apply Iran and selected ASN consistently', () => {
+test('Radar URLs apply Iran and selected ASN consistently without invalid anomaly filter combination', () => {
   const urls = buildRadarUrls({ asn: 'AS58224', since: '2026-09-01', until: '2026-09-08', now: new Date('2026-09-11T09:03:00Z') });
   const traffic = new URL(urls.trafficUrl);
   const outages = new URL(urls.outagesUrl);
@@ -48,15 +48,18 @@ test('Radar URLs apply Iran and selected ASN consistently', () => {
   assert.equal(traffic.searchParams.get('aggInterval'), '1h');
   assert.equal(outages.searchParams.get('location'), 'IR');
   assert.equal(outages.searchParams.get('asn'), '58224');
-  assert.equal(anomalies.searchParams.get('location'), 'IR');
   assert.equal(anomalies.searchParams.get('asn'), '58224');
+  assert.equal(anomalies.searchParams.has('location'), false);
   assert.equal(bgp.searchParams.get('involvedAsn'), '58224');
   assert.equal(bgp.searchParams.has('involvedCountry'), false);
 });
 
-test('Radar country-wide BGP query uses involvedCountry', () => {
+test('Radar country-wide anomaly and BGP queries use country scope only', () => {
   const urls = buildRadarUrls({ asn: '', since: '2026-09-01', until: '2026-09-08', now: new Date('2026-09-11T09:03:00Z') });
+  const anomalies = new URL(urls.anomaliesUrl);
   const bgp = new URL(urls.bgpUrl);
+  assert.equal(anomalies.searchParams.get('location'), 'IR');
+  assert.equal(anomalies.searchParams.has('asn'), false);
   assert.equal(bgp.searchParams.get('involvedCountry'), 'IR');
   assert.equal(bgp.searchParams.has('involvedAsn'), false);
 });
