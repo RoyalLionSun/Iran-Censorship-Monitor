@@ -5,6 +5,7 @@ import './v14-context.js';
 import './v16-shutdown-context.js';
 import './v17-asn-coverage.js';
 import './v18-situation.js';
+import './v19-runtime.js';
 import './app-core.js';
 import './v18-i18n-ui.js';
 

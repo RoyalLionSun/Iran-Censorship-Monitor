@@ -6,6 +6,7 @@ import { promisify } from 'node:util';
 const execFileAsync = promisify(execFile);
 const files = new Map();
 for (const path of [
+  'public/styles.css',
   'public/i18n.js',
   'public/i18n-runtime.js',
   'public/locales/en.js',
@@ -16,9 +17,13 @@ for (const path of [
   'public/locales/fa-runtime.js',
   'public/locales/en-context.js',
   'public/locales/fa-context.js',
+  'public/locales/en-v19.js',
+  'public/locales/fa-v19.js',
   'public/v18-situation.js',
   'public/v18-i18n-ui.js',
   'public/v18.css',
+  'public/v19-runtime.js',
+  'public/v19.css',
 ]) files.set(`/${path.replace(/^public\//, '')}`, await readFile(new URL(`../${path}`, import.meta.url), 'utf8'));
 
 function findBrowser() {
@@ -29,19 +34,47 @@ function findBrowser() {
   throw new Error('No supported Chrome/Chromium executable found for the i18n presentation gate.');
 }
 
+const sourceHealth = {
+  contractVersion: 1,
+  summary: { totalContract: 13, queried: 8, reachable: 8, dataAvailable: 5, observed: 4, partial: 1, noData: 3, scopeRequired: 5, errors: 0 },
+  families: [
+    { id:'ooni', name:'OONI', state:'observed', queried:true, reachable:true, hasData:true },
+    { id:'ripe', name:'RIPE Atlas', state:'no_data', queried:true, reachable:true, hasData:false },
+    { id:'ioda', name:'IODA', state:'observed', queried:true, reachable:true, hasData:true },
+    { id:'tor', name:'Tor Metrics', state:'observed', queried:true, reachable:true, hasData:true },
+    { id:'mlab', name:'M-Lab NDT', state:'no_data', queried:true, reachable:true, hasData:false },
+    { id:'apnic', name:'APNIC Labs IPv6', state:'observed', queried:true, reachable:true, hasData:true },
+    { id:'ripestat', name:'RIPEstat / RIPE RIS', state:'scope_required', queried:false, reachable:false, hasData:false },
+    { id:'globalping', name:'Globalping passive inventory', state:'no_data', queried:true, reachable:true, hasData:false },
+    { id:'censoredPlanet', name:'Censored Planet', state:'partial', queried:true, reachable:true, hasData:true },
+    { id:'peeringdb', name:'PeeringDB', state:'scope_required', queried:false, reachable:false, hasData:false },
+    { id:'ihr', name:'Internet Health Report', state:'scope_required', queried:false, reachable:false, hasData:false },
+    { id:'asrank', name:'CAIDA ASRank', state:'scope_required', queried:false, reachable:false, hasData:false },
+    { id:'rpki', name:'RIPEstat RPKI', state:'scope_required', queried:false, reachable:false, hasData:false },
+  ],
+};
+
 const assessment = {
-  status: 'corroborated', severity: 'critical', confidence: 'high', scope: 'AS58224 / Iran', availableSources: ['OONI', 'RIPE Atlas'],
+  status: 'corroborated', severity: 'critical', confidence: 'high', scope: 'Iran / all measured networks', availableSources: ['OONI', 'Censored Planet', 'IODA'], sourceHealth,
+  channels: {
+    interference: { status:'corroborated', sourceCount:2, availableSources:['OONI','Censored Planet'] },
+    connectivity: { status:'elevated', sourceCount:1, availableSources:['IODA'] },
+  },
   publicSummary: {
-    severity: 'critical', confidence: 'high', sourceCount: 2, scope: 'AS58224 / Iran',
+    severity: 'critical', confidence: 'high', sourceCount: 3, scope: 'Iran / all measured networks',
     headlineKey: 'situation.headline.corroborated', meaningKey: 'situation.meaning.corroborated', caveatKey: 'situation.caveat.corroborated',
-    completeShutdownVerdict: 'not-established', nationwideImpactVerdict: 'not-established',
-    drivers: [{ source: 'OONI', state: 'elevated', value: 42.5, unit: '% anomalies' }],
+    completeShutdownVerdict: 'not-established', nationwideImpactVerdict: 'not-established', sourceHealth: sourceHealth.summary,
+    channels: {
+      interference: { status:'corroborated', sourceCount:2, availableSources:['OONI','Censored Planet'] },
+      connectivity: { status:'elevated', sourceCount:1, availableSources:['IODA'] },
+    },
+    drivers: [{ source: 'OONI', dimension:'interference', state: 'elevated', value: 42.5, unit: '% anomalies' }],
     controlDataPlane: { messageKey: 'situation.controlDataPlane.divergence' },
   },
 };
 
-const fixture = `<!doctype html><html lang="en"><head><meta charset="utf-8"></head><body>
-<header class="topbar"><div class="brand"><div><strong>Iran Censorship Monitor</strong><small>Measurement & censorship signals</small></div></div><div class="topbar-actions"><button id="refresh-button">Refresh</button><button>Export CSV</button><button>Print</button></div></header>
+const fixture = `<!doctype html><html lang="en"><head><meta charset="utf-8"><link rel="stylesheet" href="/styles.css"></head><body>
+<header class="topbar"><div class="brand"><div><strong>Iran Censorship Monitor</strong><small>Measurement & censorship signals</small></div></div><div class="topbar-meta"><span id="header-source-state" class="source-state">Sources pending</span></div><div class="topbar-actions"><button id="refresh-button">Refresh</button><button>Export CSV</button><button>Print</button></div></header>
 <main>
 <section id="assessment-strip"><span>MEASUREMENT ASSESSMENT</span><b>Load measurements to assess the selected scope.</b></section>
 <section class="kpi-grid"><article><span>OONI anomaly rate</span></article><article><span>BGP visibility</span></article></section>
@@ -61,18 +94,19 @@ const fixture = `<!doctype html><html lang="en"><head><meta charset="utf-8"></he
 <div data-i18n-external id="external-title">External incident title should stay English</div>
 <div id="technical-value" class="technical-ltr">AS58224 · 2.144.0.0/13</div>
 </main>
-<script>
-const overview = { assessment: ${JSON.stringify(assessment)} };
-window.fetch = async () => new Response(JSON.stringify(overview), { status: 200, headers: { 'Content-Type': 'application/json' } });
-</script>
+<script>window.fetch = async () => new Response(JSON.stringify({ assessment: ${JSON.stringify(assessment)} }), { status: 200, headers: { 'Content-Type': 'application/json' } });</script>
 <script type="module">
 await import('/v18-situation.js');
+await import('/v19-runtime.js');
 await import('/v18-i18n-ui.js');
 await window.fetch('/api/overview?fixture=1');
-await new Promise((resolve) => setTimeout(resolve, 80));
+await new Promise((resolve) => setTimeout(resolve, 100));
 const fa = document.querySelector('[data-lang="fa"]');
 fa.click();
-await new Promise((resolve) => setTimeout(resolve, 80));
+await new Promise((resolve) => setTimeout(resolve, 100));
+const faButtonStyle = getComputedStyle(fa);
+const faBodyStyle = getComputedStyle(document.body);
+const faNoteStyle = getComputedStyle(document.querySelector('.panel-note'));
 document.body.dataset.faDir = document.documentElement.dir;
 document.body.dataset.faLang = document.documentElement.lang;
 document.body.dataset.faHeadline = /[\u0600-\u06FF]/.test(document.querySelector('#situation-headline')?.textContent || '') ? 'yes' : 'no';
@@ -84,14 +118,21 @@ document.body.dataset.faRuntimeContext = /[\u0600-\u06FF]/.test(document.querySe
 document.body.dataset.faRuntimeStatus = /[\u0600-\u06FF]/.test(document.querySelector('#runtime-status')?.textContent || '') ? 'yes' : 'no';
 document.body.dataset.faRuntimeDynamic = /[\u0600-\u06FF]/.test(document.querySelector('#runtime-dynamic')?.textContent || '') && document.querySelector('#runtime-dynamic')?.textContent.includes('7') ? 'yes' : 'no';
 document.body.dataset.faRuntimeRouting = /[\u0600-\u06FF]/.test(document.querySelector('#runtime-routing')?.textContent || '') && document.querySelector('#runtime-routing')?.textContent.includes('AS58224') && document.querySelector('#runtime-routing')?.textContent.includes('L2') ? 'yes' : 'no';
+document.body.dataset.faChannels = /[\u0600-\u06FF]/.test(document.querySelector('.situation-channels')?.textContent || '') ? 'yes' : 'no';
+document.body.dataset.faSourceHealth = /آداپتور/.test(document.querySelector('#header-source-state')?.textContent || '') && document.querySelector('#header-source-state')?.textContent.includes('8/8') ? 'yes' : 'no';
+document.body.dataset.faBodyReadable = parseFloat(faBodyStyle.fontSize) >= 16 && /Tahoma|Segoe UI|Noto Sans Arabic|Noto Naskh Arabic/.test(faBodyStyle.fontFamily) ? 'yes' : 'no';
+document.body.dataset.faButtonReadable = parseFloat(faButtonStyle.fontSize) >= 12 && !/Consolas|Liberation Mono|monospace/i.test(faButtonStyle.fontFamily) ? 'yes' : 'no';
+document.body.dataset.faNoteReadable = parseFloat(faNoteStyle.fontSize) >= 13 ? 'yes' : 'no';
 document.body.dataset.techLtr = document.querySelector('#technical-value')?.getAttribute('dir') || '';
 document.body.dataset.externalPreserved = document.querySelector('#external-title')?.textContent === 'External incident title should stay English' ? 'yes' : 'no';
 const en = document.querySelector('[data-lang="en"]');
 en.click();
-await new Promise((resolve) => setTimeout(resolve, 80));
+await new Promise((resolve) => setTimeout(resolve, 100));
 document.body.dataset.enDir = document.documentElement.dir;
 document.body.dataset.enKpi = document.querySelector('.kpi-grid')?.textContent.includes('OONI anomaly rate') ? 'yes' : 'no';
 document.body.dataset.enRuntimeRestored = document.querySelector('#runtime-dynamic')?.textContent === '7 rows · 3 days' && document.querySelector('#runtime-assessment')?.textContent === 'No corroborated major disruption signal' ? 'yes' : 'no';
+document.body.dataset.enSourceHealth = document.querySelector('#header-source-state')?.textContent.includes('8/8 source adapters reachable') ? 'yes' : 'no';
+document.body.dataset.enBodyReadable = parseFloat(getComputedStyle(document.body).fontSize) >= 15 ? 'yes' : 'no';
 fa.click();
 await new Promise((resolve) => setTimeout(resolve, 80));
 document.body.dataset.persisted = localStorage.getItem('iran-monitor-language') || '';
@@ -119,19 +160,21 @@ try {
   if (!address || typeof address === 'string') throw new Error('i18n fixture server did not expose a TCP port.');
   const browser = findBrowser();
   const { stdout } = await execFileAsync(browser, [
-    '--headless', '--disable-gpu', '--no-sandbox', '--disable-dev-shm-usage', '--virtual-time-budget=3500', '--dump-dom',
+    '--headless', '--disable-gpu', '--no-sandbox', '--disable-dev-shm-usage', '--virtual-time-budget=4500', '--dump-dom',
     `http://127.0.0.1:${address.port}/fixture`,
-  ], { encoding: 'utf8', timeout: 25_000, maxBuffer: 4 * 1024 * 1024 });
+  ], { encoding: 'utf8', timeout: 30_000, maxBuffer: 4 * 1024 * 1024 });
   const required = [
     'data-fixture-ready="1"', 'data-fa-dir="rtl"', 'data-fa-lang="fa"', 'data-fa-headline="yes"', 'data-fa-kpi="yes"',
     'data-meaning="yes"', 'data-fa-runtime-fixed="yes"', 'data-fa-runtime-assessment="yes"', 'data-fa-runtime-context="yes"',
-    'data-fa-runtime-status="yes"', 'data-fa-runtime-dynamic="yes"', 'data-fa-runtime-routing="yes"',
+    'data-fa-runtime-status="yes"', 'data-fa-runtime-dynamic="yes"', 'data-fa-runtime-routing="yes"', 'data-fa-channels="yes"',
+    'data-fa-source-health="yes"', 'data-fa-body-readable="yes"', 'data-fa-button-readable="yes"', 'data-fa-note-readable="yes"',
     'data-tech-ltr="ltr"', 'data-external-preserved="yes"', 'data-en-dir="ltr"', 'data-en-kpi="yes"', 'data-en-runtime-restored="yes"',
-    'data-persisted="fa"', 'id="language-switch"', 'وضعیت فعلی اینترنت — ایران', 'این چه معنایی دارد', 'AS58224 · 2.144.0.0/13'
+    'data-en-source-health="yes"', 'data-en-body-readable="yes"', 'data-persisted="fa"', 'id="language-switch"',
+    'وضعیت فعلی اینترنت — ایران', 'این چه معنایی دارد', 'AS58224 · 2.144.0.0/13'
   ];
   const missing = required.filter((needle) => !stdout.includes(needle));
   if (missing.length) throw new Error(`i18n browser gate missing: ${missing.join(', ')}`);
-  console.log('i18n browser presentation gate passed for EN/LTR, FA/RTL, controlled runtime text, restoration, persistence and technical direction safety.');
+  console.log('i18n browser presentation gate passed for readable EN/FA typography, RTL/LTR, source health, channel status, controlled runtime text, restoration, persistence and technical direction safety.');
 } finally {
   server.close();
 }

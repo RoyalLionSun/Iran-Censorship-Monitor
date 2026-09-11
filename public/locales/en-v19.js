@@ -1,0 +1,23 @@
+export default Object.freeze({
+  'situation.headline.loading': 'Analyzing current measurements…',
+  'situation.meaning.loading': 'The dashboard is loading source measurements and will replace this message with the current evidence-based situation.',
+  'situation.headline.limited': 'Sources are reachable — current measurement evidence is limited',
+  'situation.meaning.limited': 'The monitoring adapters are responding, but the selected scope/window does not currently contain enough usable measurement evidence for a stronger disruption verdict.',
+  'situation.channel.interference': 'Interference evidence',
+  'situation.channel.connectivity': 'Connectivity status',
+  'situation.channel.insufficient-data': 'Insufficient measurement evidence',
+  'situation.channel.observed': 'No elevated signal detected',
+  'situation.channel.elevated': 'Elevated signal in one source',
+  'situation.channel.corroborated': 'Corroborated signals',
+  'situation.channel.strongly-corroborated': 'Strong multi-source signals',
+  'sourceHealth.reachable': '{reachable}/{queried} source adapters reachable',
+  'sourceHealth.withData': '{count} with data',
+  'sourceHealth.scopeRequired': '{count} require ASN scope',
+  'sourceHealth.errors': '{count} source error(s)',
+  'sourceHealth.detail.observed': 'observed',
+  'sourceHealth.detail.partial': 'partial data',
+  'sourceHealth.detail.no_data': 'reachable · no data in selection',
+  'sourceHealth.detail.scope_required': 'not queried · ASN required',
+  'sourceHealth.detail.healthy': 'reachable',
+  'sourceHealth.detail.error': 'error'
+});

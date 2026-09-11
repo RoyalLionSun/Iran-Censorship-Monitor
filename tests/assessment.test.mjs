@@ -8,6 +8,9 @@ function ooni({ rate=10, count=30, truncated=false }={}) {
 function ripe({ loss=1, samples=20, status='observed' }={}) {
   return { ok:true, status, overall:{samples,packetLossPercent:loss}, series:[{date:'2026-09-06',packetLossPercent:loss,samples:samples/2},{date:'2026-09-07',packetLossPercent:loss,samples:samples/2}] };
 }
+function cp({ status='observed', rate=12.5, events=[] }={}) {
+  return { ok:true, status, iranUnexpectedRate:rate, timeseries:[{date:'2026-09-07',value:.5}], events };
+}
 
 test('one elevated source is not called corroborated', () => {
   const result = buildAssessment({ ooni:ooni({rate:45}), ripe:ripe({loss:1}), radar:{status:'token_required'}, scopeLabel:'AS58224 / Iran' });
@@ -52,9 +55,11 @@ test('partial RIPE Atlas loss cannot create control/data-plane divergence', () =
   assert.equal(result.controlDataPlane.classification, 'no-divergence-established');
 });
 
-test('Radar outage plus OONI elevation can corroborate', () => {
+test('Radar outage plus OONI elevation can corroborate disruption without making connectivity a censorship claim', () => {
   const result = buildAssessment({ ooni:ooni({rate:40}), ripe:null, radar:{status:'observed',outages:{annotations:[{}]},trafficAnomalies:{events:[]}}, scopeLabel:'Iran' });
   assert.equal(result.status, 'corroborated');
+  assert.equal(result.channels.interference.status, 'elevated');
+  assert.equal(result.channels.connectivity.status, 'elevated');
 });
 
 test('high BGP visibility plus severe data-plane loss is flagged as divergence, not as proof of censorship', () => {
@@ -68,4 +73,45 @@ test('high BGP visibility plus severe data-plane loss is flagged as divergence, 
   });
   assert.equal(result.controlDataPlane.classification, 'control-data-plane-divergence');
   assert.match(result.controlDataPlane.interpretation, /compatible with selective isolation/i);
+  assert.equal(result.channels.interference.status, 'insufficient-data');
+  assert.equal(result.channels.connectivity.status, 'elevated');
+});
+
+test('Censored Planet contributes a separate interference source when it has real measurement data', () => {
+  const result = buildAssessment({
+    ooni: ooni({rate:10}),
+    censoredPlanet: cp({events:[]}),
+    radar:{status:'token_required'},
+    scopeLabel:'Iran',
+  });
+  assert.equal(result.status, 'observed');
+  assert.deepEqual(result.channels.interference.availableSources, ['OONI', 'Censored Planet']);
+  assert.equal(result.channels.interference.status, 'observed');
+});
+
+test('OONI elevation plus a Censored Planet CenAlert event corroborates the interference channel', () => {
+  const result = buildAssessment({
+    ooni: ooni({rate:45}),
+    censoredPlanet: cp({events:[{startDate:'2026-09-07'}]}),
+    radar:{status:'token_required'},
+    scopeLabel:'Iran',
+  });
+  assert.equal(result.status, 'corroborated');
+  assert.equal(result.channels.interference.status, 'corroborated');
+  const cpSignal = result.signals.find((item) => item.source === 'Censored Planet');
+  assert.equal(cpSignal.elevated, true);
+  assert.equal(cpSignal.strong, false);
+});
+
+test('connectivity disruption alone does not create corroborated interference evidence', () => {
+  const result = buildAssessment({
+    ripe: ripe({loss:35}),
+    ioda: { ok:true, status:'observed', series:[{sampleCount:10}], events:[{datasource:'ping-slash24'}] },
+    radar:{status:'token_required'},
+    scopeLabel:'Iran',
+  });
+  assert.equal(result.status, 'corroborated');
+  assert.equal(result.channels.connectivity.status, 'corroborated');
+  assert.equal(result.channels.interference.status, 'insufficient-data');
+  assert.match(result.methodologicalBoundary, /connectivity degradation alone does not establish censorship intent/i);
 });

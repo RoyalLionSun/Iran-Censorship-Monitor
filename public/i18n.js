@@ -6,9 +6,11 @@ import enRuntime from './locales/en-runtime.js';
 import faRuntime from './locales/fa-runtime.js';
 import enContext from './locales/en-context.js';
 import faContext from './locales/fa-context.js';
+import enV19 from './locales/en-v19.js';
+import faV19 from './locales/fa-v19.js';
 
-const en = Object.freeze({ ...enCore, ...enExtra, ...enRuntime, ...enContext });
-const fa = Object.freeze({ ...faCore, ...faExtra, ...faRuntime, ...faContext });
+const en = Object.freeze({ ...enCore, ...enExtra, ...enRuntime, ...enContext, ...enV19 });
+const fa = Object.freeze({ ...faCore, ...faExtra, ...faRuntime, ...faContext, ...faV19 });
 const dictionaries = Object.freeze({ en, fa });
 const storageKey = 'iran-monitor-language';
 

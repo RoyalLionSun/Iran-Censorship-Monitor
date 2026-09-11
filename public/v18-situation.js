@@ -21,8 +21,12 @@ function insertSituationPanel() {
     <section id="current-situation" class="situation-overview" data-severity="neutral" aria-live="polite">
       <div class="situation-primary">
         <span id="situation-kicker" class="section-label">${situationEscape(t('situation.kicker'))}</span>
-        <h1 id="situation-headline">${situationEscape(t('situation.headline.insufficient'))}</h1>
-        <p id="situation-meaning">${situationEscape(t('situation.meaning.insufficient'))}</p>
+        <h1 id="situation-headline">${situationEscape(t('situation.headline.loading'))}</h1>
+        <p id="situation-meaning">${situationEscape(t('situation.meaning.loading'))}</p>
+        <div class="situation-channels">
+          <div class="situation-channel"><span>${situationEscape(t('situation.channel.connectivity'))}</span><b id="situation-connectivity">—</b></div>
+          <div class="situation-channel"><span>${situationEscape(t('situation.channel.interference'))}</span><b id="situation-interference">—</b></div>
+        </div>
       </div>
       <div class="situation-facts">
         <div><span>${situationEscape(t('situation.label.confidence'))}</span><b id="situation-confidence">—</b></div>
@@ -51,13 +55,21 @@ function signalMetric(driver) {
   return [value, driver.unit].filter(Boolean).join(' ');
 }
 
+function channelText(channel) {
+  return t(`situation.channel.${channel?.status || 'insufficient-data'}`);
+}
+
+let lastAssessment = null;
 function renderSituation(assessment) {
+  lastAssessment = assessment || null;
   insertSituationPanel();
   const summary = assessment?.publicSummary;
   const panel = document.querySelector('#current-situation');
   if (!panel) return;
   if (!summary) {
     panel.dataset.severity = 'neutral';
+    document.querySelector('#situation-headline').textContent = t('situation.headline.loading');
+    document.querySelector('#situation-meaning').textContent = t('situation.meaning.loading');
     return;
   }
 
@@ -70,6 +82,8 @@ function renderSituation(assessment) {
   document.querySelector('#situation-sources').textContent = String(summary.sourceCount ?? 0);
   document.querySelector('#situation-scope').textContent = summary.scope || '—';
   document.querySelector('#situation-shutdown').textContent = t('situation.shutdown.notEstablished');
+  document.querySelector('#situation-connectivity').textContent = channelText(summary.channels?.connectivity);
+  document.querySelector('#situation-interference').textContent = channelText(summary.channels?.interference);
   document.querySelector('#situation-divergence').textContent = t(summary.controlDataPlane?.messageKey || 'situation.controlDataPlane.noDivergence');
 
   const drivers = document.querySelector('#situation-drivers');
@@ -84,16 +98,9 @@ function renderSituation(assessment) {
 }
 
 insertSituationPanel();
+window.addEventListener('iran-monitor-overview', (event) => renderSituation(event.detail?.assessment));
+window.addEventListener('iran-monitor-languagechange', () => {
+  if (lastAssessment) renderSituation(lastAssessment);
+});
 
-const previousFetch = window.fetch.bind(window);
-window.fetch = async (...args) => {
-  const response = await previousFetch(...args);
-  try {
-    const input = args[0];
-    const url = typeof input === 'string' ? input : input?.url || '';
-    if (response.ok && url.startsWith('/api/overview?')) {
-      response.clone().json().then((payload) => setTimeout(() => renderSituation(payload?.assessment), 0)).catch(() => {});
-    }
-  } catch {}
-  return response;
-};
+export { renderSituation };

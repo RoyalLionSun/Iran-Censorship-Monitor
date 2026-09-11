@@ -1,0 +1,23 @@
+export default Object.freeze({
+  'situation.headline.loading': 'در حال تحلیل اندازه‌گیری‌های فعلی…',
+  'situation.meaning.loading': 'داشبورد در حال بارگذاری اندازه‌گیری‌های منابع است و این پیام را با وضعیت فعلی مبتنی بر شواهد جایگزین می‌کند.',
+  'situation.headline.limited': 'منابع در دسترس‌اند — شواهد اندازه‌گیری فعلی محدود است',
+  'situation.meaning.limited': 'آداپتورهای پایش پاسخ می‌دهند، اما محدوده یا بازه انتخاب‌شده در حال حاضر شواهد اندازه‌گیری قابل استفاده کافی برای نتیجه قوی‌تر درباره اختلال ندارد.',
+  'situation.channel.interference': 'شواهد اختلال یا سانسور',
+  'situation.channel.connectivity': 'وضعیت اتصال',
+  'situation.channel.insufficient-data': 'شواهد اندازه‌گیری کافی نیست',
+  'situation.channel.observed': 'نشانه افزایش‌یافته‌ای دیده نشد',
+  'situation.channel.elevated': 'یک منبع نشانه افزایش‌یافته دارد',
+  'situation.channel.corroborated': 'نشانه‌ها توسط چند منبع تأیید شده‌اند',
+  'situation.channel.strongly-corroborated': 'نشانه‌های شدید در چند منبع',
+  'sourceHealth.reachable': '{reachable}/{queried} آداپتور منبع در دسترس',
+  'sourceHealth.withData': '{count} منبع دارای داده',
+  'sourceHealth.scopeRequired': '{count} منبع نیازمند محدوده ASN',
+  'sourceHealth.errors': '{count} خطای منبع',
+  'sourceHealth.detail.observed': 'داده مشاهده‌شده',
+  'sourceHealth.detail.partial': 'داده ناقص',
+  'sourceHealth.detail.no_data': 'در دسترس · بدون داده در انتخاب فعلی',
+  'sourceHealth.detail.scope_required': 'درخواست نشده · ASN لازم است',
+  'sourceHealth.detail.healthy': 'در دسترس',
+  'sourceHealth.detail.error': 'خطا'
+});

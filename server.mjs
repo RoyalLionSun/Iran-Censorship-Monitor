@@ -204,7 +204,7 @@ async function handleApi(req, res, url) {
       safeSource('Internet Society Pulse', () => getPulseShutdowns(input)),
     ]);
     const scopeLabel = input.asn ? `${input.asn} / Iran` : 'Iran / all measured networks';
-    const assessment = buildAssessment({ ooni, ripe, radar, ioda, ripestat, scopeLabel });
+    const assessment = buildAssessment({ ooni, ripe, radar, ioda, ripestat, censoredPlanet, tor, mlab, apnic, globalping, peeringdb, ihr, asrank, rpki, scopeLabel });
     const asnProfile = input.asn ? asns.find((item) => item.asn === input.asn) || null : null;
     jsonResponse(res, 200, { ok: true, input, asnProfile, fetchedAt: new Date().toISOString(), assessment, ooni, ripe, radar, ioda, tor, mlab, apnic, ripestat, globalping, censoredPlanet, peeringdb, ihr, asrank, rpki, pulse });
     return true;
