@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import http from 'node:http';
 import { execFile, spawnSync } from 'node:child_process';
 import { promisify } from 'node:util';
@@ -12,11 +13,42 @@ const v16Source = await readFile(new URL('../public/v16-shutdown-context.js', im
 const v17Source = await readFile(new URL('../public/v17-asn-coverage.js', import.meta.url), 'utf8');
 
 function findBrowser() {
-  for (const candidate of ['google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser']) {
+  if (process.platform === 'win32') {
+    const programFiles = process.env.ProgramFiles || 'C:\\Program Files';
+    const programFilesX86 = process.env['ProgramFiles(x86)'] || 'C:\\Program Files (x86)';
+    const localAppData = process.env.LOCALAPPDATA || '';
+
+    const candidates = [
+      process.env.CHROME_BIN,
+      `${programFiles}\\BraveSoftware\\Brave-Browser\\Application\\brave.exe`,
+      `${programFilesX86}\\BraveSoftware\\Brave-Browser\\Application\\brave.exe`,
+      localAppData ? `${localAppData}\\BraveSoftware\\Brave-Browser\\Application\\brave.exe` : null,
+      `${programFiles}\\Google\\Chrome\\Application\\chrome.exe`,
+      `${programFilesX86}\\Google\\Chrome\\Application\\chrome.exe`,
+      localAppData ? `${localAppData}\\Google\\Chrome\\Application\\chrome.exe` : null,
+      `${programFiles}\\Microsoft\\Edge\\Application\\msedge.exe`,
+      `${programFilesX86}\\Microsoft\\Edge\\Application\\msedge.exe`,
+    ];
+
+    for (const candidate of candidates.filter(Boolean)) {
+      if (existsSync(candidate)) return candidate;
+    }
+
+    throw new Error('No supported Chromium-based browser executable found for the browser presentation gate.');
+  }
+
+  for (const candidate of [
+    process.env.CHROME_BIN,
+    'google-chrome',
+    'google-chrome-stable',
+    'chromium',
+    'chromium-browser',
+  ].filter(Boolean)) {
     const probe = spawnSync(candidate, ['--version'], { encoding: 'utf8' });
     if (!probe.error && probe.status === 0) return candidate;
   }
-  throw new Error('No supported Chrome/Chromium executable found for the UI presentation gate.');
+
+  throw new Error('No supported Chromium-based browser executable found for the browser presentation gate.');
 }
 
 const overview = {

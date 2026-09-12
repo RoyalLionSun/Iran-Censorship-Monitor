@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import http from 'node:http';
 import { execFile, spawnSync } from 'node:child_process';
 import { promisify } from 'node:util';
@@ -27,11 +28,42 @@ for (const path of [
 ]) files.set(`/${path.replace(/^public\//, '')}`, await readFile(new URL(`../${path}`, import.meta.url), 'utf8'));
 
 function findBrowser() {
-  for (const candidate of ['google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser']) {
+  if (process.platform === 'win32') {
+    const programFiles = process.env.ProgramFiles || 'C:\\Program Files';
+    const programFilesX86 = process.env['ProgramFiles(x86)'] || 'C:\\Program Files (x86)';
+    const localAppData = process.env.LOCALAPPDATA || '';
+
+    const candidates = [
+      process.env.CHROME_BIN,
+      `${programFiles}\\BraveSoftware\\Brave-Browser\\Application\\brave.exe`,
+      `${programFilesX86}\\BraveSoftware\\Brave-Browser\\Application\\brave.exe`,
+      localAppData ? `${localAppData}\\BraveSoftware\\Brave-Browser\\Application\\brave.exe` : null,
+      `${programFiles}\\Google\\Chrome\\Application\\chrome.exe`,
+      `${programFilesX86}\\Google\\Chrome\\Application\\chrome.exe`,
+      localAppData ? `${localAppData}\\Google\\Chrome\\Application\\chrome.exe` : null,
+      `${programFiles}\\Microsoft\\Edge\\Application\\msedge.exe`,
+      `${programFilesX86}\\Microsoft\\Edge\\Application\\msedge.exe`,
+    ];
+
+    for (const candidate of candidates.filter(Boolean)) {
+      if (existsSync(candidate)) return candidate;
+    }
+
+    throw new Error('No supported Chromium-based browser executable found for the browser presentation gate.');
+  }
+
+  for (const candidate of [
+    process.env.CHROME_BIN,
+    'google-chrome',
+    'google-chrome-stable',
+    'chromium',
+    'chromium-browser',
+  ].filter(Boolean)) {
     const probe = spawnSync(candidate, ['--version'], { encoding: 'utf8' });
     if (!probe.error && probe.status === 0) return candidate;
   }
-  throw new Error('No supported Chrome/Chromium executable found for the i18n presentation gate.');
+
+  throw new Error('No supported Chromium-based browser executable found for the browser presentation gate.');
 }
 
 const sourceHealth = {
@@ -86,6 +118,8 @@ const fixture = `<!doctype html><html lang="en"><head><meta charset="utf-8"><lin
 <article class="panel" id="tor-panel"><header class="panel-header"><h2>Direct and bridge user estimates</h2></header></article>
 <article class="panel" id="censoredplanet-panel"></article><article class="panel" id="globalping-panel"></article>
 <div id="runtime-fixed">Requesting live sources</div>
+<div id="runtime-bridge">19,300 bridge users &#183; direct estimate shown above</div>
+<div class="status-legend" aria-label="Source status colors"><strong id="status-legend-title">Source status colors</strong><span><i class="state-dot ok"></i><span id="status-legend-ok">Green: available and usable</span></span><span><i class="state-dot warn"></i><span id="status-legend-warn">Yellow: limited or partial data</span></span><span><i class="state-dot error"></i><span id="status-legend-error">Red: error or unavailable</span></span><span><i class="state-dot neutral"></i><span id="status-legend-neutral">Gray: no usable data or not assessed</span></span></div>
 <div id="runtime-assessment">No corroborated major disruption signal</div>
 <div id="runtime-context">No operator snapshot is available. No inventory count is inferred.</div>
 <div id="runtime-status">observed</div>
@@ -118,6 +152,8 @@ document.body.dataset.faRuntimeContext = /[\u0600-\u06FF]/.test(document.querySe
 document.body.dataset.faRuntimeStatus = /[\u0600-\u06FF]/.test(document.querySelector('#runtime-status')?.textContent || '') ? 'yes' : 'no';
 document.body.dataset.faRuntimeDynamic = /[\u0600-\u06FF]/.test(document.querySelector('#runtime-dynamic')?.textContent || '') && document.querySelector('#runtime-dynamic')?.textContent.includes('7') ? 'yes' : 'no';
 document.body.dataset.faRuntimeRouting = /[\u0600-\u06FF]/.test(document.querySelector('#runtime-routing')?.textContent || '') && document.querySelector('#runtime-routing')?.textContent.includes('AS58224') && document.querySelector('#runtime-routing')?.textContent.includes('L2') ? 'yes' : 'no';
+document.body.dataset.faRuntimeBridge = /[\u0600-\u06FF]/.test(document.querySelector('#runtime-bridge')?.textContent || '') && document.querySelector('#runtime-bridge')?.textContent.includes('19,300') ? 'yes' : 'no';
+document.body.dataset.faLegend = /[\u0600-\u06FF]/.test(document.querySelector('.status-legend')?.textContent || '') ? 'yes' : 'no';
 document.body.dataset.faChannels = /[\u0600-\u06FF]/.test(document.querySelector('.situation-channels')?.textContent || '') ? 'yes' : 'no';
 document.body.dataset.faSourceHealth = /آداپتور/.test(document.querySelector('#header-source-state')?.textContent || '') && document.querySelector('#header-source-state')?.textContent.includes('8/8') ? 'yes' : 'no';
 document.body.dataset.faBodyReadable = parseFloat(faBodyStyle.fontSize) >= 16 && /Tahoma|Segoe UI|Noto Sans Arabic|Noto Naskh Arabic/.test(faBodyStyle.fontFamily) ? 'yes' : 'no';
@@ -131,6 +167,8 @@ await new Promise((resolve) => setTimeout(resolve, 100));
 document.body.dataset.enDir = document.documentElement.dir;
 document.body.dataset.enKpi = document.querySelector('.kpi-grid')?.textContent.includes('OONI anomaly rate') ? 'yes' : 'no';
 document.body.dataset.enRuntimeRestored = document.querySelector('#runtime-dynamic')?.textContent === '7 rows · 3 days' && document.querySelector('#runtime-assessment')?.textContent === 'No corroborated major disruption signal' ? 'yes' : 'no';
+document.body.dataset.enRuntimeBridgeRestored = document.querySelector('#runtime-bridge')?.textContent === '19,300 bridge users \u00b7 direct estimate shown above' ? 'yes' : 'no';
+document.body.dataset.enLegend = document.querySelector('#status-legend-ok')?.textContent === 'Green: available and usable' ? 'yes' : 'no';
 document.body.dataset.enSourceHealth = document.querySelector('#header-source-state')?.textContent.includes('8/8 source adapters reachable') ? 'yes' : 'no';
 document.body.dataset.enBodyReadable = parseFloat(getComputedStyle(document.body).fontSize) >= 15 ? 'yes' : 'no';
 fa.click();
@@ -166,9 +204,9 @@ try {
   const required = [
     'data-fixture-ready="1"', 'data-fa-dir="rtl"', 'data-fa-lang="fa"', 'data-fa-headline="yes"', 'data-fa-kpi="yes"',
     'data-meaning="yes"', 'data-fa-runtime-fixed="yes"', 'data-fa-runtime-assessment="yes"', 'data-fa-runtime-context="yes"',
-    'data-fa-runtime-status="yes"', 'data-fa-runtime-dynamic="yes"', 'data-fa-runtime-routing="yes"', 'data-fa-channels="yes"',
+    'data-fa-runtime-status="yes"', 'data-fa-runtime-dynamic="yes"', 'data-fa-runtime-routing="yes"', 'data-fa-runtime-bridge="yes"', 'data-fa-legend="yes"', 'data-fa-channels="yes"',
     'data-fa-source-health="yes"', 'data-fa-body-readable="yes"', 'data-fa-button-readable="yes"', 'data-fa-note-readable="yes"',
-    'data-tech-ltr="ltr"', 'data-external-preserved="yes"', 'data-en-dir="ltr"', 'data-en-kpi="yes"', 'data-en-runtime-restored="yes"',
+    'data-tech-ltr="ltr"', 'data-external-preserved="yes"', 'data-en-dir="ltr"', 'data-en-kpi="yes"', 'data-en-runtime-restored="yes"', 'data-en-runtime-bridge-restored="yes"', 'data-en-legend="yes"',
     'data-en-source-health="yes"', 'data-en-body-readable="yes"', 'data-persisted="fa"', 'id="language-switch"',
     'وضعیت فعلی اینترنت — ایران', 'این چه معنایی دارد', 'AS58224 · 2.144.0.0/13'
   ];

@@ -23,5 +23,10 @@ export default Object.freeze({
   'runtime.assessment.boundary': 'وضعیت کلی اختلال از اندازه‌گیری‌های مستقلِ تداخل و اتصال ترکیب می‌شود. فقط کانال تداخل به شواهد سانسور یا مداخله شبکه‌ای می‌پردازد؛ افت اتصال به‌تنهایی نیت، سازوکار یا انتساب سانسور را اثبات نمی‌کند.',
   'runtime.assessment.radarNote': 'اعلان‌های Radar شاخص‌های اتصال یا رویداد هستند و به‌خودیِ خود انتسابی درباره نیت سانسور نیستند.',
   'runtime.mlabNoAggregate': 'M-Lab برای محدوده سالانه انتخاب‌شده ایران/ASN هیچ شیء تجمیعی stats-pipeline منتشر نکرده است.',
-  'runtime.template.ripeNoPingBuckets': 'پروب‌ها وجود دارند، اما Built-in Ping {measurement} در بازه انتخاب‌شده هیچ داده آماری روزانه ping بازنگرداند.'
+  'runtime.template.ripeNoPingBuckets': 'پروب‌ها وجود دارند، اما Built-in Ping {measurement} در بازه انتخاب‌شده هیچ داده آماری روزانه ping بازنگرداند.',
+  'ui.statusLegend.title': '\u0631\u0627\u0647\u0646\u0645\u0627\u06cc \u0631\u0646\u06af \u0648\u0636\u0639\u06cc\u062a \u0645\u0646\u0627\u0628\u0639',
+  'ui.statusLegend.ok': '\u0633\u0628\u0632: \u062f\u0631 \u062f\u0633\u062a\u0631\u0633 \u0648 \u0642\u0627\u0628\u0644 \u0627\u0633\u062a\u0641\u0627\u062f\u0647',
+  'ui.statusLegend.warn': '\u0632\u0631\u062f: \u0645\u062d\u062f\u0648\u062f \u06cc\u0627 \u062f\u0627\u062f\u0647 \u0646\u0627\u0642\u0635',
+  'ui.statusLegend.error': '\u0642\u0631\u0645\u0632: \u062e\u0637\u0627 \u06cc\u0627 \u062f\u0631 \u062f\u0633\u062a\u0631\u0633 \u0646\u06cc\u0633\u062a',
+  'ui.statusLegend.neutral': '\u062e\u0627\u06a9\u0633\u062a\u0631\u06cc: \u0628\u062f\u0648\u0646 \u062f\u0627\u062f\u0647 \u0642\u0627\u0628\u0644 \u0627\u0633\u062a\u0641\u0627\u062f\u0647 \u06cc\u0627 \u0627\u0631\u0632\u06cc\u0627\u0628\u06cc \u0646\u0634\u062f\u0647',
 });

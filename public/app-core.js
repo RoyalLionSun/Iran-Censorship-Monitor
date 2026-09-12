@@ -404,13 +404,17 @@ function renderKpis(overview) {
   const ooni = overview.ooni, ripe = overview.ripe, radar = overview.radar, ioda = overview.ioda, tor = overview.tor;
   $('#kpi-ooni-count').textContent = ooni?.ok ? number(ooni.totalMeasurements,0) : 'Error';
   $('#kpi-ooni-meta').textContent = ooni?.ok ? `${ooni.points?.length || 0} UTC days · ${ooni.totalConfirmed || 0} confirmed${ooni.truncatedAtApiLimit ? ' · truncated' : ''}` : (ooni?.error || 'Unavailable');
-  stateDot($('#ooni-state-dot'), ooni?.ok && ooni.totalMeasurements ? 'ok' : ooni?.ok ? 'warn' : 'error');
+  const ooniSourceState = ooni?.ok && ooni.totalMeasurements ? 'ok' : ooni?.ok ? 'warn' : 'error';
+  stateDot($('#ooni-state-dot'), ooniSourceState);
+  stateDot($('#ooni-anomaly-state-dot'), ooniSourceState);
   $('#kpi-anomaly-rate').textContent = ooni?.ok && ooni.anomalyRate !== null ? `${percent(ooni.anomalyRate)}${ooni.truncatedAtApiLimit?'*':''}` : '—';
   $('#kpi-anomaly-meta').textContent = ooni?.truncatedAtApiLimit ? '* API row limit reached; excluded from assessment' : 'Returned OONI rows in selected scope';
 
   $('#kpi-ripe-probes').textContent = ripe?.ok ? number(ripe.probeCount,0) : 'Error';
   $('#kpi-ripe-meta').textContent = ripe?.ok ? `${number(ripe.overall?.observedProbes || 0,0)} observed · ${number(ripe.overall?.samples || 0,0)} samples` : (ripe?.error || 'Unavailable');
-  stateDot($('#ripe-state-dot'), ripe?.ok && ripe.series?.length ? 'ok' : ripe?.ok ? 'warn' : 'error');
+  const ripeSourceState = ripe?.ok && ripe.series?.length ? 'ok' : ripe?.ok ? 'warn' : 'error';
+  stateDot($('#ripe-state-dot'), ripeSourceState);
+  stateDot($('#ripe-loss-state-dot'), ripeSourceState);
   $('#kpi-loss').textContent = ripe?.ok ? percent(ripe.overall?.packetLossPercent) : '—';
   $('#kpi-loss-meta').textContent = ripe?.ok && ripe.overall?.averageRttMs !== null ? `${number(ripe.overall.averageRttMs)} ms average RTT` : 'No RTT sample';
 
@@ -419,7 +423,17 @@ function renderKpis(overview) {
   stateDot($('#ioda-state-dot'), ioda?.ok && (ioda.series?.length || ioda.events?.length) ? 'ok' : ioda?.ok ? 'warn' : 'error');
 
   const radarStatus = radar?.status || 'error';
-  $('#kpi-radar').textContent = radarStatus === 'token_required' ? 'Token' : radarStatus === 'observed' ? 'Live' : radarStatus === 'partial' ? 'Partial' : radarStatus === 'error' ? 'Error' : radarStatus;
+  const radarKpi = $('#kpi-radar');
+  const radarKpiState = radarStatus === 'observed'
+    ? 'ok'
+    : radarStatus === 'partial' || radarStatus === 'token_required'
+      ? 'warn'
+      : radarStatus === 'error'
+        ? 'error'
+        : 'neutral';
+  radarKpi.textContent = radarKpiState === 'ok' ? '\u2713' : radarKpiState === 'warn' ? '!' : radarKpiState === 'error' ? '\u00d7' : '\u2013';
+  radarKpi.classList.remove('ok', 'warn', 'error', 'neutral');
+  radarKpi.classList.add('service-status', radarKpiState);
   $('#kpi-radar-meta').textContent = radarStatus === 'token_required' ? 'CLOUDFLARE_RADAR_API_TOKEN required' : `${radar?.trafficAnomalies?.events?.length || 0} traffic anomalies · ${radar?.outages?.annotations?.length || 0} outages · ${radar?.bgp?.events?.length || 0} BGP events`;
   stateDot($('#radar-state-dot'), radarStatus);
 
@@ -431,7 +445,12 @@ function renderKpis(overview) {
   const bgpVisibility = ripestat?.routing?.visibility?.percent;
   $('#kpi-bgp').textContent = bgpVisibility===null || bgpVisibility===undefined ? (ripestat?.status === 'scope_required' ? 'Select ASN' : '—') : percent(bgpVisibility);
   $('#kpi-bgp-meta').textContent = ripestat?.status === 'scope_required' ? 'RIPE RIS requires selected ASN' : ripestat?.ok ? `${number(ripestat.routing?.visibility?.seeingPeers,0)} / ${number(ripestat.routing?.visibility?.totalPeers,0)} RIS peers` : (ripestat?.error || 'Unavailable');
-  stateDot($('#bgp-state-dot'), bgpVisibility===null || bgpVisibility===undefined ? 'neutral' : bgpVisibility >= 80 ? 'ok' : bgpVisibility >= 50 ? 'warn' : 'error');
+  const bgpSourceState = ripestat?.status === 'scope_required'
+    ? 'neutral'
+    : bgpVisibility === null || bgpVisibility === undefined
+      ? ripestat?.ok ? 'warn' : 'error'
+      : 'ok';
+  stateDot($('#bgp-state-dot'), bgpSourceState);
   $('#header-updated').textContent = `Updated ${ageLabel(overview.fetchedAt)} ago`;
   const active = [
     ooni?.ok && ooni.totalMeasurements > 0,

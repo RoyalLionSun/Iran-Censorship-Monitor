@@ -48,11 +48,21 @@ function insertSituationPanel() {
     </section>`);
 }
 
+const signalUnitKeys = Object.freeze({
+  '% anomalies': 'runtime.unit.anomalies',
+  '% missing ping packets': 'runtime.unit.missingPing',
+  'event signals': 'runtime.unit.eventSignals',
+  'outage events': 'runtime.unit.outageEvents',
+});
+
 function signalMetric(driver) {
-  if (driver?.value === null || driver?.value === undefined) return '';
+  if (driver?.value === null || driver?.value === undefined) return null;
   const numeric = Number(driver.value);
   const value = Number.isFinite(numeric) ? String(Math.round(numeric * 10) / 10) : String(driver.value);
-  return [value, driver.unit].filter(Boolean).join(' ');
+  const rawUnit = String(driver.unit || '');
+  const unitKey = signalUnitKeys[rawUnit];
+  const unit = unitKey ? t(unitKey) : rawUnit;
+  return { value, unit };
 }
 
 function channelText(channel) {
@@ -90,7 +100,10 @@ function renderSituation(assessment) {
   if (summary.drivers?.length) {
     drivers.innerHTML = summary.drivers.map((driver) => {
       const metric = signalMetric(driver);
-      return `<li><strong>${situationEscape(driver.source)}</strong><span>${situationEscape(t(`situation.driver.${driver.state}`))}${metric ? ` · <b class="technical-ltr">${situationEscape(metric)}</b>` : ''}</span></li>`;
+      const metricHtml = metric
+        ? ` · <b><span class="technical-ltr">${situationEscape(metric.value)}</span>${metric.unit ? ` <span>${situationEscape(metric.unit)}</span>` : ''}</b>`
+        : '';
+      return `<li><strong>${situationEscape(driver.source)}</strong><span>${situationEscape(t(`situation.driver.${driver.state}`))}${metricHtml}</span></li>`;
     }).join('');
   } else {
     drivers.innerHTML = `<li>${situationEscape(t('situation.noElevatedDrivers'))}</li>`;

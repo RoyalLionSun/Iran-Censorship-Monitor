@@ -23,5 +23,10 @@ export default Object.freeze({
   'runtime.assessment.boundary': 'Overall disruption status combines independent interference and connectivity measurements. Only the interference channel addresses censorship/interference evidence; connectivity degradation alone does not establish censorship intent, mechanism or attribution.',
   'runtime.assessment.radarNote': 'Radar annotations are connectivity/event indicators, not an attribution of censorship intent.',
   'runtime.mlabNoAggregate': 'M-Lab did not publish a stats-pipeline aggregate object for the selected Iran/ASN year scope.',
-  'runtime.template.ripeNoPingBuckets': 'Probes exist, but Built-in Ping {measurement} returned no daily ping-stat buckets in the selected period.'
+  'runtime.template.ripeNoPingBuckets': 'Probes exist, but Built-in Ping {measurement} returned no daily ping-stat buckets in the selected period.',
+  'ui.statusLegend.title': 'Source status colors',
+  'ui.statusLegend.ok': 'Green: available and usable',
+  'ui.statusLegend.warn': 'Yellow: limited or partial data',
+  'ui.statusLegend.error': 'Red: error or unavailable',
+  'ui.statusLegend.neutral': 'Gray: no usable data or not assessed',
 });

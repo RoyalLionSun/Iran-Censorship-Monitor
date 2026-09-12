@@ -97,7 +97,7 @@
           <small id="kpi-ooni-meta">Awaiting query</small>
         </article>
         <article class="kpi-card">
-          <div class="kpi-head"><span>OONI anomaly rate</span><i class="state-dot neutral"></i></div>
+          <div class="kpi-head"><span>OONI anomaly rate</span><i id="ooni-anomaly-state-dot" class="state-dot neutral"></i></div>
           <strong id="kpi-anomaly-rate">—</strong>
           <small id="kpi-anomaly-meta">Not interpreted without sample context</small>
         </article>
@@ -107,7 +107,7 @@
           <small id="kpi-ripe-meta">Built-in Ping 1001</small>
         </article>
         <article class="kpi-card">
-          <div class="kpi-head"><span>RIPE packet loss</span><i class="state-dot neutral"></i></div>
+          <div class="kpi-head"><span>RIPE packet loss</span><i id="ripe-loss-state-dot" class="state-dot neutral"></i></div>
           <strong id="kpi-loss">—</strong>
           <small id="kpi-loss-meta">Selected measurement window</small>
         </article>
@@ -132,6 +132,14 @@
           <small id="kpi-bgp-meta">Select an ASN for RIPE RIS control-plane visibility</small>
         </article>
       </section>
+
+      <div class="status-legend" aria-label="Source status colors">
+        <strong id="status-legend-title">Source status colors</strong>
+        <span><i class="state-dot ok"></i><span id="status-legend-ok">Green: available and usable</span></span>
+        <span><i class="state-dot warn"></i><span id="status-legend-warn">Yellow: limited or partial data</span></span>
+        <span><i class="state-dot error"></i><span id="status-legend-error">Red: error or unavailable</span></span>
+        <span><i class="state-dot neutral"></i><span id="status-legend-neutral">Gray: no usable data or not assessed</span></span>
+      </div>
 
       <section class="dashboard-grid">
         <article class="panel span-8" id="ooni-panel">

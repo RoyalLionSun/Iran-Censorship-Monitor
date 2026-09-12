@@ -352,7 +352,7 @@ async function serveStatic(res, pathname) {
   const extension = extname(file).toLowerCase();
   res.writeHead(200, {
     'content-type': mime[extension] || 'application/octet-stream',
-    'cache-control': extension === '.html' ? 'no-cache' : 'public, max-age=3600',
+    'cache-control': ['.html', '.js', '.css'].includes(extension) ? 'no-cache' : 'public, max-age=3600',
     'x-content-type-options': 'nosniff',
     'referrer-policy': 'strict-origin-when-cross-origin',
     'content-security-policy': "default-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",

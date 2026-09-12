@@ -87,6 +87,25 @@ function ensureLanguageSwitch() {
   wrapper.querySelectorAll('[data-lang]').forEach((button) => button.addEventListener('click', () => setLanguage(button.dataset.lang)));
 }
 
+function renderStatusLegend() {
+  const legend = document.querySelector('.status-legend');
+  if (!legend) return;
+
+  legend.setAttribute('aria-label', t('ui.statusLegend.title'));
+
+  const fields = {
+    '#status-legend-title': 'ui.statusLegend.title',
+    '#status-legend-ok': 'ui.statusLegend.ok',
+    '#status-legend-warn': 'ui.statusLegend.warn',
+    '#status-legend-error': 'ui.statusLegend.error',
+    '#status-legend-neutral': 'ui.statusLegend.neutral',
+  };
+
+  for (const [selector, key] of Object.entries(fields)) {
+    const element = document.querySelector(selector);
+    if (element) element.textContent = t(key);
+  }
+}
 function renderMeanings() {
   for (const [panelId, key] of Object.entries(meaningPanels)) {
     const panel = document.getElementById(panelId);
@@ -133,6 +152,7 @@ function applyLanguage() {
   document.documentElement.dir = directionFor(language);
   document.body?.setAttribute('data-language', language);
   ensureLanguageSwitch();
+  renderStatusLegend();
   const switcher = document.querySelector('#language-switch');
   if (switcher) {
     switcher.setAttribute('aria-label', t('ui.language'));
