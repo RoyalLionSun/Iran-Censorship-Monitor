@@ -90,6 +90,27 @@ test('RIPE ping-stats parser accepts ISO timestamps returned by API variants', (
   assert.equal(parsed.series[0].packetLossPercent, 10);
 });
 
+test('RIPE ping-stats reads the current single-probe object format with named fields', async () => {
+  const day = Date.parse('2026-09-16T00:00:00Z') / 1000;
+  const payload = {
+    msm_id: 1001, type: 'ping', probe_id: 13312, resolution: 'day',
+    data: [
+      { timestamp: day, sent: 1080, received: 1080, rtt_5pct: 2.27, rtt_med: 2.5, rtt_95pct: 2.73 },
+      { timestamp: day + 86_400, sent: 1080, received: 972, rtt_5pct: 2.28, rtt_med: 3.5, rtt_95pct: 2.74 },
+    ],
+  };
+  const pages = await readPingStatsPages('https://example.test/stats', async () => payload);
+  assert.equal(pages.rows.length, 1);
+  assert.equal(pages.truncated, false);
+  const parsed = parseRipePingStats(pages.rows, { since: '2026-09-16', until: '2026-09-17' });
+  assert.equal(parsed.series.length, 2);
+  assert.equal(parsed.series[0].packetLossPercent, 0);
+  assert.equal(parsed.series[1].packetLossPercent, 10);
+  assert.equal(parsed.series[0].rttMs, 2.5);
+  assert.equal(parsed.overall.samples, 2160);
+  assert.equal(parsed.overall.observedProbes, 1);
+});
+
 test('RIPE ping-stats pagination is bounded and exposes truncation', async () => {
   const pages = new Map([
     ['https://example.test/s1', { next: 'https://example.test/s2', results: [{ probe_id: 1, data: [] }] }],

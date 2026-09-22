@@ -2,9 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { buildCensoredPlanetRequest, parseCensoredPlanet } from '../lib/censoredplanet.mjs';
 
-test('Censored Planet GraphQL request uses Iran and selected date range', () => {
+test('Censored Planet GraphQL request uses the IR country code and selected date range', () => {
   const body = buildCensoredPlanetRequest({ since:'2026-09-01', until:'2026-09-08' });
-  assert.equal(body.variables.country, 'Iran');
+  assert.equal(body.variables.country, 'IR');
   assert.deepEqual(body.variables.range, { startDate:'2026-09-01', endDate:'2026-09-08' });
   assert.match(body.query, /cenalertEvents/);
   assert.match(body.query, /interferenceRateByCountry/);
