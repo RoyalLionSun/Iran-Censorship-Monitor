@@ -1,12 +1,40 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { bgpWindowAvailability, boundedBgpWindow, buildRipeStatUrls, parseBgpUpdates, parseRoutingStatus } from '../lib/ripestat.mjs';
+import { ROUTING_STATUS_RETRY_TIMEOUT_MS, bgpWindowAvailability, boundedBgpWindow, buildRipeStatUrls, getRipeStatSignals, parseBgpUpdates, parseRoutingStatus, routingLookupTimestamp, routingTimeAlignment } from '../lib/ripestat.mjs';
 
 test('RIPEstat URLs are scoped to the selected ASN and dates', () => {
-  const urls = buildRipeStatUrls({ asn: 'AS58224', since: '2026-09-01', until: '2026-09-08' });
+  const urls = buildRipeStatUrls({ asn: 'AS58224', since: '2026-09-01', until: '2026-09-08', now: new Date('2026-09-12T12:00:00Z') });
   assert.match(urls.routingStatus, /resource=AS58224/);
+  assert.match(urls.routingStatus, /timestamp=2026-09-08T23%3A59%3A59\.000Z/);
   assert.match(urls.announcedPrefixes, /starttime=/);
   assert.match(urls.bgpUpdates, /endtime=/);
+});
+
+test('RIPEstat routing lookup uses the selected historical window and the latest snapshot for the current day', () => {
+  assert.equal(routingLookupTimestamp('2026-09-08', new Date('2026-09-12T12:00:00Z')), '2026-09-08T23:59:59.000Z');
+  assert.equal(routingLookupTimestamp('2026-09-12', new Date('2026-09-12T12:00:00Z')), null);
+});
+
+test('current-window RIPEstat routing URL is stable and carries no per-request timestamp', () => {
+  const first = buildRipeStatUrls({ asn: 'AS58224', since: '2026-09-06', until: '2026-09-12', now: new Date('2026-09-12T12:00:00Z') });
+  const later = buildRipeStatUrls({ asn: 'AS58224', since: '2026-09-06', until: '2026-09-12', now: new Date('2026-09-12T12:07:31.123Z') });
+  assert.equal(first.routingTimestamp, null);
+  assert.doesNotMatch(first.routingStatus, /timestamp=/);
+  assert.equal(first.routingStatus, later.routingStatus);
+});
+
+test('RIPEstat routing alignment reads zone-less query_time as UTC in any local time zone', () => {
+  const previous = process.env.TZ;
+  process.env.TZ = 'Asia/Tehran';
+  try {
+    assert.equal(routingTimeAlignment({ queryTime: '2026-09-10T16:00:00', routingTimestamp: '2026-09-10T23:59:59Z' }), 'aligned');
+    assert.equal(routingTimeAlignment({ queryTime: '2026-09-10T08:00:00', routingTimestamp: '2026-09-10T23:59:59Z' }), 'unknown');
+    assert.equal(routingTimeAlignment({ queryTime: '2026-09-22T08:00:00', routingTimestamp: null, now: new Date('2026-09-22T16:21:00Z') }), 'latest');
+    assert.equal(routingTimeAlignment({ queryTime: '2026-09-21T08:00:00', routingTimestamp: null, now: new Date('2026-09-22T16:21:00Z') }), 'unknown');
+    assert.equal(routingTimeAlignment({ queryTime: null, routingTimestamp: null }), 'unknown');
+  } finally {
+    if (previous === undefined) delete process.env.TZ; else process.env.TZ = previous;
+  }
 });
 
 test('RIPEstat routing status extracts visibility and neighbours', () => {
@@ -34,4 +62,24 @@ test('BGP drilldown is bounded to at most 48 hours', () => {
   assert.equal(result.available, true);
   assert.equal(result.cappedTo48Hours, true);
   assert.equal(result.since, '2026-09-07');
+});
+
+test('a routing lookup that exceeds the request timeout is revalidated in the background', async (t) => {
+  const requested = [];
+  t.mock.method(globalThis, 'fetch', async (url, options) => {
+    const target = String(url);
+    requested.push(target);
+    if (target.includes('routing-status')) throw new Error('This operation was aborted');
+    return { ok: true, status: 200, statusText: 'OK', json: async () => ({ data: { prefixes: [{ prefix: '2.144.0.0/13', timelines: [] }] } }) };
+  });
+
+  const result = await getRipeStatSignals({ asn: 'AS64513', since: '2026-09-04', until: '2026-09-10' });
+  assert.equal(result.routing, null);
+  assert.equal(result.routingRetryInProgress, true, 'the slow lookup must be retried in the background');
+  assert.equal(result.timeAlignment, 'not-applicable');
+  assert.match(result.partialErrors.routingStatus, /aborted/);
+  assert.equal(result.announcedPrefixes.length, 1, 'the fast part of the response is still delivered');
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(requested.filter((url) => url.includes('routing-status')).length, 2, 'exactly one background retry');
+  assert.ok(ROUTING_STATUS_RETRY_TIMEOUT_MS > 12_000);
 });
