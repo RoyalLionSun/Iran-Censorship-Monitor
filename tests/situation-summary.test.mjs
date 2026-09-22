@@ -1,95 +1,37 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildSituationSummary } from '../lib/situation-summary.mjs';
 import { buildAssessment } from '../lib/assessment.mjs';
 
-test('insufficient data remains explicitly unknown when source reachability is also unknown', () => {
-  const result = buildSituationSummary({ status: 'insufficient-data', confidence: 'none', scope: 'Iran', availableSources: [], signals: [] });
-  assert.equal(result.state, 'insufficient-data');
-  assert.equal(result.severity, 'neutral');
-  assert.equal(result.sourceCount, 0);
-  assert.equal(result.completeShutdownVerdict, 'not-established');
-  assert.equal(result.nationwideImpactVerdict, 'not-established');
-});
-
-test('reachable adapters with insufficient measurement evidence use the limited-data presentation rather than implying system failure', () => {
-  const result = buildSituationSummary({
-    status: 'insufficient-data', confidence: 'none', scope: 'Iran', availableSources: [], signals: [],
-    sourceHealth: { summary: { totalContract:13, queried:8, reachable:8, dataAvailable:2, scopeRequired:5, errors:0 } },
-  });
-  assert.equal(result.state, 'limited-measurement-evidence');
-  assert.equal(result.headlineKey, 'situation.headline.limited');
-  assert.equal(result.sourceHealth.reachable, 8);
-  assert.equal(result.sourceHealth.scopeRequired, 5);
-});
-
-test('observed state means no major disruption corroborated, not proof of full availability', () => {
-  const result = buildSituationSummary({ status: 'observed', confidence: 'medium', scope: 'AS58224 / Iran', availableSources: ['OONI', 'RIPE Atlas'], signals: [] });
-  assert.equal(result.state, 'no-major-disruption-detected');
-  assert.equal(result.headlineKey, 'situation.headline.observed');
-  assert.equal(result.completeShutdownVerdict, 'not-established');
-});
-
-test('corroborated disruption exposes only elevated usable drivers and preserves raw source identity', () => {
-  const result = buildSituationSummary({
-    status: 'corroborated', confidence: 'medium', scope: 'Iran', availableSources: ['OONI', 'RIPE Atlas', 'IODA'],
-    signals: [
-      { source: 'OONI', dimension:'interference', elevated: true, strong: false, value: 42.5, unit: '% anomalies', sample: 120 },
-      { source: 'RIPE Atlas', dimension:'connectivity', elevated: true, strong: true, value: 55, unit: '% missing ping packets', sample: 30 },
-      { source: 'IODA', dimension:'connectivity', elevated: false, strong: false, value: 0, unit: 'outage events', sample: 12 },
-    ],
-    channels: {
-      interference: { status:'elevated', sourceCount:1, availableSources:['OONI'] },
-      connectivity: { status:'elevated', sourceCount:2, availableSources:['RIPE Atlas','IODA'] },
-    },
-  });
-  assert.equal(result.state, 'significant-disruption-signals');
-  assert.deepEqual(result.drivers.map((row) => row.source), ['OONI', 'RIPE Atlas']);
-  assert.deepEqual(result.drivers.map((row) => row.dimension), ['interference', 'connectivity']);
-  assert.equal(result.sourceCount, 2);
-  assert.equal(result.availableSourceCount, 3);
-  assert.deepEqual(result.supportingSources, ['OONI', 'RIPE Atlas']);
-  assert.equal(result.channels.interference.status, 'elevated');
-  assert.equal(result.channels.connectivity.status, 'elevated');
-});
-
-test('control/data-plane divergence is surfaced without changing shutdown verdict', () => {
-  const result = buildSituationSummary({
-    status: 'strongly-corroborated', confidence: 'high', scope: 'AS58224 / Iran', availableSources: ['OONI', 'RIPE Atlas', 'IODA'], signals: [],
-    controlDataPlane: { classification: 'control-data-plane-divergence' },
-  });
-  assert.equal(result.state, 'strong-multisource-disruption-signals');
-  assert.equal(result.controlDataPlane.messageKey, 'situation.controlDataPlane.divergence');
-  assert.equal(result.completeShutdownVerdict, 'not-established');
-});
-
-test('unknown assessment status fails safe to insufficient-data presentation', () => {
-  const result = buildSituationSummary({ status: 'future-status', availableSources: ['OONI'] });
-  assert.equal(result.state, 'insufficient-data');
-  assert.equal(result.severity, 'neutral');
-});
-
-test('buildAssessment exposes channel-aware plain-language summary without changing assessment status', () => {
+test('public interpretation summary is claim-based and has no global severity or score', () => {
   const result = buildAssessment({
-    ooni: { ok: true, totalMeasurements: 40, truncatedAtApiLimit: false, points: [
+    ooni: { ok: true, status: 'observed', totalMeasurements: 40, totalAnomalies: 18, totalConfirmed: 0, anomalyRate: 45, truncatedAtApiLimit: false, points: [
       { date: '2026-09-09', measurements: 20, anomalyRate: 45 },
       { date: '2026-09-10', measurements: 20, anomalyRate: 45 },
     ] },
-    ripe: { ok: true, status: 'observed', overall: { samples: 20, packetLossPercent: 30 }, series: [
-      { date: '2026-09-09', packetLossPercent: 30, samples: 10 },
-      { date: '2026-09-10', packetLossPercent: 30, samples: 10 },
-    ] },
+    ioda: { ok: true, status: 'observed', series: [{ sampleCount: 10 }], events: [{ datasource: 'ping-slash24' }] },
     radar: { status: 'token_required' },
-    ioda: null,
-    ripestat: null,
+    selection: { since: '2026-09-09', until: '2026-09-10', testName: 'web_connectivity' },
     scopeLabel: 'AS58224 / Iran',
   });
-  assert.equal(result.status, 'corroborated');
-  assert.equal(result.confidence, 'medium');
-  assert.deepEqual(result.supportingSources, ['OONI', 'RIPE Atlas']);
-  assert.equal(result.publicSummary.state, 'significant-disruption-signals');
-  assert.equal(result.publicSummary.sourceCount, 2);
-  assert.equal(result.publicSummary.channels.interference.status, 'elevated');
-  assert.equal(result.publicSummary.channels.connectivity.status, 'elevated');
-  assert.equal(result.publicSummary.completeShutdownVerdict, 'not-established');
+  const interpretation = result.interpretation;
+  assert.equal(interpretation.summary.state, 'access-and-connectivity-signals');
+  assert.equal(Object.hasOwn(interpretation.summary, 'severity'), false);
+  assert.equal(Object.hasOwn(interpretation.summary, 'score'), false);
+  assert.equal(interpretation.summary.evidenceMode, 'per-finding');
+  assert.equal(interpretation.dimensions.interference.confidence, 'low');
+  assert.equal(interpretation.dimensions.connectivity.confidence, 'low');
+  assert.equal(interpretation.dimensions.shutdown.state, 'not-established');
+});
+
+test('overview findings state positive observations and explicit non-findings', () => {
+  const result = buildAssessment({
+    ripestat: { ok: true, status: 'observed', timeAlignment: 'aligned', routing: { visibility: { percent: 99.7, seeingPeers: 325, totalPeers: 326 } } },
+    ripe: { ok: true, status: 'no_data', probeCount: 7, overall: { samples: 0, packetLossPercent: null, averageRttMs: null }, series: [] },
+    radar: { status: 'token_required' },
+    selection: { since: '2026-09-09', until: '2026-09-10' },
+    scopeLabel: 'AS58224 / Iran',
+  });
+  assert.ok(result.interpretation.findings.some((item) => item.id === 'routing-visible'));
+  assert.ok(result.interpretation.findings.some((item) => item.id === 'quality-unknown'));
+  assert.ok(result.interpretation.findings.some((item) => item.id === 'shutdown-not-established'));
 });

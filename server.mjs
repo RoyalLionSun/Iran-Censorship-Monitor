@@ -5,7 +5,7 @@ import { extname, join, normalize, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildAssessment } from './lib/assessment.mjs';
 import { errorPayload, jsonResponse, mapLimit, normalizeAsn, validateRange } from './lib/common.mjs';
-import { getCircumventionSignals, getOoniMeasurementDetail, getOoniTimeline, listOoniMeasurements, OONI_TESTS } from './lib/ooni.mjs';
+import { getCircumventionSignals, getOoniDomainMeasurements, getOoniDomains, getOoniMeasurementDetail, getOoniTimeline, listOoniMeasurements, OONI_TESTS } from './lib/ooni.mjs';
 import { getRipeSignals } from './lib/ripe.mjs';
 import { getRadarSignals } from './lib/radar.mjs';
 import { getIodaSignals } from './lib/ioda.mjs';
@@ -17,6 +17,7 @@ import { compareAsnIdentity, getAsnRegistryIdentity } from './lib/asn-registry.m
 import { readAsnCoverageSnapshot } from './lib/asn-coverage-snapshot.mjs';
 import { authorizeGlobalpingControl, createGlobalpingMeasurement, getGlobalpingIranProbes, getGlobalpingMeasurement, globalpingRateLimit } from './lib/globalping.mjs';
 import { getCensoredPlanetSignals } from './lib/censoredplanet.mjs';
+import { selectionBrand } from './public/service-findings.js';
 import { getCitizenLabIranTargets } from './lib/citizenlab.mjs';
 import { getPeeringDbTopology } from './lib/peeringdb.mjs';
 import { getIhrDependencies } from './lib/ihr.mjs';
@@ -87,7 +88,16 @@ function queryInput(url) {
     try { parsed = new URL(target); } catch { throw new Error('Target must be an absolute HTTP(S) URL.'); }
     if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error('Target must use HTTP or HTTPS.');
   }
-  return { country: 'IR', asn, since, until, testName, target: testName === 'web_connectivity' ? target : '' };
+  const selection = { country: 'IR', asn, since, until, testName, target: testName === 'web_connectivity' ? target : '' };
+  // A selected service covers all of its hosts, so OONI must not be filtered to one exact URL.
+  selection.serviceId = selectionBrand(selection)?.id ?? null;
+  return selection;
+}
+
+// OONI queries for a selected service drop the exact-URL filter; the service scope is
+// applied to the returned domain groups instead.
+function ooniScope(input) {
+  return input.serviceId ? { ...input, target: '' } : input;
 }
 
 async function safeSource(name, work) {
@@ -186,8 +196,8 @@ async function handleApi(req, res, url) {
 
   if (url.pathname === '/api/overview') {
     const input = queryInput(url);
-    const [ooni, ripe, radar, ioda, tor, mlab, apnic, ripestat, globalping, censoredPlanet, peeringdb, ihr, asrank, rpki, pulse] = await Promise.all([
-      safeSource('OONI', () => getOoniTimeline(input)),
+    const [ooni, ripe, radar, ioda, tor, mlab, apnic, ripestat, globalping, censoredPlanet, peeringdb, ihr, asrank, rpki, pulse, ooniDomains, circumvention] = await Promise.all([
+      safeSource('OONI', () => getOoniTimeline(ooniScope(input))),
       safeSource('RIPE Atlas', () => getRipeSignals(input)),
       safeSource('Cloudflare Radar', () => getRadarSignals(input)),
       safeSource('IODA', () => getIodaSignals(input)),
@@ -202,9 +212,12 @@ async function handleApi(req, res, url) {
       input.asn ? safeSource('CAIDA ASRank', () => getAsRankTopology(input)) : Promise.resolve(scopeRequired('CAIDA ASRank', input)),
       input.asn ? safeSource('RIPEstat RPKI', () => getRpkiIntegrity(input)) : Promise.resolve(scopeRequired('RIPEstat RPKI', input)),
       safeSource('Internet Society Pulse', () => getPulseShutdowns(input)),
+      // Priority-service summary for the Overview. The full domain list stays on /api/ooni/domains.
+      input.testName === 'web_connectivity' ? safeSource('OONI domains', () => getOoniDomains(ooniScope(input))) : Promise.resolve(null),
+      safeSource('OONI circumvention', () => getCircumventionSignals(input)),
     ]);
     const scopeLabel = input.asn ? `${input.asn} / Iran` : 'Iran / all measured networks';
-    const assessment = buildAssessment({ ooni, ripe, radar, ioda, ripestat, censoredPlanet, tor, mlab, apnic, globalping, peeringdb, ihr, asrank, rpki, scopeLabel });
+    const assessment = buildAssessment({ ooni, ripe, radar, ioda, ripestat, censoredPlanet, tor, mlab, apnic, globalping, peeringdb, ihr, asrank, rpki, pulse, ooniDomains, circumvention, selection: input, scopeLabel });
     const asnProfile = input.asn ? asns.find((item) => item.asn === input.asn) || null : null;
     jsonResponse(res, 200, { ok: true, input, asnProfile, fetchedAt: new Date().toISOString(), assessment, ooni, ripe, radar, ioda, tor, mlab, apnic, ripestat, globalping, censoredPlanet, peeringdb, ihr, asrank, rpki, pulse });
     return true;
@@ -220,6 +233,24 @@ async function handleApi(req, res, url) {
   if (url.pathname === '/api/ooni/measurements') {
     const input = queryInput(url);
     const result = await listOoniMeasurements(input);
+    jsonResponse(res, 200, result);
+    return true;
+  }
+
+  if (url.pathname === '/api/ooni/domains') {
+    const input = queryInput(url);
+    if (input.testName !== 'web_connectivity') throw new Error('Domain findings require Web Connectivity.');
+    const result = await getOoniDomains(ooniScope(input));
+    jsonResponse(res, 200, result);
+    return true;
+  }
+
+  if (url.pathname === '/api/ooni/domain-measurements') {
+    const input = queryInput(url);
+    const domain = url.searchParams.get('domain') || '';
+    const offsetText = url.searchParams.get('offset') || '0';
+    if (!/^(0|[1-9]\d*)$/.test(offsetText)) throw new Error('Invalid OONI domain page offset.');
+    const result = await getOoniDomainMeasurements(input, domain, Number(offsetText));
     jsonResponse(res, 200, result);
     return true;
   }
