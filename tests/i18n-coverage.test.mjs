@@ -5,6 +5,8 @@ import faRuntime from '../public/locales/fa-runtime.js';
 import enContext from '../public/locales/en-context.js';
 import faContext from '../public/locales/fa-context.js';
 import enV19 from '../public/locales/en-v19.js';
+import faBase from '../public/locales/fa.js';
+import faExtra from '../public/locales/fa-extra.js';
 import faV19 from '../public/locales/fa-v19.js';
 import { setLanguage, translateKnownText } from '../public/i18n.js';
 import { translateRuntimeText } from '../public/i18n-runtime.js';
@@ -32,8 +34,11 @@ test('representative controlled runtime UI phrases translate to Farsi', () => {
     'No independent measurement source returned usable observations.',
     'Pulse shutdown context unavailable; no incident count is inferred.',
     'No operator snapshot is available. No inventory count is inferred.',
-    'Overall disruption status combines independent interference and connectivity measurements. Only the interference channel addresses censorship/interference evidence; connectivity degradation alone does not establish censorship intent, mechanism or attribution.',
+    'Severity, confidence, verification, coverage and attribution are evaluated per claim. Signals from different dimensions are not merged into proof of one common disruption or censorship cause.',
     'Radar annotations are connectivity/event indicators, not an attribution of censorship intent.',
+    'No anomalous OONI measurement days or source-native events were returned for this selected window.',
+    'Routes are visible while a broad Radar disruption annotation is present',
+    'No broad, time-aligned control-plane/data-plane divergence is established for the selected scope from the available measurements.',
     'M-Lab did not publish a stats-pipeline aggregate object for the selected Iran/ASN year scope.',
     'access review',
     'observed',
@@ -73,4 +78,17 @@ test('arbitrary external content is never generically translated', () => {
   assert.equal(translateKnownText(external), external);
   assert.equal(translateRuntimeText(external), external);
   setLanguage('en', { persist: false, notify: false });
+});
+
+test('Farsi sentences never start with a Latin word, which would break their reading order', () => {
+  const layers = { fa: faBase, 'fa-extra': faExtra, 'fa-context': faContext, 'fa-runtime': faRuntime, 'fa-v19': faV19 };
+  const offenders = [];
+  for (const [layer, dictionary] of Object.entries(layers)) {
+    for (const [key, raw] of Object.entries(dictionary)) {
+      const value = String(raw).replace(/^[⁨‏\s]+/, '');
+      const isSentence = hasPersian(value) && /[.؟]$/.test(value.trim());
+      if (isSentence && /^[A-Za-z]/.test(value)) offenders.push(`${layer}:${key}`);
+    }
+  }
+  assert.deepEqual(offenders, []);
 });

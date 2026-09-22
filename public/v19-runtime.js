@@ -34,35 +34,23 @@ function healthDetail(health) {
 function renderSourceHealth(health = lastHealth) {
   lastHealth = health || null;
   const element = document.querySelector('#header-source-state');
-  if (!element || !health?.summary) return;
+  if (!element) return;
+  if (!health?.summary) {
+    element.textContent = t('ui.sources.pending');
+    element.title = '';
+    element.dataset.health = 'neutral';
+    return;
+  }
   element.textContent = healthText(health);
   element.title = healthDetail(health);
-  element.dataset.health = health.summary.errors > 0 ? 'error' : health.summary.partial > 0 || health.summary.noData > 0 || health.summary.scopeRequired > 0 ? 'mixed' : 'ok';
-}
-
-function overviewRequest(input) {
-  const raw = typeof input === 'string' ? input : input?.url || '';
-  if (!raw) return false;
-  try {
-    return new URL(raw, window.location.href).pathname === '/api/overview';
-  } catch {
-    return false;
-  }
+  // One missing side source is not an alarm; red stays for a broadly unavailable source set.
+  const broadlyDown = health.summary.errors > 0 && health.summary.reachable < health.summary.queried * 0.7;
+  element.dataset.health = broadlyDown ? 'error'
+    : health.summary.errors > 0 || health.summary.partial > 0 || health.summary.noData > 0 || health.summary.scopeRequired > 0 ? 'mixed' : 'ok';
 }
 
 ensureV19Styles();
-const previousFetch = window.fetch.bind(window);
-window.fetch = async (...args) => {
-  const response = await previousFetch(...args);
-  if (response.ok && overviewRequest(args[0])) {
-    response.clone().json().then((payload) => setTimeout(() => {
-      renderSourceHealth(payload?.assessment?.sourceHealth);
-      window.dispatchEvent(new CustomEvent('iran-monitor-overview', { detail: payload }));
-    }, 0)).catch(() => {});
-  }
-  return response;
-};
-
+window.addEventListener('iran-monitor-overview', (event) => renderSourceHealth(event.detail?.assessment?.sourceHealth ?? null));
 window.addEventListener('iran-monitor-languagechange', () => renderSourceHealth());
 
 export { renderSourceHealth };

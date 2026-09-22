@@ -1,3 +1,6 @@
+import { t } from './i18n.js';
+import { summarizeMessagingAppTests, summarizeServiceFindings } from './service-findings.js';
+
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
 
@@ -8,6 +11,13 @@ const state = {
   providers: null,
   targets: null,
   routingUpdates: null,
+  ooniDomains: null,
+  showAllOoniDomains: false,
+  selectedOoniDomain: null,
+  ooniDomainDetails: null,
+  ooniDomainDetailsError: null,
+  ooniDomainDetailsLoading: false,
+  ooniDomainDetailsRequest: 0,
   loading: false,
   requestSerial: 0,
 };
@@ -185,9 +195,9 @@ function renderDivergence(assessment) {
     return;
   }
   const diverged = item.classification === 'control-data-plane-divergence';
-  $('#divergence-state').textContent = diverged ? 'Divergence detected' : 'No strong divergence';
-  box.dataset.state = diverged ? 'warning' : 'ok';
-  box.innerHTML = `<div class="posture-head"><strong>${escapeHtml(diverged ? 'Routing remains visible while user-path disruption is elevated' : 'No strong routing/data-plane split established')}</strong><span>${escapeHtml(item.classification)}</span></div><div class="posture-metrics"><div><span>BGP visibility</span><b>${item.bgpVisibilityPercent===null?'—':percent(item.bgpVisibilityPercent)}</b></div><div><span>RIPE loss</span><b>${item.ripePacketLossPercent===null?'—':percent(item.ripePacketLossPercent)}</b></div><div><span>IODA events</span><b>${number(item.iodaOutageEvents,0)}</b></div><div><span>Radar events</span><b>${number(item.radarDisruptionEvents,0)}</b></div></div><p>${escapeHtml(item.interpretation)}</p>`;
+  $('#divergence-state').textContent = diverged ? 'Divergence detected' : 'No broad divergence established';
+  box.dataset.state = diverged ? 'warning' : 'neutral';
+  box.innerHTML = `<div class="posture-head"><strong>${escapeHtml(diverged ? 'Routes are visible while a broad Radar disruption annotation is present' : 'No broad, time-aligned routing/data-plane split established')}</strong><span>${escapeHtml(item.classification)}</span></div><div class="posture-metrics"><div><span>BGP visibility</span><b>${item.bgpVisibilityPercent===null?'—':percent(item.bgpVisibilityPercent)}</b></div><div><span>RIPE loss</span><b>${item.ripePacketLossPercent===null?'—':percent(item.ripePacketLossPercent)}</b></div><div><span>IODA events</span><b>${number(item.iodaOutageEvents,0)}</b></div><div><span>Radar events</span><b>${number(item.radarDisruptionEvents,0)}</b></div></div><p>${escapeHtml(item.interpretation)}</p>`;
 }
 
 function renderRouting(ripestat) {
@@ -394,8 +404,8 @@ function renderAssessment(assessment) {
   $('#assessment-sources').textContent = String(assessment?.availableSources?.length || 0);
   $('#assessment-scope').textContent = assessment?.scope || '—';
   $('#signal-list').innerHTML = assessment?.signals?.length ? assessment.signals.map((signal) => {
-    const stateClass = signal.strong ? 'strong' : signal.elevated ? 'elevated' : '';
-    const status = signal.strong ? 'STRONG SIGNAL' : signal.elevated ? 'ELEVATED' : signal.usableForAssessment === false ? 'EXCLUDED' : 'NOT ELEVATED';
+    const stateClass = signal.usableForAssessment === false ? 'excluded' : '';
+    const status = signal.usableForAssessment === false ? 'EXCLUDED' : 'OBSERVED';
     return `<div class="signal-item"><div class="signal-item-head"><strong>${escapeHtml(signal.source)}</strong><span class="${stateClass}">${status}</span></div><div class="signal-metric"><b>${signal.value===null?'—':number(signal.value,1)}</b><small>${escapeHtml(signal.unit)} · n=${number(signal.sample,0)}</small></div><p>${escapeHtml(signal.note)}</p></div>`;
   }).join('') : '<div class="empty-state">No independent measurement source returned usable observations.</div>';
 }
@@ -452,48 +462,200 @@ function renderKpis(overview) {
       : 'ok';
   stateDot($('#bgp-state-dot'), bgpSourceState);
   $('#header-updated').textContent = `Updated ${ageLabel(overview.fetchedAt)} ago`;
-  const active = [
-    ooni?.ok && ooni.totalMeasurements > 0,
-    ripe?.ok && ripe.series?.length > 0,
-    ioda?.ok && (ioda.series?.length > 0 || ioda.events?.length > 0),
-    radarStatus === 'observed' || radarStatus === 'partial',
-    tor?.ok && (tor.relay?.rows?.length > 0 || tor.bridge?.rows?.length > 0),
-    overview.ripestat?.ok && overview.ripestat?.status === 'observed',
-    overview.globalping?.ok && overview.globalping?.probeCount > 0,
-    overview.censoredPlanet?.ok && overview.censoredPlanet?.status === 'observed',
-    overview.peeringdb?.ok && overview.peeringdb?.status === 'observed',
-    overview.ihr?.ok && overview.ihr?.status === 'observed',
-    overview.pulse?.ok && overview.pulse?.status === 'observed',
-  ].filter(Boolean).length;
-  $('#header-source-state').textContent = `${active}/11 source families observed`;
 }
 
 function renderEvents(overview) {
   const events = [];
   for (const row of overview.ooni?.points || []) {
-    if ((row.measurements || 0) >= 10 && (row.anomalyRate || 0) >= 25) events.push({ time: row.date, source: 'OONI', severity: row.anomalyRate >= 60 ? 'critical' : 'warn', title: `${number(row.anomalyRate)}% anomalous OONI rows`, detail: `${row.measurements} measurements · ${row.confirmed || 0} confirmed` });
+    if ((row.anomalies || 0) > 0 || (row.confirmed || 0) > 0) events.push({ time: row.date, source: 'OONI', title: `${number(row.anomalyRate)}% anomalous OONI rows`, detail: `${row.measurements} measurements · ${row.confirmed || 0} confirmed` });
   }
   for (const item of overview.radar?.outages?.annotations || []) {
-    events.push({ time: item.startDate || overview.input.since, source: 'RADAR', severity: 'critical', title: item.description || `${item.outageType || 'Outage'} annotation`, detail: [item.outageCause, item.scope, item.asns?.length ? `${item.asns.length} ASN(s)` : null].filter(Boolean).join(' · ') });
+    events.push({ time: item.startDate || overview.input.since, source: 'RADAR', title: item.description || `${item.outageType || 'Outage'} annotation`, detail: [item.outageCause, item.scope, item.asns?.length ? `${item.asns.length} ASN(s)` : null].filter(Boolean).join(' · ') });
   }
   for (const item of overview.radar?.trafficAnomalies?.events || []) {
-    events.push({ time: item.startDate || overview.input.since, source: 'RADAR', severity: item.status === 'VERIFIED' ? 'critical' : 'warn', title: `Traffic anomaly${item.status ? ` · ${item.status.toLowerCase()}` : ''}`, detail: [item.type, item.asn ? `AS${String(item.asn).replace(/^AS/i,'')}` : null, item.asnName, item.locationCode].filter(Boolean).join(' · ') });
+    events.push({ time: item.startDate || overview.input.since, source: 'RADAR', title: `Traffic anomaly${item.status ? ` · ${item.status.toLowerCase()}` : ''}`, detail: [item.type, item.asn ? `AS${String(item.asn).replace(/^AS/i,'')}` : null, item.asnName, item.locationCode].filter(Boolean).join(' · ') });
   }
   for (const item of overview.radar?.bgp?.events || []) {
-    events.push({ time: item.minTimestamp || overview.input.since, source: 'BGP', severity: (item.confidenceScore || 0) >= 8 ? 'critical' : 'warn', title: `BGP hijack event ${item.id ?? ''}`.trim(), detail: `confidence ${number(item.confidenceScore,0)} · ${item.prefixes?.length || 0} prefix(es)` });
+    events.push({ time: item.minTimestamp || overview.input.since, source: 'BGP', title: `BGP hijack event ${item.id ?? ''}`.trim(), detail: `confidence ${number(item.confidenceScore,0)} · ${item.prefixes?.length || 0} prefix(es)` });
   }
   for (const item of overview.ioda?.events || []) {
-    events.push({ time: item.start || overview.input.since, source: 'IODA', severity: 'critical', title: `IODA outage event · ${item.datasource || 'signal'}`, detail: `${item.entityName || item.entityCode || 'Iran'}${item.durationSeconds ? ` · ${number(item.durationSeconds / 3600,1)} h` : ''}${item.score !== null && item.score !== undefined ? ` · score ${number(item.score,1)}` : ''}` });
+    events.push({ time: item.start || overview.input.since, source: 'IODA', title: `IODA outage event · ${item.datasource || 'signal'}`, detail: `${item.entityName || item.entityCode || 'Iran'}${item.durationSeconds ? ` · ${number(item.durationSeconds / 3600,1)} h` : ''}${item.score !== null && item.score !== undefined ? ` · score ${number(item.score,1)}` : ''}` });
   }
   for (const item of overview.censoredPlanet?.events || []) {
-    events.push({ time: item.peak || item.startDate || overview.input.since, source: 'CP', severity: 'warn', title: `CenAlert event · impact ${item.impact===null?'—':number(item.impact,2)}`, detail: [item.cause,item.reportedBy].filter(Boolean).join(' · ') || 'Censored Planet behavioral anomaly' });
+    events.push({ time: item.peak || item.startDate || overview.input.since, source: 'CP', title: `CenAlert event · impact ${item.impact===null?'—':number(item.impact,2)}`, detail: [item.cause,item.reportedBy].filter(Boolean).join(' · ') || 'Censored Planet behavioral anomaly' });
   }
   for (const item of overview.pulse?.events || []) {
-    events.push({ time: item.startDate || overview.input.since, source: 'PULSE', severity: item.verificationLevel === 'confirmed' || item.verificationLevel === 'acknowledged' ? 'critical' : 'warn', title: `${item.type || 'Shutdown'} · ${item.verificationLevel || 'verification unknown'}`, detail: [item.affectedRegions,item.cause].filter(Boolean).join(' · ') || 'Curated shutdown context' });
+    events.push({ time: item.startDate || overview.input.since, source: 'PULSE', title: `${item.type || 'Shutdown'} · ${item.verificationLevel || 'verification unknown'}`, detail: [item.affectedRegions,item.cause].filter(Boolean).join(' · ') || 'Curated shutdown context' });
   }
   events.sort((a,b) => Date.parse(b.time) - Date.parse(a.time));
-  $('#event-feed').innerHTML = events.length ? events.slice(0,12).map((event) => `<div class="event-item"><span class="event-time">${escapeHtml(shortDate(String(event.time).slice(0,10)))}</span><div class="event-copy"><strong>${escapeHtml(event.title)}</strong><small>${escapeHtml(event.detail || 'Source event')}</small></div><span class="event-source ${event.severity}">${escapeHtml(event.source)}</span></div>`).join('') : '<div class="empty-state">No thresholded OONI days, IODA events or Radar/BGP annotations in this selected window.</div>';
+  $('#event-feed').innerHTML = events.length ? events.slice(0,12).map((event) => `<div class="event-item"><span class="event-time">${escapeHtml(shortDate(String(event.time).slice(0,10)))}</span><div class="event-copy"><strong>${escapeHtml(event.title)}</strong><small>${escapeHtml(event.detail || 'Source event')}</small></div><span class="event-source">${escapeHtml(event.source)}</span></div>`).join('') : '<div class="empty-state">No anomalous OONI measurement days or source-native events were returned for this selected window.</div>';
 }
+
+function renderOoniDomains() {
+  const payload = state.ooniDomains;
+  renderServiceFindings();
+  const table = $('#ooni-domains-table');
+  const more = $('#ooni-domains-more');
+  more.classList.add('hidden');
+  if (!payload?.ok) {
+    const message = payload?.error ? t('ooni.domains.unavailable', { error: payload.error })
+      : t($('#test-select').value === 'web_connectivity' ? 'ooni.domains.loading' : 'ooni.domains.notApplicable');
+    $('#ooni-domains-state').textContent = message;
+    table.innerHTML = `<tr><td class="table-empty" colspan="6">${escapeHtml(message)}</td></tr>`;
+    return;
+  }
+  $('#ooni-domains-source').href = payload.sourceUrl;
+  if (!payload.domains.length) {
+    const message = t('ooni.domains.noData');
+    $('#ooni-domains-state').textContent = message;
+    table.innerHTML = `<tr><td class="table-empty" colspan="6">${escapeHtml(message)}</td></tr>`;
+    return;
+  }
+  const search = $('#ooni-domain-search').value.trim().toLowerCase();
+  const matches = payload.domains.filter((row) => row.domain.toLowerCase().includes(search));
+  const visible = state.showAllOoniDomains || search ? matches : matches.slice(0, 30);
+  $('#ooni-domains-state').textContent = t('ooni.domains.count', {
+    shown: number(visible.length, 0), total: number(payload.domainCount, 0), measurements: number(payload.totalMeasurements, 0),
+    confirmed: number(payload.domains.filter((row) => row.confirmed > 0).length, 0),
+    anomalous: number(payload.domains.filter((row) => row.anomalous > 0 && row.confirmed === 0).length, 0),
+  });
+  table.innerHTML = visible.length ? visible.map((row) => {
+    const source = new URL(payload.sourceUrl);
+    source.searchParams.set('domain', row.domain);
+    return `<tr><td><strong dir="ltr">${escapeHtml(row.domain)}</strong></td><td>${number(row.confirmed, 0)}</td><td>${number(row.anomalous, 0)}</td><td>${number(row.measurements, 0)}</td><td dir="ltr">${escapeHtml(row.lastObserved)}</td><td><button class="button" type="button" data-ooni-domain="${escapeHtml(row.domain)}" aria-label="${escapeHtml(t('ooni.details.open', { domain: row.domain }))}">${escapeHtml(t('ooni.details.button'))}</button> <a href="${escapeHtml(source.href)}" target="_blank" rel="noreferrer">${escapeHtml(t('ooni.domains.view'))}</a></td></tr>`;
+  }).join('') : `<tr><td class="table-empty" colspan="6">${escapeHtml(t('ooni.domains.noMatch'))}</td></tr>`;
+  more.classList.toggle('hidden', Boolean(search) || state.showAllOoniDomains || matches.length <= visible.length);
+}
+
+function renderServiceFindings() {
+  const payload = state.ooniDomains;
+  const selection = { testName: $('#test-select').value, target: $('#target-select').value };
+  const { rows, focus, sourceUrl } = summarizeServiceFindings(payload, selection);
+  const section = $('#service-findings');
+  const source = $('#service-findings-source');
+  const loading = !payload && selection.testName === 'web_connectivity';
+  section.dataset.status = loading ? 'pending' : focus?.status || 'neutral';
+  $('#service-findings-kicker').textContent = t('services.kicker');
+  // The Overview situation board carries the headline; this panel is the per-website detail.
+  const title = focus ? t('services.detailsTitle')
+    : t(loading ? 'services.headline.loading' : selection.testName !== 'web_connectivity' ? 'services.headline.notWeb'
+      : !payload?.ok ? 'services.headline.unavailable' : selection.target && !rows.some((row) => row.measurements > 0) ? 'services.headline.targetEmpty'
+        : !rows.some((row) => row.measurements > 0) ? 'services.headline.untested'
+          : !rows.some((row) => row.status === 'no_signal') ? 'services.headline.inconclusive' : 'services.headline.noFinding');
+  $('#service-findings-title').textContent = title;
+  $('#service-findings-context').textContent = t('services.context', {
+    asn: $('#asn-select').value === 'ALL' ? 'IR / all networks' : $('#asn-select').value,
+    since: $('#since-input').value, until: $('#until-input').value,
+  }) + (selection.target ? ` · ${t('services.target', { target: selection.target })}` : '')
+    + (focus ? ` · ${t('services.focus', { count: number(focus.measurements, 0), date: focus.lastObserved })}` : '');
+  $('#service-findings-boundary').textContent = t('services.boundary');
+  source.classList.toggle('hidden', !sourceUrl);
+  if (sourceUrl) source.href = sourceUrl;
+  source.textContent = t('services.source');
+  const renderRow = (row) => {
+    const detail = ['confirmed', 'anomaly', 'no_signal', 'inconclusive'].includes(row.status)
+      ? `${number(row.measurements, 0)} ${t('services.tests')} · ${number(row.confirmed, 0)} ${t('services.confirmed')} · ${number(row.anomalous, 0)} ${t('services.anomalies')} · ${escapeHtml(row.lastObserved)} UTC`
+      : '';
+    const button = detail ? `<button type="button" class="button" data-service-domain="${escapeHtml(row.domain)}">${escapeHtml(t('services.inspect'))}</button>` : '';
+    return `<div class="service-finding" data-status="${row.status}"><div><strong>${escapeHtml(row.name)}</strong><span dir="ltr">${escapeHtml(row.domain)}</span></div><b>${escapeHtml(t(`services.status.${row.status}`))}</b><small>${detail}</small>${button}</div>`;
+  };
+  const visibleStatuses = ['confirmed', 'anomaly', 'no_signal', 'inconclusive', 'loading', 'unavailable'];
+  const measured = rows.filter((row) => visibleStatuses.includes(row.status))
+    .sort((a, b) => Number(b.status === 'confirmed') - Number(a.status === 'confirmed')
+      || Number(b.status === 'anomaly') - Number(a.status === 'anomaly')
+      || Number(b.status === 'loading') - Number(a.status === 'loading')
+      || Number(b.status === 'unavailable') - Number(a.status === 'unavailable')
+      || b.confirmed - a.confirmed || b.anomalous - a.anomalous || a.domain.localeCompare(b.domain));
+  const other = rows.filter((row) => row.status === 'untested' || row.status === 'out_of_scope');
+  $('#service-findings-list').innerHTML = measured.map(renderRow).join('')
+    + (other.length ? `<details class="service-findings-other"><summary>${escapeHtml(t('services.other', { count: number(other.length, 0) }))}</summary><div class="service-findings-list">${other.map(renderRow).join('')}</div></details>` : '');
+  $('#service-app-title').textContent = t('services.appTitle');
+  $('#service-app-tests').innerHTML = summarizeMessagingAppTests(state.circumvention, selection).map((row) => {
+    const detail = ['anomaly', 'no_signal'].includes(row.status)
+      ? `${number(row.measurements, 0)} ${t('services.tests')} · ${number(row.anomalies, 0)} ${t('services.anomalies')} · ${escapeHtml(row.lastObservation || '—')} UTC` : '';
+    const sourceLink = detail && row.sourceUrl
+      ? `<a href="${escapeHtml(row.sourceUrl)}" target="_blank" rel="noreferrer">${escapeHtml(t('services.source'))}</a>` : '';
+    return `<div class="service-finding" data-status="${row.status}"><div><strong>${escapeHtml(row.testName)}</strong><span>${escapeHtml(t('services.appTest'))}</span></div><b>${escapeHtml(t(`services.status.${row.status}`))}</b>${detail ? `<small>${detail}</small>` : ''}${sourceLink}</div>`;
+  }).join('');
+}
+
+function renderOoniDomainDetails() {
+  const panel = $('#ooni-domain-details');
+  const domain = state.selectedOoniDomain;
+  panel.classList.toggle('hidden', !domain);
+  if (!domain) return;
+  const payload = state.ooniDomainDetails;
+  $('#ooni-detail-title').textContent = t('ooni.details.title', { domain });
+  $('#ooni-detail-close').textContent = t('ooni.details.close');
+  $('#ooni-detail-note').textContent = t('ooni.details.note');
+  for (const [id, key] of [
+    ['ooni-detail-url-header','url'], ['ooni-detail-outcome-header','outcome'],
+    ['ooni-detail-date-header','date'], ['ooni-detail-evidence-header','evidence'],
+  ]) $(`#${id}`).textContent = t(`ooni.details.${key}`);
+  const rows = payload?.rows || [];
+  const message = state.ooniDomainDetailsError
+    ? t('ooni.details.error', { error: state.ooniDomainDetailsError })
+    : state.ooniDomainDetailsLoading && !rows.length ? t('ooni.details.loading')
+      : rows.length ? [t('ooni.details.count', { count: number(rows.length, 0) }), payload.limitReached ? t('ooni.details.limit') : ''].filter(Boolean).join(' ')
+        : t('ooni.details.empty');
+  $('#ooni-detail-state').textContent = message;
+  $('#ooni-detail-table').innerHTML = rows.map((row) => `<tr><td><span class="ooni-url" dir="ltr" data-i18n-external>${escapeHtml(row.url)}</span></td><td>${escapeHtml(t(`ooni.details.outcome.${row.outcome}`))}</td><td dir="ltr">${escapeHtml(row.timestamp)}</td><td>${row.explorerUrl || row.rawUrl ? `<a href="${escapeHtml(row.explorerUrl || row.rawUrl)}" target="_blank" rel="noreferrer">${escapeHtml(t(row.explorerUrl ? 'ooni.details.uid' : 'ooni.details.raw'))}</a>` : escapeHtml(t('ooni.details.noEvidence'))}</td></tr>`).join('');
+  const more = $('#ooni-detail-more');
+  more.textContent = t('ooni.details.more');
+  more.classList.toggle('hidden', !payload?.hasMore);
+  more.disabled = state.ooniDomainDetailsLoading;
+  const source = $('#ooni-detail-source');
+  source.classList.toggle('hidden', !payload?.sourceUrl);
+  source.textContent = t('ooni.details.source');
+  if (payload?.sourceUrl) source.href = payload.sourceUrl;
+}
+
+async function loadOoniDomainPage(offset = 0) {
+  const domain = state.selectedOoniDomain;
+  const serial = state.requestSerial;
+  const request = ++state.ooniDomainDetailsRequest;
+  state.ooniDomainDetailsLoading = true;
+  state.ooniDomainDetailsError = null;
+  renderOoniDomainDetails();
+  const params = new URLSearchParams(queryString());
+  params.set('domain', domain);
+  params.set('offset', String(offset));
+  try {
+    const payload = await api(`/api/ooni/domain-measurements?${params}`, activeController?.signal);
+    if (serial !== state.requestSerial || request !== state.ooniDomainDetailsRequest || domain !== state.selectedOoniDomain) return;
+    const previous = offset ? state.ooniDomainDetails : null;
+    if (offset && (!previous || previous.offset + previous.pageSize !== offset)) throw new Error('Unexpected OONI pagination state.');
+    const known = new Set((previous?.rows || []).map((row) => row.uid || `${row.url}|${row.timestamp}`));
+    if (payload.rows.some((row) => known.has(row.uid || `${row.url}|${row.timestamp}`))) throw new Error('Repeated OONI URL records across pages.');
+    state.ooniDomainDetails = { ...payload, rows: [...(previous?.rows || []), ...payload.rows] };
+  } catch (error) {
+    if (serial === state.requestSerial && request === state.ooniDomainDetailsRequest && domain === state.selectedOoniDomain && error.name !== 'AbortError') state.ooniDomainDetailsError = error.message;
+  } finally {
+    if (request === state.ooniDomainDetailsRequest) {
+      state.ooniDomainDetailsLoading = false;
+      renderOoniDomainDetails();
+    }
+  }
+}
+
+async function loadOoniDomains(serial, signal) {
+  state.ooniDomains = null;
+  renderOoniDomains();
+  if ($('#test-select').value !== 'web_connectivity') return;
+  try {
+    const payload = await api(`/api/ooni/domains?${queryString()}`, signal);
+    if (serial === state.requestSerial) {
+      state.ooniDomains = payload;
+      renderOoniDomains();
+    }
+  } catch (error) {
+    if (serial === state.requestSerial && error.name !== 'AbortError') {
+      state.ooniDomains = { ok: false, error: error.message };
+      renderOoniDomains();
+    }
+  }
+}
+
 
 function renderOverview(overview) {
   state.overview = overview;
@@ -523,6 +685,7 @@ function renderCircumvention(payload) {
   if (!payload?.ok) {
     $('#circumvention-state').textContent = 'Source error';
     $('#circumvention-table').innerHTML = `<tr><td colspan="5" class="table-empty">${escapeHtml(payload?.error || 'Circumvention signals unavailable.')}</td></tr>`;
+    renderServiceFindings();
     return;
   }
   $('#circumvention-state').textContent = `Updated ${ageLabel(payload.fetchedAt)} ago`;
@@ -530,6 +693,7 @@ function renderCircumvention(payload) {
     const status = row.status === 'observed' ? (row.anomalyRate !== null && row.anomalyRate >= 25 ? 'warn' : 'observed') : row.status;
     return `<tr><td><strong>${escapeHtml(row.testName)}</strong></td><td><span class="status-cell ${status}"><i></i>${escapeHtml(row.status)}</span></td><td>${number(row.measurements,0)}</td><td>${row.anomalyRate===null?'—':percent(row.anomalyRate)} <small>(${number(row.anomalies,0)})</small></td><td>${escapeHtml(row.lastObservation || '—')}</td></tr>`;
   }).join('');
+  renderServiceFindings();
 }
 
 async function loadCircumvention(serial, signal) {
@@ -543,9 +707,16 @@ async function loadCircumvention(serial, signal) {
 }
 
 let activeController = null;
+function publishOverview(stateName, assessment = null) {
+  window.dispatchEvent(new CustomEvent('iran-monitor-overview', { detail: { state: stateName, assessment } }));
+}
+
 async function loadAll() {
   const since = $('#since-input').value, until = $('#until-input').value;
   if (!since || !until || since > until) {
+    if (activeController) activeController.abort();
+    ++state.requestSerial;
+    publishOverview('error');
     $('#assessment-label').textContent = 'Invalid date range';
     return;
   }
@@ -553,19 +724,33 @@ async function loadAll() {
   activeController = new AbortController();
   const serial = ++state.requestSerial;
   setLoading(true);
+  publishOverview('loading');
   state.providers = null;
   state.routingUpdates = null;
+  state.ooniDomains = null;
+  state.showAllOoniDomains = false;
+  state.selectedOoniDomain = null;
+  state.ooniDomainDetails = null;
+  state.ooniDomainDetailsError = null;
+  state.ooniDomainDetailsLoading = false;
+  ++state.ooniDomainDetailsRequest;
+  $('#ooni-domain-search').value = '';
+  renderOoniDomains();
+  renderOoniDomainDetails();
   $('#bgp-updates-state').textContent = 'BGP update drilldown not requested.';
   $('#bgp-updates-table').innerHTML = '<tr><td colspan="5" class="table-empty">Load updates for a selected ASN.</td></tr>';
   $('#providers-table').innerHTML = '<tr><td colspan="7" class="table-empty">Provider comparison has not been requested for this filter state.</td></tr>';
+  loadOoniDomains(serial, activeController.signal);
   try {
     const overview = await api(`/api/overview?${queryString()}`, activeController.signal);
     if (serial !== state.requestSerial) return;
+    publishOverview('ready', overview.assessment);
     renderOverview(overview);
     loadCircumvention(serial, activeController.signal);
   } catch (error) {
-    if (error.name !== 'AbortError') {
-      $('#assessment-strip').dataset.severity = 'critical';
+    if (serial === state.requestSerial && error.name !== 'AbortError') {
+      publishOverview('error');
+      $('#assessment-strip').dataset.severity = 'neutral';
       $('#assessment-label').textContent = `Dashboard query failed: ${error.message}`;
       $('#assessment-confidence').textContent = 'NONE';
       $('#ooni-query-state').textContent = 'Query failed';
@@ -758,7 +943,8 @@ async function init() {
     renderSavedRuns();
     await loadAll();
   } catch (error) {
-    $('#assessment-strip').dataset.severity = 'critical';
+    publishOverview('error');
+    $('#assessment-strip').dataset.severity = 'neutral';
     $('#assessment-label').textContent = `Initialization failed: ${error.message}`;
   }
 }
@@ -773,6 +959,41 @@ $('#load-targets').addEventListener('click', loadTargets);
 $('#target-search').addEventListener('keydown', (event) => { if (event.key === 'Enter') { event.preventDefault(); loadTargets(); } });
 $('#target-category').addEventListener('change', loadTargets);
 $('#load-measurements').addEventListener('click', loadMeasurementIds);
+$('#ooni-domain-search').addEventListener('input', renderOoniDomains);
+$('#ooni-domains-more').addEventListener('click', () => { state.showAllOoniDomains = true; renderOoniDomains(); });
+$('#ooni-domains-table').addEventListener('click', (event) => {
+  const button = event.target.closest('button[data-ooni-domain]');
+  if (!button || !$('#ooni-domains-table').contains(button) || !state.ooniDomains?.domains.some((row) => row.domain === button.dataset.ooniDomain)) return;
+  state.selectedOoniDomain = button.dataset.ooniDomain;
+  state.ooniDomainDetails = null;
+  state.ooniDomainDetailsError = null;
+  loadOoniDomainPage();
+});
+$('#ooni-detail-close').addEventListener('click', () => {
+  state.selectedOoniDomain = null;
+  state.ooniDomainDetails = null;
+  ++state.ooniDomainDetailsRequest;
+  renderOoniDomainDetails();
+});
+$('#ooni-detail-more').addEventListener('click', () => {
+  const payload = state.ooniDomainDetails;
+  if (payload?.hasMore && !state.ooniDomainDetailsLoading) loadOoniDomainPage(payload.offset + payload.pageSize);
+});
+window.addEventListener('iran-monitor-languagechange', () => {
+  renderOoniDomains();
+  renderOoniDomainDetails();
+  renderServiceFindings();
+  renderDivergence(state.overview?.assessment);
+});
+$('#service-findings-list').addEventListener('click', (event) => {
+  const button = event.target.closest('button[data-service-domain]');
+  if (!button || !$('#service-findings-list').contains(button) || !state.ooniDomains?.domains.some((row) => row.domain === button.dataset.serviceDomain)) return;
+  state.selectedOoniDomain = button.dataset.serviceDomain;
+  state.ooniDomainDetails = null;
+  state.ooniDomainDetailsError = null;
+  loadOoniDomainPage();
+  $('#ooni-domains-title').scrollIntoView({ behavior: 'smooth' });
+});
 $('#measurement-select').addEventListener('change', loadMeasurementDetail);
 $('#save-vpn-run').addEventListener('click', saveVpnRun);
 $('#vpn-form').addEventListener('input', renderVpnCalculation);

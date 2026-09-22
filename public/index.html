@@ -54,8 +54,12 @@
           <span>Target</span>
           <select id="target-select">
             <option value="">All tested inputs</option>
-            <option value="https://web.whatsapp.com/">WhatsApp Web</option>
             <option value="https://www.instagram.com/">Instagram</option>
+            <option value="https://web.whatsapp.com/">WhatsApp</option>
+            <option value="https://web.telegram.org/">Telegram</option>
+            <option value="https://www.youtube.com/">YouTube</option>
+            <option value="https://x.com/">X (Twitter)</option>
+            <option value="https://www.facebook.com/">Facebook</option>
             <option value="https://signal.org/">Signal</option>
             <option value="https://play.google.com/">Google Play</option>
             <option value="https://1.1.1.1/dns/">Encrypted DNS endpoint</option>
@@ -75,6 +79,18 @@
           <button type="button" data-days="30">30D</button>
           <button type="button" data-historical="2022">Sep 2022</button>
         </div>
+      </section>
+
+      <section id="service-findings" class="service-findings" data-status="pending" aria-live="polite" aria-labelledby="service-findings-title">
+        <div class="service-findings-heading">
+          <div><span class="section-label" id="service-findings-kicker">PRIORITY SERVICES / OONI WEB TESTS</span><h1 id="service-findings-title">Checking tested service domains…</h1></div>
+          <a id="service-findings-source" class="hidden" href="https://api.ooni.io/" target="_blank" rel="noreferrer">OONI source ↗</a>
+        </div>
+        <p id="service-findings-context" class="service-findings-context">Results will be scoped to the selected network and UTC dates. A missing test is not evidence that a service works.</p>
+        <div id="service-findings-list" class="service-findings-list"></div>
+        <h2 id="service-app-title" class="service-app-title">Messaging app tests (separate from websites)</h2>
+        <div id="service-app-tests" class="service-findings-list"></div>
+        <p id="service-findings-boundary" class="service-findings-boundary">Domain groups may contain different tested URLs. Inspect URL records for exact inputs; web tests do not establish app availability or nationwide reachability.</p>
       </section>
 
       <section class="assessment-strip" id="assessment-strip">
@@ -150,6 +166,31 @@
           <p class="panel-note">Anomaly rate is an OONI measurement signal, not a direct percentage of blocked internet traffic. Volume bars show returned measurements per UTC day.</p>
           <div id="ooni-chart" class="chart large-chart empty-chart"><span>No data loaded</span></div>
           <div id="ooni-methods" class="method-chips"></div>
+          <section class="ooni-domain-section" aria-labelledby="ooni-domains-title">
+            <h3 id="ooni-domains-title">Which tested sites are affected?</h3>
+            <p id="ooni-domains-note" class="panel-note">OONI Web Connectivity results for the selected network and period. Confirmed blocking and anomalies are different outcomes; these tests do not cover every website or user.</p>
+            <div class="ooni-domain-controls">
+              <span id="ooni-domains-state" role="status">Waiting for Web Connectivity results</span>
+              <input id="ooni-domain-search" type="search" placeholder="Find a tested domain" aria-label="Find a tested domain" />
+            </div>
+            <div class="table-wrap compact-table-wrap"><table>
+              <thead><tr><th>Tested domain</th><th>Confirmed blocked tests</th><th>Anomalous tests</th><th>All tests</th><th>Last observed (UTC)</th><th>Evidence</th></tr></thead>
+              <tbody id="ooni-domains-table"><tr><td class="table-empty" colspan="6">Waiting for results</td></tr></tbody>
+            </table></div>
+            <button id="ooni-domains-more" class="button hidden" type="button">Show all tested domains</button>
+            <a id="ooni-domains-source" href="https://api.ooni.io/" target="_blank" rel="noreferrer">OONI source ↗</a>
+            <section id="ooni-domain-details" class="ooni-domain-details hidden" aria-labelledby="ooni-detail-title">
+              <div class="ooni-detail-heading"><h4 id="ooni-detail-title"></h4><button id="ooni-detail-close" type="button" class="button"></button></div>
+              <p id="ooni-detail-note" class="panel-note"></p>
+              <p id="ooni-detail-state" role="status"></p>
+              <div class="table-wrap compact-table-wrap"><table>
+                <thead><tr><th id="ooni-detail-url-header"></th><th id="ooni-detail-outcome-header"></th><th id="ooni-detail-date-header"></th><th id="ooni-detail-evidence-header"></th></tr></thead>
+                <tbody id="ooni-detail-table"></tbody>
+              </table></div>
+              <button id="ooni-detail-more" class="button hidden" type="button"></button>
+              <a id="ooni-detail-source" class="hidden" href="https://api.ooni.io/" target="_blank" rel="noreferrer"></a>
+            </section>
+          </section>
         </article>
 
         <article class="panel span-4" id="signals-panel">

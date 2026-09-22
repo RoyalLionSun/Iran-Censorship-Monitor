@@ -133,16 +133,12 @@ function syncAssessmentStrip(assessment = lastAssessment) {
   if (assessment !== lastAssessment) lastAssessment = assessment || null;
   const current = lastAssessment;
   if (!current) return;
-  const sourceCount = current.publicSummary?.sourceCount
-    ?? current.supportingSources?.length
-    ?? current.availableSources?.length
-    ?? 0;
+  const sourceCount = current.availableSources?.length ?? 0;
   const sourceElement = document.querySelector('#assessment-sources');
   if (sourceElement) sourceElement.textContent = String(sourceCount);
   const confidenceElement = document.querySelector('#assessment-confidence');
   if (confidenceElement) {
-    const confidence = current.confidence || 'none';
-    confidenceElement.textContent = getLanguage() === 'fa' ? t(`confidence.${confidence}`) : String(confidence).toUpperCase();
+    confidenceElement.textContent = t('interpretation.hero.perFinding');
   }
 }
 

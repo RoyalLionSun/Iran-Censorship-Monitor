@@ -185,7 +185,9 @@ function renderOverviewContext(overview) {
   contextState.overview = overview;
   renderMlab(overview.mlab);
   renderApnic(overview.apnic);
-  renderSourceFamilyCount(overview);
+  // v1.9 owns the header when the source-health contract is present. The
+  // legacy context view must not overwrite reachability with a data count.
+  if (!overview.assessment?.sourceHealth?.summary) renderSourceFamilyCount(overview);
   const button = document.querySelector('#export-context-button');
   if (button) button.disabled = false;
 }

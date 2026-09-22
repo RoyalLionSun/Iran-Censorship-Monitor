@@ -86,28 +86,43 @@ const sourceHealth = {
   ],
 };
 
+const evidence = {
+  connectivity: [{ source:'IODA', state:'observed', metric:'events', value:2 }, { source:'Cloudflare Radar', state:'observed', metric:'events', value:1 }],
+  interference: [{ source:'OONI', state:'observed', metric:'measurements', value:120 }, { source:'OONI', state:'observed', metric:'anomaly-rate', value:42.5 }, { source:'OONI', state:'observed', metric:'confirmed', value:0 }, { source:'Censored Planet', state:'partial', metric:'events', value:null }],
+  routing: [{ source:'RIPEstat / RIPE RIS', state:'observed', metric:'visibility-percent', value:99.7 }, { source:'RIPEstat / RIPE RIS', state:'observed', metric:'peers-seeing', value:325 }],
+  quality: [{ source:'RIPE Atlas', state:'no-data', metric:'probes', value:7 }, { source:'RIPE Atlas', state:'no-data', metric:'samples', value:0 }],
+};
 const assessment = {
-  status: 'corroborated', severity: 'critical', confidence: 'high', scope: 'Iran / all measured networks', availableSources: ['OONI', 'Censored Planet', 'IODA'], sourceHealth,
-  channels: {
-    interference: { status:'corroborated', sourceCount:2, availableSources:['OONI','Censored Planet'] },
-    connectivity: { status:'elevated', sourceCount:1, availableSources:['IODA'] },
-  },
-  publicSummary: {
-    severity: 'critical', confidence: 'high', sourceCount: 3, scope: 'Iran / all measured networks',
-    headlineKey: 'situation.headline.corroborated', meaningKey: 'situation.meaning.corroborated', caveatKey: 'situation.caveat.corroborated',
-    completeShutdownVerdict: 'not-established', nationwideImpactVerdict: 'not-established', sourceHealth: sourceHealth.summary,
-    channels: {
-      interference: { status:'corroborated', sourceCount:2, availableSources:['OONI','Censored Planet'] },
-      connectivity: { status:'elevated', sourceCount:1, availableSources:['IODA'] },
+  status: 'dimension-specific', severity: 'neutral', confidence: 'per-finding', scope: 'Iran / all measured networks',
+  availableSources: ['OONI', 'IODA', 'Cloudflare Radar', 'RIPEstat / RIPE RIS'], sourceHealth,
+  methodologicalBoundary: 'Severity, confidence, verification, coverage and attribution are evaluated per claim. Signals from different dimensions are not merged into proof of one common disruption or censorship cause.',
+  interpretation: {
+    schemaVersion: 1,
+    scope: 'Iran / all measured networks',
+    summary: { state:'access-and-connectivity-signals', evidenceMode:'per-finding', shutdownState:'not-established', routingState:'routes-visible' },
+    dimensions: {
+      connectivity: { id:'connectivity', state:'disruption-signals', severity:'unknown', confidence:'low', verification:'signal', coverage:'adequate', availableSources:['IODA','Cloudflare Radar'], supportingSources:['IODA','Cloudflare Radar'], evidence:evidence.connectivity, limitationKey:'interpretation.connectivity.limit' },
+      interference: { id:'interference', state:'interference-signals', severity:'unknown', confidence:'low', verification:'signal', coverage:'limited', availableSources:['OONI'], supportingSources:['OONI'], evidence:evidence.interference, limitationKey:'interpretation.interference.limit' },
+      routing: { id:'routing', state:'routes-visible', severity:'unknown', confidence:'medium', verification:'signal', coverage:'limited', availableSources:['RIPEstat / RIPE RIS'], supportingSources:['RIPEstat / RIPE RIS'], evidence:evidence.routing, limitationKey:'interpretation.routing.limit' },
+      quality: { id:'quality', state:'insufficient-data', severity:'unknown', confidence:'none', verification:'not-established', coverage:'none', availableSources:[], supportingSources:[], evidence:evidence.quality, limitationKey:'interpretation.quality.limit' },
+      shutdown: { id:'shutdown', state:'not-established', severity:'unknown', confidence:'none', verification:'not-established', coverage:'none', availableSources:['IODA','Cloudflare Radar'], supportingSources:[], evidence:[], limitationKey:'interpretation.shutdown.limit' },
     },
-    drivers: [{ source: 'OONI', dimension:'interference', state: 'elevated', value: 42.5, unit: '% anomalies' }],
-    controlDataPlane: { messageKey: 'situation.controlDataPlane.divergence' },
+    attribution: { state:'unknown', evidence:[] },
+    findings: [
+      { id:'interference-signals', dimension:'interference', state:'signal', evidence:evidence.interference },
+      { id:'connectivity-events', dimension:'connectivity', state:'signal', evidence:evidence.connectivity },
+      { id:'routing-visible', dimension:'routing', state:'observed', evidence:evidence.routing },
+      { id:'quality-unknown', dimension:'quality', state:'unknown', evidence:evidence.quality },
+      { id:'shutdown-not-established', dimension:'shutdown', state:'not-established', evidence:[] },
+    ],
+    unknowns: ['complete-nationwide-shutdown','target-blocking','affected-services','connection-quality','cause-and-intent'],
   },
 };
 
 const fixture = `<!doctype html><html lang="en"><head><meta charset="utf-8"><link rel="stylesheet" href="/styles.css"></head><body>
 <header class="topbar"><div class="brand"><div><strong>Iran Censorship Monitor</strong><small>Measurement & censorship signals</small></div></div><div class="topbar-meta"><span id="header-source-state" class="source-state">Sources pending</span></div><div class="topbar-actions"><button id="refresh-button">Refresh</button><button>Export CSV</button><button>Print</button></div></header>
 <main>
+<section class="filterbar"></section>
 <section id="assessment-strip"><span>MEASUREMENT ASSESSMENT</span><b>Load measurements to assess the selected scope.</b></section>
 <section class="kpi-grid"><article><span>OONI anomaly rate</span></article><article><span>BGP visibility</span></article></section>
 <article class="panel" id="ooni-panel"><header class="panel-header"><h2>Measurement anomalies over time</h2></header><p class="panel-note">Anomaly rate is an OONI measurement signal, not a direct percentage of blocked internet traffic. Volume bars show returned measurements per UTC day.</p></article>
@@ -133,8 +148,30 @@ const fixture = `<!doctype html><html lang="en"><head><meta charset="utf-8"><lin
 await import('/v18-situation.js');
 await import('/v19-runtime.js');
 await import('/v18-i18n-ui.js');
-await window.fetch('/api/overview?fixture=1');
+const fixtureResponse = await window.fetch('/api/overview?fixture=1');
+const fixturePayload = await fixtureResponse.json();
+window.dispatchEvent(new CustomEvent('iran-monitor-overview', { detail: { state: 'ready', assessment: fixturePayload.assessment } }));
 await new Promise((resolve) => setTimeout(resolve, 100));
+document.body.dataset.overviewReady = document.querySelector('.interpretation-grid')?.children.length === 4 &&
+  document.querySelector('#overview-view')?.getAttribute('aria-busy') === 'false' ? 'yes' : 'no';
+window.dispatchEvent(new CustomEvent('iran-monitor-overview', { detail: { state: 'error', assessment: null } }));
+document.body.dataset.overviewError = /Measurements could not be loaded/.test(document.querySelector('#situation-headline')?.textContent || '') &&
+  document.querySelector('#interpretation-dimensions')?.hidden && document.querySelector('.overview-lower-grid')?.hidden ? 'yes' : 'no';
+window.dispatchEvent(new CustomEvent('iran-monitor-overview', { detail: { state: 'ready', assessment: { publicSummary: {} } } }));
+document.body.dataset.overviewIncompatible = /cannot evaluate this response/.test(document.querySelector('#situation-headline')?.textContent || '') &&
+  document.querySelector('#evidence-overview')?.hidden ? 'yes' : 'no';
+window.dispatchEvent(new CustomEvent('iran-monitor-overview', { detail: { state: 'ready', assessment: fixturePayload.assessment } }));
+document.body.dataset.overviewRecovered = document.querySelector('.interpretation-grid')?.children.length === 4 &&
+  !document.querySelector('#interpretation-dimensions')?.hidden ? 'yes' : 'no';
+const overviewView = document.querySelector('#overview-view');
+const technicalView = document.querySelector('#technical-view');
+const technicalButton = document.querySelector('[data-dashboard-view="technical"]');
+const overviewButton = document.querySelector('[data-dashboard-view="overview"]');
+const initialViewValid = !overviewView.hidden && technicalView.hidden;
+technicalButton.click();
+const technicalViewValid = overviewView.hidden && !technicalView.hidden && technicalView.contains(document.querySelector('#assessment-strip')) && technicalView.contains(document.querySelector('.kpi-grid'));
+overviewButton.click();
+document.body.dataset.viewSwitch = initialViewValid && !overviewView.hidden && technicalView.hidden && technicalViewValid ? 'yes' : 'no';
 const fa = document.querySelector('[data-lang="fa"]');
 fa.click();
 await new Promise((resolve) => setTimeout(resolve, 100));
@@ -154,8 +191,8 @@ document.body.dataset.faRuntimeDynamic = /[\u0600-\u06FF]/.test(document.querySe
 document.body.dataset.faRuntimeRouting = /[\u0600-\u06FF]/.test(document.querySelector('#runtime-routing')?.textContent || '') && document.querySelector('#runtime-routing')?.textContent.includes('AS58224') && document.querySelector('#runtime-routing')?.textContent.includes('L2') ? 'yes' : 'no';
 document.body.dataset.faRuntimeBridge = /[\u0600-\u06FF]/.test(document.querySelector('#runtime-bridge')?.textContent || '') && document.querySelector('#runtime-bridge')?.textContent.includes('19,300') ? 'yes' : 'no';
 document.body.dataset.faLegend = /[\u0600-\u06FF]/.test(document.querySelector('.status-legend')?.textContent || '') ? 'yes' : 'no';
-document.body.dataset.faChannels = /[\u0600-\u06FF]/.test(document.querySelector('.situation-channels')?.textContent || '') ? 'yes' : 'no';
-document.body.dataset.faSourceHealth = /آداپتور/.test(document.querySelector('#header-source-state')?.textContent || '') && document.querySelector('#header-source-state')?.textContent.includes('8/8') ? 'yes' : 'no';
+document.body.dataset.faChannels = /[\u0600-\u06FF]/.test(document.querySelector('.interpretation-grid')?.textContent || '') ? 'yes' : 'no';
+document.body.dataset.faSourceHealth = /منبع داده در دسترس/.test(document.querySelector('#header-source-state')?.textContent || '') && /۸ از ۸|8 از 8/.test(document.querySelector('#header-source-state')?.textContent || '') ? 'yes' : 'no';
 document.body.dataset.faBodyReadable = parseFloat(faBodyStyle.fontSize) >= 16 && /Tahoma|Segoe UI|Noto Sans Arabic|Noto Naskh Arabic/.test(faBodyStyle.fontFamily) ? 'yes' : 'no';
 document.body.dataset.faButtonReadable = parseFloat(faButtonStyle.fontSize) >= 12 && !/Consolas|Liberation Mono|monospace/i.test(faButtonStyle.fontFamily) ? 'yes' : 'no';
 document.body.dataset.faNoteReadable = parseFloat(faNoteStyle.fontSize) >= 13 ? 'yes' : 'no';
@@ -169,7 +206,7 @@ document.body.dataset.enKpi = document.querySelector('.kpi-grid')?.textContent.i
 document.body.dataset.enRuntimeRestored = document.querySelector('#runtime-dynamic')?.textContent === '7 rows · 3 days' && document.querySelector('#runtime-assessment')?.textContent === 'No corroborated major disruption signal' ? 'yes' : 'no';
 document.body.dataset.enRuntimeBridgeRestored = document.querySelector('#runtime-bridge')?.textContent === '19,300 bridge users \u00b7 direct estimate shown above' ? 'yes' : 'no';
 document.body.dataset.enLegend = document.querySelector('#status-legend-ok')?.textContent === 'Green: available and usable' ? 'yes' : 'no';
-document.body.dataset.enSourceHealth = document.querySelector('#header-source-state')?.textContent.includes('8/8 source adapters reachable') ? 'yes' : 'no';
+document.body.dataset.enSourceHealth = document.querySelector('#header-source-state')?.textContent.includes('8 of 8 data sources available') ? 'yes' : 'no';
 document.body.dataset.enBodyReadable = parseFloat(getComputedStyle(document.body).fontSize) >= 15 ? 'yes' : 'no';
 fa.click();
 await new Promise((resolve) => setTimeout(resolve, 80));
@@ -207,8 +244,9 @@ try {
     'data-fa-runtime-status="yes"', 'data-fa-runtime-dynamic="yes"', 'data-fa-runtime-routing="yes"', 'data-fa-runtime-bridge="yes"', 'data-fa-legend="yes"', 'data-fa-channels="yes"',
     'data-fa-source-health="yes"', 'data-fa-body-readable="yes"', 'data-fa-button-readable="yes"', 'data-fa-note-readable="yes"',
     'data-tech-ltr="ltr"', 'data-external-preserved="yes"', 'data-en-dir="ltr"', 'data-en-kpi="yes"', 'data-en-runtime-restored="yes"', 'data-en-runtime-bridge-restored="yes"', 'data-en-legend="yes"',
-    'data-en-source-health="yes"', 'data-en-body-readable="yes"', 'data-persisted="fa"', 'id="language-switch"',
-    'وضعیت فعلی اینترنت — ایران', 'این چه معنایی دارد', 'AS58224 · 2.144.0.0/13'
+    'data-en-source-health="yes"', 'data-en-body-readable="yes"', 'data-persisted="fa"', 'data-view-switch="yes"', 'id="language-switch"',
+    'data-overview-ready="yes"', 'data-overview-error="yes"', 'data-overview-incompatible="yes"', 'data-overview-recovered="yes"',
+    'این برای شما چه معنایی دارد', 'این چه معنایی دارد', 'AS58224 · 2.144.0.0/13'
   ];
   const missing = required.filter((needle) => !stdout.includes(needle));
   if (missing.length) throw new Error(`i18n browser gate missing: ${missing.join(', ')}`);
