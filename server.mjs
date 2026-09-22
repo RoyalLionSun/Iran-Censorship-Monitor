@@ -5,7 +5,7 @@ import { extname, join, normalize, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildAssessment } from './lib/assessment.mjs';
 import { errorPayload, jsonResponse, mapLimit, normalizeAsn, validateRange } from './lib/common.mjs';
-import { getCircumventionSignals, getOoniDomainMeasurements, getOoniDomains, getOoniMeasurementDetail, getOoniTimeline, listOoniMeasurements, OONI_TESTS } from './lib/ooni.mjs';
+import { getCircumventionSignals, getOoniDomainMeasurements, getOoniDomains, getOoniMeasurementDetail, getOoniTimeline, getOoniVantage, listOoniMeasurements, OONI_TESTS } from './lib/ooni.mjs';
 import { getRipeSignals } from './lib/ripe.mjs';
 import { getRadarSignals } from './lib/radar.mjs';
 import { getIodaSignals } from './lib/ioda.mjs';
@@ -17,7 +17,7 @@ import { compareAsnIdentity, getAsnRegistryIdentity } from './lib/asn-registry.m
 import { readAsnCoverageSnapshot } from './lib/asn-coverage-snapshot.mjs';
 import { authorizeGlobalpingControl, createGlobalpingMeasurement, getGlobalpingIranProbes, getGlobalpingMeasurement, globalpingRateLimit } from './lib/globalping.mjs';
 import { getCensoredPlanetSignals } from './lib/censoredplanet.mjs';
-import { selectionBrand } from './public/service-findings.js';
+import { selectionBrand, summarizeServiceBrands } from './public/service-findings.js';
 import { getCitizenLabIranTargets } from './lib/citizenlab.mjs';
 import { getPeeringDbTopology } from './lib/peeringdb.mjs';
 import { getIhrDependencies } from './lib/ihr.mjs';
@@ -216,8 +216,13 @@ async function handleApi(req, res, url) {
       input.testName === 'web_connectivity' ? safeSource('OONI domains', () => getOoniDomains(ooniScope(input))) : Promise.resolve(null),
       safeSource('OONI circumvention', () => getCircumventionSignals(input)),
     ]);
+    // For an explicit service selection, sample how many independent measurement runs and
+    // days stand behind the finding that the Overview reports.
+    const focus = ooniDomains?.ok ? summarizeServiceBrands(ooniDomains, circumvention, input).visible[0] : null;
+    const vantageDomain = (input.serviceId || input.target) && focus?.web?.measurements > 0 ? focus.web.domain : null;
+    const ooniVantage = vantageDomain ? await safeSource('OONI coverage sample', () => getOoniVantage(ooniScope(input), vantageDomain)) : null;
     const scopeLabel = input.asn ? `${input.asn} / Iran` : 'Iran / all measured networks';
-    const assessment = buildAssessment({ ooni, ripe, radar, ioda, ripestat, censoredPlanet, tor, mlab, apnic, globalping, peeringdb, ihr, asrank, rpki, pulse, ooniDomains, circumvention, selection: input, scopeLabel });
+    const assessment = buildAssessment({ ooni, ripe, radar, ioda, ripestat, censoredPlanet, tor, mlab, apnic, globalping, peeringdb, ihr, asrank, rpki, pulse, ooniDomains, circumvention, ooniVantage, selection: input, scopeLabel });
     const asnProfile = input.asn ? asns.find((item) => item.asn === input.asn) || null : null;
     jsonResponse(res, 200, { ok: true, input, asnProfile, fetchedAt: new Date().toISOString(), assessment, ooni, ripe, radar, ioda, tor, mlab, apnic, ripestat, globalping, censoredPlanet, peeringdb, ihr, asrank, rpki, pulse });
     return true;

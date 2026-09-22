@@ -230,7 +230,22 @@ function channelLine(channel, kind) {
   return `<li data-channel-status="${escapeHtml(status)}">${escapeHtml(t(key, variables))}</li>`;
 }
 
-function renderServiceTiles(services) {
+function windowDays(selection) {
+  const since = Date.parse(`${selection?.since ?? ''}T00:00:00Z`);
+  const until = Date.parse(`${selection?.until ?? ''}T00:00:00Z`);
+  if (!Number.isFinite(since) || !Number.isFinite(until) || until < since) return null;
+  return Math.floor((until - since) / 86_400_000) + 1;
+}
+
+// Coverage is part of the claim: 400 tests on one day are not 400 tests across a week.
+function coverageLine(item, selection) {
+  const days = item?.web?.observedDays ?? 0;
+  const window = windowDays(selection);
+  if (!days || !window) return '';
+  return `<li class="tile-coverage">${escapeHtml(t('board.coverage.days', { days: formatNumber(days), window: formatNumber(window) }))}</li>`;
+}
+
+function renderServiceTiles(services, selection) {
   if (!services) return '';
   const items = services.visible ?? services.items;
   const title = services.scoped ? t('board.services.selected') : t('board.services.title');
@@ -241,7 +256,7 @@ function renderServiceTiles(services) {
         <article class="service-tile" data-status="${escapeHtml(item.status)}">
           <div class="service-tile-head"><span class="status-mark" aria-hidden="true"></span><h3 class="${item.id === 'selected-target' ? 'technical-ltr' : ''}">${escapeHtml(brandName(item.id, services))}</h3></div>
           <b class="service-tile-status">${escapeHtml(t(`board.status.${item.status}`))}</b>
-          <ul>${channelLine(item.web, 'web')}${channelLine(item.app, 'app')}</ul>
+          <ul>${channelLine(item.web, 'web')}${channelLine(item.app, 'app')}${coverageLine(item, selection)}</ul>
         </article>`).join('')}
       </div>` : `<p class="service-board-empty">${escapeHtml(t('board.services.noneInSelection'))}</p>`}
     </section>`;
@@ -288,7 +303,7 @@ function renderHero(interpretation) {
       <h1 id="situation-headline">${escapeHtml(headlineText(summary, interpretation.services))}</h1>
       <p class="situation-lede">${escapeHtml(ledeText(interpretation))}</p>
     </header>
-    ${renderServiceTiles(interpretation.services)}
+    ${renderServiceTiles(interpretation.services, selection)}
     ${statusRow(interpretation)}`;
 }
 
@@ -310,6 +325,15 @@ function meaningSentences(interpretation) {
     : connection === 'none' ? t('meaning.connection.noOutage')
       : connection === 'signals' ? plural('meaning.connection.signals', dimensions.connectivity.eventCount ?? 0)
         : t(`meaning.connection.${connection}`));
+  const vantage = services?.vantage;
+  if (vantage?.runs) {
+    const window = windowDays(interpretation.selection);
+    sentences.push(t(vantage.bounded ? 'meaning.vantage.atLeast' : 'meaning.vantage.exact', {
+      runs: formatNumber(vantage.runs),
+      days: formatNumber(vantage.observedDays),
+      window: window ? formatNumber(window) : formatNumber(vantage.observedDays),
+    }));
+  }
   sentences.push(t('meaning.basis'));
   return sentences;
 }

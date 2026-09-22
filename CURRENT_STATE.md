@@ -24,6 +24,7 @@ Package version: **`1.8.0` intentionally unchanged**
 - country-level Censored Planet results no longer cover or support claims about a selected ASN, target or non-web test;
 - current-window RIPEstat routing uses the stable latest-snapshot lookup, and RIPEstat `query_time` is read as UTC; a cold historical routing lookup can still exceed the 12 s request timeout;
 - the Overview holds three blocks for non-technical readers (situation board, what this means for you, open questions); the per-claim assessment, per-website details, findings and coverage matrix live in Technical analysis;
+- service claims state their coverage: measured days per service, plus the independent measurement runs behind an explicitly selected service;
 - a selection means a service and covers all of its hosts plus its app test, so the Overview cannot contradict itself for a selected service;
 - the Overview opens with a plain-language situation board: headline naming confirmed blocked services, six service tiles (website and app separate) and a status row for connection, test connections, global routing and complete shutdown;
 - Censored Planet, RIPE Atlas and APNIC deliver data again after fixes for an upstream country-code change, an upstream response-format change and a too-short connect attempt window;

@@ -76,6 +76,12 @@
 - the status row drops the routing tile for lay readers; routing stays in the technical assessment;
 - a single unavailable side source is no longer displayed in alarm red.
 
+### Coverage behind a finding (2026-09-22)
+
+- service tiles state the measured days ("Measured on 7 of 7 days"), so a week of testing is no longer indistinguishable from a single day;
+- an explicit service selection additionally samples the independent measurement runs behind the finding and reports a full sample as a floor;
+- OONI domain aggregation carries `observedDays`; a fully qualified domain with a trailing root dot is accepted instead of rejected.
+
 ## 1.8.0 — 2026-09-10
 
 ### Plain-language current situation

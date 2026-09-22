@@ -163,6 +163,10 @@ The following invariants are executable regression assertions:
 - Website and app results are separate channels. A website result never stands in for app availability, and the reverse.
 - Brand status: `blocked` when a channel has OONI-confirmed blocking; `restricted` when a channel only has anomalies (blocking not confirmed); `reachable` when tested without anomalies; `unclear` when tests only failed; otherwise `untested`, `unavailable` or `out-of-scope`. Missing or failed data never becomes `reachable`.
 
+### Coverage of a service claim
+
+OONI deliberately publishes no stable probe identity, so a claim's coverage is expressed in units that can be counted honestly: the **measured days** a domain group was tested on (from the daily aggregation, complete for the window) and, for an explicit service selection, the **independent measurement runs** behind the finding (distinct `report_id` in a bounded sample of the most recent records). A full sample is reported as a floor ("at least N"), never as a total, and neither number is presented as a count of people, devices or probes.
+
 `summary.headline` selects the first-screen statement in this order: established nationwide shutdown; source-native `widespread`/`severe` connectivity impact; confirmed blocked services (named); unconfirmed service problems (named); generic connectivity events; `no-problems-detected` only when every tested service is reachable and connectivity has adequate no-event coverage; otherwise `limited-evidence`. When services were tested, the open unknown becomes `other-services` instead of `affected-services`.
 
 ## Presentation order

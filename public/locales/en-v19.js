@@ -359,4 +359,7 @@ export default Object.freeze({
   'meaning.connection.unknown': 'Whether the connection itself is disrupted cannot be determined from the available data.',
   'meaning.basis': 'These results come from volunteers running OONI Probe in this network. They describe the tested services at the tested times, not every user, app or website.',
   'board.openTechnical': 'See the technical assessment',
+  'board.coverage.days': 'Measured on {days} of {window} days',
+  'meaning.vantage.exact': 'This rests on {runs} independent measurement runs, spread over {days} of {window} days.',
+  'meaning.vantage.atLeast': 'This rests on at least {runs} independent measurement runs; only the most recent records are counted, which covered {days} days.',
 });

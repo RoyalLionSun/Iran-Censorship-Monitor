@@ -71,6 +71,7 @@ Plain-language Overview and source reliability, same day:
 - CAIDA ASRank `/links` returns HTTP 500 for every ASN (checked AS3356, AS15169, AS58224). The adapter keeps reporting `partial`; no value is invented.
 - Farsi review: 38 sentences that began with a Latin word were rewritten to start with Persian; labels and section titles were left unchanged. `tests/i18n-coverage.test.mjs` now fails if a Persian sentence starts with a Latin word.
 - Selection review with live data (AS58224, AS197207, AS44244): selecting Facebook returns "Facebook is blocked · confirmed in 217 of 422 tests" instead of the previous "not tested"; WhatsApp returns website "not tested" plus app "problems in 287 of 402 tests"; Google Play returns its own measured rows; a Tor selection no longer reports WhatsApp findings.
+- Coverage sampling, live check (`AS58224`, `2026-09-16..2026-09-22`): www.instagram.com reports 426 measurements across 7 of 7 days, and the bounded sample of the 200 most recent records contains 190 distinct measurement runs over 4 days, so the run count is published as a floor. play.google.com returns 8 runs over 6 days as a complete count.
 - Slow historical routing lookup, live check (`AS58224`, `2026-08-20..2026-08-27`): the first request returned after 12 s with `routingRetryInProgress: true` and a routing dimension marked pending; the background revalidation then filled the cache.
 
 No commit, push, tag or GitHub CI result is claimed for this working state.

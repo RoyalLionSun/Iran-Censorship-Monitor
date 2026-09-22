@@ -35,7 +35,8 @@ function webRow(payload, { name, domain }, selection = {}) {
             : measured.ok > 0 ? 'no_signal' : 'inconclusive';
   return { name, domain, status, measurements: measured?.measurements ?? 0,
     confirmed: measured?.confirmed ?? 0, anomalous: measured?.anomalous ?? 0,
-    failures: measured?.failures ?? 0, lastObserved: measured?.lastObserved ?? null };
+    failures: measured?.failures ?? 0, observedDays: measured?.observedDays ?? 0,
+    lastObserved: measured?.lastObserved ?? null };
 }
 
 export function summarizeServiceFindings(payload, selection = {}) {
@@ -137,7 +138,8 @@ export function summarizeServiceBrands(domainPayload, appPayload, selection = {}
     const strongest = strongestWebRow(webRows.filter((row) => brand.domains.includes(row.domain)));
     const web = strongest ? {
       status: strongest.status, domain: strongest.domain, measurements: strongest.measurements,
-      confirmed: strongest.confirmed, anomalous: strongest.anomalous, lastObserved: strongest.lastObserved,
+      confirmed: strongest.confirmed, anomalous: strongest.anomalous,
+      observedDays: strongest.observedDays, lastObserved: strongest.lastObserved,
     } : null;
     const appRow = brand.app ? appRows.find((row) => row.testName === brand.app) : null;
     const app = appRow ? {
