@@ -1,6 +1,6 @@
 # Architecture
 
-Last verified: **2026-09-10**
+Last verified: **2026-09-12**
 
 ## Design goal
 
@@ -29,7 +29,7 @@ Node.js HTTP server (server.mjs)
   |      +--> PeeringDB
   |      +--> Internet Health Report
   |      +--> Internet Society Pulse (token gated, selected-window context)
-  |      \--> assessment from approved technical corroboration inputs only
+  |      \--> claim-based interpretation + source-health/technical observations
   |
   +--> /api/circumvention       --> OONI Tor/Psiphon/Signal/WhatsApp/Telegram
   +--> /api/routing-updates     --> bounded RIPEstat BGP update drilldown
@@ -55,7 +55,7 @@ Operator process (not started by server)
 
 ## Browser composition
 
-`public/app.js` is a small loader. The established dashboard application remains in `public/app-core.js`. `public/v11-context.js` adds the M-Lab/APNIC/STOP presentation and context export.
+`public/app.js` is a small loader. The established dashboard application remains in `public/app-core.js`. `public/v11-context.js` adds the M-Lab/APNIC/STOP presentation and context export. `public/v18-situation.js` composes the unreleased v1.9 default Overview and moves the established source cards, charts and drill-down into the Technical analysis view without refetching data.
 
 The v1.1 context layer observes/clones the same successful same-origin API responses used by the core application rather than issuing a second set of upstream source requests. This keeps presentation additions separate from the assessment logic and avoids duplicate source load.
 
@@ -93,7 +93,15 @@ These labels are architectural boundaries, not confidence rankings.
 
 ## Assessment model
 
-`lib/assessment.mjs` combines only source observations explicitly approved for disruption corroboration. Existing inputs include OONI, RIPE Atlas, IODA and eligible Cloudflare Radar observations, with RIPEstat used for the separate control/data-plane divergence analysis.
+`lib/interpretation.mjs` is the public interpretation contract. It evaluates connectivity, interference, routing, quality and shutdown claims separately. Each claim has independent severity, confidence, verification and coverage fields; attribution is a separate object. The summary deliberately has no global severity and no numeric health score.
+
+`lib/assessment.mjs` retains source observations, source health and the bounded control-/data-plane comparison for technical compatibility, then exposes the claim model as `assessment.interpretation`. It no longer merges OONI, RIPE, IODA or Radar into a global critical/corroborated state. Coverage currently uses eligible source-family counts within a dimension, but does not prove per-event time, scope or evidence-lineage alignment. Confidence and verification therefore do not promote multi-source event claims automatically. Counts never increase severity.
+
+The real `index.html` → `app.js` → `app-core.js` loading path emits a direct overview lifecycle event. Missing/legacy `assessment.interpretation` and failed requests show explicit EN/FA error states instead of an indefinite loading screen. Browser verification has a dedicated real-app deterministic gate in addition to the older presentation fixtures. A Node.js process that predates changed server-side module files must be restarted to load the new interpretation contract; a static-JS refresh alone cannot update cached server modules. Automatic nationwide shutdown establishment is disabled pending per-incident time, scope and lineage verification.
+
+IODA and generic Radar event counts are observations, not impact values. Only suitable source-native impact/scope metadata may determine connectivity severity. OONI source-native confirmation confirms only the measured blocking claim. Censored Planet `partial` data remains visible but is excluded from automatic support/confidence; only fully `observed` results are eligible. Missing data never becomes a normal state.
+
+The complete normative contract, including the five axes, shutdown requirements and negative-claim coverage rule, is in [INTERPRETATION.md](INTERPRETATION.md).
 
 The following are intentionally **not** additional independent censorship votes:
 
@@ -121,6 +129,8 @@ STOP may cite OONI, Radar, IODA or other sensors already present. The adapter th
 - RIPE Atlas probe discovery follows pagination with a safety cap.
 - RIPE Atlas daily history uses one `ping-stats` request per selected probe with bounded concurrency because the live service currently rejects multi-probe requests with HTTP 400.
 - RIPE Atlas `partial` coverage remains visible but is excluded from automatic corroboration/divergence decisions.
+- Historical RIPEstat routing-status requests include the selected-window timestamp; returned alignment is exposed as `aligned`, `latest` or `unknown`.
+- Unknown BGP time alignment lowers routing confidence and suppresses control-/data-plane divergence.
 - RIPEstat BGP update drilldown is limited to the final 48 hours and 250 records and exposes historical horizon limitations.
 - M-Lab requests use only Iran country or Iran+selected-ASN aggregate paths.
 - APNIC requests use Iran economy or Iran+selected-ASN IPv6 datasets; raw sample counts are retained.

@@ -2,7 +2,8 @@
 
 Iran-focused censorship-intelligence dashboard for technical measurements, routing/control-plane state, data-plane performance, protocol and circumvention context, ASN topology/inventory, and curated shutdown/OSINT evidence.
 
-**Release line:** `v1.8.0`  
+**Working line:** unreleased `v1.9` UX/interpretation redesign (`package.json` intentionally remains `1.8.0`)
+
 **Production branch:** `main`
 
 The application does **not** fabricate monitoring values or convert missing access into positive/negative observations. `no_data`, `partial`, `token_required`, rate-limited and hard-error states remain explicit. Contextual reports never become independent technical sensor votes merely because they cite or repeat underlying measurements.
@@ -21,6 +22,16 @@ The application does **not** fabricate monitoring values or convert missing acce
 - **ASN identity/inventory:** reviewed registry-qualified catalogue + RIPE/RIR country inventory + optional ipverse enrichment;
 - **targets:** Citizen Lab Iran list;
 - **shutdown/OSINT:** Internet Society Pulse + Access Now #KeepItOn STOP + curated/GDELT discovery.
+
+## Unreleased v1.9 — claim-based interpretation
+
+The v1.9 working line replaces the single global disruption ladder with a claim-based interpretation contract. It evaluates **general connectivity**, **websites/filtering**, **routing**, **connection quality** and **shutdown status** separately. Severity, confidence, verification, coverage and attribution are independent axes; evidence from different dimensions is never merged into a generic critical state or censorship conclusion.
+
+The default **Overview** answers what is happening, what it may mean for users, what was actually observed and what remains unknown. **Technical analysis** retains the source measurements, charts and raw detail. Source-health colors continue to describe data availability only, never disruption severity.
+
+Historical RIPEstat routing lookups are now aligned to the selected time window. BGP visibility remains a routing observation and never becomes proof of website or end-user reachability. IODA/Radar event counts are observations, not impact scores. Tor remains circumvention context rather than an Internet-health indicator.
+
+The exact contract is documented in [INTERPRETATION.md](INTERPRETATION.md). This line is not yet released, committed or version-bumped.
 
 ## v1.8.0 — current situation and English/Farsi UX
 
@@ -101,6 +112,9 @@ The large ipverse world dataset is intentionally not downloaded by routine GitHu
 14. NIN-vs-global claims require reviewed target classes and paired same-probe observations.
 15. Active Globalping remains disabled by default.
 16. `deploymentAuthorized:false` remains authoritative.
+17. Severity, confidence, verification, coverage and attribution are evaluated per claim and never collapsed into a global score.
+18. Source count may increase confidence only for the same time-/scope-aligned claim; it never increases severity.
+19. Missing, partial, stale or unavailable data never implies a normal state.
 
 ## Requirements
 
@@ -148,6 +162,7 @@ Both are separate bounded operator processes and remain control-plane context on
 
 - [CURRENT_STATE.md](CURRENT_STATE.md)
 - [ARCHITECTURE.md](ARCHITECTURE.md)
+- [INTERPRETATION.md](INTERPRETATION.md)
 - [DATA_SOURCES.md](DATA_SOURCES.md)
 - [ASN_COVERAGE_RUNTIME.md](ASN_COVERAGE_RUNTIME.md)
 - [SHUTDOWN_CONTEXT.md](SHUTDOWN_CONTEXT.md)

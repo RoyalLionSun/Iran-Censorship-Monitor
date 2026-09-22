@@ -1,4 +1,83 @@
-# Verification Report — v1.6.0 release candidate
+# Verification Report
+
+## Unreleased v1.9 UX/interpretation working state
+
+Date: **2026-09-12**
+
+Basis: **`main` at `21938941e7b5e2da3f4fee55eb744879be1f76aa`**
+
+Package version: **`1.8.0` intentionally unchanged**
+
+Completed deterministic coverage includes:
+
+- cross-dimension observations cannot become a global critical verdict;
+- source-family counts alone cannot increase confidence or verification for positive claims without per-incident alignment;
+- IODA event count cannot determine severity or create control-/data-plane divergence;
+- only source-native broad Radar scope can provide broad connectivity impact in the current adapter contract;
+- OONI confirmation remains bound to the selected measurement scope;
+- partial Censored Planet and ineligible Radar results cannot improve support/confidence;
+- one quiet source is insufficient for a normal claim;
+- RIPE probes with zero samples keep quality unknown;
+- historical RIPEstat routing URLs include the selected end timestamp; current-window requests use the stable latest-snapshot URL (see the 2026-09-22 follow-up);
+- unknown BGP time alignment reduces confidence and suppresses divergence;
+- BGP visibility remains a routing-only finding;
+- automatic nationwide shutdown establishment is disabled until per-incident place/time/root evidence is verified; Pulse verification remains contextual;
+- attribution remains unknown without an established incident and curated cause context;
+- interpretation summaries contain neither a global score nor global severity.
+
+Cross-platform working-state results:
+
+- `npm run check`: **324/324 passed**;
+- targeted interpretation/routing suite: **26/26 passed**;
+- `npm run build`: **passed**;
+- `npm run verify:release-notes`: **passed** for the unchanged stable package line `v1.8.0`;
+- local production runtime smoke: **passed** (`/api/health` and `/` successful; ASN coverage remained `no_data`/zero-vote; missing path and traversal attempt returned 404);
+- committed-token/private-key/local-`.env` scan: **passed**;
+- baseline comparison whitespace gate (`git diff --no-index --check`, excluding generated/dependency trees): **passed with no findings**;
+- `npm run verify:ui`: **passed** with a Chromium-based browser, including the established presentation fixture and the EN → FA/RTL → EN interpretation/view-switch fixture;
+- live public-source acceptance: **passed** for `2026-08-30..2026-09-12`, `AS58224`;
+
+One pre-hotfix wrapper run reported 323/324 deterministic tests without retaining the failing assertion. An immediate direct rerun passed 324/324, and the final post-hotfix full check again passed 324/324. No deterministic failure was reproduced. The browser gate initially identified the missing stable `#situation-headline` hook; the hook was restored, added to the UI contract test and the complete browser gate then passed.
+
+### 2026-09-13 runtime and interpretation safety follow-up
+
+The earlier browser pass covered presentation fixtures, not the real app loading an old backend payload. The reported screenshot and `/api/overview` diagnostic established a long-running Node server with cached pre-change modules: the newly served client needed `assessment.interpretation`, while the running backend returned `assessment.publicSummary`. The client now visibly reports incompatible/failed responses, and a new deterministic browser gate runs the **real** `index.html` + `app.js` path against valid, legacy and HTTP-error API fixtures. Automatic nationwide-shutdown establishment was disabled after a regional Pulse plus other mismatched events could incorrectly yield a nationwide claim.
+
+- `npm run check` **328/328 passed**, `npm run build` **passed**, `npm run verify:release-notes` **passed**.
+- The new browser gate and modified EN/FA browser fixture were **not** run in this round: no compatible browser was available. Earlier browser passes do not certify these new edits.
+- Only a controlled restart of the running application process after applying the fix can clear the cached server modules; verify the API contract after restart. No commit, push, tag or release was performed.
+
+### 2026-09-22 follow-up: service findings, scope and routing fixes
+
+Line endings were normalized to LF (as stored in the repository) and pinned with `.gitattributes`; no content changed through that step.
+
+- Integrated the OONI service findings (priority service domains, per-domain table with bounded URL drilldown, separate WhatsApp/Telegram app tests) from the 2026-09-20 selective integration. Routine circumvention monitoring now actually uses `OONI_ROUTINE_TESTS`; the legacy Signal test remains a manual selection only. Web targets for Facebook, Instagram, X/Twitter, Telegram Web and YouTube were added to the target selection.
+- Censored Planet is queried for Iran as a whole. It no longer counts toward coverage or support of a claim about a selected ASN, target or non-web test; the server default selection is AS58224, so this affected the default view.
+- RIPEstat `routing-status` with a per-request "now" timestamp was never served from the upstream cache and took about 18–35 s, exceeding the 12 s request timeout; current windows lost routing entirely. Current windows now use the stable latest-snapshot URL. RIPEstat `query_time` carries no zone designator and was parsed as local time, which turned correct historical alignments into `unknown` on non-UTC machines; it is now parsed as UTC.
+
+Results in this working state:
+
+- `npm run check`: **349/349 passed**; `npm run build`: **passed**; `npm run verify:release-notes`: **passed** (`v1.8.0`).
+- `npm run verify:ui`: **passed** with headless Chrome (disposable profile) via `CHROME_BIN`, including the real-app Overview gate (ready, legacy and error responses) and the EN/FA/RTL fixture.
+- Live public sources, `AS58224`, `2026-09-15..2026-09-22`: `/api/overview` answered in 4.6 s; routing `routes-visible` (324/325 RIS peers), alignment `latest`; interference `blocking-confirmed-in-measurements` from OONI only, Censored Planet marked out of scope; `/api/ooni/domains` returned 2,704 domains / 49,707 measurements; service findings showed confirmed blocking for www.facebook.com, www.instagram.com, x.com, twitter.com, telegram.org and www.youtube.com; routine circumvention requests were tor, psiphon, whatsapp and telegram. APNIC returned 404 from both endpoints (upstream).
+- Open: a historical window (`2026-09-04..2026-09-10`) still exceeded the 12 s timeout on the first, uncached RIPEstat lookup; routing then reports insufficient data rather than a result.
+
+Plain-language Overview and source reliability, same day:
+
+- Cold-cache timing of all 17 overview sources (two runs, `AS58224`, `2026-09-16..2026-09-22`): every source answered within 5 s. Persistent defects found and fixed: Censored Planet rejected the country name `Iran` (now `IR`); RIPE Atlas ping-stats changed to a single-probe object format (now parsed: 9/9 probes, 44,520 pings, 2 % loss, 18.6 ms); APNIC failed with ETIMEDOUT because Node allowed only 250 ms per connect attempt on a host without IPv6 (now 2.5 s; fallback endpoint delivers). The APNIC per-ASN primary directory no longer exists upstream; the fallback is used. CAIDA ASRank `links` returned HTTP 500 (upstream).
+- After the fixes the live header reported 13/13 source adapters reachable.
+- `npm run check`: **359/359 passed**; `npm run build`: **passed**; `npm run verify:release-notes`: **passed**; `npm run verify:ui`: **passed** (real-app gate now asserts the situation board headline, six service tiles and status row).
+- Live screenshots checked in English and Farsi (RTL, Persian digits and calendar) at 1440 px and at 500 px width.
+- CAIDA ASRank `/links` returns HTTP 500 for every ASN (checked AS3356, AS15169, AS58224). The adapter keeps reporting `partial`; no value is invented.
+- Farsi review: 38 sentences that began with a Latin word were rewritten to start with Persian; labels and section titles were left unchanged. `tests/i18n-coverage.test.mjs` now fails if a Persian sentence starts with a Latin word.
+- Selection review with live data (AS58224, AS197207, AS44244): selecting Facebook returns "Facebook is blocked · confirmed in 217 of 422 tests" instead of the previous "not tested"; WhatsApp returns website "not tested" plus app "problems in 287 of 402 tests"; Google Play returns its own measured rows; a Tor selection no longer reports WhatsApp findings.
+- Slow historical routing lookup, live check (`AS58224`, `2026-08-20..2026-08-27`): the first request returned after 12 s with `routingRetryInProgress: true` and a routing dimension marked pending; the background revalidation then filled the cache.
+
+No commit, push, tag or GitHub CI result is claimed for this working state.
+
+---
+
+## Historical v1.6.0 release-candidate report
 
 Date: **2026-09-10**  
 Release line: **v1.6.0**  

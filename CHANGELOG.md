@@ -1,5 +1,81 @@
 # Changelog
 
+## Unreleased — v1.9 UX/interpretation redesign
+
+### Claim-based interpretation
+
+- replaced the global `status/severity/confidence` ladder with separate connectivity, interference, routing, quality and shutdown claims;
+- made severity, confidence, verification, coverage and attribution independent per-claim axes with no global numeric health score;
+- prevented cross-dimension evidence, source counts and IODA/Radar event counts from increasing disruption severity or proving censorship;
+- limited OONI `confirmed` to the measured blocking claim and kept cause, intent and actor attribution separate;
+- kept partial Censored Planet results visible while excluding them from automatic support/confidence;
+- required adequate relevant coverage before any no-disruption/no-interference finding; missing data remains explicitly unknown;
+- disabled automatic nationwide-shutdown establishment after finding that event labels alone did not establish time, scope or root-evidence alignment; Pulse verification remains separate analyst context.
+- stopped raising positive-claim confidence/verification merely because two source families report events within one selected window; per-incident alignment remains future work.
+
+### Runtime compatibility and browser coverage
+
+- removed the v1.9 overview fetch interceptor and wired the real app loader directly to Overview and source health;
+- made old-backend responses and request failures visible instead of leaving an empty or indefinitely loading Overview;
+- added a real-app browser gate for valid, legacy and failed API responses alongside the existing fixtures;
+- removed a legacy source-health header overwrite and kept query failures neutral rather than marking them as critical incidents.
+
+### User-facing hierarchy
+
+- added a default Overview with a plain-language headline, user impact, four distinct question-oriented status areas, current findings, explicit unknowns and evidence/coverage;
+- separated Overview from Technical analysis without removing the existing charts, raw measurements, source status or drill-down;
+- retained source-health colors exclusively for data availability/usability rather than incident severity;
+- added paired English/Farsi strings and direction-safe rendering for every new controlled interpretation surface.
+
+### Routing time alignment and verification
+
+- aligned RIPEstat routing-status requests to the selected historical window and exposed alignment state;
+- suppressed control-/data-plane divergence when routing time alignment is unknown;
+- stopped describing BGP visibility as control-plane health and stopped treating generic IODA/Radar event counts as severe data-plane impact;
+- replaced legacy assessment regression expectations with claim-boundary, missing-data, shutdown, partial-source and time-alignment tests;
+- before the runtime compatibility changes, passed the 324/324 deterministic suite, production build, browser presentation and EN/FA/RTL fixtures, and live public-source acceptance for `2026-08-30..2026-09-12` / `AS58224`; the additional real-app browser gate still needs a browser run;
+- restored and regression-tested the stable `#situation-headline` DOM hook required by the browser presentation contract;
+- kept `package.json` at `1.8.0`; no v1.9 release, tag or deployment authorization is created by this working change.
+
+### Service findings and scope fixes (2026-09-22)
+
+- integrated OONI service findings: priority service domains on the first screen, a per-domain Web Connectivity table with a bounded, on-demand URL drilldown, and WhatsApp/Telegram app tests shown separately from website results;
+- routine circumvention monitoring now requests only `OONI_ROUTINE_TESTS`; the legacy Signal test stays available as a manual selection;
+- added Facebook, Instagram, X/Twitter, Telegram Web and YouTube web targets to the target selection;
+- country-level Censored Planet results no longer count toward coverage or support for a selected ASN, target or non-web test;
+- current-window RIPEstat routing lookups use the stable latest-snapshot URL instead of a per-request timestamp that exceeded the request timeout; RIPEstat `query_time` is parsed as UTC;
+- normalized line endings to LF and added `.gitattributes`;
+- passed 349/349 deterministic tests, production build, release-notes gate, `verify:ui` with headless Chrome and a live public-source run for `AS58224`.
+
+### Plain-language Overview and source reliability (2026-09-22)
+
+- the Overview now opens with a situation board for non-technical readers: a headline that names confirmed blocked services, six service tiles (website and app shown separately), and a status row for internet connection, test connections, global routing and complete shutdown;
+- added `services`, `summary.headline` and `summary.latestObservation` to the interpretation; `/api/overview` queries the OONI domain aggregation and app tests for this;
+- the "affected services" unknown is replaced by "other services" once services were tested, removing a contradiction with the service results;
+- finding metrics are labelled (`OONI · measurements: 44,091` instead of `OONI: 44,091`);
+- per-website test details moved into the Overview below the assessment cards;
+- Censored Planet requests use the `IR` country code; the API had started rejecting `Iran`, so every response was partial;
+- RIPE Atlas ping-stats reads the current single-probe object format; connection quality was reported as unmeasured although all probes delivered data;
+- Node's 250 ms per-address connect attempt is raised to 2.5 s; APNIC (Australia) failed with ETIMEDOUT on hosts without IPv6;
+- 359/359 deterministic tests, build, release-notes gate and `verify:ui` pass.
+
+### Farsi readability and slow-source handling (2026-09-22)
+
+- Farsi sentences no longer start with a Latin word, which reversed their reading order; a locale test now enforces this for every Persian sentence;
+- the header age value is isolated inside the Persian sentence, so `<1 min` is no longer rendered as `min 1>`;
+- a routing lookup that exceeds the request timeout is revalidated in the background and cached; the Overview says the lookup is still being fetched instead of reporting no data;
+- source-health wording is plain: `12 of 13 data sources available · 11 delivered data · 1 not answering`.
+
+### Overview for non-technical readers (2026-09-22)
+
+- a selection now means the service, not one hostname: selecting Facebook no longer reported "not tested" while the same page reported Facebook as blocked, and WhatsApp/Telegram selections include their app test;
+- the target filter offers each service exactly once instead of per-host duplicates; a contract test keeps it that way;
+- unrelated app findings can no longer drive the headline of a website selection, and a selected test without a service tile (Tor, Psiphon, DNS) gets its own headline;
+- the Overview is reduced to three blocks: situation board, "What this means for you" in plain sentences, and the open questions for the current selection;
+- assessment cards, findings, evidence matrix and per-website test details moved to Technical analysis, removing the fourfold repetition of the same numbers;
+- the status row drops the routing tile for lay readers; routing stays in the technical assessment;
+- a single unavailable side source is no longer displayed in alarm red.
+
 ## 1.8.0 — 2026-09-10
 
 ### Plain-language current situation

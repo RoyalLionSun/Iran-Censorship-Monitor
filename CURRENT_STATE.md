@@ -1,4 +1,44 @@
-# Current State — v1.8.0 release line
+# Current State — unreleased v1.9 UX/interpretation work
+
+Date: **2026-09-22**
+
+Implementation basis: **`main` at `21938941e7b5e2da3f4fee55eb744879be1f76aa`**
+
+Intended working branch: **`feat/v1.9-ux-interpretation`** (not present on the remote at analysis time)
+
+Package version: **`1.8.0` intentionally unchanged**
+
+## Working state
+
+- the former global disruption ladder is replaced by the claim-based contract in `lib/interpretation.mjs`;
+- connectivity, websites/filtering, routing, connection quality and shutdown are assessed separately;
+- severity, confidence, verification, coverage and attribution are separate axes;
+- source counts and raw IODA/Radar event counts cannot increase severity;
+- missing/partial/unavailable data cannot become a normal state;
+- historical RIPEstat routing lookups are aligned to the selected window and unknown alignment suppresses divergence;
+- the default Overview presents user impact, four question-oriented areas, findings, unknowns and evidence/coverage;
+- the former dashboard remains available under Technical analysis;
+- all new controlled presentation is paired EN/FA with RTL/LTR handling;
+- Censored Planet partial observations remain visible but cannot support automatic confidence;
+- OONI service findings are integrated: priority service domains, a per-domain table with bounded URL drilldown and separate WhatsApp/Telegram app tests; routine circumvention monitoring no longer requests Signal;
+- country-level Censored Planet results no longer cover or support claims about a selected ASN, target or non-web test;
+- current-window RIPEstat routing uses the stable latest-snapshot lookup, and RIPEstat `query_time` is read as UTC; a cold historical routing lookup can still exceed the 12 s request timeout;
+- the Overview holds three blocks for non-technical readers (situation board, what this means for you, open questions); the per-claim assessment, per-website details, findings and coverage matrix live in Technical analysis;
+- a selection means a service and covers all of its hosts plus its app test, so the Overview cannot contradict itself for a selected service;
+- the Overview opens with a plain-language situation board: headline naming confirmed blocked services, six service tiles (website and app separate) and a status row for connection, test connections, global routing and complete shutdown;
+- Censored Planet, RIPE Atlas and APNIC deliver data again after fixes for an upstream country-code change, an upstream response-format change and a too-short connect attempt window;
+- the deterministic suite passes **359/359 tests**; build and release-notes gate pass;
+- `npm run verify:ui`, including the real-app Overview gate and the EN/FA/RTL fixture, passes with headless Chrome; live public sources were checked for `AS58224`, `2026-09-15..2026-09-22`;
+- the earlier screenshot was caused by an old long-lived server process returning `publicSummary` while the newly served Overview expected `assessment.interpretation`; static assets and server modules were out of sync;
+- automatic nationwide shutdown establishment is disabled pending per-incident time/scope/root-evidence verification;
+- line endings are LF and pinned by `.gitattributes`;
+- no commit, push, release, tag or deployment authorization has been made for this working state.
+
+The exact model is documented in [INTERPRETATION.md](INTERPRETATION.md). Validation results for this uncommitted state are recorded at the top of [VERIFICATION.md](VERIFICATION.md).
+
+---
+
+## Historical v1.8.0 release-line record
 
 Date: **2026-09-10**  
 Current release line: **`v1.8.0`**  

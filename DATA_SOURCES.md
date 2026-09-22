@@ -1,17 +1,18 @@
 # Data Sources
 
-Last reviewed: **2026-09-10**  
-Release source set: **v1.6.0**
+Last reviewed: **2026-09-12**
+
+Implementation basis: **unreleased v1.9 interpretation work; package remains 1.8.0**
 
 Presence in the runtime does not make a source an independent censorship sensor. Measurement, data-plane, performance/protocol, routing/control-plane, topology, circumvention, inventory and curated/OSINT context remain separate evidence dimensions.
 
 | Source | Access | Runtime role | Assessment role |
 |---|---|---|---|
-| OONI | Public API | censorship/application measurements | eligible technical signal |
-| Censored Planet | Public GraphQL | remote interference + CenAlert | investigation/technical context |
-| RIPE Atlas | Public API | active-probe RTT/loss | eligible data-plane signal with sufficient coverage |
-| IODA | Public API | connectivity/outage signals | eligible data-plane signal |
-| Cloudflare Radar | Radar Read token | traffic/outages/anomalies/BGP/protocol mix | only where explicitly permitted |
+| OONI | Public API | censorship/application measurements | interference claim; source-native confirmation remains measurement-scoped |
+| Censored Planet | Public GraphQL | remote interference + CenAlert | observed data may support an interference claim; partial data is visible but excluded |
+| RIPE Atlas | Public API | active-probe RTT/loss | bounded path/quality evidence with usable samples; not national connectivity severity |
+| IODA | Public API | connectivity/outage signals | connectivity claim; event count is not severity |
+| Cloudflare Radar | Radar Read token | traffic/outages/anomalies/BGP/protocol mix | eligible connectivity claim only when required channels are valid; source-native scope may describe impact |
 | RIPEstat / RIPE RIS / RPKI | Public API | BGP visibility/prefix/neighbour/update + route-origin authorization | control-plane / route-integrity context |
 | RIPE RIS Live | Public stream | passive announcements/withdrawals | control-plane context only |
 | Route Views via CAIDA BGPStream | Public broker + `bgpreader` | second passive routing collector | control-plane context only |
@@ -33,15 +34,15 @@ Presence in the runtime does not make a source an independent censorship sensor.
 
 ### OONI / Censored Planet
 
-An anomaly, failed control or remote interference signal is an investigation input, not automatic proof of censorship. Website reachability is not reinterpreted as WireGuard/OpenVPN/V2Ray/Outline transport evidence.
+An anomaly, failed control or remote interference signal is an investigation input, not automatic proof of censorship. OONI `confirmed` can confirm blocking only for the measured target/test/network scope. Fully observed Censored Planet results may support the same broad interference hypothesis; partial responses cannot raise automatic confidence. Website reachability is not reinterpreted as WireGuard/OpenVPN/V2Ray/Outline transport evidence.
 
 ### RIPE Atlas / IODA / Radar
 
-RIPE Atlas preserves per-probe coverage; partial coverage remains visible and is not promoted to national confirmation. IODA and Radar provide connectivity/traffic context without establishing political intent. Radar credentials remain server-side.
+RIPE Atlas preserves per-probe coverage; zero samples remain unknown and partial coverage is not promoted to national confirmation. IODA and Radar provide connectivity observations without establishing filtering, political intent or actor. Counts of IODA/Radar events never determine severity. Radar source-native national/regional/network scope may determine impact only when its outage/anomaly channels satisfy the eligibility contract. Radar credentials remain server-side.
 
 ### RIPE / routing / RPKI
 
-BGP visibility, prefixes, neighbours, announcements, withdrawals and RPKI states are control-plane/route-integrity evidence. They do not prove working end-user Internet or censorship intent. BGPStream is an access/normalization framework, not itself another sensor; Route Views and RIPE observations keep their root provenance.
+BGP visibility, prefixes, neighbours, announcements, withdrawals and RPKI states are control-plane/route-integrity evidence. Historical routing status is requested for the selected time window; unknown time alignment limits confidence and cannot produce control-/data-plane divergence. Visibility does not prove working end-user Internet or censorship intent. BGPStream is an access/normalization framework, not itself another sensor; Route Views and RIPE observations keep their root provenance.
 
 ### ASN identity / inventory — included from v1.5 development
 
@@ -55,7 +56,7 @@ M-Lab and APNIC preserve sample/coverage context. Performance or protocol variat
 
 ### Tor / BridgeDB
 
-Iran Tor transport observations remain published lower/upper estimate bounds; exact users are not invented. Directional change is supported only where paired intervals do not overlap. BridgeDB demand is global and explicitly not Iran-specific. These sources remain context only.
+Iran Tor transport observations remain published lower/upper estimate bounds; exact users are not invented. Directional change is supported only where paired intervals do not overlap. BridgeDB demand is global and explicitly not Iran-specific. These sources remain context only and are never rendered as an Internet-health status.
 
 ### STOP ↔ Pulse — v1.6
 
@@ -74,6 +75,8 @@ GDELT is discovery context, not a technical measurement source. Citizen Lab supp
 ## Source admission rule
 
 A continuous source must have identifiable root provenance, stable supported machine-readable access, Iran-relevant scope, explicit sample/coverage semantics, explicit no-data/failure behavior, an interpretable relationship to the claimed dimension and an independence/overlap review. Unsupported scraping or duplicate provenance stays absent/contextual rather than being promoted to a sensor.
+
+Independent roots may improve confidence only when they support the same claim over compatible scope and time. They never raise severity merely by being counted. A quiet or unavailable source does not corroborate a positive claim. See [INTERPRETATION.md](INTERPRETATION.md).
 
 ## Failure behavior
 
