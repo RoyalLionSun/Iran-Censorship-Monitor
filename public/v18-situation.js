@@ -366,6 +366,36 @@ function renderAccess(services, selection) {
     </section>`;
 }
 
+// Privileged access is reported by journalists and researchers, not measurable here. It stays
+// in its own block, with every statement tied to its source and date.
+const PRIVILEGED_SOURCES = {
+  filterwatchApr: 'https://filter.watch/english/2026/04/20/nvestigative-report-april-2026-from-the-open-internet-to-internet-sovereignty/',
+  cnn: 'https://www.cnn.com/2026/05/10/middleeast/iran-internet-pro-blackout-access-vpn-intl',
+  filterwatchNov: 'https://filter.watch/english/2025/11/24/investigative-report-november-2025-revealing-the-depth-of-digital-discrimination/',
+  wikipedia: 'https://en.wikipedia.org/wiki/White_SIM_Card',
+  ban: 'https://thenewregion.com/posts/3922',
+};
+
+function sourceLinks(keys) {
+  return keys.map((key) => `<a href="${escapeHtml(PRIVILEGED_SOURCES[key])}" target="_blank" rel="noreferrer">${escapeHtml(t(`board.privileged.source.${key}`))}</a>`).join(' · ');
+}
+
+function renderPrivileged() {
+  const items = [
+    ['internetPro', ['filterwatchApr']],
+    ['price', ['cnn']],
+    ['services', ['filterwatchApr']],
+    ['whiteSim', ['filterwatchNov', 'wikipedia']],
+    ['ban', ['ban']],
+  ];
+  return `
+    <section class="privileged-board" aria-labelledby="privileged-title">
+      <header><h2 id="privileged-title">${escapeHtml(t('board.privileged.title'))}</h2><p>${escapeHtml(t('board.privileged.note'))}</p></header>
+      <ul>${items.map(([key, sources]) => `<li>${escapeHtml(t(`board.privileged.${key}`))} <small>${sourceLinks(sources)}</small></li>`).join('')}</ul>
+      <p class="privileged-limit">${escapeHtml(t('board.privileged.limit'))}</p>
+    </section>`;
+}
+
 function renderServiceTiles(services, selection, connectivity = null) {
   if (!services) return '';
   const items = services.visible ?? services.items;
@@ -612,6 +642,7 @@ function renderHero(interpretation) {
     </header>
     ${renderServiceTiles(interpretation.services, selection, interpretation.dimensions.connectivity)}
     ${renderAccess(interpretation.services, selection)}
+    ${renderPrivileged()}
     ${statusRow(interpretation)}
     ${renderOutageTraffic(interpretation)}`;
   bindOutageChart(hero, interpretation);

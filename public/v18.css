@@ -80,6 +80,14 @@ tr[data-level="blocked"] .access-level b { color: var(--status-blocked); }
 .access-unmeasured p { margin: 6px 0 0; }
 .access-unmeasured a { color: var(--text-soft); }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* Reported, not measured: set apart from the measurements by a dashed edge. */
+.privileged-board { padding: 12px 14px; border: 1px dashed var(--border-strong); border-radius: 8px; }
+.privileged-board header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }
+.privileged-board h2 { margin: 0; font-size: 13px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--text-soft); }
+.privileged-board header p, .privileged-limit { margin: 0; color: var(--muted); font-size: 12.5px; }
+.privileged-board ul { margin: 8px 0; padding-inline-start: 18px; display: grid; gap: 5px; font-size: 13.5px; color: var(--text-soft); }
+.privileged-board small { color: var(--muted); }
+.privileged-board a { color: var(--muted); text-decoration: underline; text-underline-offset: 2px; }
 .status-row { margin: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .status-row > div { --row: var(--status-unknown); min-width: 0; padding: 11px 13px; border: 1px solid var(--border); border-inline-start: 4px solid var(--row); border-radius: 8px; background: rgba(11,16,23,.42); }
 .status-row > div[data-status="ok"] { --row: var(--status-reachable); }
