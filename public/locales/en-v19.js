@@ -381,4 +381,8 @@ export default Object.freeze({
   'meaning.networks.blocked': 'Across Iran, {service} was confirmed blocked in {blocked} of {measured} networks that were measured in this period.',
   'meaning.networks.restricted': 'Across Iran, {service} showed problems in {restricted} of {measured} networks that were measured in this period.',
   'meaning.networks.reachable': 'In {reachable} of them {service} was still reachable in the tests, so the picture is not the same everywhere.',
+  'board.shutdown.missingAccess': 'Cannot be confirmed here: the Internet Society Pulse access is not configured',
+  'board.kicker.stale': 'LAST KNOWN SITUATION',
+  'board.stale.since': 'source unavailable, last successful data {date} UTC',
+  'board.services.staleNote': 'Last known state: the OONI source is currently unavailable, so these results are not current.',
 });

@@ -84,6 +84,10 @@ Attribution is separate from verification:
 
 Technical measurements never infer political intent by themselves. The current implementation emits only `unknown` or a narrowly scoped `reported` state.
 
+## Last known state
+
+When a source fails or rate-limits the dashboard, its last successful answer for the same scope is returned with `status: 'stale'` and the time it was fetched. Stale data is history: it never supports a current claim, never counts toward coverage, and its numbers are not shown as current evidence. The service tiles keep showing the last known state, the Overview headline is introduced as `LAST KNOWN SITUATION`, and the scope line names the source outage together with the time of the last successful data. Nothing is presented as fresh that is not.
+
 ## Missing-data contract
 
 | Source state | Interpretation behavior |

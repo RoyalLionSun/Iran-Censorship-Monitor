@@ -381,4 +381,8 @@ export default Object.freeze({
   'meaning.networks.blocked': 'در سراسر ایران، مسدود بودن {service} در {blocked} از {measured} شبکه‌ای که در این بازه اندازه‌گیری شدند تأیید شد.',
   'meaning.networks.restricted': 'در سراسر ایران، {service} در {restricted} از {measured} شبکه‌ای که در این بازه اندازه‌گیری شدند مشکل نشان داد.',
   'meaning.networks.reachable': 'در {reachable} شبکه از آن‌ها {service} در آزمون‌ها همچنان در دسترس بود، بنابراین وضعیت همه‌جا یکسان نیست.',
+  'board.shutdown.missingAccess': 'در اینجا قابل تأیید نیست: دسترسی Internet Society Pulse پیکربندی نشده است',
+  'board.kicker.stale': 'آخرین وضعیت شناخته‌شده',
+  'board.stale.since': 'منبع در دسترس نیست، آخرین داده موفق {date} به وقت UTC',
+  'board.services.staleNote': 'آخرین وضعیت شناخته‌شده: منبع OONI اکنون در دسترس نیست، بنابراین این نتایج به‌روز نیستند.',
 });

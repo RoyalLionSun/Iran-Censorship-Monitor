@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import net from 'node:net';
-import { CONNECT_ATTEMPT_TIMEOUT_MS, fetchJson, inclusiveDays, normalizeAsn, prefetchJson, validateRange } from '../lib/common.mjs';
+import { CONNECT_ATTEMPT_TIMEOUT_MS, createLastGoodStore, fetchJson, inclusiveDays, normalizeAsn, prefetchJson, validateRange } from '../lib/common.mjs';
 
 test('ASN normalization', () => {
   assert.equal(normalizeAsn('58224'), 'AS58224');
@@ -41,4 +41,26 @@ test('background revalidation fills the shared cache once and is not repeated wh
   assert.equal(calls, 1);
   assert.deepEqual(await fetchJson(url, { cacheTtlMs: 60_000 }), { value: 1 }, 'the next request is served from cache');
   assert.equal(calls, 1);
+});
+
+test('a failed source falls back to its last successful answer, marked as history', () => {
+  const store = createLastGoodStore({ limit: 2 });
+  assert.equal(store.stale('ooni|AS58224'), null, 'without a remembered answer there is nothing to show');
+
+  store.remember('ooni|AS58224', { ok: true, status: 'observed', totalMeasurements: 426, fetchedAt: '2026-09-23T08:00:00.000Z' });
+  const stale = store.stale('ooni|AS58224', new Error('429 quota exceeded'));
+  assert.equal(stale.status, 'stale', 'the fallback can never be presented as current');
+  assert.equal(stale.stale, true);
+  assert.equal(stale.totalMeasurements, 426);
+  assert.equal(stale.staleSince, '2026-09-23T08:00:00.000Z');
+  assert.match(stale.staleReason, /quota exceeded/);
+
+  store.remember('ooni|AS44244', { ok: false, error: 'failed' });
+  assert.equal(store.stale('ooni|AS44244'), null, 'a failed answer is never remembered');
+
+  store.remember('a', { ok: true, status: 'observed' });
+  store.remember('b', { ok: true, status: 'observed' });
+  store.remember('c', { ok: true, status: 'observed' });
+  assert.equal(store.size(), 2, 'the store stays bounded');
+  assert.equal(store.stale('a'), null, 'the oldest entry is dropped first');
 });

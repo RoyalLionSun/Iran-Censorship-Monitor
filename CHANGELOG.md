@@ -89,6 +89,12 @@
 - the mechanism comes from the OONI blocking type and confirmed block fingerprints, is only counted for measurements that actually have a finding, and an unspecified mechanism is never presented as one;
 - the evidence samples for the affected services run in one parallel round, which kept the cold Overview at about 14 s and a warm one at 2.6 s.
 
+### Last known state and missing shutdown access (2026-09-23)
+
+- a source that fails or rate-limits the dashboard falls back to its last successful answer for the same scope, marked `stale` with the time it was fetched, bounded to 120 remembered scopes;
+- stale data stays visible as the last known state but cannot support a current claim, cannot count toward coverage and shows no current values; the Overview marks it as `LAST KNOWN SITUATION` and names the outage in the scope line;
+- the shutdown tile now names the missing Internet Society Pulse access instead of leaving a generic caveat, and the setup files document how to request it.
+
 ### Historical robustness (2026-09-23)
 
 - a tested input that is not a plain host name (`128.31.0.39:9131`, `doh.seby.io:8443`, `varzesh`) is skipped and counted instead of discarding the whole window; five such rows had blinded the dashboard for September 2022;

@@ -4,7 +4,7 @@ import { createReadStream, existsSync } from 'node:fs';
 import { extname, join, normalize, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildAssessment } from './lib/assessment.mjs';
-import { errorPayload, jsonResponse, mapLimit, normalizeAsn, validateRange } from './lib/common.mjs';
+import { createLastGoodStore, errorPayload, jsonResponse, mapLimit, normalizeAsn, validateRange } from './lib/common.mjs';
 import { getCircumventionSignals, getOoniDomainMeasurements, getOoniDomains, getOoniMeasurementDetail, getOoniNetworks, getOoniTimeline, getOoniSample, listOoniMeasurements, OONI_TESTS } from './lib/ooni.mjs';
 import { getRipeSignals } from './lib/ripe.mjs';
 import { getRadarConnectionQuality, getRadarSignals } from './lib/radar.mjs';
@@ -100,11 +100,18 @@ function ooniScope(input) {
   return input.serviceId ? { ...input, target: '' } : input;
 }
 
-async function safeSource(name, work) {
+const lastGoodSources = createLastGoodStore();
+
+function sourceKey(name, input) {
+  return [name, input.asn || 'ALL', input.since, input.until, input.testName || '', input.target || ''].join('|');
+}
+
+async function safeSource(name, work, key = null) {
   try {
-    return await work();
+    return lastGoodSources.remember(key, await work());
   } catch (error) {
-    return errorPayload(error, name);
+    // A failing source falls back to its last successful answer, marked as history.
+    return lastGoodSources.stale(key, error) ?? errorPayload(error, name);
   }
 }
 
@@ -197,25 +204,25 @@ async function handleApi(req, res, url) {
   if (url.pathname === '/api/overview') {
     const input = queryInput(url);
     const [ooni, ripe, radar, radarQuality, ioda, tor, mlab, apnic, ripestat, globalping, censoredPlanet, peeringdb, ihr, asrank, rpki, pulse, ooniDomains, circumvention] = await Promise.all([
-      safeSource('OONI', () => getOoniTimeline(ooniScope(input))),
-      safeSource('RIPE Atlas', () => getRipeSignals(input)),
-      safeSource('Cloudflare Radar', () => getRadarSignals(input)),
-      safeSource('Cloudflare Radar quality', () => getRadarConnectionQuality(input)),
-      safeSource('IODA', () => getIodaSignals(input)),
+      safeSource('OONI', () => getOoniTimeline(ooniScope(input)), sourceKey('OONI', input)),
+      safeSource('RIPE Atlas', () => getRipeSignals(input), sourceKey('RIPE Atlas', input)),
+      safeSource('Cloudflare Radar', () => getRadarSignals(input), sourceKey('Cloudflare Radar', input)),
+      safeSource('Cloudflare Radar quality', () => getRadarConnectionQuality(input), sourceKey('Cloudflare Radar quality', input)),
+      safeSource('IODA', () => getIodaSignals(input), sourceKey('IODA', input)),
       safeSource('Tor Metrics', () => getTorMetrics(input)),
       safeSource('M-Lab NDT', () => getMlabPerformance(input)),
       safeSource('APNIC Labs IPv6', () => getApnicIpv6(input)),
-      input.asn ? safeSource('RIPEstat / RIPE RIS', () => getRipeStatSignals(input)) : Promise.resolve(scopeRequired('RIPEstat / RIPE RIS', input)),
+      input.asn ? safeSource('RIPEstat / RIPE RIS', () => getRipeStatSignals(input), sourceKey('RIPEstat', input)) : Promise.resolve(scopeRequired('RIPEstat / RIPE RIS', input)),
       safeSource('Globalping', () => getGlobalpingIranProbes(input)),
-      safeSource('Censored Planet', () => getCensoredPlanetSignals(input)),
+      safeSource('Censored Planet', () => getCensoredPlanetSignals(input), sourceKey('Censored Planet', input)),
       input.asn ? safeSource('PeeringDB', () => getPeeringDbTopology(input)) : Promise.resolve(scopeRequired('PeeringDB', input)),
       input.asn ? safeSource('Internet Health Report', () => getIhrDependencies(input)) : Promise.resolve(scopeRequired('Internet Health Report', input)),
       input.asn ? safeSource('CAIDA ASRank', () => getAsRankTopology(input)) : Promise.resolve(scopeRequired('CAIDA ASRank', input)),
       input.asn ? safeSource('RIPEstat RPKI', () => getRpkiIntegrity(input)) : Promise.resolve(scopeRequired('RIPEstat RPKI', input)),
-      safeSource('Internet Society Pulse', () => getPulseShutdowns(input)),
+      safeSource('Internet Society Pulse', () => getPulseShutdowns(input), sourceKey('Pulse', input)),
       // Priority-service summary for the Overview. The full domain list stays on /api/ooni/domains.
-      input.testName === 'web_connectivity' ? safeSource('OONI domains', () => getOoniDomains(ooniScope(input))) : Promise.resolve(null),
-      safeSource('OONI circumvention', () => getCircumventionSignals(input)),
+      input.testName === 'web_connectivity' ? safeSource('OONI domains', () => getOoniDomains(ooniScope(input)), sourceKey('OONI domains', input)) : Promise.resolve(null),
+      safeSource('OONI circumvention', () => getCircumventionSignals(input), sourceKey('OONI circumvention', input)),
     ]);
     // For an explicit service selection, sample how many independent measurement runs and
     // days stand behind the finding that the Overview reports.
@@ -226,11 +233,11 @@ async function handleApi(req, res, url) {
     const focusDomain = (input.serviceId || input.target) && visibleServices[0]?.web?.measurements > 0 ? visibleServices[0].web.domain : null;
     if (focusDomain && !sampleDomains.includes(focusDomain)) sampleDomains.unshift(focusDomain);
     const ooniSamples = (await mapLimit(sampleDomains.slice(0, 2), 2, (domain) =>
-      safeSource('OONI evidence sample', () => getOoniSample(ooniScope(input), domain)))).filter((sample) => sample?.ok);
+      safeSource('OONI evidence sample', () => getOoniSample(ooniScope(input), domain), sourceKey(`OONI sample ${domain}`, input)))).filter((sample) => sample?.ok);
     // One aggregation answers whether the headline service is blocked in one network or in many.
     const headlineDomain = sampleDomains[0] ?? null;
     const ooniNetworks = headlineDomain
-      ? await safeSource('OONI network comparison', () => getOoniNetworks(ooniScope(input), headlineDomain))
+      ? await safeSource('OONI network comparison', () => getOoniNetworks(ooniScope(input), headlineDomain), sourceKey(`OONI networks ${headlineDomain}`, input))
       : null;
     const scopeLabel = input.asn ? `${input.asn} / Iran` : 'Iran / all measured networks';
     const assessment = buildAssessment({ ooni, ripe, radar, radarQuality, ioda, ripestat, censoredPlanet, tor, mlab, apnic, globalping, peeringdb, ihr, asrank, rpki, pulse, ooniDomains, circumvention, ooniSamples, ooniNetworks, selection: input, scopeLabel });

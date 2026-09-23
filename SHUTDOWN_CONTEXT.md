@@ -42,6 +42,8 @@ Temporal overlap alone is insufficient. Unknown scope is insufficient. Conflicti
 
 ## Failure and availability states
 
+`https://pulse-api.internetsociety.org/shutdowns` answers `401 Unauthorized` without a token; access is granted on request through https://pulse.internetsociety.org/. Until a token is configured, the Overview states plainly that a shutdown cannot be confirmed here because that access is missing, instead of leaving a generic caveat.
+
 Pulse without `INTERNET_SOCIETY_PULSE_API_TOKEN` returns `token_required`; this is not converted to an empty successful observation. The combined context layer reports `partial_context` when only STOP or Pulse is usable and `complete_context` only when both curated sources are available.
 
 ## Evidence boundary

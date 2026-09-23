@@ -383,3 +383,17 @@ test('the network comparison travels with the service claim without changing its
   assert.equal(scope.serviceId, 'instagram', 'the comparison is bound to the service it describes');
   assert.equal(result.interpretation.dimensions.interference.severity, 'unknown', 'a wider pattern is scope, not severity');
 });
+
+test('stale source data stays visible as history but cannot support a current claim', () => {
+  const staleDomains = { ...serviceDomains, status: 'stale', stale: true, staleSince: '2026-09-23T08:00:00.000Z' };
+  const result = buildAssessment({
+    ooni: { ...ooni({ rate: 45, confirmed: 3 }), status: 'stale', stale: true, staleSince: '2026-09-23T08:00:00.000Z' },
+    ooniDomains: staleDomains, radar: { status: 'token_required' }, selection, scopeLabel: 'AS58224 / Iran',
+  });
+  const { services, dimensions } = result.interpretation;
+  assert.equal(services.stale.since, '2026-09-23T08:00:00.000Z', 'the age travels with the last known state');
+  assert.equal(services.visible.find((item) => item.id === 'instagram').status, 'blocked', 'the last known state stays visible');
+  assert.equal(dimensions.interference.state, 'insufficient-data', 'a stale source cannot carry a current claim');
+  assert.deepEqual(dimensions.interference.availableSources, []);
+  assert.equal(dimensions.interference.evidence.find((item) => item.metric === 'measurements').value, 0);
+});

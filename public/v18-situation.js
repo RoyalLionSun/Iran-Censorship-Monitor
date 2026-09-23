@@ -149,6 +149,12 @@ function formatNumber(value, digits = 0) {
   return new Intl.NumberFormat(localeFor(), { maximumFractionDigits: digits }).format(value);
 }
 
+function formatDateTime(value) {
+  const parsed = Date.parse(String(value ?? ''));
+  if (!Number.isFinite(parsed)) return String(value ?? '—');
+  return new Intl.DateTimeFormat(localeFor(), { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }).format(parsed);
+}
+
 function formatDay(value) {
   if (!value || !/^\d{4}-\d{2}-\d{2}/.test(value)) return value || '—';
   return new Intl.DateTimeFormat(localeFor(), { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
@@ -259,7 +265,7 @@ function renderServiceTiles(services, selection) {
   const title = services.scoped ? t('board.services.selected') : t('board.services.title');
   return `
     <section class="service-board" aria-labelledby="service-board-title">
-      <header><h2 id="service-board-title">${escapeHtml(title)}</h2><p>${escapeHtml(t('board.services.note'))}</p></header>
+      <header><h2 id="service-board-title">${escapeHtml(title)}</h2><p>${escapeHtml(services.stale?.since ? t('board.services.staleNote') : t('board.services.note'))}</p></header>
       ${items.length ? `<div class="service-tiles">${items.map((item) => `
         <article class="service-tile" data-status="${escapeHtml(item.status)}">
           <div class="service-tile-head"><span class="status-mark" aria-hidden="true"></span><h3 class="${item.id === 'selected-target' ? 'technical-ltr' : ''}">${escapeHtml(brandName(item.id, services))}</h3></div>
@@ -297,7 +303,10 @@ function statusRow(interpretation) {
       id: 'shutdown',
       status: shutdown.state === 'nationwide-shutdown-established' ? 'bad' : 'unknown',
       value: t(`board.shutdown.${shutdown.state}`),
-      hint: t('board.shutdown.hint'),
+      // Name the missing access instead of leaving the reader with a generic caveat.
+      hint: shutdown.evidence?.some((item) => item.source === 'Internet Society Pulse' && item.state === 'token-required')
+        ? t('board.shutdown.missingAccess')
+        : t('board.shutdown.hint'),
     },
   ];
   return `<dl class="status-row">${items.map((item) => `
@@ -311,11 +320,13 @@ function renderHero(interpretation) {
   const selection = interpretation.selection ?? {};
   const period = selection.since && selection.until ? `${formatDay(selection.since)} – ${formatDay(selection.until)}` : '';
   const latest = summary.latestObservation ? t('board.latest', { date: formatDay(summary.latestObservation) }) : '';
+  const stale = interpretation.services?.stale?.since ?? null;
   hero.dataset.headline = summary.headline?.state ?? summary.state;
+  hero.dataset.stale = stale ? 'yes' : 'no';
   hero.innerHTML = `
     <header class="situation-top">
-      <span class="section-label">${escapeHtml(t('board.kicker'))}</span>
-      <p class="situation-scope"><strong><bdi>${escapeHtml(networkLabel(interpretation))}</bdi></strong>${period ? ` · <bdi>${escapeHtml(period)}</bdi>` : ''}${latest ? ` · <bdi>${escapeHtml(latest)}</bdi>` : ''}</p>
+      <span class="section-label">${escapeHtml(stale ? t('board.kicker.stale') : t('board.kicker'))}</span>
+      <p class="situation-scope"><strong><bdi>${escapeHtml(networkLabel(interpretation))}</bdi></strong>${period ? ` · <bdi>${escapeHtml(period)}</bdi>` : ''}${latest ? ` · <bdi>${escapeHtml(latest)}</bdi>` : ''}${stale ? ` · <bdi class="scope-stale">${escapeHtml(t('board.stale.since', { date: formatDateTime(stale) }))}</bdi>` : ''}</p>
       <h1 id="situation-headline">${escapeHtml(headlineText(summary, interpretation.services))}</h1>
       <p class="situation-lede">${escapeHtml(ledeText(interpretation))}</p>
     </header>
