@@ -348,3 +348,25 @@ test('a selected test outside the service tiles still gets its own headline', ()
   const confirmed = buildAssessment({ ooni: ooni({ rate: 40, confirmed: 5 }), radar: { status: 'token_required' }, selection: torSelection, scopeLabel: 'AS58224 / Iran' });
   assert.equal(confirmed.interpretation.summary.headline.state, 'interference-confirmed');
 });
+
+test('connection quality gains a second source only when Radar stayed in the selected window', () => {
+  const radarQuality = (extra = {}) => ({ ok: true, source: 'Cloudflare Radar', status: 'observed', windowAligned: true,
+    latency: { median: 115.1 }, bandwidth: { median: 5.1 }, ...extra });
+
+  const both = buildAssessment({ ripe: ripe({ loss: 2 }), radarQuality: radarQuality(), radar: { status: 'token_required' }, selection, scopeLabel: 'AS58224 / Iran' });
+  const dimension = both.interpretation.dimensions.quality;
+  assert.deepEqual(dimension.availableSources, ['RIPE Atlas', 'Cloudflare Radar']);
+  assert.equal(dimension.coverage, 'adequate');
+  assert.equal(dimension.evidence.find((item) => item.metric === 'latency-ms').value, 115.1);
+  assert.equal(dimension.evidence.find((item) => item.metric === 'download-mbps').value, 5.1);
+
+  const widened = buildAssessment({ ripe: ripe({ samples: 0, status: 'no_data' }), radarQuality: radarQuality({ windowAligned: false }), radar: { status: 'token_required' }, selection, scopeLabel: 'AS58224 / Iran' });
+  const widenedQuality = widened.interpretation.dimensions.quality;
+  assert.deepEqual(widenedQuality.availableSources, [], 'a 90-day answer cannot cover a 7-day claim');
+  assert.equal(widenedQuality.state, 'insufficient-data');
+  assert.equal(widenedQuality.evidence.find((item) => item.metric === 'latency-ms').value, null);
+
+  const radarOnly = buildAssessment({ ripe: ripe({ samples: 0, status: 'no_data' }), radarQuality: radarQuality(), radar: { status: 'token_required' }, selection, scopeLabel: 'AS58224 / Iran' });
+  assert.equal(radarOnly.interpretation.dimensions.quality.state, 'path-observations-available');
+  assert.equal(radarOnly.interpretation.dimensions.quality.coverage, 'limited');
+});

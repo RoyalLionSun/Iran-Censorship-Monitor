@@ -7,7 +7,7 @@ import { buildAssessment } from './lib/assessment.mjs';
 import { errorPayload, jsonResponse, mapLimit, normalizeAsn, validateRange } from './lib/common.mjs';
 import { getCircumventionSignals, getOoniDomainMeasurements, getOoniDomains, getOoniMeasurementDetail, getOoniTimeline, getOoniSample, listOoniMeasurements, OONI_TESTS } from './lib/ooni.mjs';
 import { getRipeSignals } from './lib/ripe.mjs';
-import { getRadarSignals } from './lib/radar.mjs';
+import { getRadarConnectionQuality, getRadarSignals } from './lib/radar.mjs';
 import { getIodaSignals } from './lib/ioda.mjs';
 import { getTorMetrics } from './lib/tor.mjs';
 import { getRipeBgpUpdates, getRipeStatSignals } from './lib/ripestat.mjs';
@@ -196,10 +196,11 @@ async function handleApi(req, res, url) {
 
   if (url.pathname === '/api/overview') {
     const input = queryInput(url);
-    const [ooni, ripe, radar, ioda, tor, mlab, apnic, ripestat, globalping, censoredPlanet, peeringdb, ihr, asrank, rpki, pulse, ooniDomains, circumvention] = await Promise.all([
+    const [ooni, ripe, radar, radarQuality, ioda, tor, mlab, apnic, ripestat, globalping, censoredPlanet, peeringdb, ihr, asrank, rpki, pulse, ooniDomains, circumvention] = await Promise.all([
       safeSource('OONI', () => getOoniTimeline(ooniScope(input))),
       safeSource('RIPE Atlas', () => getRipeSignals(input)),
       safeSource('Cloudflare Radar', () => getRadarSignals(input)),
+      safeSource('Cloudflare Radar quality', () => getRadarConnectionQuality(input)),
       safeSource('IODA', () => getIodaSignals(input)),
       safeSource('Tor Metrics', () => getTorMetrics(input)),
       safeSource('M-Lab NDT', () => getMlabPerformance(input)),
@@ -224,12 +225,12 @@ async function handleApi(req, res, url) {
       .map((item) => item.web.domain);
     const focusDomain = (input.serviceId || input.target) && visibleServices[0]?.web?.measurements > 0 ? visibleServices[0].web.domain : null;
     if (focusDomain && !sampleDomains.includes(focusDomain)) sampleDomains.unshift(focusDomain);
-    const ooniSamples = (await mapLimit(sampleDomains.slice(0, 6), 6, (domain) =>
+    const ooniSamples = (await mapLimit(sampleDomains.slice(0, 2), 2, (domain) =>
       safeSource('OONI evidence sample', () => getOoniSample(ooniScope(input), domain)))).filter((sample) => sample?.ok);
     const scopeLabel = input.asn ? `${input.asn} / Iran` : 'Iran / all measured networks';
-    const assessment = buildAssessment({ ooni, ripe, radar, ioda, ripestat, censoredPlanet, tor, mlab, apnic, globalping, peeringdb, ihr, asrank, rpki, pulse, ooniDomains, circumvention, ooniSamples, selection: input, scopeLabel });
+    const assessment = buildAssessment({ ooni, ripe, radar, radarQuality, ioda, ripestat, censoredPlanet, tor, mlab, apnic, globalping, peeringdb, ihr, asrank, rpki, pulse, ooniDomains, circumvention, ooniSamples, selection: input, scopeLabel });
     const asnProfile = input.asn ? asns.find((item) => item.asn === input.asn) || null : null;
-    jsonResponse(res, 200, { ok: true, input, asnProfile, fetchedAt: new Date().toISOString(), assessment, ooni, ripe, radar, ioda, tor, mlab, apnic, ripestat, globalping, censoredPlanet, peeringdb, ihr, asrank, rpki, pulse });
+    jsonResponse(res, 200, { ok: true, input, asnProfile, fetchedAt: new Date().toISOString(), assessment, ooni, ripe, radar, radarQuality, ioda, tor, mlab, apnic, ripestat, globalping, censoredPlanet, peeringdb, ihr, asrank, rpki, pulse });
     return true;
   }
 

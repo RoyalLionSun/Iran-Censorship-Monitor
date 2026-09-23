@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { OONI_SAMPLE_SIZE, sampleMechanism, aggregateOoniAggregationRows, aggregateOoniDomains, aggregateOoniRows, buildOoniAggregationQuery, buildOoniDomainMeasurementsQuery, buildOoniDomainQuery, buildOoniQuery, buildOoniSampleQuery, inferDetailedMethods, parseOoniDomainMeasurements, summarizeOoniSample } from '../lib/ooni.mjs';
+import { OONI_CACHE_TTL_MS, OONI_MAX_PARALLEL_REQUESTS, OONI_RATE_LIMIT_MESSAGE, OONI_SAMPLE_SIZE, getCircumventionSignals, getOoniDomains, sampleMechanism, aggregateOoniAggregationRows, aggregateOoniDomains, aggregateOoniRows, buildOoniAggregationQuery, buildOoniDomainMeasurementsQuery, buildOoniDomainQuery, buildOoniQuery, buildOoniSampleQuery, inferDetailedMethods, parseOoniDomainMeasurements, summarizeOoniSample } from '../lib/ooni.mjs';
 
 const domainInput = { country:'IR', asn:'AS44244', since:'2026-09-01', until:'2026-09-02', testName:'web_connectivity', target:'' };
 
@@ -260,4 +260,38 @@ test('the sample counts mechanisms only for affected tests and names the dominan
 
   const unknownOnly = summarizeOoniSample({ results: [row({ anomaly: true, scores: {} })] }, { domain: 'www.instagram.com', input: vantageInput });
   assert.equal(unknownOnly.dominantMechanism, null, 'an unspecified mechanism is not presented as one');
+});
+
+test('OONI requests stay under the upstream quota: gated in parallel and cached per window', async (t) => {
+  assert.ok(OONI_MAX_PARALLEL_REQUESTS <= 2, 'a dashboard load must not fire a dozen parallel OONI queries');
+  assert.ok(OONI_CACHE_TTL_MS >= 5 * 60_000, 'daily-grained results survive a reload without a new request');
+
+  let inFlight = 0;
+  let peak = 0;
+  t.mock.method(globalThis, 'fetch', async () => {
+    inFlight += 1;
+    peak = Math.max(peak, inFlight);
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    inFlight -= 1;
+    return { ok: true, status: 200, statusText: 'OK', json: async () => ({ result: [] }) };
+  });
+  const windows = ['2026-08-02', '2026-08-03', '2026-08-04', '2026-08-05', '2026-08-06'];
+  await Promise.all(windows.map((until) => getCircumventionSignals({ since: '2026-08-01', until, asn: 'AS64515' })));
+  assert.ok(peak <= OONI_MAX_PARALLEL_REQUESTS, `peak parallel OONI requests was ${peak}`);
+});
+
+test('an OONI rate limit is named and not hammered against', async (t) => {
+  let calls = 0;
+  t.mock.method(globalThis, 'fetch', async () => {
+    calls += 1;
+    return { ok: false, status: 429, statusText: 'Too Many Requests', text: async () => '{"error":"quota exceeded"}' };
+  });
+  const input = { country: 'IR', asn: 'AS64516', since: '2026-08-01', until: '2026-08-02', testName: 'web_connectivity', target: '' };
+  await assert.rejects(() => getOoniDomains(input), (error) => {
+    assert.equal(error.message, OONI_RATE_LIMIT_MESSAGE, 'the rate limit is reported as such, not as missing data');
+    return true;
+  });
+  const afterFirst = calls;
+  await assert.rejects(() => getOoniDomains({ ...input, until: '2026-08-03' }), /rate limit/);
+  assert.equal(calls, afterFirst, 'during the cooldown no further request is sent upstream');
 });

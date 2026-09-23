@@ -311,7 +311,7 @@ export default Object.freeze({
   'board.app.unavailable': 'App: test data unavailable',
   'board.app.loading': 'App: loading…',
   'board.row.connection': 'Internet connection',
-  'board.row.quality': 'Test connections',
+  'board.row.quality': 'Connection quality',
   'board.row.routing': 'Link to the global internet',
   'board.row.shutdown': 'Complete shutdown',
   'board.connection.none': 'No outage reported',
@@ -370,4 +370,9 @@ export default Object.freeze({
   'meaning.mechanism.tcp': 'For {service} the block works at network level: connections to its addresses are refused or dropped ({count} of {affected} affected tests).',
   'meaning.mechanism.blockpage': 'For {service} the network returns a block page instead of the service ({count} of {affected} affected tests).',
   'meaning.mechanism.http-failure': 'For {service} the encrypted connection is interrupted while it is being established ({count} of {affected} affected tests).',
+  'board.quality.user': '{download} Mbit/s · {latency} ms',
+  'board.quality.userHint': 'Typical values of real user traffic in this network (Cloudflare)',
+  'interpretation.metric.latency-ms': 'median latency',
+  'interpretation.metric.download-mbps': 'median download',
+  'meaning.quality.user': 'For regular traffic in this network, Cloudflare measured about {download} Mbit/s download and {latency} ms latency in this period.',
 });

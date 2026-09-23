@@ -311,7 +311,7 @@ export default Object.freeze({
   'board.app.unavailable': 'اپلیکیشن: داده آزمون در دسترس نیست',
   'board.app.loading': 'اپلیکیشن: در حال بارگذاری…',
   'board.row.connection': 'اتصال اینترنت',
-  'board.row.quality': 'اتصال‌های آزمایشی',
+  'board.row.quality': 'کیفیت اتصال',
   'board.row.routing': 'پیوند با اینترنت جهانی',
   'board.row.shutdown': 'قطع کامل',
   'board.connection.none': 'قطعی گزارش نشده',
@@ -370,4 +370,9 @@ export default Object.freeze({
   'meaning.mechanism.tcp': 'برای {service} مسدودسازی در سطح شبکه انجام می‌شود: اتصال به نشانی‌های آن رد یا قطع می‌شود ({count} از {affected} آزمون متأثر).',
   'meaning.mechanism.blockpage': 'برای {service} شبکه به‌جای خود سرویس یک صفحه مسدودسازی برمی‌گرداند ({count} از {affected} آزمون متأثر).',
   'meaning.mechanism.http-failure': 'برای {service} اتصال رمزگذاری‌شده هنگام برقراری قطع می‌شود ({count} از {affected} آزمون متأثر).',
+  'board.quality.user': '{download} مگابیت بر ثانیه · {latency} میلی‌ثانیه',
+  'board.quality.userHint': 'مقادیر معمول ترافیک واقعی کاربران در این شبکه (Cloudflare)',
+  'interpretation.metric.latency-ms': 'میانه تأخیر',
+  'interpretation.metric.download-mbps': 'میانه دریافت',
+  'meaning.quality.user': 'برای ترافیک معمول در این شبکه، Cloudflare در این بازه حدود {download} مگابیت بر ثانیه دریافت و {latency} میلی‌ثانیه تأخیر اندازه گرفت.',
 });

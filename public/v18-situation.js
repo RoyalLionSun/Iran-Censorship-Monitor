@@ -100,7 +100,8 @@ function valueText(evidence) {
   if (['anomaly-rate', 'visibility-percent', 'packet-loss-percent'].includes(evidence.metric)) {
     return `${new Intl.NumberFormat(localeFor(), { maximumFractionDigits: 1 }).format(value)}%`;
   }
-  if (evidence.metric === 'rtt-ms') return `${new Intl.NumberFormat(localeFor(), { maximumFractionDigits: 1 }).format(value)} ms`;
+  if (['rtt-ms', 'latency-ms'].includes(evidence.metric)) return `${new Intl.NumberFormat(localeFor(), { maximumFractionDigits: 1 }).format(value)} ms`;
+  if (evidence.metric === 'download-mbps') return `${new Intl.NumberFormat(localeFor(), { maximumFractionDigits: 1 }).format(value)} Mbit/s`;
   return new Intl.NumberFormat(localeFor(), { maximumFractionDigits: 1 }).format(value);
 }
 
@@ -109,7 +110,7 @@ function relevantEvidence(dimension) {
     connectivity: new Set(['events']),
     interference: new Set(['measurements', 'anomaly-rate', 'confirmed', 'events']),
     routing: new Set(['visibility-percent', 'peers-seeing', 'total-peers']),
-    quality: new Set(['probes', 'samples', 'packet-loss-percent', 'rtt-ms']),
+    quality: new Set(['probes', 'samples', 'packet-loss-percent', 'rtt-ms', 'latency-ms', 'download-mbps']),
   }[dimension.id] ?? new Set();
   return (dimension.evidence ?? []).filter((item) => allowed.has(item.metric) && item.value !== null && item.value !== undefined);
 }
@@ -274,6 +275,8 @@ function statusRow(interpretation) {
   const connection = connectionState(connectivity);
   const loss = evidenceValue(quality, 'packet-loss-percent');
   const rtt = evidenceValue(quality, 'rtt-ms');
+  const radarLatency = evidenceValue(quality, 'latency-ms');
+  const radarDownload = evidenceValue(quality, 'download-mbps');
   const items = [
     {
       id: 'connection',
@@ -281,9 +284,13 @@ function statusRow(interpretation) {
       value: connection === 'signals' ? plural('board.connection.signals', connectivity.eventCount ?? 0) : t(`board.connection.${connection}`),
       hint: t('board.connection.hint'),
     },
-    quality.state === 'path-observations-available' && loss !== null
-      ? { id: 'quality', status: 'info', value: t('board.quality.value', { delivered: formatNumber(100 - loss, 1), rtt: rtt === null ? '—' : formatNumber(rtt, 0) }), hint: t('board.quality.hint') }
-      : { id: 'quality', status: 'unknown', value: t('board.quality.unknown'), hint: t('board.quality.hint') },
+    radarLatency !== null
+      // Real user traffic in this network says more to a reader than a probe ping.
+      ? { id: 'quality', status: 'info', hint: t('board.quality.userHint'),
+        value: t('board.quality.user', { download: radarDownload === null ? '—' : formatNumber(radarDownload, 1), latency: formatNumber(radarLatency, 0) }) }
+      : quality.state === 'path-observations-available' && loss !== null
+        ? { id: 'quality', status: 'info', value: t('board.quality.value', { delivered: formatNumber(100 - loss, 1), rtt: rtt === null ? '—' : formatNumber(rtt, 0) }), hint: t('board.quality.hint') }
+        : { id: 'quality', status: 'unknown', value: t('board.quality.unknown'), hint: t('board.quality.hint') },
     {
       id: 'shutdown',
       status: shutdown.state === 'nationwide-shutdown-established' ? 'bad' : 'unknown',
@@ -332,6 +339,14 @@ function meaningSentences(interpretation) {
     : connection === 'none' ? t('meaning.connection.noOutage')
       : connection === 'signals' ? plural('meaning.connection.signals', dimensions.connectivity.eventCount ?? 0)
         : t(`meaning.connection.${connection}`));
+  const radarLatency = evidenceValue(dimensions.quality, 'latency-ms');
+  const radarDownload = evidenceValue(dimensions.quality, 'download-mbps');
+  if (radarLatency !== null) {
+    sentences.push(t('meaning.quality.user', {
+      download: radarDownload === null ? '—' : formatNumber(radarDownload, 1),
+      latency: formatNumber(radarLatency, 0),
+    }));
+  }
   const vantage = services?.vantage;
   const dominant = vantage?.dominantMechanism;
   const sampled = services?.visible?.[0];

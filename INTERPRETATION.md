@@ -17,7 +17,7 @@ Every public statement belongs to one dimension:
 | `connectivity` | Are broad connectivity/outage signals present? | IODA; eligible Cloudflare Radar outage/anomaly channels | Does not establish filtering, censorship, cause or intent |
 | `interference` | Do tested websites/services show access or blocking signals? | OONI; fully observed Censored Planet results for country-level web claims only | Does not describe the whole Internet or identify an actor |
 | `routing` | Are selected-ASN routes visible to RIPE RIS peers? | time-aligned RIPEstat/RIPE RIS routing status | Does not prove end-user or website reachability |
-| `quality` | Are usable path/performance observations available? | RIPE Atlas; M-Lab NDT as bounded context | Does not represent national quality without adequate coverage |
+| `quality` | Are usable path/performance observations available? | RIPE Atlas; Cloudflare Radar quality for the selected window; M-Lab NDT as bounded context | Does not represent national quality without adequate coverage |
 | `shutdown` | Is a nationwide intentional shutdown established? | technical impact and separately reviewed Pulse context | Automatic confirmation is disabled until evidence can be matched by place, time and root provenance |
 
 Tor, BridgeDB, topology, ASN inventory, RPKI, APNIC, STOP, Pulse, GDELT and specialist reporting retain their documented context roles. They do not become additional censorship votes.
@@ -162,6 +162,10 @@ The following invariants are executable regression assertions:
 - A brand shows its strongest single domain result. Domain groups are never summed; X and legacy Twitter remain separate counts.
 - Website and app results are separate channels. A website result never stands in for app availability, and the reverse.
 - Brand status: `blocked` when a channel has OONI-confirmed blocking; `restricted` when a channel only has anomalies (blocking not confirmed); `reachable` when tested without anomalies; `unclear` when tests only failed; otherwise `untested`, `unavailable` or `out-of-scope`. Missing or failed data never becomes `reachable`.
+
+### Connection quality sources
+
+Cloudflare Radar contributes latency and bandwidth estimated from real user traffic in the selected network. Only the daily time series is used, because the ASN-level summary endpoint silently answers with a 90-day window regardless of the requested period. Every response is checked against the requested window and counts as coverage only while it stays inside it; otherwise it remains visible without speaking for the selected period. The values are rolling averages of measured traffic, not a controlled speed test.
 
 ### Coverage of a service claim
 
