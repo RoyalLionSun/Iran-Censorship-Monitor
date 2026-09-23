@@ -308,7 +308,9 @@ function renderServiceTiles(services, selection, connectivity = null) {
         return `
         <article class="service-tile" data-status="${escapeHtml(status)}"${country ? ' data-scope="country"' : ''}>
           <div class="service-tile-head"><span class="status-mark" aria-hidden="true"></span><h3 class="${item.id === 'selected-target' ? 'technical-ltr' : ''}">${escapeHtml(brandName(item.id, services))}</h3></div>
-          <b class="service-tile-status">${escapeHtml(country ? t(`board.country.status.${country.status}`) : t(`board.status.${item.status}`))}</b>
+          <b class="service-tile-status">${escapeHtml(country ? t(`board.country.status.${country.status}`)
+            : item.status === 'restricted' && item.app?.status === 'anomaly' && item.web?.status !== 'anomaly' ? t('board.status.appFailed')
+              : t(`board.status.${item.status}`))}</b>
           <ul>${country ? countryLine(country, item) : ''}${!country && services.countryCheck === 'unavailable' && ['untested', 'unclear'].includes(item.status) ? `<li class="tile-country">${escapeHtml(t('board.country.unavailable'))}</li>` : ''}${country && item.web?.status === 'untested' ? '' : channelLine(item.web, 'web')}${channelLine(item.app, 'app')}${mechanismLine(item)}${coverageLine(item, selection)}</ul>
         </article>`;
       }).join('')}
@@ -530,7 +532,18 @@ function meaningSentences(interpretation) {
   const names = (ids) => listOf(ids.map((id) => brandName(id, services)));
   const sentences = [];
   if (services?.blocked?.length) sentences.push(t('meaning.blocked', { services: names(services.blocked) }));
-  if (services?.restricted?.length) sentences.push(t('meaning.restricted', { services: names(services.restricted) }));
+  if (services?.restricted?.length) {
+    // An app test only knows that the connection to the app's servers failed; OONI has no block
+    // page for apps and never confirms them. Website anomalies are a different finding.
+    const byId = new Map((services.items ?? []).map((item) => [item.id, item]));
+    const appOnly = services.restricted.filter((id) => byId.get(id)?.app?.status === 'anomaly' && byId.get(id)?.web?.status !== 'anomaly');
+    const web = services.restricted.filter((id) => !appOnly.includes(id));
+    if (web.length) sentences.push(t('meaning.restricted', { services: names(web) }));
+    if (appOnly.length) sentences.push(t('meaning.restrictedApp', { services: names(appOnly) }));
+    // In an outage a failed connection may be the outage itself, not a block of this service.
+    const outageNow = nationwidePeriod(dimensions.connectivity);
+    if (outageNow && !outageNow.endedInWindow) sentences.push(t('meaning.outageCause'));
+  }
   if (!services?.blocked?.length && !services?.restricted?.length && services?.reachable?.length) {
     sentences.push(t('meaning.reachable', { services: names(services.reachable) }));
   }

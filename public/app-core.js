@@ -665,7 +665,9 @@ function renderServiceFindings() {
       ? `${number(row.measurements, 0)} ${t('services.tests')} · ${number(row.anomalies, 0)} ${t('services.anomalies')} · ${escapeHtml(row.lastObservation || '—')} UTC` : '';
     const sourceLink = detail && row.sourceUrl
       ? `<a href="${escapeHtml(row.sourceUrl)}" target="_blank" rel="noreferrer">${escapeHtml(t('services.source'))}</a>` : '';
-    return `<div class="service-finding" data-status="${row.status}"><div><strong>${escapeHtml(row.testName)}</strong><span>${escapeHtml(t('services.appTest'))}</span></div><b>${escapeHtml(t(`services.status.${row.status}`))}</b>${detail ? `<small>${detail}</small>` : ''}${sourceLink}</div>`;
+    // An app test has no block page; "not confirmed" would suggest missing evidence that cannot exist.
+    const label = row.status === 'anomaly' ? t('services.status.appFailed') : t(`services.status.${row.status}`);
+    return `<div class="service-finding" data-status="${row.status}"><div><strong>${escapeHtml(row.testName)}</strong><span>${escapeHtml(t('services.appTest'))}</span></div><b>${escapeHtml(label)}</b>${detail ? `<small>${detail}</small>` : ''}${sourceLink}</div>`;
   }).join('');
 }
 
