@@ -15,7 +15,8 @@ const markup = await readFile(new URL('../public/index.html', import.meta.url), 
 test('overview is the default view and the established dashboard remains technical analysis', () => {
   assert.match(situation, /data-dashboard-view="overview"/);
   assert.match(situation, /data-dashboard-view="technical"/);
-  assert.match(situation, /setView\('overview'\)/);
+  // Overview stays the default; only a shared link with view=technical opens the analysis.
+  assert.match(situation, /get\('view'\) === 'technical' \? 'technical' : 'overview'/);
   assert.match(situation, /id="situation-headline"/);
   for (const selector of ['#assessment-strip', '.kpi-grid', '.status-legend', '.dashboard-grid']) {
     assert.ok(situation.includes(`'${selector}'`), `${selector} is not preserved in technical analysis`);
