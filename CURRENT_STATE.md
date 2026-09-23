@@ -35,6 +35,11 @@ Package version: **`1.8.0` intentionally unchanged**
 - line endings are LF and pinned by `.gitattributes`;
 - no commit, push, release, tag or deployment authorization has been made for this working state.
 
+## Open decisions
+
+- **Maximum selectable period (currently 120 days).** The limit protects against very large OONI queries. Internet Society Pulse records a 138-day national shutdown for Iran (8 January to 26 May 2026), which therefore cannot be selected as one period; it is visible as context in every sub-period instead. Whether to raise the limit, and to what, is deliberately left open.
+- **Internet Society Pulse API surface.** Only `/shutdowns` is used. The other 25 documented endpoints (IPv6, HTTPS, TLS, DNSSEC, ROA/ROV, IXP and market concentration) duplicate sources this project already has, and `/net-loss` is a modelled economic estimate rather than a measurement.
+
 The exact model is documented in [INTERPRETATION.md](INTERPRETATION.md). Validation results for this uncommitted state are recorded at the top of [VERIFICATION.md](VERIFICATION.md).
 
 ---
