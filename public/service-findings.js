@@ -220,3 +220,29 @@ export function summarizeServiceNetworks(rows = []) {
     };
   }).filter((item) => item.measured > 0);
 }
+
+// Who has access: every Iranian network with tests, and how far the popular services worked
+// there. "full" only when every service tested in that network was reachable; "partial" when
+// at least one got through at least half the time; otherwise "blocked".
+export function summarizeNetworkAccess(rows = []) {
+  const perService = summarizeServiceNetworks(rows);
+  const networks = new Map();
+  for (const service of perService) {
+    for (const status of ['blocked', 'partial', 'restricted', 'reachable', 'inconclusive']) {
+      for (const entry of service[status]) {
+        const network = networks.get(entry.asn) ?? { asn: entry.asn, services: {}, measurements: 0 };
+        network.services[service.id] = { status, measurements: entry.measurements, ok: entry.ok, confirmed: entry.confirmed };
+        network.measurements += entry.measurements;
+        networks.set(entry.asn, network);
+      }
+    }
+  }
+  const rank = { full: 0, partial: 1, blocked: 2, unclear: 3 };
+  return [...networks.values()].map((network) => {
+    const statuses = Object.values(network.services).map((item) => item.status).filter((status) => status !== 'inconclusive');
+    const level = !statuses.length ? 'unclear'
+      : statuses.every((status) => status === 'reachable') ? 'full'
+        : statuses.some((status) => status === 'reachable' || status === 'partial') ? 'partial' : 'blocked';
+    return { ...network, level };
+  }).sort((a, b) => rank[a.level] - rank[b.level] || b.measurements - a.measurements);
+}

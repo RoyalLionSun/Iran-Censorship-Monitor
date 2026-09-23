@@ -305,46 +305,64 @@ function networkHref(asn) {
   return `?${params}`;
 }
 
-function networkList(entries, breakdown, selection, key) {
-  const { names, types = {} } = breakdown;
-  return entries.map((entry) => {
-    const text = escapeHtml(t(key, {
-      network: '\u0000',
-      ok: formatNumber(entry.ok), total: formatNumber(entry.measurements),
-      count: formatNumber(entry.anomalous), confirmed: formatNumber(entry.confirmed),
-    }));
-    const link = `<a href="${escapeHtml(networkHref(entry.asn))}">${escapeHtml(networkName(entry.asn, names, selection))}</a>`;
-    const note = types[entry.asn] === 'institutional' ? ` <small class="network-note">${escapeHtml(t('board.networks.institutional'))}</small>` : '';
-    return text.replace('\u0000', link) + note;
-  }).join('<br>');
+const KIND_GROUPS = [
+  ['mobile', 'mobile'], ['institutional', 'institutional'], ['government_admin', 'public'],
+  ['hosting', 'hosting'], ['education_research', 'research'], ['research', 'research'],
+  ['business', 'business'], ['isp', 'provider'], ['fixed', 'provider'], ['backbone', 'provider'],
+];
+
+function kindLabel(kind) {
+  if (!kind) return '';
+  const group = KIND_GROUPS.find(([prefix]) => String(kind).startsWith(prefix))?.[1];
+  return group ? t(`board.access.kind.${group}`) : '';
 }
 
-// Which providers did not block which service, by name, on the first screen: a reader should
-// not have to switch networks one by one to find where a service still works.
-function renderNetworkBreakdown(services, selection) {
+const ACCESS_MARK = { reachable: '✓', partial: '◐', blocked: '✕', restricted: '!', inconclusive: '?' };
+
+function accessCell(entry) {
+  if (!entry) return `<td class="access-cell" data-status="none" title="${escapeHtml(t('board.access.cell.none'))}">·</td>`;
+  const title = t(`board.access.cell.${entry.status}`, { ok: formatNumber(entry.ok), confirmed: formatNumber(entry.confirmed), total: formatNumber(entry.measurements) });
+  return `<td class="access-cell" data-status="${escapeHtml(entry.status)}" title="${escapeHtml(title)}"><span aria-hidden="true">${ACCESS_MARK[entry.status]}</span><span class="visually-hidden">${escapeHtml(title)}</span></td>`;
+}
+
+// Who has access to the internet services, by named Iranian network, full or partial, on the
+// first screen: a reader should not have to switch networks one by one to find out.
+function renderAccess(services, selection) {
   const breakdown = services?.networkBreakdown;
-  if (!breakdown?.items?.length) return '';
-  const { items } = breakdown;
-  const rows = items.map((item) => {
-    const open = [...item.reachable];
-    const partial = [...item.partial, ...item.restricted];
-    return `<tr>
-      <th scope="row">${escapeHtml(brandName(item.id, services))}</th>
-      <td>${escapeHtml(t('board.networks.blockedCount', { blocked: formatNumber(item.blocked.length + item.partial.length), measured: formatNumber(item.measured) }))}</td>
-      <td class="networks-open">${open.length ? networkList(open, breakdown, selection, 'board.networks.reachable') : `<span class="networks-none">${escapeHtml(t('board.networks.noneOpen'))}</span>`}</td>
-      <td class="networks-partial">${partial.length ? [
-        item.partial.length ? networkList(item.partial, breakdown, selection, 'board.networks.partial') : '',
-        item.restricted.length ? networkList(item.restricted, breakdown, selection, 'board.networks.restricted') : '',
-      ].filter(Boolean).join('<br>') : '—'}</td>
+  const access = breakdown?.access ?? [];
+  if (!access.length) return '';
+  const { names, types = {}, coverage } = breakdown;
+  const brands = ['instagram', 'whatsapp', 'telegram', 'youtube', 'x', 'facebook'];
+  const count = (level) => access.filter((entry) => entry.level === level).length;
+  const rows = access.map((entry) => {
+    const kind = kindLabel(types[entry.asn]);
+    const note = types[entry.asn] === 'institutional' ? `<small class="network-note">${escapeHtml(t('board.networks.institutional'))}</small>` : '';
+    return `<tr data-level="${escapeHtml(entry.level)}"${entry.asn === selection?.asn ? ' data-selected="yes"' : ''}>
+      <th scope="row"><a href="${escapeHtml(networkHref(entry.asn))}">${escapeHtml(networkName(entry.asn, names, selection))}</a>${kind ? `<small>${escapeHtml(kind)}</small>` : ''}${note}</th>
+      <td class="access-level"><b>${escapeHtml(t(`board.access.level.${entry.level}`))}</b><small>${escapeHtml(t('board.access.tests', { count: formatNumber(entry.measurements) }))}</small></td>
+      ${brands.map((id) => accessCell(entry.services[id])).join('')}
     </tr>`;
   }).join('');
+  const kinds = coverage?.unmeasuredKinds ?? {};
+  const kindText = Object.entries(kinds).map(([kind, n]) => `${formatNumber(n)} ${kindLabel(kind) || t('board.access.kind.other')}`).join(' · ');
+  const publicBodies = coverage?.publicUnmeasured ?? [];
   return `
-    <section class="network-breakdown" aria-labelledby="network-breakdown-title">
-      <header><h2 id="network-breakdown-title">${escapeHtml(t('board.networks.title'))}</h2><p>${escapeHtml(t('board.networks.note'))}</p></header>
-      <div class="network-breakdown-scroll"><table>
-        <thead><tr><th scope="col">${escapeHtml(t('board.networks.service'))}</th><th scope="col">${escapeHtml(t('board.networks.blockedIn'))}</th><th scope="col">${escapeHtml(t('board.networks.notBlocked'))}</th><th scope="col">${escapeHtml(t('board.networks.partlyCol'))}</th></tr></thead>
+    <section class="access-board" aria-labelledby="access-title">
+      <header>
+        <h2 id="access-title">${escapeHtml(t('board.access.title'))}</h2>
+        <p>${escapeHtml(t('board.access.summary', { measured: formatNumber(access.length), full: formatNumber(count('full')), partial: formatNumber(count('partial')), blocked: formatNumber(count('blocked')) }))}</p>
+      </header>
+      <p class="access-legend">${escapeHtml(t('board.access.legend'))}</p>
+      <div class="access-scroll"><table>
+        <thead><tr><th scope="col">${escapeHtml(t('board.access.network'))}</th><th scope="col">${escapeHtml(t('board.access.access'))}</th>${brands.map((id) => `<th scope="col">${escapeHtml(brandName(id, services))}</th>`).join('')}</tr></thead>
         <tbody>${rows}</tbody>
       </table></div>
+      ${coverage ? `<details class="access-unmeasured">
+        <summary>${escapeHtml(t('board.access.unmeasured', { count: formatNumber(coverage.registered - coverage.measured), registered: formatNumber(coverage.registered) }))}</summary>
+        ${kindText ? `<p>${escapeHtml(kindText)}</p>` : ''}
+        ${publicBodies.length ? `<p><b>${escapeHtml(t('board.access.publicUnmeasured'))}</b> ${publicBodies.map((item) => `<a href="${escapeHtml(networkHref(item.asn))}">${escapeHtml(item.name ? `${item.name} (${item.asn})` : item.asn)}</a>`).join(' · ')}</p>` : ''}
+        <p>${escapeHtml(t('board.access.blindSpot'))}</p>
+      </details>` : ''}
     </section>`;
 }
 
@@ -593,7 +611,7 @@ function renderHero(interpretation) {
       <p class="situation-lede">${escapeHtml(ledeText(interpretation))}</p>
     </header>
     ${renderServiceTiles(interpretation.services, selection, interpretation.dimensions.connectivity)}
-    ${renderNetworkBreakdown(interpretation.services, selection)}
+    ${renderAccess(interpretation.services, selection)}
     ${statusRow(interpretation)}
     ${renderOutageTraffic(interpretation)}`;
   bindOutageChart(hero, interpretation);

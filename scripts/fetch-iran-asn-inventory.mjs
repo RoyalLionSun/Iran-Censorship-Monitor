@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { compareCuratedAsnCoverage, getIranAsnInventory, getIranAsnRoutingSummary } from '../lib/iran-asn-inventory.mjs';
 import { buildIranAsnCandidateQueue, enrichIranAsnInventory, getIpverseAsMetadata } from '../lib/ipverse-as-metadata.mjs';
 import { buildAsnCoverageSnapshot, writeAsnCoverageSnapshot } from '../lib/asn-coverage-snapshot.mjs';
+import { buildAsnDirectory, writeAsnDirectory } from '../lib/asn-directory.mjs';
 
 const args = new Set(process.argv.slice(2));
 for (const arg of args) {
@@ -55,6 +56,8 @@ if (args.has('--write')) {
   const snapshot = buildAsnCoverageSnapshot(result);
   const snapshotPath = fileURLToPath(new URL('../var/asn-coverage/latest.json', import.meta.url));
   await writeAsnCoverageSnapshot(snapshotPath, snapshot);
+  // Name and kind of every Iranian network, for the dashboard's access overview.
+  await writeAsnDirectory(buildAsnDirectory(inventory, secondaryMetadata.entries, curated));
   process.stdout.write(`${JSON.stringify(snapshot, null, 2)}\n`);
 } else {
   process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);

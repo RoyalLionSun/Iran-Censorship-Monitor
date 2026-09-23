@@ -5,7 +5,7 @@ import { extname, join, normalize, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildAssessment } from './lib/assessment.mjs';
 import { createLastGoodStore, errorPayload, isCleanOverview, isSettledPeriod, jsonResponse, mapLimit, normalizeAsn, validateRange } from './lib/common.mjs';
-import { getCircumventionSignals, getOoniDomainMeasurements, getOoniDomains, getOoniMeasurementDetail, getOoniNetworks, getOoniServiceNetworks, getOoniTimeline, getOoniSample, listOoniMeasurements, OONI_TESTS } from './lib/ooni.mjs';
+import { getCircumventionSignals, getOoniDomainMeasurements, getOoniDomains, getOoniMeasurementDetail, getOoniNetworks, getOoniServiceNetworks, getOoniTimeline, iranRegisteredAsns, getOoniSample, listOoniMeasurements, OONI_TESTS } from './lib/ooni.mjs';
 import { getRipeSignals } from './lib/ripe.mjs';
 import { getRadarConnectionQuality, getRadarOutageHistory, getRadarOutageTraffic, getRadarSignals, isNationwideAnnotation } from './lib/radar.mjs';
 import { getIodaSignals } from './lib/ioda.mjs';
@@ -17,7 +17,8 @@ import { compareAsnIdentity, getAsnRegistryIdentity } from './lib/asn-registry.m
 import { readAsnCoverageSnapshot } from './lib/asn-coverage-snapshot.mjs';
 import { authorizeGlobalpingControl, createGlobalpingMeasurement, getGlobalpingIranProbes, getGlobalpingMeasurement, globalpingRateLimit } from './lib/globalping.mjs';
 import { getCensoredPlanetSignals } from './lib/censoredplanet.mjs';
-import { SERVICE_BRANDS, selectionBrand, summarizeServiceBrands, summarizeServiceNetworks } from './public/service-findings.js';
+import { SERVICE_BRANDS, selectionBrand, summarizeNetworkAccess, summarizeServiceBrands, summarizeServiceNetworks } from './public/service-findings.js';
+import { readAsnDirectory } from './lib/asn-directory.mjs';
 import { getAsnNames } from './lib/asn-names.mjs';
 import { getCitizenLabIranTargets } from './lib/citizenlab.mjs';
 import { getPeeringDbTopology } from './lib/peeringdb.mjs';
@@ -291,11 +292,29 @@ async function handleApi(req, res, url) {
       const raw = await safeSource('OONI service networks', () => getOoniServiceNetworks({ ...input, asn: '', target: '' }, domains), sourceKey('OONI service networks', { ...input, asn: '', target: '' }));
       if (raw?.ok && raw.status !== 'stale') {
         const breakdown = summarizeServiceNetworks(raw.rows);
-        const shown = breakdown.flatMap((item) => [...item.partial, ...item.restricted, ...item.reachable, ...item.blocked].map((entry) => entry.asn));
-        // Institutional networks (an international organisation's offices) are not providers the
-        // public can use; the reader is told so next to the name.
-        const types = Object.fromEntries(asns.filter((item) => shown.includes(item.asn)).map((item) => [item.asn, item.type]));
-        serviceNetworks = { ok: true, breakdown, names: await getAsnNames(shown, asns), types, excludedMeasurements: raw.excludedMeasurements, sourceUrl: raw.sourceUrl };
+        const access = summarizeNetworkAccess(raw.rows);
+        const shown = access.map((entry) => entry.asn);
+        // Who a network is: the reviewed catalogue first, then the Iranian network directory,
+        // then RIPEstat for a name. Institutional and public networks are named as such.
+        const directory = await readAsnDirectory();
+        const kinds = Object.fromEntries(shown.map((asn) => [asn, asns.find((item) => item.asn === asn)?.type ?? directory?.entries?.[asn]?.kind ?? null]));
+        const known = [...asns, ...shown.filter((asn) => directory?.entries?.[asn]?.name).map((asn) => ({ asn, name: directory.entries[asn].name }))];
+        const names = await getAsnNames(shown, known);
+        // Networks without any test in the period: nothing can be said about them, and the
+        // reader has to know that, especially for public bodies.
+        const inventory = await iranRegisteredAsns();
+        const unmeasured = inventory ? [...inventory].filter((asn) => !shown.includes(asn)) : [];
+        const unmeasuredKinds = {};
+        for (const asn of unmeasured) {
+          const kind = directory?.entries?.[asn]?.kind ?? 'unknown';
+          unmeasuredKinds[kind] = (unmeasuredKinds[kind] ?? 0) + 1;
+        }
+        const publicUnmeasured = unmeasured.filter((asn) => ['government_admin', 'institutional'].includes(directory?.entries?.[asn]?.kind))
+          .map((asn) => ({ asn, name: directory.entries[asn].name }));
+        serviceNetworks = {
+          ok: true, breakdown, access, names, types: kinds, excludedMeasurements: raw.excludedMeasurements, sourceUrl: raw.sourceUrl,
+          coverage: inventory ? { registered: inventory.size, measured: shown.length, unmeasuredKinds, publicUnmeasured, directory: Boolean(directory) } : null,
+        };
       } else serviceNetworks = { ok: false };
     }
     const scopeLabel = input.asn ? `${input.asn} / Iran` : 'Iran / all measured networks';

@@ -218,3 +218,16 @@ test('networks are named per service: blocked, partly blocked, reachable', async
   assert.deepEqual(instagram.partial.map((entry) => entry.asn), ['AS31549']);
   assert.deepEqual(instagram.blocked.map((entry) => entry.asn), ['AS58224']);
 });
+
+test('who has access: full only when every tested service was reachable in that network', async () => {
+  const { summarizeNetworkAccess } = await import('../public/service-findings.js');
+  const row = (domain, asn, confirmed, ok) => ({ domain, asn, measurements: confirmed + ok, confirmed, anomalous: 0, ok, failures: 0 });
+  const access = summarizeNetworkAccess([
+    row('www.instagram.com', 'AS52140', 0, 6), row('www.youtube.com', 'AS52140', 0, 6),
+    row('www.instagram.com', 'AS31549', 32, 35), row('www.youtube.com', 'AS31549', 60, 3),
+    row('www.instagram.com', 'AS58224', 224, 2), row('www.youtube.com', 'AS58224', 200, 1),
+  ]);
+  assert.deepEqual(access.map((entry) => [entry.asn, entry.level]), [['AS52140', 'full'], ['AS31549', 'partial'], ['AS58224', 'blocked']]);
+  assert.equal(access[1].services.instagram.status, 'partial');
+  assert.equal(access[1].services.youtube.status, 'blocked');
+});
