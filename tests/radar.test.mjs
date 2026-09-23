@@ -298,3 +298,21 @@ test('the outage list keeps Radar dates and only drops entries lying inside anot
     ['2025-06-17T14:00:00Z', '2025-06-18T06:00:00Z'],
   ]);
 });
+
+test('network shutdowns a few days apart form one episode; different causes and scopes do not', () => {
+  return import('../lib/radar.mjs').then(({ listOutageEpisodes: list }) => {
+    const item = (startDate, endDate, outageType, outageCause, asns) => ({ startDate, endDate, outageType, outageCause, asns });
+    const episodes = list([
+      item('2022-09-21T16:30:00Z', '2022-09-22T05:00:00Z', 'NETWORK', 'GOVERNMENT_DIRECTED', [197207]),
+      item('2022-10-03T12:30:00Z', '2022-10-03T20:20:00Z', 'NETWORK', 'GOVERNMENT_DIRECTED', [44244]),
+      item('2022-10-08T13:30:00Z', '2022-10-08T20:15:00Z', 'NETWORK', 'GOVERNMENT_DIRECTED', [57218]),
+      item('2022-09-25T00:00:00Z', '2022-09-25T05:00:00Z', 'NETWORK', 'CABLE_CUT', [58224]),
+      item('2022-09-30T00:00:00Z', '2022-09-30T05:00:00Z', 'NATIONWIDE', 'GOVERNMENT_DIRECTED', []),
+    ]);
+    assert.equal(episodes.length, 3, 'a gap of 12 days splits; a different cause is its own episode; nationwide is not listed');
+    const curfew = episodes.find((episode) => episode.start === '2022-10-03T12:30:00Z');
+    assert.equal(curfew.end, '2022-10-08T20:15:00Z');
+    assert.deepEqual(curfew.asns, ['AS44244', 'AS57218']);
+    assert.equal(curfew.days, 2);
+  });
+});

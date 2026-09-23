@@ -122,8 +122,10 @@ async function loadOutageHistory() {
   try {
     const result = await api('/api/outages');
     state.outages = result?.ok && Array.isArray(result.outages) ? result.outages : [];
+    state.outageEpisodes = result?.ok && Array.isArray(result.episodes) ? result.episodes : [];
   } catch {
     state.outages = [];
+    state.outageEpisodes = [];
   }
   renderOutageOptions();
 }
@@ -132,8 +134,20 @@ function outageLabel(outage) {
   const format = new Intl.DateTimeFormat(localeFor(), { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
   const causeKey = `outages.cause.${outage.cause}`;
   const cause = t(causeKey) === causeKey ? t('outages.cause.UNKNOWN') : t(causeKey);
+  const start = format.format(Date.parse(outage.start));
   const end = outage.end ? format.format(Date.parse(outage.end)) : t('outages.ongoing');
-  return `${format.format(Date.parse(outage.start))} – ${end} · ${cause}`;
+  return `${start === end ? start : `${start} – ${end}`} · ${cause}`;
+}
+
+function episodeLabel(episode) {
+  const format = new Intl.DateTimeFormat(localeFor(), { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+  const causeKey = `outages.cause.${episode.cause}`;
+  const cause = t(causeKey) === causeKey ? t('outages.cause.UNKNOWN') : t(causeKey);
+  const start = format.format(Date.parse(episode.start));
+  const end = format.format(Date.parse(episode.end));
+  const range = start === end ? start : `${start} – ${end}`;
+  const who = episode.networks?.length ? episode.networks.join(', ') : t(`outages.scope.${episode.scope}`);
+  return `${range} · ${who} · ${t(episode.days === 1 ? 'outages.shutdowns.one' : 'outages.shutdowns.other', { count: episode.days })} · ${cause}`;
 }
 
 function renderOutageOptions() {
@@ -141,10 +155,14 @@ function renderOutageOptions() {
   const select = $('#outage-select');
   if (!picker || !select) return;
   const outages = state.outages ?? [];
-  picker.hidden = !outages.length;
+  const episodes = state.outageEpisodes ?? [];
+  picker.hidden = !outages.length && !episodes.length;
   const current = select.value;
+  // Nationwide outages first; shutdowns of single networks or regions, such as the 2022
+  // mobile curfews, in their own group.
   select.innerHTML = `<option value="">${escapeHtml(t('outages.choose'))}</option>`
-    + outages.map((outage, index) => `<option value="${index}">${escapeHtml(outageLabel(outage))}</option>`).join('');
+    + (outages.length ? `<optgroup label="${escapeHtml(t('outages.group.nationwide'))}">${outages.map((outage, index) => `<option value="n${index}">${escapeHtml(outageLabel(outage))}</option>`).join('')}</optgroup>` : '')
+    + (episodes.length ? `<optgroup label="${escapeHtml(t('outages.group.networks'))}">${episodes.map((episode, index) => `<option value="e${index}">${escapeHtml(episodeLabel(episode))}</option>`).join('')}</optgroup>` : '');
   select.value = current;
 }
 
@@ -1137,8 +1155,10 @@ $('#vpn-form').addEventListener('reset', () => setTimeout(renderVpnCalculation, 
 $('#test-select').addEventListener('change', () => { updateTargetVisibility(); scheduleLoad(); });
 ['#asn-select','#target-select','#since-input','#until-input'].forEach((selector)=>$(selector).addEventListener('change', scheduleLoad));
 $('#outage-select').addEventListener('change', (event) => {
-  const outage = state.outages?.[Number(event.target.value)];
-  if (event.target.value !== '' && outage) selectOutage(outage);
+  const value = event.target.value;
+  const outage = value.startsWith('n') ? state.outages?.[Number(value.slice(1))]
+    : value.startsWith('e') ? state.outageEpisodes?.[Number(value.slice(1))] : null;
+  if (outage) selectOutage(outage);
 });
 $$('.presets button').forEach((button)=>button.addEventListener('click',()=>{
   if (button.dataset.days) setPreset(Number(button.dataset.days));

@@ -222,6 +222,9 @@ async function handleApi(req, res, url) {
 
   if (url.pathname === '/api/outages') {
     const result = await safeSource('Cloudflare Radar outage history', () => getRadarOutageHistory(), 'Radar outage history');
+    // Network episodes name their operators the way the network selector does.
+    const names = Object.fromEntries(asns.map((item) => [item.asn, item.name]));
+    if (Array.isArray(result?.episodes)) result.episodes = result.episodes.map((episode) => ({ ...episode, networks: episode.asns.map((asn) => names[asn] ?? asn) }));
     jsonResponse(res, 200, result);
     return true;
   }

@@ -395,6 +395,7 @@ const PRIVILEGED_SOURCES = {
   filterwatchNov: 'https://filter.watch/english/2025/11/24/investigative-report-november-2025-revealing-the-depth-of-digital-discrimination/',
   wikipedia: 'https://en.wikipedia.org/wiki/White_SIM_Card',
   ban: 'https://thenewregion.com/posts/3922',
+  citizenlab: 'https://citizenlab.ca/research/uncovering-irans-mobile-legal-intercept-system/',
 };
 
 function sourceLinks(keys) {
@@ -408,6 +409,7 @@ function renderPrivileged() {
     ['services', ['filterwatchApr']],
     ['whiteSim', ['filterwatchNov', 'wikipedia']],
     ['ban', ['ban']],
+    ['perSubscriber', ['citizenlab']],
   ];
   return `
     <section class="privileged-board" aria-labelledby="privileged-title">
