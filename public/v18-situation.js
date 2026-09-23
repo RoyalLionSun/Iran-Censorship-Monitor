@@ -90,6 +90,8 @@ function translateStaticView() {
 }
 
 function stateKey(dimension) {
+  // A lookup still running in the background is not "not evaluated".
+  if (dimension.pending) return `interpretation.${dimension.id}.state.pending`;
   return `interpretation.${dimension.id}.state.${dimension.state}`;
 }
 
@@ -127,6 +129,7 @@ function renderEvidenceItems(dimension) {
 
 // A routing answer from another point in time must not be described as the selected one.
 function meaningKey(dimension) {
+  if (dimension.pending) return `interpretation.${dimension.id}.meaning.pending`;
   const unaligned = dimension.id === 'routing' && dimension.timeAlignment === 'unknown' && dimension.state !== 'insufficient-data';
   return `interpretation.${dimension.id}.meaning.${dimension.state}${unaligned ? '-unaligned' : ''}`;
 }
@@ -291,6 +294,7 @@ function renderServiceTiles(services, selection, connectivity = null) {
   // consequence of the outage, not a gap that could hide a working service.
   const sparse = items.some((item) => ['untested', 'unclear', 'unavailable'].includes(item.status) && !item.country);
   const note = services.stale?.since ? t('board.services.staleNote')
+    : items.some((item) => ['untested', 'unclear'].includes(item.status) && item.country) ? t('board.services.noteCountry')
     : nationwidePeriod(connectivity) && sparse ? t('board.services.outageNote')
       : t('board.services.note');
   return `

@@ -500,3 +500,11 @@ test('the selected network traffic is shown only for that network and only next 
   const alone = buildAssessment({ ...base, networkOutageTraffic: { ...traffic, asn: 'AS58224' } });
   assert.equal(alone.interpretation.dimensions.connectivity.outageTraffic, null);
 });
+
+test('a measured nationwide outage is reported as measured, not as "no shutdown"', () => {
+  const measured = buildAssessment({ radar: radar({ outages: [blackout] }), ioda: ioda([{ datasource: 'bgp' }]), pulse: pulseRecord, selection: { ...selection, since: '2026-03-01', until: '2026-03-20' }, scopeLabel: 'Iran' });
+  const ids = measured.interpretation.findings.map((item) => item.id);
+  assert.ok(ids.includes('shutdown-measured-unconfirmed'));
+  assert.ok(!ids.includes('shutdown-not-established'));
+  assert.equal(measured.interpretation.dimensions.shutdown.state, 'not-established', 'the shutdown rule itself is unchanged');
+});
