@@ -362,4 +362,12 @@ export default Object.freeze({
   'board.coverage.days': 'Measured on {days} of {window} days',
   'meaning.vantage.exact': 'This rests on {runs} independent measurement runs, spread over {days} of {window} days.',
   'meaning.vantage.atLeast': 'This rests on at least {runs} independent measurement runs; only the most recent records are counted, which covered {days} days.',
+  'board.mechanism.dns': 'Mostly via the name lookup (DNS)',
+  'board.mechanism.tcp': 'Mostly blocked connections (IP)',
+  'board.mechanism.blockpage': 'Mostly a block page',
+  'board.mechanism.http-failure': 'Mostly interrupted encrypted connections',
+  'meaning.mechanism.dns': 'For {service} the block works through the name lookup: the network answers with a wrong address ({count} of {affected} affected tests).',
+  'meaning.mechanism.tcp': 'For {service} the block works at network level: connections to its addresses are refused or dropped ({count} of {affected} affected tests).',
+  'meaning.mechanism.blockpage': 'For {service} the network returns a block page instead of the service ({count} of {affected} affected tests).',
+  'meaning.mechanism.http-failure': 'For {service} the encrypted connection is interrupted while it is being established ({count} of {affected} affected tests).',
 });

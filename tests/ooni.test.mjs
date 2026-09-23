@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { OONI_VANTAGE_SAMPLE_SIZE, aggregateOoniAggregationRows, aggregateOoniDomains, aggregateOoniRows, buildOoniAggregationQuery, buildOoniDomainMeasurementsQuery, buildOoniDomainQuery, buildOoniQuery, buildOoniVantageQuery, inferDetailedMethods, parseOoniDomainMeasurements, summarizeOoniVantage } from '../lib/ooni.mjs';
+import { OONI_SAMPLE_SIZE, sampleMechanism, aggregateOoniAggregationRows, aggregateOoniDomains, aggregateOoniRows, buildOoniAggregationQuery, buildOoniDomainMeasurementsQuery, buildOoniDomainQuery, buildOoniQuery, buildOoniSampleQuery, inferDetailedMethods, parseOoniDomainMeasurements, summarizeOoniSample } from '../lib/ooni.mjs';
 
 const domainInput = { country:'IR', asn:'AS44244', since:'2026-09-01', until:'2026-09-02', testName:'web_connectivity', target:'' };
 
@@ -191,12 +191,12 @@ test('non web-connectivity queries do not send input target', () => {
 const vantageInput = { country: 'IR', asn: 'AS58224', since: '2026-09-16', until: '2026-09-22', testName: 'web_connectivity', target: '' };
 
 test('coverage sampling asks OONI for one domain inside the selected scope', () => {
-  const params = buildOoniVantageQuery(vantageInput, 'WWW.Instagram.com.');
+  const params = buildOoniSampleQuery(vantageInput, 'WWW.Instagram.com.');
   assert.equal(params.get('domain'), 'www.instagram.com');
   assert.equal(params.get('probe_asn'), '58224');
   assert.equal(params.get('probe_cc'), 'IR');
   assert.equal(params.get('until'), '2026-09-22T23:59:59Z');
-  assert.equal(Number(params.get('limit')), OONI_VANTAGE_SAMPLE_SIZE);
+  assert.equal(Number(params.get('limit')), OONI_SAMPLE_SIZE);
   assert.equal(params.get('input'), null, 'the sample covers the service, not one exact URL');
 });
 
@@ -206,12 +206,12 @@ test('coverage sampling counts independent measurement runs and days, never prob
     { probe_cc: 'IR', probe_asn: 'AS58224', test_name: 'web_connectivity', input: 'https://www.instagram.com/x', report_id: 'r1', measurement_start_time: '2026-09-22T10:05:00Z' },
     { probe_cc: 'IR', probe_asn: 'AS58224', test_name: 'web_connectivity', input: 'https://www.instagram.com/', report_id: 'r2', measurement_start_time: '2026-09-21T09:00:00Z' },
   ];
-  const summary = summarizeOoniVantage({ results }, { domain: 'www.instagram.com', input: vantageInput });
+  const summary = summarizeOoniSample({ results }, { domain: 'www.instagram.com', input: vantageInput });
   assert.equal(summary.runs, 2);
   assert.equal(summary.observedDays, 2);
   assert.equal(summary.sampled, 3);
   assert.equal(summary.bounded, false, 'a short sample is a complete count');
-  assert.equal(summarizeOoniVantage({ results: Array.from({ length: OONI_VANTAGE_SAMPLE_SIZE }, (_, index) => ({
+  assert.equal(summarizeOoniSample({ results: Array.from({ length: OONI_SAMPLE_SIZE }, (_, index) => ({
     ...results[0], report_id: `r${index}`,
   })) }, { domain: 'www.instagram.com', input: vantageInput }).bounded, true, 'a full sample is only a floor');
 });
@@ -222,7 +222,7 @@ test('coverage sampling rejects records from another network or domain', () => {
     { probe_cc: 'IR', probe_asn: 'AS58224', test_name: 'web_connectivity', input: 'https://www.facebook.com/', report_id: 'r1', measurement_start_time: '2026-09-22T10:00:00Z' },
     { probe_cc: 'DE', probe_asn: 'AS58224', test_name: 'web_connectivity', input: 'https://www.instagram.com/', report_id: 'r1', measurement_start_time: '2026-09-22T10:00:00Z' },
   ]) {
-    assert.throws(() => summarizeOoniVantage({ results: [bad] }, { domain: 'www.instagram.com', input: vantageInput }), /scope mismatch/);
+    assert.throws(() => summarizeOoniSample({ results: [bad] }, { domain: 'www.instagram.com', input: vantageInput }), /scope mismatch/);
   }
 });
 
@@ -233,4 +233,31 @@ test('domain aggregation reports how many days a domain was measured on', () => 
   ]);
   assert.equal(rows[0].observedDays, 2);
   assert.equal(rows[0].measurements, 6);
+});
+
+test('the blocking mechanism is read from OONI, never inferred', () => {
+  assert.equal(sampleMechanism({ scores: { fingerprints: [{ location_found: 'dns' }], analysis: { blocking_type: 'http-failure' } } }), 'dns',
+    'a confirmed DNS fingerprint outranks the analysed type');
+  assert.equal(sampleMechanism({ scores: { fingerprints: [{ location_found: 'body' }] } }), 'blockpage');
+  assert.equal(sampleMechanism({ scores: { analysis: { blocking_type: 'tcp_ip' } } }), 'tcp');
+  assert.equal(sampleMechanism({ scores: { analysis: { blocking_type: 'http-diff' } } }), 'blockpage');
+  assert.equal(sampleMechanism({ scores: { analysis: { blocking_type: 'http-failure' } } }), 'http-failure');
+  assert.equal(sampleMechanism({ scores: {} }), 'unspecified');
+  assert.equal(sampleMechanism(null), 'unspecified');
+});
+
+test('the sample counts mechanisms only for affected tests and names the dominant one', () => {
+  const row = (extra) => ({ probe_cc: 'IR', probe_asn: 'AS58224', test_name: 'web_connectivity', input: 'https://www.instagram.com/', report_id: 'r1', measurement_start_time: '2026-09-22T10:00:00Z', ...extra });
+  const summary = summarizeOoniSample({ results: [
+    row({ anomaly: true, confirmed: true, scores: { fingerprints: [{ location_found: 'dns' }] } }),
+    row({ anomaly: true, scores: { fingerprints: [{ location_found: 'dns' }] } }),
+    row({ anomaly: true, scores: { analysis: { blocking_type: 'http-failure' } } }),
+    row({ anomaly: false, confirmed: false, scores: { analysis: { blocking_type: 'tcp_ip' } } }),
+  ] }, { domain: 'www.instagram.com', input: vantageInput });
+  assert.equal(summary.affected, 3, 'tests without a finding have no mechanism');
+  assert.deepEqual(summary.mechanisms, { dns: 2, 'http-failure': 1 });
+  assert.deepEqual(summary.dominantMechanism, { code: 'dns', count: 2 });
+
+  const unknownOnly = summarizeOoniSample({ results: [row({ anomaly: true, scores: {} })] }, { domain: 'www.instagram.com', input: vantageInput });
+  assert.equal(unknownOnly.dominantMechanism, null, 'an unspecified mechanism is not presented as one');
 });

@@ -167,6 +167,10 @@ The following invariants are executable regression assertions:
 
 OONI deliberately publishes no stable probe identity, so a claim's coverage is expressed in units that can be counted honestly: the **measured days** a domain group was tested on (from the daily aggregation, complete for the window) and, for an explicit service selection, the **independent measurement runs** behind the finding (distinct `report_id` in a bounded sample of the most recent records). A full sample is reported as a floor ("at least N"), never as a total, and neither number is presented as a count of people, devices or probes.
 
+### Blocking mechanism
+
+The mechanism is source-native and never inferred by this project. For each affected measurement in the sample, OONI reports an analysed `blocking_type` and, for confirmed cases, where the block fingerprint was found. A confirmed DNS fingerprint outranks the analysed type; otherwise `dns`, `tcp_ip`, `http-diff` and `http-failure` map to name-lookup blocking, blocked connections, a block page and an interrupted encrypted connection. Measurements without a finding contribute no mechanism, and an unspecified mechanism is never presented as one. The dominant mechanism is reported with its count out of the affected tests in the sample, for the named service only.
+
 `summary.headline` selects the first-screen statement in this order: established nationwide shutdown; source-native `widespread`/`severe` connectivity impact; confirmed blocked services (named); unconfirmed service problems (named); generic connectivity events; `no-problems-detected` only when every tested service is reachable and connectivity has adequate no-event coverage; otherwise `limited-evidence`. When services were tested, the open unknown becomes `other-services` instead of `affected-services`.
 
 ## Presentation order

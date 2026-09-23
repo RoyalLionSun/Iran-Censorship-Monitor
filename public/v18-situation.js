@@ -237,6 +237,13 @@ function windowDays(selection) {
   return Math.floor((until - since) / 86_400_000) + 1;
 }
 
+// How a service is blocked is the most actionable part of a finding.
+function mechanismLine(item) {
+  const dominant = item?.web?.sample?.dominantMechanism;
+  if (!dominant?.code || !dominant.count) return '';
+  return `<li class="tile-mechanism">${escapeHtml(t(`board.mechanism.${dominant.code}`))}</li>`;
+}
+
 // Coverage is part of the claim: 400 tests on one day are not 400 tests across a week.
 function coverageLine(item, selection) {
   const days = item?.web?.observedDays ?? 0;
@@ -256,7 +263,7 @@ function renderServiceTiles(services, selection) {
         <article class="service-tile" data-status="${escapeHtml(item.status)}">
           <div class="service-tile-head"><span class="status-mark" aria-hidden="true"></span><h3 class="${item.id === 'selected-target' ? 'technical-ltr' : ''}">${escapeHtml(brandName(item.id, services))}</h3></div>
           <b class="service-tile-status">${escapeHtml(t(`board.status.${item.status}`))}</b>
-          <ul>${channelLine(item.web, 'web')}${channelLine(item.app, 'app')}${coverageLine(item, selection)}</ul>
+          <ul>${channelLine(item.web, 'web')}${channelLine(item.app, 'app')}${mechanismLine(item)}${coverageLine(item, selection)}</ul>
         </article>`).join('')}
       </div>` : `<p class="service-board-empty">${escapeHtml(t('board.services.noneInSelection'))}</p>`}
     </section>`;
@@ -326,6 +333,15 @@ function meaningSentences(interpretation) {
       : connection === 'signals' ? plural('meaning.connection.signals', dimensions.connectivity.eventCount ?? 0)
         : t(`meaning.connection.${connection}`));
   const vantage = services?.vantage;
+  const dominant = vantage?.dominantMechanism;
+  const sampled = services?.visible?.[0];
+  if (dominant?.code && dominant.count && sampled) {
+    // The sample belongs to one service, so the sentence names it.
+    sentences.push(t(`meaning.mechanism.${dominant.code}`, {
+      service: brandName(sampled.id, services),
+      count: formatNumber(dominant.count), affected: formatNumber(vantage.affected ?? dominant.count),
+    }));
+  }
   if (vantage?.runs) {
     const window = windowDays(interpretation.selection);
     sentences.push(t(vantage.bounded ? 'meaning.vantage.atLeast' : 'meaning.vantage.exact', {

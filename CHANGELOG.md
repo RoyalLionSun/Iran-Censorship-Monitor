@@ -82,6 +82,13 @@
 - an explicit service selection additionally samples the independent measurement runs behind the finding and reports a full sample as a floor;
 - OONI domain aggregation carries `observedDays`; a fully qualified domain with a trailing root dot is accepted instead of rejected.
 
+### Blocking mechanism (2026-09-23)
+
+- service tiles state how a service is blocked: via the name lookup (DNS), blocked connections (IP), a block page, or an interrupted encrypted connection;
+- the plain-language panel explains the dominant mechanism for the named service with its share of the affected tests;
+- the mechanism comes from the OONI blocking type and confirmed block fingerprints, is only counted for measurements that actually have a finding, and an unspecified mechanism is never presented as one;
+- the evidence samples for the affected services run in one parallel round, which kept the cold Overview at about 14 s and a warm one at 2.6 s.
+
 ## 1.8.0 — 2026-09-10
 
 ### Plain-language current situation

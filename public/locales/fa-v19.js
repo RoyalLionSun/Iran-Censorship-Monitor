@@ -362,4 +362,12 @@ export default Object.freeze({
   'board.coverage.days': 'اندازه‌گیری در {days} از {window} روز',
   'meaning.vantage.exact': 'این یافته بر {runs} اجرای مستقل آزمون تکیه دارد که در {days} از {window} روز پخش شده‌اند.',
   'meaning.vantage.atLeast': 'این یافته دست‌کم بر {runs} اجرای مستقل آزمون تکیه دارد؛ فقط تازه‌ترین رکوردها شمرده می‌شوند که {days} روز را پوشش می‌دادند.',
+  'board.mechanism.dns': 'بیشتر از راه جست‌وجوی نام (DNS)',
+  'board.mechanism.tcp': 'بیشتر مسدودسازی اتصال‌ها (IP)',
+  'board.mechanism.blockpage': 'بیشتر نمایش صفحه مسدودسازی',
+  'board.mechanism.http-failure': 'بیشتر قطع اتصال رمزگذاری‌شده',
+  'meaning.mechanism.dns': 'برای {service} مسدودسازی از راه جست‌وجوی نام انجام می‌شود: شبکه نشانی نادرست پاسخ می‌دهد ({count} از {affected} آزمون متأثر).',
+  'meaning.mechanism.tcp': 'برای {service} مسدودسازی در سطح شبکه انجام می‌شود: اتصال به نشانی‌های آن رد یا قطع می‌شود ({count} از {affected} آزمون متأثر).',
+  'meaning.mechanism.blockpage': 'برای {service} شبکه به‌جای خود سرویس یک صفحه مسدودسازی برمی‌گرداند ({count} از {affected} آزمون متأثر).',
+  'meaning.mechanism.http-failure': 'برای {service} اتصال رمزگذاری‌شده هنگام برقراری قطع می‌شود ({count} از {affected} آزمون متأثر).',
 });
