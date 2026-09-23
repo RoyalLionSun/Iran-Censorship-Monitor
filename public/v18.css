@@ -47,11 +47,11 @@
 .access-board h2 { margin: 0; font-size: 13px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--text-soft); }
 .access-board header p, .access-legend { margin: 0; color: var(--muted); font-size: 12.5px; }
 .access-legend { margin-bottom: 8px; }
-.access-scroll { overflow-x: auto; max-height: 520px; overflow-y: auto; }
+.access-scroll { overflow-x: auto; }
 .access-board table { width: 100%; min-width: 0; border-collapse: collapse; font-size: 13px; }
 .access-board th, .access-board td { padding: 7px 9px; border-bottom: 1px solid var(--border); text-align: start; vertical-align: top; }
 .access-board thead th { position: sticky; top: 0; background: var(--bg-elevated); color: var(--muted); font-size: 11px; font-weight: 750; letter-spacing: .04em; text-transform: uppercase; }
-.access-board tbody th { font: 650 13px/1.4 inherit; font-family: inherit; text-transform: none; letter-spacing: normal; }
+.access-board tbody th { font: 650 13px/1.4 inherit; font-family: inherit; text-transform: none; letter-spacing: normal; background: transparent; }
 .access-board tbody th small { text-transform: none; letter-spacing: normal; font-family: inherit; }
 .access-board tbody th a { color: var(--text); text-decoration: underline; text-underline-offset: 2px; }
 .access-board tbody th small, .access-board .access-level small { display: block; color: var(--muted); font-weight: 400; font-size: 11.5px; }
@@ -234,3 +234,8 @@ html[dir="rtl"] .topbar-actions { justify-content: flex-start; }
 .access-board tbody tr:nth-child(odd) { background: rgba(89,168,255,.045); }
 .access-board tbody tr:hover { background: rgba(89,168,255,.1); }
 .access-board thead th { background: #172a44; }
+
+.access-more { margin-top: 8px; }
+/* Grid children default to their content's width; the wide access table would widen the
+   whole board on a phone instead of scrolling inside its own box. */
+.situation-board > * { min-width: 0; }

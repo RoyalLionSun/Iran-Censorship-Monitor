@@ -506,6 +506,7 @@ export default Object.freeze({
   'outages.shutdowns.other': '{count} قطع',
   'board.privileged.perSubscriber': 'اسناد افشاشده از سال‌های ۲۰۱۸ تا ۲۰۲۱ رابطی را توصیف می‌کنند که نهاد تنظیم‌گر از طریق آن می‌تواند مشترکان منفرد موبایل را کنترل کند: قطع داده، محدود کردن به ۲G کند، یا مسدود یا کند کردن سرویس‌های مشخص برای هر کاربر. اینکه امروز کجا و آیا اجرا می‌شود تأیید نشده است؛ این اسناد عمدتاً از یک اپراتور کوچک‌تر هستند.',
   'board.privileged.source.citizenlab': 'سیتیزن لب، ۱۶ ژانویه ۲۰۲۳',
+  'board.access.showAll': 'نمایش همهٔ {count} شبکه',
   'board.outage.percent': '{value}٪',
   'board.outage.belowTenth': 'کمتر از ۰٫۱٪',
   'board.outage.title': 'ترافیک اینترنت از ایران',

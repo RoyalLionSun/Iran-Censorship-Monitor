@@ -444,3 +444,17 @@ html:not([lang="fa"]) .language-switch button[data-lang="en"], html[lang="fa"] .
 .export-menu-list .button { width: 100%; text-align: start; }
 @media (max-width: 1050px) { .updated { display: none; } }
 @media (max-width: 760px) { .brand small { display: none; } .brand-logo { width: 46px; height: 46px; flex-basis: 46px; } .export-menu { display: none; } }
+
+/* Filter bar: fields in the first row; quick ranges and known outages share the second, so
+   the date fields never run into the preset buttons. */
+@media (min-width: 1051px) {
+  .filterbar { grid-template-columns: 1.4fr 1.25fr 1.35fr minmax(150px,.9fr) minmax(150px,.9fr); }
+  .filterbar .presets { grid-row: 2; grid-column: 4 / 6; justify-content: flex-end; align-self: center; }
+  .filterbar .outage-picker { grid-row: 2; grid-column: 1 / 4; }
+}
+/* Dates are technical values; right-to-left layout otherwise cuts off the day. */
+input[type="date"] { direction: ltr; text-align: start; }
+html[dir="rtl"] input[type="date"] { text-align: right; }
+@media (max-width: 1050px) {
+  .filterbar .presets, .filterbar .outage-picker { grid-column: 1 / -1; justify-content: flex-start; }
+}

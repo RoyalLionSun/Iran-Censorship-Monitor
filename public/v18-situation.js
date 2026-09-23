@@ -355,10 +355,13 @@ function renderAccess(services, selection) {
   const { names, types = {}, coverage } = breakdown;
   const brands = ['instagram', 'whatsapp', 'telegram', 'youtube', 'x', 'facebook'];
   const count = (level) => access.filter((entry) => entry.level === level).length;
-  const rows = access.map((entry) => {
+  const VISIBLE_ROWS = 10;
+  const rows = access.map((entry, index) => {
     const kind = kindLabel(types[entry.asn]);
     const note = types[entry.asn] === 'institutional' ? `<small class="network-note">${escapeHtml(t('board.networks.institutional'))}</small>` : '';
-    return `<tr data-level="${escapeHtml(entry.level)}"${entry.asn === selection?.asn ? ' data-selected="yes"' : ''}>
+    // The selected network always stays visible, even beyond the first rows.
+    const extra = index >= VISIBLE_ROWS && entry.asn !== selection?.asn;
+    return `<tr data-level="${escapeHtml(entry.level)}"${entry.asn === selection?.asn ? ' data-selected="yes"' : ''}${extra ? ' data-extra="yes" hidden' : ''}>
       <th scope="row"><a href="${escapeHtml(networkHref(entry.asn))}">${escapeHtml(networkName(entry.asn, names, selection))}</a>${kind ? `<small>${escapeHtml(kind)}</small>` : ''}${note}</th>
       <td class="access-level"><b>${escapeHtml(t(`board.access.level.${entry.level}`))}</b><small>${escapeHtml(t('board.access.tests', { count: formatNumber(entry.measurements) }))}</small></td>
       ${brands.map((id) => accessCell(entry.services[id])).join('')}
@@ -374,10 +377,11 @@ function renderAccess(services, selection) {
         <p>${escapeHtml(t('board.access.summary', { measured: formatNumber(access.length), full: formatNumber(count('full')), partial: formatNumber(count('partial')), blocked: formatNumber(count('blocked')) }))}</p>
       </header>
       <p class="access-legend">${escapeHtml(t('board.access.legend'))}</p>
-      <div class="access-scroll"><table>
+      <div class="access-scroll"><table id="access-table">
         <thead><tr><th scope="col">${escapeHtml(t('board.access.network'))}</th><th scope="col">${escapeHtml(t('board.access.access'))}</th>${brands.map((id) => `<th scope="col">${escapeHtml(brandName(id, services))}</th>`).join('')}</tr></thead>
         <tbody>${rows}</tbody>
       </table></div>
+      ${access.length > VISIBLE_ROWS ? `<button type="button" class="button access-more" data-access-more>${escapeHtml(t('board.access.showAll', { count: formatNumber(access.length) }))}</button>` : ''}
       ${coverage ? `<details class="access-unmeasured">
         <summary>${escapeHtml(t('board.access.unmeasured', { count: formatNumber(coverage.registered - coverage.measured), registered: formatNumber(coverage.registered) }))}</summary>
         ${kindText ? `<p>${escapeHtml(kindText)}</p>` : ''}
@@ -664,11 +668,15 @@ function renderHero(interpretation) {
       <p class="situation-lede">${escapeHtml(ledeText(interpretation))}</p>
     </header>
     ${renderServiceTiles(interpretation.services, selection, interpretation.dimensions.connectivity)}
-    ${renderAccess(interpretation.services, selection)}
-    ${renderPrivileged()}
     ${statusRow(interpretation)}
-    ${renderOutageTraffic(interpretation)}`;
+    ${renderOutageTraffic(interpretation)}
+    ${renderAccess(interpretation.services, selection)}
+    ${renderPrivileged()}`;
   bindOutageChart(hero, interpretation);
+  hero.querySelector('[data-access-more]')?.addEventListener('click', (event) => {
+    hero.querySelectorAll('#access-table tr[data-extra]').forEach((row) => { row.hidden = false; });
+    event.currentTarget.remove();
+  });
 }
 
 function meaningSentences(interpretation) {

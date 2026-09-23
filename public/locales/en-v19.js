@@ -506,6 +506,7 @@ export default Object.freeze({
   'outages.shutdowns.other': '{count} shutdowns',
   'board.privileged.perSubscriber': 'Leaked documents from 2018–2021 describe an interface through which the regulator can control individual mobile subscribers: cut off their data, restrict them to slow 2G, or block or slow single services per user. Whether and where it runs today is not confirmed; the documents come mainly from one smaller provider.',
   'board.privileged.source.citizenlab': 'Citizen Lab, 16 Jan 2023',
+  'board.access.showAll': 'Show all {count} networks',
   'board.outage.percent': '{value}%',
   'board.outage.belowTenth': 'under 0.1%',
   'board.outage.title': 'Internet traffic from Iran',
