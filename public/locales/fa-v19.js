@@ -423,6 +423,8 @@ export default Object.freeze({
   'interpretation.finding.shutdown-measured-unconfirmed.title': 'یک قطعی سراسری اندازه‌گیری شد',
   'interpretation.finding.shutdown-measured-unconfirmed.meaning': 'پایشگرهای قطعی اثر سراسری گزارش می‌کنند. این هنوز به‌طور مستقل به‌عنوان خاموشی تأیید نشده است، زیرا رکورد گزینش‌شدهٔ رویداد تأییدنشده است.',
   'board.services.noteCountry': 'کاشی‌های توپر: آزمون‌هایی که کاربران همین شبکه اجرا کرده‌اند. کاشی‌های خط‌چین: این شبکه آزمون قابل‌استفاده‌ای نداشت، پس نتیجه از شبکه‌های دیگر ایران است.',
+  'services.countryTitle': 'در سراسر ایران (شبکه‌های ثبت‌شده در ایران)',
+  'services.headline.countryOnly': 'در این شبکه آزمون قابل‌استفاده‌ای نیست؛ نتایج شبکه‌های دیگر ایران در پایین آمده است',
   'board.outage.percent': '{value}٪',
   'board.outage.belowTenth': 'کمتر از ۰٫۱٪',
   'board.outage.title': 'ترافیک اینترنت از ایران',

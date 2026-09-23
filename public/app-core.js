@@ -613,8 +613,12 @@ function renderServiceFindings() {
   const loading = !payload && selection.testName === 'web_connectivity';
   section.dataset.status = loading ? 'pending' : focus?.status || 'neutral';
   $('#service-findings-kicker').textContent = t('services.kicker');
+  // Where this network had no usable test, the result from other Iranian networks answers.
+  const countryItems = (state.overview?.assessment?.interpretation?.services?.items ?? [])
+    .filter((item) => item.country && ['untested', 'unclear'].includes(item.status));
   // The Overview situation board carries the headline; this panel is the per-website detail.
   const title = focus ? t('services.detailsTitle')
+    : countryItems.length && payload?.ok ? t('services.headline.countryOnly')
     : t(loading ? 'services.headline.loading' : selection.testName !== 'web_connectivity' ? 'services.headline.notWeb'
       : !payload?.ok ? 'services.headline.unavailable' : selection.target && !rows.some((row) => row.measurements > 0) ? 'services.headline.targetEmpty'
         : !rows.some((row) => row.measurements > 0) ? 'services.headline.untested'
@@ -646,6 +650,15 @@ function renderServiceFindings() {
   const other = rows.filter((row) => row.status === 'untested' || row.status === 'out_of_scope');
   $('#service-findings-list').innerHTML = measured.map(renderRow).join('')
     + (other.length ? `<details class="service-findings-other"><summary>${escapeHtml(t('services.other', { count: number(other.length, 0) }))}</summary><div class="service-findings-list">${other.map(renderRow).join('')}</div></details>` : '');
+  const countryStatus = { blocked: 'confirmed', restricted: 'anomaly', reachable: 'no_signal' };
+  $('#service-country-title').hidden = !countryItems.length;
+  $('#service-country-list').hidden = !countryItems.length;
+  $('#service-country-title').textContent = t('services.countryTitle');
+  $('#service-country-list').innerHTML = countryItems.map((item) => {
+    const status = countryStatus[item.country.status] ?? 'inconclusive';
+    const detail = `${number(item.country.measurements, 0)} ${t('services.tests')} · ${number(item.country.confirmed, 0)} ${t('services.confirmed')} · ${number(item.country.anomalous, 0)} ${t('services.anomalies')} · ${escapeHtml(item.country.lastObserved || '—')} UTC`;
+    return `<div class="service-finding" data-status="${status}"><div><strong>${escapeHtml(item.name)}</strong><span dir="ltr">${escapeHtml(item.country.domain)}</span></div><b>${escapeHtml(t(`services.status.${status}`))}</b><small>${detail}</small></div>`;
+  }).join('');
   $('#service-app-title').textContent = t('services.appTitle');
   $('#service-app-tests').innerHTML = summarizeMessagingAppTests(state.circumvention, selection).map((row) => {
     const detail = ['anomaly', 'no_signal'].includes(row.status)
@@ -736,6 +749,7 @@ async function loadOoniDomains(serial, signal) {
 
 function renderOverview(overview) {
   state.overview = overview;
+  renderServiceFindings();
   renderAssessment(overview.assessment);
   renderKpis(overview);
   renderDivergence(overview.assessment);

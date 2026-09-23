@@ -423,6 +423,8 @@ export default Object.freeze({
   'interpretation.finding.shutdown-measured-unconfirmed.title': 'A nationwide outage was measured',
   'interpretation.finding.shutdown-measured-unconfirmed.meaning': 'Outage monitors report nationwide impact. It is not yet independently confirmed as a shutdown, because the curated incident record is unconfirmed.',
   'board.services.noteCountry': 'Solid tiles: tests run by people in this network. Dashed tiles: this network had no usable test, so the result comes from other Iranian networks.',
+  'services.countryTitle': 'Across Iran (networks registered in Iran)',
+  'services.headline.countryOnly': 'No usable tests in this network; results from other Iranian networks are listed below',
   'board.outage.percent': '{value}%',
   'board.outage.belowTenth': 'under 0.1%',
   'board.outage.title': 'Internet traffic from Iran',
