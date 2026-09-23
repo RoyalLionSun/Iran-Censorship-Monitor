@@ -177,3 +177,25 @@ test('a target that a priority brand already covers does not create a second til
   assert.deepEqual(summary.visible.map((item) => item.id), ['instagram']);
   assert.deepEqual(summary.blocked, ['instagram']);
 });
+
+test('a service without usable tests in the network is answered from tests across Iran, labelled', async () => {
+  const { summarizeServiceBrands } = await import('../public/service-findings.js');
+  const network = { ok: true, domains: [{ domain: 'twitter.com', measurements: 1, confirmed: 0, anomalous: 0, ok: 0, failures: 1 }] };
+  const country = { ok: true, domains: [
+    { domain: 'www.facebook.com', measurements: 353, confirmed: 5, anomalous: 11, ok: 300 },
+    { domain: 'x.com', measurements: 40, confirmed: 0, anomalous: 0, ok: 40 },
+  ] };
+  const selection = { asn: 'AS58224', testName: 'web_connectivity', target: '' };
+  const result = summarizeServiceBrands(network, null, selection, country);
+  const facebook = result.items.find((item) => item.id === 'facebook');
+  assert.equal(facebook.status, 'untested', 'the network status never takes the country result');
+  assert.equal(facebook.country.status, 'blocked');
+  assert.equal(facebook.country.confirmed, 5);
+  const x = result.items.find((item) => item.id === 'x');
+  assert.equal(x.status, 'unclear');
+  assert.equal(x.country.status, 'reachable', 'an inconclusive network test also gets the country answer');
+  assert.deepEqual(result.countryBlocked, ['facebook']);
+  assert.deepEqual(result.blocked, [], 'network claims stay network-only');
+  const everywhere = summarizeServiceBrands(country, null, { ...selection, asn: '' }, country);
+  assert.equal(everywhere.items.find((item) => item.id === 'facebook').country, null, 'no fallback when Iran is already the scope');
+});

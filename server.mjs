@@ -256,6 +256,11 @@ async function handleApi(req, res, url) {
     // For an explicit service selection, sample how many independent measurement runs and
     // days stand behind the finding that the Overview reports.
     const visibleServices = ooniDomains?.ok ? summarizeServiceBrands(ooniDomains, circumvention, input).visible : [];
+    // A service with no usable test in the selected network still has an answer across Iran.
+    const needsCountry = Boolean(input.asn && ooniDomains?.ok && visibleServices.some((item) => ['untested', 'unclear'].includes(item.status)));
+    const countryOoniDomains = needsCountry
+      ? await safeSource('OONI domains (Iran)', () => getOoniDomains(ooniScope({ ...input, asn: '' })), sourceKey('OONI domains', { ...input, asn: '' }))
+      : null;
     const sampleDomains = visibleServices
       .filter((item) => ['blocked', 'restricted'].includes(item.status) && item.web?.measurements > 0)
       .map((item) => item.web.domain);
@@ -279,10 +284,10 @@ async function handleApi(req, res, url) {
       ? await Promise.all([trafficFor(''), input.asn ? trafficFor(input.asn) : null])
       : [null, null];
     const scopeLabel = input.asn ? `${input.asn} / Iran` : 'Iran / all measured networks';
-    const assessment = buildAssessment({ ooni, ripe, radar, radarQuality, ioda, ripestat, censoredPlanet, tor, mlab, apnic, globalping, peeringdb, ihr, asrank, rpki, pulse, ooniDomains, circumvention, ooniSamples, ooniNetworks, outageTraffic, networkOutageTraffic, selection: input, scopeLabel });
+    const assessment = buildAssessment({ ooni, ripe, radar, radarQuality, ioda, ripestat, censoredPlanet, tor, mlab, apnic, globalping, peeringdb, ihr, asrank, rpki, pulse, ooniDomains, countryOoniDomains, circumvention, ooniSamples, ooniNetworks, outageTraffic, networkOutageTraffic, selection: input, scopeLabel });
     const asnProfile = input.asn ? asns.find((item) => item.asn === input.asn) || null : null;
     const payload = { ok: true, input, asnProfile, fetchedAt: new Date().toISOString(), assessment, ooni, ripe, radar, radarQuality, ioda, tor, mlab, apnic, ripestat, globalping, censoredPlanet, peeringdb, ihr, asrank, rpki, pulse };
-    if (cacheKey && isCleanOverview([ooni, ripe, radar, radarQuality, ioda, tor, mlab, apnic, ripestat, censoredPlanet, pulse, ooniDomains, circumvention, outageTraffic, networkOutageTraffic, ooniNetworks, ...ooniSamples])) {
+    if (cacheKey && isCleanOverview([ooni, ripe, radar, radarQuality, ioda, tor, mlab, apnic, ripestat, censoredPlanet, pulse, ooniDomains, countryOoniDomains, circumvention, outageTraffic, networkOutageTraffic, ooniNetworks, ...ooniSamples])) {
       rememberHistoricalOverview(cacheKey, payload);
     }
     jsonResponse(res, 200, payload);

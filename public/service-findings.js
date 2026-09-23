@@ -126,8 +126,25 @@ export function selectedTargetHost(selection = {}) {
   return brandForHost(host) ? null : host;
 }
 
-export function summarizeServiceBrands(domainPayload, appPayload, selection = {}) {
+const COUNTRY_STATUS = { confirmed: 'blocked', anomaly: 'restricted', no_signal: 'reachable', inconclusive: 'unclear' };
+
+// When the selected network has no usable test for a service, what OONI measured across Iran
+// is still worth knowing. It stays a separate, labelled channel and never becomes the
+// network's own status, so a country-wide test cannot stand in for this network.
+function countryFallback(countryRows, brand, networkWeb) {
+  if (!countryRows || (networkWeb && !['untested', 'inconclusive'].includes(networkWeb.status))) return null;
+  const strongest = strongestWebRow(countryRows.filter((row) => brand.domains.includes(row.domain)));
+  if (!strongest || !COUNTRY_STATUS[strongest.status] || strongest.status === 'inconclusive') return null;
+  return {
+    status: COUNTRY_STATUS[strongest.status], webStatus: strongest.status, domain: strongest.domain,
+    measurements: strongest.measurements, confirmed: strongest.confirmed, anomalous: strongest.anomalous,
+    observedDays: strongest.observedDays, lastObserved: strongest.lastObserved,
+  };
+}
+
+export function summarizeServiceBrands(domainPayload, appPayload, selection = {}, countryPayload = null) {
   const webRows = summarizeServiceFindings(domainPayload, selection).rows;
+  const countryRows = selection.asn && countryPayload?.ok ? summarizeServiceFindings(countryPayload, selection).rows : null;
   const appRows = summarizeMessagingAppTests(appPayload, selection);
   const targetHost = selectedTargetHost(selection);
   const targetItem = targetHost ? (() => {
@@ -145,7 +162,7 @@ export function summarizeServiceBrands(domainPayload, appPayload, selection = {}
     const app = appRow ? {
       status: appRow.status, measurements: appRow.measurements, anomalies: appRow.anomalies, lastObserved: appRow.lastObservation,
     } : null;
-    return { id: brand.id, name: brand.name, status: brandStatus(web, app), web, app };
+    return { id: brand.id, name: brand.name, status: brandStatus(web, app), web, app, country: countryFallback(countryRows, brand, web) };
   });
   if (targetItem) items.unshift(targetItem);
   // Only what the current selection actually covers is presented and summarized.
@@ -163,5 +180,6 @@ export function summarizeServiceBrands(domainPayload, appPayload, selection = {}
             : visible.every((item) => item.status === 'unavailable') ? 'unavailable' : 'untested';
   const latestObserved = visible.flatMap((item) => [item.web?.lastObserved, item.app?.lastObserved]).filter(Boolean).sort().at(-1) ?? null;
   const scoped = Boolean(selection.target || (selection.testName && selection.testName !== 'web_connectivity'));
-  return { state, scoped, items, visible, blocked, restricted, reachable, tested, latestObserved };
+  const countryBlocked = visible.filter((item) => ['untested', 'unclear'].includes(item.status) && item.country?.status === 'blocked').map((item) => item.id);
+  return { state, scoped, items, visible, blocked, restricted, reachable, tested, latestObserved, countryBlocked };
 }

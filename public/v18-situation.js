@@ -276,25 +276,38 @@ function coverageLine(item, selection) {
   return `<li class="tile-coverage">${escapeHtml(t('board.coverage.days', { days: formatNumber(days), window: formatNumber(window) }))}</li>`;
 }
 
+function countryLine(country, item) {
+  const key = { blocked: 'board.country.blocked', restricted: 'board.country.restricted', reachable: 'board.country.reachable' }[country.status];
+  return `<li class="tile-country">${escapeHtml(t(key, {
+    confirmed: formatNumber(country.confirmed), count: formatNumber(country.anomalous), total: formatNumber(country.measurements),
+  }))}</li>`;
+}
+
 function renderServiceTiles(services, selection, connectivity = null) {
   if (!services) return '';
   const items = services.visible ?? services.items;
   const title = services.scoped ? t('board.services.selected') : t('board.services.title');
   // During a nationwide outage the volunteers' probes are cut off too: a missing test is a
   // consequence of the outage, not a gap that could hide a working service.
-  const sparse = items.some((item) => ['untested', 'unclear', 'unavailable'].includes(item.status));
+  const sparse = items.some((item) => ['untested', 'unclear', 'unavailable'].includes(item.status) && !item.country);
   const note = services.stale?.since ? t('board.services.staleNote')
     : nationwidePeriod(connectivity) && sparse ? t('board.services.outageNote')
       : t('board.services.note');
   return `
     <section class="service-board" aria-labelledby="service-board-title">
       <header><h2 id="service-board-title">${escapeHtml(title)}</h2><p>${escapeHtml(note)}</p></header>
-      ${items.length ? `<div class="service-tiles">${items.map((item) => `
-        <article class="service-tile" data-status="${escapeHtml(item.status)}">
+      ${items.length ? `<div class="service-tiles">${items.map((item) => {
+        // Without a usable test in this network, the tile answers with the result across Iran,
+        // labelled as such, instead of stopping at "not tested".
+        const country = ['untested', 'unclear'].includes(item.status) ? item.country : null;
+        const status = country ? country.status : item.status;
+        return `
+        <article class="service-tile" data-status="${escapeHtml(status)}"${country ? ' data-scope="country"' : ''}>
           <div class="service-tile-head"><span class="status-mark" aria-hidden="true"></span><h3 class="${item.id === 'selected-target' ? 'technical-ltr' : ''}">${escapeHtml(brandName(item.id, services))}</h3></div>
-          <b class="service-tile-status">${escapeHtml(t(`board.status.${item.status}`))}</b>
-          <ul>${channelLine(item.web, 'web')}${channelLine(item.app, 'app')}${mechanismLine(item)}${coverageLine(item, selection)}</ul>
-        </article>`).join('')}
+          <b class="service-tile-status">${escapeHtml(country ? t(`board.country.status.${country.status}`) : t(`board.status.${item.status}`))}</b>
+          <ul>${country ? countryLine(country, item) : ''}${country && item.web?.status === 'untested' ? '' : channelLine(item.web, 'web')}${channelLine(item.app, 'app')}${mechanismLine(item)}${coverageLine(item, selection)}</ul>
+        </article>`;
+      }).join('')}
       </div>` : `<p class="service-board-empty">${escapeHtml(t('board.services.noneInSelection'))}</p>`}
     </section>`;
 }
@@ -517,6 +530,9 @@ function meaningSentences(interpretation) {
   if (!services?.blocked?.length && !services?.restricted?.length && services?.reachable?.length) {
     sentences.push(t('meaning.reachable', { services: names(services.reachable) }));
   }
+  if (services?.countryBlocked?.length) {
+    sentences.push(t('meaning.countryBlocked', { services: names(services.countryBlocked) }));
+  }
   if (services?.state === 'untested' && services.visible?.length) {
     sentences.push(t('meaning.untested', { services: names(services.visible.map((item) => item.id)) }));
   }
@@ -599,6 +615,10 @@ function meaningSentences(interpretation) {
       days: formatNumber(vantage.observedDays),
       window: window ? formatNumber(window) : formatNumber(vantage.observedDays),
     }));
+  }
+  const foreign = interpretation.summary?.foreignExcluded;
+  if (foreign?.measurements) {
+    sentences.push(t('meaning.foreignExcluded', { count: formatNumber(foreign.measurements), networks: foreign.networks.join(', ') }));
   }
   sentences.push(t('meaning.basis'));
   return sentences;

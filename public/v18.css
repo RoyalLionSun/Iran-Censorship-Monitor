@@ -48,6 +48,9 @@
 .service-tile li { color: var(--muted); font-size: 12px; line-height: 1.45; }
 .service-tile li[data-channel-status="confirmed"], .service-tile li[data-channel-status="anomaly"] { color: var(--text-soft); }
 
+/* A tile answered from tests across Iran, not from this network: same colour, dashed edge. */
+.service-tile[data-scope="country"] { border-style: dashed; }
+.service-tile .tile-country { color: var(--text-soft); }
 .status-row { margin: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .status-row > div { --row: var(--status-unknown); min-width: 0; padding: 11px 13px; border: 1px solid var(--border); border-inline-start: 4px solid var(--row); border-radius: 8px; background: rgba(11,16,23,.42); }
 .status-row > div[data-status="ok"] { --row: var(--status-reachable); }
