@@ -508,3 +508,16 @@ test('a measured nationwide outage is reported as measured, not as "no shutdown"
   assert.ok(!ids.includes('shutdown-not-established'));
   assert.equal(measured.interpretation.dimensions.shutdown.state, 'not-established', 'the shutdown rule itself is unchanged');
 });
+
+test('a connectivity signal names its latest event, and a quiet week reports no shutdown', () => {
+  const week = { ...selection, since: '2026-09-17', until: '2026-09-23' };
+  const result = buildAssessment({
+    radar: radar(), ioda: ioda([{ datasource: 'bgp', start: '2026-09-22T08:25:00.000Z', end: '2026-09-22T10:30:00.000Z' }]),
+    pulse: { ok: true, status: 'no_data', events: [] }, selection: week, scopeLabel: 'AS58224 / Iran',
+  }).interpretation;
+  assert.deepEqual(result.dimensions.connectivity.latestEvent, { source: 'IODA', kind: 'bgp', start: '2026-09-22T08:25:00.000Z', end: '2026-09-22T10:30:00.000Z' });
+  assert.equal(result.dimensions.shutdown.quiet, true);
+  assert.ok(!result.unknowns.includes('complete-nationwide-shutdown'), 'nothing to confirm is not an open question');
+  const noToken = buildAssessment({ radar: radar(), pulse: { ok: true, status: 'token_required', events: [] }, selection: week, scopeLabel: 'AS58224 / Iran' }).interpretation;
+  assert.equal(noToken.dimensions.shutdown.quiet, false, 'without the incident record the question stays open');
+});

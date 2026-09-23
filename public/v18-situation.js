@@ -311,7 +311,7 @@ function renderServiceTiles(services, selection, connectivity = null) {
           <b class="service-tile-status">${escapeHtml(country ? t(`board.country.status.${country.status}`)
             : item.status === 'restricted' && item.app?.status === 'anomaly' && item.web?.status !== 'anomaly' ? t('board.status.appFailed')
               : t(`board.status.${item.status}`))}</b>
-          <ul>${country ? countryLine(country, item) : ''}${!country && services.countryCheck === 'unavailable' && ['untested', 'unclear'].includes(item.status) ? `<li class="tile-country">${escapeHtml(t('board.country.unavailable'))}</li>` : ''}${country && item.web?.status === 'untested' ? '' : channelLine(item.web, 'web')}${channelLine(item.app, 'app')}${mechanismLine(item)}${coverageLine(item, selection)}</ul>
+          <ul>${country ? countryLine(country, item) : ''}${!country && item.country && item.web?.status === 'untested' ? `<li class="tile-country">${escapeHtml(t(`board.country.web.${item.country.status}`, { confirmed: formatNumber(item.country.confirmed), count: formatNumber(item.country.anomalous), total: formatNumber(item.country.measurements) }))}</li>` : ''}${!country && services.countryCheck === 'unavailable' && ['untested', 'unclear'].includes(item.status) ? `<li class="tile-country">${escapeHtml(t('board.country.unavailable'))}</li>` : ''}${item.country && item.web?.status === 'untested' ? '' : channelLine(item.web, 'web')}${channelLine(item.app, 'app')}${mechanismLine(item)}${coverageLine(item, selection)}</ul>
         </article>`;
       }).join('')}
       </div>` : `<p class="service-board-empty">${escapeHtml(t('board.services.noneInSelection'))}</p>`}
@@ -329,6 +329,15 @@ function periodHint(connectivity) {
   return period.end
     ? t('board.connection.period', { from: formatDay(period.start), to: formatDay(period.end) })
     : t('board.connection.periodOngoing', { from: formatDay(period.start) });
+}
+
+function eventHint(connectivity) {
+  const event = connectivity?.latestEvent;
+  if (!event || connectivity.state !== 'disruption-signals') return null;
+  const kindKey = `board.event.kind.${event.kind}`;
+  const kind = t(kindKey) === kindKey ? t('board.event.kind.other') : t(kindKey);
+  const time = (value) => formatDateTime(value);
+  return t(event.end ? 'board.event.range' : 'board.event.since', { source: event.source, kind, from: time(event.start), to: event.end ? time(event.end) : '' });
 }
 
 function formatPercent(value) {
@@ -471,7 +480,7 @@ function statusRow(interpretation) {
       status: ended ? 'warn' : { none: 'ok', signals: 'warn', unknown: 'unknown' }[connection] ?? 'bad',
       value: ended ? t('board.connection.ended', { date: formatDay(ended.end) })
         : connection === 'signals' ? plural('board.connection.signals', connectivity.eventCount ?? 0) : t(`board.connection.${connection}`),
-      hint: periodHint(connectivity) ?? t('board.connection.hint'),
+      hint: periodHint(connectivity) ?? eventHint(connectivity) ?? t('board.connection.hint'),
     },
     radarLatency !== null
       // Real user traffic in this network says more to a reader than a probe ping.
@@ -486,9 +495,9 @@ function statusRow(interpretation) {
       id: 'shutdown',
       // Measured nationwide impact without a confirmed record is neither "established" nor
       // "not confirmed" to a reader looking at a traffic line at zero; say what was measured.
-      status: shutdown.state === 'nationwide-shutdown-established' ? 'bad' : connectivity.severity === 'widespread' ? 'warn' : 'unknown',
+      status: shutdown.state === 'nationwide-shutdown-established' ? 'bad' : connectivity.severity === 'widespread' ? 'warn' : shutdown.quiet ? 'ok' : 'unknown',
       value: shutdown.state !== 'nationwide-shutdown-established' && connectivity.severity === 'widespread'
-        ? t('board.shutdown.measured') : t(`board.shutdown.${shutdown.state}`),
+        ? t('board.shutdown.measured') : shutdown.quiet ? t('board.shutdown.none') : t(`board.shutdown.${shutdown.state}`),
       // Name the missing access or the curated record instead of a generic caveat.
       hint: shutdown.evidence?.some((item) => item.source === 'Internet Society Pulse' && item.state === 'token-required')
         ? t('board.shutdown.missingAccess')
@@ -497,7 +506,7 @@ function statusRow(interpretation) {
             verification: t(`board.shutdown.verification.${shutdown.contextEvent.verificationLevel ?? 'unconfirmed'}`),
             from: formatDay(shutdown.contextEvent.startDate), to: formatDay(shutdown.contextEvent.endDate),
           })
-          : t('board.shutdown.hint'),
+          : shutdown.quiet ? t('board.shutdown.noneHint') : t('board.shutdown.hint'),
     },
   ];
   return `<dl class="status-row">${items.map((item) => `

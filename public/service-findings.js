@@ -2,15 +2,19 @@
 export const SERVICE_DOMAINS = Object.freeze([
   { name: 'Facebook', domain: 'facebook.com' },
   { name: 'Facebook (www)', domain: 'www.facebook.com' },
+  { name: 'Facebook (web)', domain: 'web.facebook.com' },
   { name: 'Instagram', domain: 'instagram.com' },
   { name: 'Instagram (www)', domain: 'www.instagram.com' },
   { name: 'X', domain: 'x.com' },
   { name: 'X (www)', domain: 'www.x.com' },
   { name: 'X (legacy)', domain: 'twitter.com' },
   { name: 'WhatsApp', domain: 'whatsapp.com' },
+  { name: 'WhatsApp (www)', domain: 'www.whatsapp.com' },
   { name: 'WhatsApp Web host', domain: 'web.whatsapp.com' },
   { name: 'Telegram', domain: 'telegram.org' },
   { name: 'Telegram Web host', domain: 'web.telegram.org' },
+  { name: 'Telegram links (t.me)', domain: 't.me' },
+  { name: 'Telegram links (telegram.me)', domain: 'telegram.me' },
   { name: 'YouTube', domain: 'youtube.com' },
   { name: 'YouTube (www)', domain: 'www.youtube.com' },
 ]);
@@ -75,11 +79,13 @@ export function summarizeMessagingAppTests(payload, selection = {}) {
 // App tests stay a separate channel: website results never stand in for app availability.
 export const SERVICE_BRANDS = Object.freeze([
   { id: 'instagram', name: 'Instagram', domains: ['www.instagram.com', 'instagram.com'] },
-  { id: 'whatsapp', name: 'WhatsApp', domains: ['web.whatsapp.com', 'whatsapp.com'], app: 'whatsapp' },
-  { id: 'telegram', name: 'Telegram', domains: ['web.telegram.org', 'telegram.org'], app: 'telegram' },
+  // Hosts as OONI actually tests them; www.whatsapp.com, t.me and telegram.me were missing, so
+  // the website channel reported "not tested" while hundreds of tests existed.
+  { id: 'whatsapp', name: 'WhatsApp', domains: ['www.whatsapp.com', 'web.whatsapp.com', 'whatsapp.com'], app: 'whatsapp' },
+  { id: 'telegram', name: 'Telegram', domains: ['web.telegram.org', 'telegram.org', 't.me', 'telegram.me'], app: 'telegram' },
   { id: 'youtube', name: 'YouTube', domains: ['www.youtube.com', 'youtube.com'] },
   { id: 'x', name: 'X (Twitter)', domains: ['x.com', 'www.x.com', 'twitter.com'] },
-  { id: 'facebook', name: 'Facebook', domains: ['www.facebook.com', 'facebook.com'] },
+  { id: 'facebook', name: 'Facebook', domains: ['www.facebook.com', 'facebook.com', 'web.facebook.com'] },
 ]);
 
 // A selection names a service, not one hostname: picking "Facebook" must cover
@@ -132,7 +138,7 @@ const COUNTRY_STATUS = { confirmed: 'blocked', anomaly: 'restricted', no_signal:
 // is still worth knowing. It stays a separate, labelled channel and never becomes the
 // network's own status, so a country-wide test cannot stand in for this network.
 function countryFallback(countryRows, brand, networkWeb) {
-  if (!countryRows || (networkWeb && !['untested', 'inconclusive'].includes(networkWeb.status))) return null;
+  if (!countryRows || !networkWeb || !['untested', 'inconclusive'].includes(networkWeb.status)) return null;
   const strongest = strongestWebRow(countryRows.filter((row) => brand.domains.includes(row.domain)));
   if (!strongest || !COUNTRY_STATUS[strongest.status] || strongest.status === 'inconclusive') return null;
   return {

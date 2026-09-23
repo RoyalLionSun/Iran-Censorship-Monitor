@@ -28,7 +28,7 @@ Package version: **`1.8.0` intentionally unchanged**
 - a selection means a service and covers all of its hosts plus its app test, so the Overview cannot contradict itself for a selected service;
 - the Overview opens with a plain-language situation board: headline naming confirmed blocked services, six service tiles (website and app separate) and a status row for connection, test connections, global routing and complete shutdown;
 - Censored Planet, RIPE Atlas and APNIC deliver data again after fixes for an upstream country-code change, an upstream response-format change and a too-short connect attempt window;
-- the deterministic suite passes **413/413 tests**; build and release-notes gate pass;
+- the deterministic suite passes **417/417 tests**; build and release-notes gate pass;
 - `npm run verify:ui`, including the real-app Overview gate and the EN/FA/RTL fixture, passes with headless Chrome; live public sources were checked for `AS58224`, `2026-09-15..2026-09-22`;
 - the earlier screenshot was caused by an old long-lived server process returning `publicSummary` while the newly served Overview expected `assessment.interpretation`; static assets and server modules were out of sync;
 - a nationwide shutdown is established only when source-native nationwide impact, two independent technical roots and a confirmed or acknowledged national Pulse record overlap in time; confidence stops at medium because root lineage is unverified;
@@ -48,6 +48,8 @@ Package version: **`1.8.0` intentionally unchanged**
 - OONI files measurements under Iran by probe geolocation, not network. In the 2026 blackouts most "Iranian" Web Connectivity tests came from networks registered abroad (1–20 March: 66% from AS142578, Hong Kong; 10–20 January: 100% from AS9009, a hosting/VPN provider; September 2026: 0.0%). Country-wide OONI figures now count only networks registered in Iran (RIPEstat country resource list, cached for a day); excluded tests are subtracted day by day and reported to the reader. Without the registry the exclusion is reported as not applied;
 - a service with no usable test in the selected network is answered on its tile from tests in other Iranian networks, labelled as such and drawn with a dashed edge; the network's own status and claims stay network-only;
 - access claims rest only on inside-out measurements: Censored Planet, which measures from abroad towards servers in Iran, is context only; OONI evidence samples in country scope skip probes on networks registered abroad, and such records are marked in the URL drilldown. INTERPRETATION.md lists where every source measures from;
+- the service brands now include the hosts OONI actually tests: `www.whatsapp.com`, `t.me`, `telegram.me` and `web.facebook.com` were missing, so WhatsApp's website reported "not tested" while hundreds of tests existed (AS58224, 17–23 September 2026: blocking confirmed in 21 of 154);
+- a connectivity signal names its latest event (source, kind and time), and a week in which neither outage monitors nor the incident record report a nationwide outage shows "None reported" instead of "Not confirmed";
 - regional outages cannot be charted: Radar's regional annotations for Iran name no region;
 - a third-party dossier (Iran "digital apartheid" report v4.5, 23 Sep 2026) was checked against primary sources; only claims the project's own sources confirm were used, see below;
 - no commit, push, release, tag or deployment authorization has been made for this working state.

@@ -257,7 +257,7 @@ async function handleApi(req, res, url) {
     // days stand behind the finding that the Overview reports.
     const visibleServices = ooniDomains?.ok ? summarizeServiceBrands(ooniDomains, circumvention, input).visible : [];
     // A service with no usable test in the selected network still has an answer across Iran.
-    const needsCountry = Boolean(input.asn && ooniDomains?.ok && visibleServices.some((item) => ['untested', 'unclear'].includes(item.status)));
+    const needsCountry = Boolean(input.asn && ooniDomains?.ok && visibleServices.some((item) => ['untested', 'inconclusive'].includes(item.web?.status)));
     const countryOoniDomains = needsCountry
       ? await safeSource('OONI domains (Iran)', () => getOoniDomains(ooniScope({ ...input, asn: '' })), sourceKey('OONI domains', { ...input, asn: '' }))
       : null;
