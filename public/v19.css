@@ -42,7 +42,11 @@ th { font-size: 12px; }
 .situation-explanation li { font-size: 13.5px; }
 .situation-explanation p { font-size: 14.5px; line-height: 1.62; }
 .language-switch button { font-family: inherit; font-size: 14px; line-height: 1.2; }
+/* Label and explanation are separate lines; inline they ran together ("What this meansA …"). */
+.plain-meaning { display: grid; gap: 3px; }
 .plain-meaning strong { font-size: 13px; }
+/* Secondary cell notes sit under their value instead of running into it. */
+#asn-coverage-table td small { display: block; margin-top: 2px; color: var(--muted); }
 .plain-meaning span { font-size: 14.5px; line-height: 1.58; }
 .situation-channels { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 11px; }
 .situation-channel { min-width: 220px; border: 1px solid var(--border); background: rgba(11,16,23,.32); border-radius: 7px; padding: 9px 11px; }

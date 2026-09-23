@@ -125,6 +125,12 @@ function renderEvidenceItems(dimension) {
     </li>`).join('');
 }
 
+// A routing answer from another point in time must not be described as the selected one.
+function meaningKey(dimension) {
+  const unaligned = dimension.id === 'routing' && dimension.timeAlignment === 'unknown' && dimension.state !== 'insufficient-data';
+  return `interpretation.${dimension.id}.meaning.${dimension.state}${unaligned ? '-unaligned' : ''}`;
+}
+
 function renderDimension(dimension) {
   const metadata = [
     ['severity', dimension.severity],
@@ -138,7 +144,7 @@ function renderDimension(dimension) {
         <span class="dimension-icon" aria-hidden="true">${escapeHtml(t(`interpretation.${dimension.id}.icon`))}</span>
         <div><span>${escapeHtml(t(`interpretation.${dimension.id}.title`))}</span><h2>${escapeHtml(t(stateKey(dimension)))}</h2></div>
       </header>
-      <p>${escapeHtml(t(`interpretation.${dimension.id}.meaning.${dimension.state}`))}</p>
+      <p>${escapeHtml(t(meaningKey(dimension)))}</p>
       <dl>${metadata.map(([label, value]) => `<div><dt>${escapeHtml(t(`interpretation.axis.${label}`))}</dt><dd>${escapeHtml(t(`interpretation.${label}.${value}`))}</dd></div>`).join('')}</dl>
       <ul class="dimension-evidence">${renderEvidenceItems(dimension)}</ul>
       <small>${escapeHtml(t(dimension.limitationKey))}</small>
@@ -200,6 +206,11 @@ function headlineText(summary, services) {
   const names = headline.services.map((id) => brandName(id, services));
   if (NAMED_HEADLINES.includes(headline.state) && names.length) {
     return plural(`board.headline.${headline.state}`, names.length, { services: listOf(names) });
+  }
+  if (headline.state === 'major-outage') {
+    // A dated nationwide outage is plainer than "a major outage has been reported".
+    const period = headline.period;
+    if (period?.scope === 'nationwide' && !period.endedInWindow) return t('board.headline.nationwide-since', { date: formatDay(period.start) });
   }
   if (headline.state === 'outage-ended') {
     const date = formatDay(headline.endedOn);
@@ -433,6 +444,8 @@ function statusRow(interpretation) {
   const range = quality.typicalRange?.latency?.low != null ? quality.typicalRange : null;
   // An outage that ended inside the period is reported as ended, not as the current state.
   const ended = nationwidePeriod(connectivity)?.endedInWindow ? nationwidePeriod(connectivity) : null;
+  // During an outage the quality values describe only the little traffic that still got through.
+  const duringOutage = Boolean(nationwidePeriod(connectivity) && !ended);
   const items = [
     {
       id: 'connection',
@@ -444,7 +457,7 @@ function statusRow(interpretation) {
     radarLatency !== null
       // Real user traffic in this network says more to a reader than a probe ping.
       ? { id: 'quality', status: 'info',
-        hint: [range ? t('board.quality.userRange', { low: formatNumber(range.latency.low, 0), high: formatNumber(range.latency.high, 0) }) : t('board.quality.userHint'),
+        hint: [duringOutage ? t('board.quality.duringOutage') : range ? t('board.quality.userRange', { low: formatNumber(range.latency.low, 0), high: formatNumber(range.latency.high, 0) }) : t('board.quality.userHint'),
           qualityDaysNote(quality, interpretation.selection)].filter(Boolean).join(' · '),
         value: t('board.quality.user', { download: radarDownload === null ? '—' : formatNumber(radarDownload, 1), latency: formatNumber(radarLatency, 0) }) }
       : quality.state === 'path-observations-available' && loss !== null
@@ -452,8 +465,11 @@ function statusRow(interpretation) {
         : { id: 'quality', status: 'unknown', value: t('board.quality.unknown'), hint: t('board.quality.hint') },
     {
       id: 'shutdown',
-      status: shutdown.state === 'nationwide-shutdown-established' ? 'bad' : 'unknown',
-      value: t(`board.shutdown.${shutdown.state}`),
+      // Measured nationwide impact without a confirmed record is neither "established" nor
+      // "not confirmed" to a reader looking at a traffic line at zero; say what was measured.
+      status: shutdown.state === 'nationwide-shutdown-established' ? 'bad' : connectivity.severity === 'widespread' ? 'warn' : 'unknown',
+      value: shutdown.state !== 'nationwide-shutdown-established' && connectivity.severity === 'widespread'
+        ? t('board.shutdown.measured') : t(`board.shutdown.${shutdown.state}`),
       // Name the missing access or the curated record instead of a generic caveat.
       hint: shutdown.evidence?.some((item) => item.source === 'Internet Society Pulse' && item.state === 'token-required')
         ? t('board.shutdown.missingAccess')
@@ -483,7 +499,7 @@ function renderHero(interpretation) {
     <header class="situation-top">
       <span class="section-label">${escapeHtml(stale ? t('board.kicker.stale') : t('board.kicker'))}</span>
       <p class="situation-scope"><strong><bdi>${escapeHtml(networkLabel(interpretation))}</bdi></strong>${period ? ` · <bdi>${escapeHtml(period)}</bdi>` : ''}${latest ? ` · <bdi>${escapeHtml(latest)}</bdi>` : ''}${stale ? ` · <bdi class="scope-stale">${escapeHtml(t('board.stale.since', { date: formatDateTime(stale) }))}</bdi>` : ''}</p>
-      <h1 id="situation-headline">${escapeHtml(headlineText(summary, interpretation.services))}</h1>
+      <h1 id="situation-headline">${escapeHtml(headlineText({ ...summary, headline: summary.headline && { ...summary.headline, period: nationwidePeriod(interpretation.dimensions.connectivity) } }, interpretation.services))}</h1>
       <p class="situation-lede">${escapeHtml(ledeText(interpretation))}</p>
     </header>
     ${renderServiceTiles(interpretation.services, selection, interpretation.dimensions.connectivity)}
@@ -534,7 +550,8 @@ function meaningSentences(interpretation) {
   }
   const radarLatency = evidenceValue(dimensions.quality, 'latency-ms');
   const radarDownload = evidenceValue(dimensions.quality, 'download-mbps');
-  if (radarLatency !== null) {
+  const inOutage = Boolean(nationwidePeriod(dimensions.connectivity) && !nationwidePeriod(dimensions.connectivity).endedInWindow);
+  if (radarLatency !== null && !inOutage) {
     const range = dimensions.quality.typicalRange;
     sentences.push(t(range?.latency?.low != null ? 'meaning.quality.userRange' : 'meaning.quality.user', {
       download: radarDownload === null ? '—' : formatNumber(radarDownload, 1),

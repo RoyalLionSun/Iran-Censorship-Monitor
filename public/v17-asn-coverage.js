@@ -93,7 +93,7 @@ function renderAsnCoverage(payload) {
       <td>${coverageEscape(row.displayName)}${mismatch}</td>
       <td>${coverageEscape(coverageClass(row.candidateClass))}<small>analyst priority only</small></td>
       <td>${coverageEscape(role)}<small>${coverageEscape(category)}</small></td>
-      <td>${coverageEscape(row.secondary?.lastAnnounced || '—')}</td>
+      <td class="technical-ltr">${coverageEscape(String(row.secondary?.lastAnnounced || '—').replace(/T00:00:00(\.000)?Z$/, ''))}</td>
       <td>${coverageEscape(topology)}</td>
     </tr>`;
   }).join('') : '<tr><td colspan="6" class="table-empty">Snapshot contains no uncurated review candidates.</td></tr>';

@@ -5,13 +5,13 @@ import { ROUTING_STATUS_RETRY_TIMEOUT_MS, bgpWindowAvailability, boundedBgpWindo
 test('RIPEstat URLs are scoped to the selected ASN and dates', () => {
   const urls = buildRipeStatUrls({ asn: 'AS58224', since: '2026-09-01', until: '2026-09-08', now: new Date('2026-09-12T12:00:00Z') });
   assert.match(urls.routingStatus, /resource=AS58224/);
-  assert.match(urls.routingStatus, /timestamp=2026-09-08T23%3A59%3A59\.000Z/);
+  assert.match(urls.routingStatus, /timestamp=2026-09-08T23%3A59%3A59Z/);
   assert.match(urls.announcedPrefixes, /starttime=/);
   assert.match(urls.bgpUpdates, /endtime=/);
 });
 
 test('RIPEstat routing lookup uses the selected historical window and the latest snapshot for the current day', () => {
-  assert.equal(routingLookupTimestamp('2026-09-08', new Date('2026-09-12T12:00:00Z')), '2026-09-08T23:59:59.000Z');
+  assert.equal(routingLookupTimestamp('2026-09-08', new Date('2026-09-12T12:00:00Z')), '2026-09-08T23:59:59Z');
   assert.equal(routingLookupTimestamp('2026-09-12', new Date('2026-09-12T12:00:00Z')), null);
 });
 
@@ -82,4 +82,12 @@ test('a routing lookup that exceeds the request timeout is revalidated in the ba
   await new Promise((resolve) => setImmediate(resolve));
   assert.equal(requested.filter((url) => url.includes('routing-status')).length, 2, 'exactly one background retry');
   assert.ok(ROUTING_STATUS_RETRY_TIMEOUT_MS > 12_000);
+});
+
+test('a historical routing lookup is sent in whole seconds, which RIPEstat honours', async () => {
+  const { buildRipeStatUrls, routingLookupTimestamp } = await import('../lib/ripestat.mjs');
+  const timestamp = routingLookupTimestamp('2026-03-20', new Date('2026-09-23T00:00:00Z'));
+  assert.equal(timestamp, '2026-03-20T23:59:59Z', 'with milliseconds RIPEstat answers with today instead');
+  const urls = buildRipeStatUrls({ asn: 'AS58224', since: '2026-03-01', until: '2026-03-20', now: new Date('2026-09-23T00:00:00Z') });
+  assert.equal(new URL(urls.routingStatus).searchParams.get('timestamp'), '2026-03-20T23:59:59Z');
 });
