@@ -455,6 +455,8 @@ export default Object.freeze({
   'board.networks.partial': 'شبکهٔ {network}: مسدود در {confirmed}، در دسترس در {ok} از {total} آزمون',
   'board.networks.restricted': 'شبکهٔ {network}: مشکل در {count} از {total} آزمون، بدون مسدودسازی تأییدشده',
   'board.networks.this': '{network}، همین شبکه',
+  'board.networks.institutional': 'شبکهٔ اداری یک سازمان، نه ارائه‌دهنده‌ای که عموم مردم بتوانند از آن استفاده کنند',
+  'board.lede.otherSites': 'وب‌سایت‌های دیگرِ آزموده‌شده در {rate}٪ از {total} آزمون مشکل نشان دادند و هیچ‌کدام به‌عنوان مسدودسازی تأیید نشد.',
   'board.outage.percent': '{value}٪',
   'board.outage.belowTenth': 'کمتر از ۰٫۱٪',
   'board.outage.title': 'ترافیک اینترنت از ایران',

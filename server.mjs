@@ -292,7 +292,10 @@ async function handleApi(req, res, url) {
       if (raw?.ok && raw.status !== 'stale') {
         const breakdown = summarizeServiceNetworks(raw.rows);
         const shown = breakdown.flatMap((item) => [...item.partial, ...item.restricted, ...item.reachable, ...item.blocked].map((entry) => entry.asn));
-        serviceNetworks = { ok: true, breakdown, names: await getAsnNames(shown, asns), excludedMeasurements: raw.excludedMeasurements, sourceUrl: raw.sourceUrl };
+        // Institutional networks (an international organisation's offices) are not providers the
+        // public can use; the reader is told so next to the name.
+        const types = Object.fromEntries(asns.filter((item) => shown.includes(item.asn)).map((item) => [item.asn, item.type]));
+        serviceNetworks = { ok: true, breakdown, names: await getAsnNames(shown, asns), types, excludedMeasurements: raw.excludedMeasurements, sourceUrl: raw.sourceUrl };
       } else serviceNetworks = { ok: false };
     }
     const scopeLabel = input.asn ? `${input.asn} / Iran` : 'Iran / all measured networks';

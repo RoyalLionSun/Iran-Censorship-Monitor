@@ -521,3 +521,11 @@ test('a connectivity signal names its latest event, and a quiet week reports no 
   const noToken = buildAssessment({ radar: radar(), pulse: { ok: true, status: 'token_required', events: [] }, selection: week, scopeLabel: 'AS58224 / Iran' }).interpretation;
   assert.equal(noToken.dimensions.shutdown.quiet, false, 'without the incident record the question stays open');
 });
+
+test('all popular services reachable is the headline even when other sites had problems', () => {
+  const reachable = { ok: true, domains: ['www.instagram.com', 'www.whatsapp.com', 'telegram.org', 'www.youtube.com', 'twitter.com', 'www.facebook.com']
+    .map((domain) => ({ domain, measurements: 6, confirmed: 0, anomalous: 0, ok: 6, failures: 0, observedDays: 3 })) };
+  const result = buildAssessment({ ooni: ooni({ rate: 7 }), ooniDomains: reachable, radar: { status: 'token_required' }, selection: { ...selection, asn: 'AS52140' }, scopeLabel: 'AS52140 / Iran' });
+  assert.equal(result.interpretation.summary.headline.state, 'services-reachable');
+  assert.equal(result.interpretation.dimensions.interference.state, 'interference-signals', 'the other sites stay visible as a signal');
+});

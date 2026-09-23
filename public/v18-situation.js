@@ -241,6 +241,11 @@ function ledeText(interpretation) {
     const names = services.restricted.map((id) => brandName(id, services));
     sentences.push(plural('board.lede.also-restricted', names.length, { services: listOf(names) }));
   }
+  if (summary.headline.state === 'services-reachable' && !services?.scoped && dimensions.interference?.state === 'interference-signals') {
+    const rate = dimensions.interference.evidence?.find((item) => item.source === 'OONI' && item.metric === 'anomaly-rate')?.value;
+    const total = dimensions.interference.evidence?.find((item) => item.source === 'OONI' && item.metric === 'measurements')?.value;
+    if (rate != null && total) sentences.push(t('board.lede.otherSites', { rate: formatNumber(rate, 1), total: formatNumber(total) }));
+  }
   // The connection state has its own tile and the plain-language panel; no third copy here.
   return sentences.join(' ');
 }
@@ -292,12 +297,26 @@ function networkName(asn, names, selection) {
   return asn === selection?.asn ? t('board.networks.this', { network: label }) : label;
 }
 
-function networkList(entries, names, selection, key) {
-  return entries.map((entry) => escapeHtml(t(key, {
-    network: networkName(entry.asn, names, selection),
-    ok: formatNumber(entry.ok), total: formatNumber(entry.measurements),
-    count: formatNumber(entry.anomalous), confirmed: formatNumber(entry.confirmed),
-  }))).join('<br>');
+// A network name opens that network's view directly, with the same period and test.
+function networkHref(asn) {
+  const params = new URLSearchParams(window.location.search);
+  params.set('asn', asn);
+  params.delete('target');
+  return `?${params}`;
+}
+
+function networkList(entries, breakdown, selection, key) {
+  const { names, types = {} } = breakdown;
+  return entries.map((entry) => {
+    const text = escapeHtml(t(key, {
+      network: '\u0000',
+      ok: formatNumber(entry.ok), total: formatNumber(entry.measurements),
+      count: formatNumber(entry.anomalous), confirmed: formatNumber(entry.confirmed),
+    }));
+    const link = `<a href="${escapeHtml(networkHref(entry.asn))}">${escapeHtml(networkName(entry.asn, names, selection))}</a>`;
+    const note = types[entry.asn] === 'institutional' ? ` <small class="network-note">${escapeHtml(t('board.networks.institutional'))}</small>` : '';
+    return text.replace('\u0000', link) + note;
+  }).join('<br>');
 }
 
 // Which providers did not block which service, by name, on the first screen: a reader should
@@ -305,17 +324,17 @@ function networkList(entries, names, selection, key) {
 function renderNetworkBreakdown(services, selection) {
   const breakdown = services?.networkBreakdown;
   if (!breakdown?.items?.length) return '';
-  const { items, names } = breakdown;
+  const { items } = breakdown;
   const rows = items.map((item) => {
     const open = [...item.reachable];
     const partial = [...item.partial, ...item.restricted];
     return `<tr>
       <th scope="row">${escapeHtml(brandName(item.id, services))}</th>
       <td>${escapeHtml(t('board.networks.blockedCount', { blocked: formatNumber(item.blocked.length + item.partial.length), measured: formatNumber(item.measured) }))}</td>
-      <td class="networks-open">${open.length ? networkList(open, names, selection, 'board.networks.reachable') : `<span class="networks-none">${escapeHtml(t('board.networks.noneOpen'))}</span>`}</td>
+      <td class="networks-open">${open.length ? networkList(open, breakdown, selection, 'board.networks.reachable') : `<span class="networks-none">${escapeHtml(t('board.networks.noneOpen'))}</span>`}</td>
       <td class="networks-partial">${partial.length ? [
-        item.partial.length ? networkList(item.partial, names, selection, 'board.networks.partial') : '',
-        item.restricted.length ? networkList(item.restricted, names, selection, 'board.networks.restricted') : '',
+        item.partial.length ? networkList(item.partial, breakdown, selection, 'board.networks.partial') : '',
+        item.restricted.length ? networkList(item.restricted, breakdown, selection, 'board.networks.restricted') : '',
       ].filter(Boolean).join('<br>') : '—'}</td>
     </tr>`;
   }).join('');

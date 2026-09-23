@@ -90,7 +90,12 @@ function applyUrlState() {
     element.value = value;
     return true;
   };
-  pick('#asn-select', params.get('asn'));
+  // A network outside the curated list (for example opened from the per-network table) is added.
+  const asn = params.get('asn');
+  if (asn && /^AS\d{1,10}$/.test(asn) && ![...$('#asn-select').options].some((option) => option.value === asn)) {
+    $('#asn-select').insertAdjacentHTML('beforeend', `<option value="${escapeHtml(asn)}">${escapeHtml(asn)}</option>`);
+  }
+  pick('#asn-select', asn);
   if (pick('#test-select', params.get('testName'))) updateTargetVisibility();
   pick('#target-select', params.get('target'));
   const since = params.get('since');

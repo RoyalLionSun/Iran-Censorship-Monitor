@@ -357,5 +357,21 @@
     "providerComparison": false,
     "identityConfidence": "registry_confirmed",
     "independentCensorshipVote": false
+  },
+  {
+    "asn": "AS52140",
+    "name": "UNHCR (UN refugee agency, office network)",
+    "type": "institutional",
+    "registryName": "United Nations High Commissioner for Refugees",
+    "asName": "UNHCR-IR-AS",
+    "orgId": "ORG-UNHC1-RIPE",
+    "country": "IR",
+    "aliases": ["UNHCR"],
+    "operatorFamily": "unhcr",
+    "roles": ["institutional"],
+    "providerComparison": false,
+    "identityConfidence": "registry_confirmed",
+    "identityNote": "Office network of an international organisation, connected through Iranian providers (Respina AS42337, Fanap Telecom AS24631). Not a provider the public can use; services reachable here say nothing about ordinary subscribers.",
+    "independentCensorshipVote": false
   }
 ]

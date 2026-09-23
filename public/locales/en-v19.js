@@ -455,6 +455,8 @@ export default Object.freeze({
   'board.networks.partial': '{network}: blocked in {confirmed}, reachable in {ok} of {total} tests',
   'board.networks.restricted': '{network}: problems in {count} of {total} tests, no confirmed block',
   'board.networks.this': '{network}, this network',
+  'board.networks.institutional': 'office network of an organisation, not a provider the public can use',
+  'board.lede.otherSites': 'Other tested websites showed problems in {rate}% of {total} tests, none of them confirmed as blocking.',
   'board.outage.percent': '{value}%',
   'board.outage.belowTenth': 'under 0.1%',
   'board.outage.title': 'Internet traffic from Iran',
