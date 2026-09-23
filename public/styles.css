@@ -42,11 +42,6 @@ button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-v
 .brand { display: flex; align-items: center; gap: 11px; min-width: 0; }
 .brand strong { display: block; font-size: 14px; letter-spacing: .015em; }
 .brand small { display: block; color: var(--muted); font-size: 11px; margin-top: 1px; letter-spacing: .08em; text-transform: uppercase; }
-.brand-mark { width: 28px; height: 28px; border: 1px solid var(--border-strong); border-radius: 7px; display: flex; align-items: end; justify-content: center; gap: 2px; padding: 6px; background: var(--panel); }
-.brand-mark span { width: 3px; border-radius: 1px; background: var(--blue); }
-.brand-mark span:nth-child(1) { height: 6px; opacity: .55; }
-.brand-mark span:nth-child(2) { height: 12px; }
-.brand-mark span:nth-child(3) { height: 9px; opacity: .78; }
 .topbar-meta { min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; color: var(--muted); font-size: 11px; }
 .topbar-meta > * { white-space: nowrap; }
 .topbar-meta .source-state { white-space: normal; }
@@ -393,8 +388,6 @@ body { background:
 
 .topbar { background: linear-gradient(90deg, rgba(19,36,62,.96), rgba(27,30,64,.96)); border-bottom: 0; }
 .topbar::after { content: ""; position: absolute; inset: auto 0 0 0; height: 2px; background: linear-gradient(90deg, var(--accent), var(--accent-2) 55%, var(--accent-3)); opacity: .85; }
-.brand-mark { border: 0; background: linear-gradient(140deg, var(--accent), var(--accent-3)); box-shadow: 0 4px 14px rgba(89,168,255,.28); }
-.brand-mark span { background: #fff; }
 .brand small { color: #86d6d2; }
 .scope-chip { border-color: rgba(82,201,196,.45); background: rgba(82,201,196,.08); color: #bfeeea; }
 .button { background: #182a44; border-color: #34507a; color: #d3e1f1; }
@@ -420,3 +413,7 @@ select:focus-visible, input:focus-visible { border-color: var(--accent-2); box-s
   body { background: #fff !important; }
   .topbar::after { display: none; }
 }
+
+/* The owner's emblem, on its own; no frame. */
+.brand-logo { width: 44px; height: 44px; flex: 0 0 44px; object-fit: contain; filter: drop-shadow(0 2px 6px rgba(0,0,0,.35)); }
+.footer-handle { color: var(--text-soft); font-weight: 600; direction: ltr; unicode-bidi: isolate; }
