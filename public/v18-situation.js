@@ -303,10 +303,15 @@ function statusRow(interpretation) {
       id: 'shutdown',
       status: shutdown.state === 'nationwide-shutdown-established' ? 'bad' : 'unknown',
       value: t(`board.shutdown.${shutdown.state}`),
-      // Name the missing access instead of leaving the reader with a generic caveat.
+      // Name the missing access or the curated record instead of a generic caveat.
       hint: shutdown.evidence?.some((item) => item.source === 'Internet Society Pulse' && item.state === 'token-required')
         ? t('board.shutdown.missingAccess')
-        : t('board.shutdown.hint'),
+        : shutdown.contextEvent && shutdown.state !== 'nationwide-shutdown-established'
+          ? t('board.shutdown.context', {
+            verification: t(`board.shutdown.verification.${shutdown.contextEvent.verificationLevel ?? 'unconfirmed'}`),
+            from: formatDay(shutdown.contextEvent.startDate), to: formatDay(shutdown.contextEvent.endDate),
+          })
+          : t('board.shutdown.hint'),
     },
   ];
   return `<dl class="status-row">${items.map((item) => `
@@ -361,6 +366,17 @@ function meaningSentences(interpretation) {
       latency: formatNumber(radarLatency, 0),
       low: range?.latency?.low != null ? formatNumber(range.latency.low, 0) : '—',
       high: range?.latency?.high != null ? formatNumber(range.latency.high, 0) : '—',
+    }));
+  }
+  const shutdown = dimensions.shutdown;
+  if (shutdown.state === 'nationwide-shutdown-established' && shutdown.establishedEvent) {
+    sentences.push(t('meaning.shutdown.established', {
+      from: formatDay(shutdown.establishedEvent.startDate), to: formatDay(shutdown.establishedEvent.endDate),
+    }));
+  } else if (shutdown.contextEvent) {
+    sentences.push(t('meaning.shutdown.context', {
+      verification: t(`board.shutdown.verification.${shutdown.contextEvent.verificationLevel ?? 'unconfirmed'}`),
+      from: formatDay(shutdown.contextEvent.startDate), to: formatDay(shutdown.contextEvent.endDate),
     }));
   }
   const scope = services?.networkScope;

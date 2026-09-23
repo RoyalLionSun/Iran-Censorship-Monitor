@@ -89,6 +89,13 @@
 - the mechanism comes from the OONI blocking type and confirmed block fingerprints, is only counted for measurements that actually have a finding, and an unspecified mechanism is never presented as one;
 - the evidence samples for the affected services run in one parallel round, which kept the cold Overview at about 14 s and a warm one at 2.6 s.
 
+### Nationwide shutdown rule (2026-09-23)
+
+- with Internet Society Pulse access configured, the documented establishment rule is implemented and tested: source-native nationwide impact, two independent technical connectivity roots, and a confirmed or acknowledged national Pulse record whose time range overlaps both a nationwide Radar annotation and an IODA event;
+- confidence stops at medium because root lineage between the sources is still unverified, Pulse never counts as a technical source, and an established shutdown is stated for its period rather than in the present tense;
+- a national record that misses the rule, such as the 138-day record Pulse marks unconfirmed, is shown as context with its verification level and period instead of disappearing;
+- verified live: 13-25 June 2025 is established as a nationwide shutdown, February 2026 is not established but reports the unconfirmed record, and the current window reports neither.
+
 ### Last known state and missing shutdown access (2026-09-23)
 
 - a source that fails or rate-limits the dashboard falls back to its last successful answer for the same scope, marked `stale` with the time it was fetched, bounded to 120 remembered scopes;

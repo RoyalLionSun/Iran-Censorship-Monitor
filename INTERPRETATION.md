@@ -18,7 +18,7 @@ Every public statement belongs to one dimension:
 | `interference` | Do tested websites/services show access or blocking signals? | OONI; fully observed Censored Planet results for country-level web claims only | Does not describe the whole Internet or identify an actor |
 | `routing` | Are selected-ASN routes visible to RIPE RIS peers? | time-aligned RIPEstat/RIPE RIS routing status | Does not prove end-user or website reachability |
 | `quality` | Are usable path/performance observations available? | RIPE Atlas; Cloudflare Radar quality for the selected window; M-Lab NDT as bounded context | Does not represent national quality without adequate coverage |
-| `shutdown` | Is a nationwide intentional shutdown established? | technical impact and separately reviewed Pulse context | Automatic confirmation is disabled until evidence can be matched by place, time and root provenance |
+| `shutdown` | Is a nationwide intentional shutdown established? | source-native nationwide technical impact from two independent connectivity roots, matched in time by a confirmed or acknowledged national Internet Society Pulse record | Establishes the incident, never the responsible actor or intent |
 
 Tor, BridgeDB, topology, ASN inventory, RPKI, APNIC, STOP, Pulse, GDELT and specialist reporting retain their documented context roles. They do not become additional censorship votes.
 
@@ -110,16 +110,16 @@ Concrete invariants:
 
 ## Shutdown rule
 
-Automatic `nationwide-shutdown-established` is **disabled** in this working version. Earlier logic combined a nationwide Radar label, an IODA event and a confirmed Pulse event without proving that they refer to the same affected population, time or underlying evidence. Even a *regional* Pulse event could be promoted incorrectly. The interpreter now always returns `shutdown.state: not-established`; source-native Pulse verification survives separately as `contextVerification` and remains analyst context, not a technical vote.
+A nationwide shutdown is established only when all of the following hold for the **same incident**:
 
-A future establishment rule must, at minimum, verify all of the following for the **same incident**:
+1. source-native nationwide technical impact (`connectivity.severity: widespread`, from an eligible Radar outage annotation whose own scope says nationwide);
+2. at least two independent technical connectivity roots supporting the claim (IODA and Cloudflare Radar);
+3. a confirmed or acknowledged **national** Internet Society Pulse record whose time range overlaps both a nationwide Radar annotation and an IODA event, so the records describe one incident rather than three unrelated ones;
+4. Pulse remains curated context: it is never listed as a supporting technical source and never becomes an extra technical vote.
 
-1. source-native nationwide technical impact (`connectivity.severity: widespread`);
-2. at least two independent technical connectivity roots aligned to the claim;
-3. confirmed or acknowledged *nationwide* Internet Society Pulse context, with matching time and affected population;
-4. explicit independent-root/evidence-lineage checks; Pulse does not count as an extra technical vote.
+Confidence stops at `medium` even when the rule is met, because root lineage between the sources is still unverified. An established shutdown reports its period, not a present-tense claim, and attribution stays separate: a Pulse cause is reported as a source-reported cause, never as proven intent.
 
-Until those checks exist and are tested, shutdown remains `not-established` even if all three source families appear in the selected window. This does not assert that a shutdown did not occur.
+A national Pulse record that does not meet the rule — for example one that Pulse itself marks `unconfirmed` — is shown as context with its verification level and period, so a reader learns that the record exists without it being treated as established. Without a Pulse token the dimension says plainly that the question cannot be answered by this deployment.
 
 ## Slow routing lookups
 

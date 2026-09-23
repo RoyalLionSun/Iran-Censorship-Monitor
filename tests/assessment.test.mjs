@@ -397,3 +397,57 @@ test('stale source data stays visible as history but cannot support a current cl
   assert.deepEqual(dimensions.interference.availableSources, []);
   assert.equal(dimensions.interference.evidence.find((item) => item.metric === 'measurements').value, 0);
 });
+
+const nationwideRadar = () => ({ ok: true, status: 'observed', assessmentEligible: true,
+  outages: { status: 'observed', annotations: [{ outageType: 'NATIONWIDE', outageCause: 'GOVERNMENT_DIRECTED', startDate: '2025-06-18T12:50:00Z', endDate: '2025-06-25T05:00:00Z' }] },
+  trafficAnomalies: { status: 'no_data', events: [] } });
+const iodaWindow = () => ({ ok: true, status: 'observed', series: [{ sampleCount: 10 }],
+  events: [{ datasource: 'ping-slash24', start: '2025-06-18T13:00:00.000Z', end: '2025-06-21T03:30:00.000Z' }] });
+const pulseNational = (extra = {}) => ({ ok: true, status: 'observed', events: [{
+  id: 'pulse-1', country: 'IR', type: 'national', verificationLevel: 'confirmed', cause: 'war_conflict',
+  startTime: '2025-06-13T07:00:00.000Z', endTime: '2025-06-25T05:00:00.000Z', startDate: '2025-06-13', endDate: '2025-06-25', ...extra }] });
+const shutdownSelection = { ...selection, since: '2025-06-13', until: '2025-06-25' };
+
+test('a nationwide shutdown is established only when technical impact and context match in time', () => {
+  const result = buildAssessment({ radar: nationwideRadar(), ioda: iodaWindow(), pulse: pulseNational(), selection: shutdownSelection, scopeLabel: 'Iran' });
+  const shutdown = result.interpretation.dimensions.shutdown;
+  assert.equal(shutdown.state, 'nationwide-shutdown-established');
+  assert.equal(shutdown.verification, 'confirmed');
+  assert.equal(shutdown.severity, 'widespread');
+  assert.equal(shutdown.confidence, 'medium', 'root lineage between the sources is still unverified');
+  assert.deepEqual(shutdown.supportingSources, ['IODA', 'Cloudflare Radar'], 'Pulse never becomes a technical vote');
+  assert.equal(shutdown.establishedEvent.cause, 'war_conflict');
+  assert.equal(result.interpretation.summary.headline.state, 'shutdown');
+  assert.equal(result.interpretation.attribution.state, 'reported');
+  assert.ok(!result.interpretation.unknowns.includes('complete-nationwide-shutdown'));
+});
+
+test('every missing part of the shutdown rule keeps it unestablished', () => {
+  const cases = {
+    'regional Pulse event': { pulse: pulseNational({ type: 'regional' }), radar: nationwideRadar(), ioda: iodaWindow() },
+    'unconfirmed Pulse event': { pulse: pulseNational({ verificationLevel: 'unconfirmed' }), radar: nationwideRadar(), ioda: iodaWindow() },
+    'Pulse context from another time': { pulse: pulseNational({ startTime: '2025-01-01T00:00:00.000Z', endTime: '2025-01-05T00:00:00.000Z' }), radar: nationwideRadar(), ioda: iodaWindow() },
+    'only one technical root': { pulse: pulseNational(), radar: nationwideRadar(), ioda: { ok: true, status: 'no_data', series: [], events: [] } },
+    'no nationwide technical scope': { pulse: pulseNational(), ioda: iodaWindow(),
+      radar: { ok: true, status: 'observed', assessmentEligible: true, outages: { status: 'observed', annotations: [{ outageType: 'REGIONAL', startDate: '2025-06-18T12:50:00Z', endDate: '2025-06-25T05:00:00Z' }] }, trafficAnomalies: { status: 'no_data', events: [] } } },
+    'context without technical evidence': { pulse: pulseNational(), radar: { status: 'token_required' } },
+  };
+  for (const [name, sources] of Object.entries(cases)) {
+    const result = buildAssessment({ ...sources, selection: shutdownSelection, scopeLabel: 'Iran' });
+    assert.equal(result.interpretation.dimensions.shutdown.state, 'not-established', name);
+    assert.equal(result.interpretation.dimensions.shutdown.supportingSources.length, 0, name);
+  }
+});
+
+test('a curated national record that misses the rule is still shown as context', () => {
+  // Pulse records a 138-day national shutdown for Iran that it marks unconfirmed.
+  const longUnconfirmed = { ok: true, status: 'observed', events: [{
+    id: 'pulse-2', country: 'IR', type: 'national', verificationLevel: 'unconfirmed', cause: 'protests',
+    startTime: '2026-01-08T16:30:00.000Z', endTime: '2026-05-26T14:00:00.000Z', startDate: '2026-01-08', endDate: '2026-05-26' }] };
+  const result = buildAssessment({ radar: nationwideRadar(), ioda: iodaWindow(), pulse: longUnconfirmed, selection: { ...selection, since: '2026-02-01', until: '2026-02-28' }, scopeLabel: 'Iran' });
+  const shutdown = result.interpretation.dimensions.shutdown;
+  assert.equal(shutdown.state, 'not-established', 'an unconfirmed record cannot establish a shutdown');
+  assert.equal(shutdown.contextEvent.startDate, '2026-01-08', 'but the reader is told the record exists');
+  assert.equal(shutdown.contextEvent.verificationLevel, 'unconfirmed');
+  assert.equal(shutdown.establishedEvent, null);
+});

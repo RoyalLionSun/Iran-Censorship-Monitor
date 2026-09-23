@@ -31,7 +31,7 @@ Package version: **`1.8.0` intentionally unchanged**
 - the deterministic suite passes **359/359 tests**; build and release-notes gate pass;
 - `npm run verify:ui`, including the real-app Overview gate and the EN/FA/RTL fixture, passes with headless Chrome; live public sources were checked for `AS58224`, `2026-09-15..2026-09-22`;
 - the earlier screenshot was caused by an old long-lived server process returning `publicSummary` while the newly served Overview expected `assessment.interpretation`; static assets and server modules were out of sync;
-- automatic nationwide shutdown establishment is disabled pending per-incident time/scope/root-evidence verification;
+- a nationwide shutdown is established only when source-native nationwide impact, two independent technical roots and a confirmed or acknowledged national Pulse record overlap in time; confidence stops at medium because root lineage is unverified;
 - line endings are LF and pinned by `.gitattributes`;
 - no commit, push, release, tag or deployment authorization has been made for this working state.
 
