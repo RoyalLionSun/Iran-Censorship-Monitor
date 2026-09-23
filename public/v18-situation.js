@@ -633,6 +633,7 @@ function meaningSentences(interpretation) {
       window: window ? formatNumber(window) : formatNumber(vantage.observedDays),
     }));
   }
+  if (interpretation.summary?.foreignUnchecked) sentences.push(t('meaning.foreignUnchecked'));
   const foreign = interpretation.summary?.foreignExcluded;
   if (foreign?.measurements) {
     sentences.push(t('meaning.foreignExcluded', { count: formatNumber(foreign.measurements), networks: foreign.networks.join(', ') }));

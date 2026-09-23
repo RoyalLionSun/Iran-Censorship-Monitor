@@ -429,6 +429,7 @@ export default Object.freeze({
   'meaning.outageCause': 'During the nationwide outage, a failed test can also come from the outage itself rather than from blocking one particular service.',
   'board.status.appFailed': 'Connection failed',
   'services.status.appFailed': 'Connection failed',
+  'meaning.foreignUnchecked': 'Tests from networks registered outside Iran could not be filtered out right now, so these country figures may include them. Reload in a moment.',
   'board.outage.percent': '{value}%',
   'board.outage.belowTenth': 'under 0.1%',
   'board.outage.title': 'Internet traffic from Iran',

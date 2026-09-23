@@ -429,6 +429,7 @@ export default Object.freeze({
   'meaning.outageCause': 'در طول قطعی سراسری، شکست یک آزمون ممکن است از خود قطعی باشد، نه از مسدودسازی یک سرویس خاص.',
   'board.status.appFailed': 'اتصال برقرار نشد',
   'services.status.appFailed': 'اتصال برقرار نشد',
+  'meaning.foreignUnchecked': 'آزمون‌های شبکه‌های ثبت‌شده در خارج از ایران در حال حاضر قابل جداسازی نبودند، پس این ارقام سراسری ممکن است آن‌ها را هم شامل شوند. کمی بعد دوباره بارگذاری کنید.',
   'board.outage.percent': '{value}٪',
   'board.outage.belowTenth': 'کمتر از ۰٫۱٪',
   'board.outage.title': 'ترافیک اینترنت از ایران',
