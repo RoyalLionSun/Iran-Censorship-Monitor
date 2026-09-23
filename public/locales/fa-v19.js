@@ -417,6 +417,7 @@ export default Object.freeze({
   'meaning.countryBlocked': 'این شبکه در این بازه آزمون قابل‌استفاده‌ای از {services} ندارد، اما آزمون‌ها در شبکه‌های دیگر ایران مسدودسازی را تأیید کردند.',
   'meaning.foreignExcluded': 'تعداد {count} آزمون OONI که زیر نام ایران ثبت شده بودند از شبکه‌هایی ثبت‌شده در خارج از ایران ({networks}) آمده‌اند، مثلاً خروجی‌های VPN یا پروکسی. این آزمون‌ها وضعیت خارج از ایران را نشان می‌دهند و کنار گذاشته شدند.',
   'ooni.details.outsideIran': 'شبکهٔ ثبت‌شده در خارج از ایران ({asn})، شمرده نمی‌شود',
+  'board.country.unavailable': 'نتایج شبکه‌های دیگر ایران در حال حاضر بارگیری نشد؛ کمی بعد دوباره بارگذاری کنید.',
   'board.outage.percent': '{value}٪',
   'board.outage.belowTenth': 'کمتر از ۰٫۱٪',
   'board.outage.title': 'ترافیک اینترنت از ایران',

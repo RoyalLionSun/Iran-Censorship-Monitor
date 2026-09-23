@@ -305,7 +305,7 @@ function renderServiceTiles(services, selection, connectivity = null) {
         <article class="service-tile" data-status="${escapeHtml(status)}"${country ? ' data-scope="country"' : ''}>
           <div class="service-tile-head"><span class="status-mark" aria-hidden="true"></span><h3 class="${item.id === 'selected-target' ? 'technical-ltr' : ''}">${escapeHtml(brandName(item.id, services))}</h3></div>
           <b class="service-tile-status">${escapeHtml(country ? t(`board.country.status.${country.status}`) : t(`board.status.${item.status}`))}</b>
-          <ul>${country ? countryLine(country, item) : ''}${country && item.web?.status === 'untested' ? '' : channelLine(item.web, 'web')}${channelLine(item.app, 'app')}${mechanismLine(item)}${coverageLine(item, selection)}</ul>
+          <ul>${country ? countryLine(country, item) : ''}${!country && services.countryCheck === 'unavailable' && ['untested', 'unclear'].includes(item.status) ? `<li class="tile-country">${escapeHtml(t('board.country.unavailable'))}</li>` : ''}${country && item.web?.status === 'untested' ? '' : channelLine(item.web, 'web')}${channelLine(item.app, 'app')}${mechanismLine(item)}${coverageLine(item, selection)}</ul>
         </article>`;
       }).join('')}
       </div>` : `<p class="service-board-empty">${escapeHtml(t('board.services.noneInSelection'))}</p>`}

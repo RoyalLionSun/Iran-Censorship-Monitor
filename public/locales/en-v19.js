@@ -417,6 +417,7 @@ export default Object.freeze({
   'meaning.countryBlocked': 'This network has no usable tests of {services} in this period, but tests in other Iranian networks confirmed blocking.',
   'meaning.foreignExcluded': '{count} OONI tests listed under Iran came from networks registered outside Iran ({networks}), for example VPN or proxy exits. They show what works abroad, so they were left out.',
   'ooni.details.outsideIran': 'network registered outside Iran ({asn}), not counted',
+  'board.country.unavailable': 'Results from other Iranian networks could not be loaded right now; reload in a moment.',
   'board.outage.percent': '{value}%',
   'board.outage.belowTenth': 'under 0.1%',
   'board.outage.title': 'Internet traffic from Iran',
