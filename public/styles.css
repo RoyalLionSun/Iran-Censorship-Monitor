@@ -458,3 +458,19 @@ html[dir="rtl"] input[type="date"] { text-align: right; }
 @media (max-width: 1050px) {
   .filterbar .presets, .filterbar .outage-picker { grid-column: 1 / -1; justify-content: flex-start; }
 }
+
+/* Domain table: compact rows, the blocked share as a bar, numbers coloured by meaning. */
+#ooni-domains-table td { vertical-align: middle; }
+#ooni-domains-table .evidence-cell { white-space: nowrap; }
+#ooni-domains-table .evidence-cell .button { min-height: 26px; padding: 2px 8px; }
+#ooni-domains-table .evidence-cell a { margin-inline-start: 6px; font-size: 11.5px; }
+.domain-share { display: flex; width: 120px; height: 4px; margin-top: 5px; border-radius: 2px; overflow: hidden; background: rgba(131,150,174,.22); }
+.domain-share i { display: block; height: 100%; }
+.domain-share .share-confirmed { background: var(--red); }
+.domain-share .share-anomalous { background: var(--yellow); }
+#ooni-domains-table .num-confirmed.has-value { color: #ff8a8a; font-weight: 700; }
+#ooni-domains-table .num-anomalous.has-value { color: var(--yellow); }
+/* The short corroboration column follows the reader down the long domain table. */
+@media (min-width: 1051px) { #signals-panel { align-self: start; position: sticky; top: 92px; } }
+/* KPI subtitles wrap to two lines instead of ending in "…". */
+.kpi-card > small { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.35; }

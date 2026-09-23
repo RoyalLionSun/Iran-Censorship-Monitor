@@ -625,9 +625,18 @@ function renderOoniDomains() {
   table.innerHTML = visible.length ? visible.map((row) => {
     const source = new URL(payload.sourceUrl);
     source.searchParams.set('domain', row.domain);
-    return `<tr><td><strong dir="ltr">${escapeHtml(row.domain)}</strong></td><td>${number(row.confirmed, 0)}</td><td>${number(row.anomalous, 0)}</td><td>${number(row.measurements, 0)}</td><td dir="ltr">${escapeHtml(row.lastObserved)}</td><td><button class="button" type="button" data-ooni-domain="${escapeHtml(row.domain)}" aria-label="${escapeHtml(t('ooni.details.open', { domain: row.domain }))}">${escapeHtml(t('ooni.details.button'))}</button> <a href="${escapeHtml(source.href)}" target="_blank" rel="noreferrer">${escapeHtml(t('ooni.domains.view'))}</a></td></tr>`;
+    // A bar shows at a glance which share of the tests was confirmed blocked (red) or anomalous (amber).
+    const confirmedShare = row.measurements ? Math.round((row.confirmed / row.measurements) * 100) : 0;
+    const anomalousShare = row.measurements ? Math.round((row.anomalous / row.measurements) * 100) : 0;
+    const bar = `<span class="domain-share" aria-hidden="true"><i class="share-confirmed"></i><i class="share-anomalous"></i></span>`;
+    return `<tr data-confirmed-share="${confirmedShare}" data-anomalous-share="${anomalousShare}"><td><strong dir="ltr">${escapeHtml(row.domain)}</strong>${bar}</td><td class="num-confirmed${row.confirmed ? ' has-value' : ''}">${number(row.confirmed, 0)}</td><td class="num-anomalous${row.anomalous ? ' has-value' : ''}">${number(row.anomalous, 0)}</td><td>${number(row.measurements, 0)}</td><td dir="ltr">${escapeHtml(row.lastObserved)}</td><td class="evidence-cell"><button class="button" type="button" data-ooni-domain="${escapeHtml(row.domain)}" aria-label="${escapeHtml(t('ooni.details.open', { domain: row.domain }))}">${escapeHtml(t('ooni.details.button'))}</button> <a href="${escapeHtml(source.href)}" target="_blank" rel="noreferrer">${escapeHtml(t('ooni.domains.view'))}</a></td></tr>`;
   }).join('') : `<tr><td class="table-empty" colspan="6">${escapeHtml(t('ooni.domains.noMatch'))}</td></tr>`;
   more.classList.toggle('hidden', Boolean(search) || state.showAllOoniDomains || matches.length <= visible.length);
+  // Widths through the CSSOM; the CSP forbids inline style attributes.
+  table.querySelectorAll('tr[data-confirmed-share]').forEach((tr) => {
+    tr.querySelector('.share-confirmed').style.width = `${tr.dataset.confirmedShare}%`;
+    tr.querySelector('.share-anomalous').style.width = `${tr.dataset.anomalousShare}%`;
+  });
 }
 
 function renderServiceFindings() {
@@ -693,7 +702,7 @@ function renderServiceFindings() {
       ? `<a href="${escapeHtml(row.sourceUrl)}" target="_blank" rel="noreferrer">${escapeHtml(t('services.source'))}</a>` : '';
     // An app test has no block page; "not confirmed" would suggest missing evidence that cannot exist.
     const label = row.status === 'anomaly' ? t('services.status.appFailed') : t(`services.status.${row.status}`);
-    return `<div class="service-finding" data-status="${row.status}"><div><strong>${escapeHtml(row.testName)}</strong><span>${escapeHtml(t('services.appTest'))}</span></div><b>${escapeHtml(label)}</b>${detail ? `<small>${detail}</small>` : ''}${sourceLink}</div>`;
+    return `<div class="service-finding" data-status="${row.status}"><div><strong>${escapeHtml({ whatsapp: 'WhatsApp', telegram: 'Telegram' }[row.testName] ?? row.testName)}</strong><span>${escapeHtml(t('services.appTest'))}</span></div><b>${escapeHtml(label)}</b>${detail ? `<small>${detail}</small>` : ''}${sourceLink}</div>`;
   }).join('');
 }
 
