@@ -47,7 +47,7 @@
 .access-board h2 { margin: 0; font-size: 13px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--text-soft); }
 .access-board header p, .access-legend { margin: 0; color: var(--muted); font-size: 12.5px; }
 .access-legend { margin-bottom: 8px; }
-.access-scroll { overflow-x: auto; }
+.access-scroll { position: relative; overflow-x: auto; }
 .access-board table { width: 100%; min-width: 0; border-collapse: collapse; font-size: 13px; }
 .access-board th, .access-board td { padding: 7px 9px; border-bottom: 1px solid var(--border); text-align: start; vertical-align: top; }
 .access-board thead th { position: sticky; top: 0; background: var(--bg-elevated); color: var(--muted); font-size: 11px; font-weight: 750; letter-spacing: .04em; text-transform: uppercase; }

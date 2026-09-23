@@ -113,3 +113,9 @@ html[lang="fa"] .technical-ltr,
 html[lang="fa"] code,
 html[lang="fa"] pre,
 html[lang="fa"] .chart text { font-family: var(--mono); }
+/* A monospace face breaks the joining of Persian letters. In Farsi the technical font falls
+   back to the Persian stack; numbers stay tabular. */
+html[lang="fa"] { --mono: var(--fa-sans); }
+html[lang="fa"] .kpi-card strong, html[lang="fa"] .technical-ltr { font-variant-numeric: tabular-nums; }
+/* Mixed English and Persian fragments take the direction of their own first letter. */
+html[dir="rtl"] .kpi-card > small, html[dir="rtl"] .signal-item p, html[dir="rtl"] .signal-item small { unicode-bidi: plaintext; }

@@ -507,6 +507,8 @@ export default Object.freeze({
   'board.privileged.perSubscriber': 'Leaked documents from 2018–2021 describe an interface through which the regulator can control individual mobile subscribers: cut off their data, restrict them to slow 2G, or block or slow single services per user. Whether and where it runs today is not confirmed; the documents come mainly from one smaller provider.',
   'board.privileged.source.citizenlab': 'Citizen Lab, 16 Jan 2023',
   'board.access.showAll': 'Show all {count} networks',
+  'signals.note.censoredPlanetOutsideIn': 'Censored Planet measures from outside Iran towards servers inside it. A vantage point abroad cannot check what people inside Iran can reach, so it stays outside-in context and never supports or covers an access claim.',
+  'assessment.label.dimensionSpecific': 'Dimension-specific evidence assessment',
   'board.outage.percent': '{value}%',
   'board.outage.belowTenth': 'under 0.1%',
   'board.outage.title': 'Internet traffic from Iran',
