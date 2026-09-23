@@ -497,6 +497,7 @@ export default Object.freeze({
   'board.privileged.source.filterwatchNov': 'فیلترواچ، ۲۴ نوامبر ۲۰۲۵',
   'board.privileged.source.wikipedia': 'ویکی‌پدیا (برآورد زومیت، دسامبر ۲۰۲۵)',
   'board.privileged.source.ban': 'نیو ریجن، ۱۱ دسامبر ۲۰۲۵',
+  'sourceHealth.short': 'منابع: {reachable} از {queried}',
   'board.outage.percent': '{value}٪',
   'board.outage.belowTenth': 'کمتر از ۰٫۱٪',
   'board.outage.title': 'ترافیک اینترنت از ایران',

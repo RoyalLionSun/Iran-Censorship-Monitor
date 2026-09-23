@@ -497,6 +497,7 @@ export default Object.freeze({
   'board.privileged.source.filterwatchNov': 'Filterwatch, 24 Nov 2025',
   'board.privileged.source.wikipedia': 'Wikipedia (Zoomit estimate, Dec 2025)',
   'board.privileged.source.ban': 'The New Region, 11 Dec 2025',
+  'sourceHealth.short': '{reachable}/{queried} sources',
   'board.outage.percent': '{value}%',
   'board.outage.belowTenth': 'under 0.1%',
   'board.outage.title': 'Internet traffic from Iran',

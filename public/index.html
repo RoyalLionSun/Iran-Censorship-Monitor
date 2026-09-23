@@ -15,21 +15,25 @@
   <div class="app-shell">
     <header class="topbar">
       <div class="brand">
-        <img class="brand-logo" src="/brand/logo-128.png" width="44" height="44" alt="" aria-hidden="true" />
+        <img class="brand-logo" src="/brand/logo-128.png" width="60" height="60" alt="" aria-hidden="true" />
         <div>
           <strong>Iran Censorship Monitor</strong>
-          <small>Measurement & censorship signals</small>
+          <small>Internet censorship in Iran, measured</small>
         </div>
       </div>
       <div class="topbar-meta">
-        <span class="scope-chip"><i></i> IRAN / IR</span>
         <span id="header-source-state" class="source-state">Sources pending</span>
-        <span id="header-updated" class="updated">Not loaded</span>
       </div>
       <div class="topbar-actions">
+        <span id="header-updated" class="updated">Not loaded</span>
         <button id="refresh-button" class="button primary" type="button">Refresh</button>
-        <button id="export-button" class="button" type="button" disabled>Export CSV</button>
-        <button id="print-button" class="button" type="button">Print</button>
+        <details class="export-menu">
+          <summary class="button">Export</summary>
+          <div class="export-menu-list">
+            <button id="export-button" class="button" type="button" disabled>Export CSV</button>
+            <button id="print-button" class="button" type="button">Print</button>
+          </div>
+        </details>
       </div>
     </header>
 

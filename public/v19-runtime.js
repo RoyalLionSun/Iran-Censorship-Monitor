@@ -1,4 +1,4 @@
-import { t } from './i18n.js';
+import { localeFor, t } from './i18n.js';
 
 function ensureV19Styles() {
   if (document.querySelector('link[data-v19-style]')) return;
@@ -41,8 +41,19 @@ function renderSourceHealth(health = lastHealth) {
     element.dataset.health = 'neutral';
     return;
   }
-  element.textContent = healthText(health);
-  element.title = healthDetail(health);
+  // A small badge on the first screen; the full sentence stays for screen readers and in the
+  // tooltip, with each source's state, so nothing is hidden, only moved out of the way.
+  const full = healthText(health);
+  const badge = document.createElement('span');
+  badge.className = 'source-state-short';
+  badge.setAttribute('aria-hidden', 'true');
+  const format = (value) => new Intl.NumberFormat(localeFor()).format(value);
+  badge.textContent = t('sourceHealth.short', { reachable: format(health.summary.reachable), queried: format(health.summary.queried) });
+  const sentence = document.createElement('span');
+  sentence.className = 'visually-hidden';
+  sentence.textContent = full;
+  element.replaceChildren(badge, sentence);
+  element.title = [full, healthDetail(health)].filter(Boolean).join('\n\n');
   // One missing side source is not an alarm; red stays for a broadly unavailable source set.
   const broadlyDown = health.summary.errors > 0 && health.summary.reachable < health.summary.queried * 0.7;
   element.dataset.health = broadlyDown ? 'error'

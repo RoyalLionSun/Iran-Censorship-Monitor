@@ -33,9 +33,10 @@ export default Object.freeze({
   'confidence.none': 'بدون ارزیابی',
 
   'ui.language': 'زبان',
-  'ui.brand.subtitle': 'اندازه‌گیری و نشانه‌های سانسور',
+  'ui.brand.subtitle': 'سانسور اینترنت در ایران، اندازه‌گیری‌شده',
   'ui.sources.pending': 'در انتظار منابع',
   'ui.notLoaded': 'بارگذاری نشده',
+  'ui.exportMenu': 'خروجی',
   'ui.refresh': 'به‌روزرسانی',
   'ui.exportCsv': 'خروجی CSV',
   'ui.exportContextCsv': 'خروجی CSV زمینه',

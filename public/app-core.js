@@ -1078,6 +1078,12 @@ async function init() {
 }
 
 $('#refresh-button').addEventListener('click', loadAll);
+// The export menu closes after a choice and when the reader clicks elsewhere.
+document.addEventListener('click', (event) => {
+  const menu = document.querySelector('.export-menu');
+  if (!menu?.open) return;
+  if (!menu.contains(event.target) || event.target.closest('.export-menu-list button')) menu.open = false;
+});
 $('#export-button').addEventListener('click', exportCsv);
 $('#print-button').addEventListener('click', () => window.print());
 $('#load-providers').addEventListener('click', loadProviders);
