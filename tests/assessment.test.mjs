@@ -60,7 +60,7 @@ test('two interference source families without event alignment cannot establish 
   assert.equal(dimension.verification, 'signal');
   assert.equal(dimension.confidence, 'low');
   assert.equal(dimension.severity, 'unknown');
-  assert.deepEqual(dimension.supportingSources, ['OONI', 'Censored Planet']);
+  assert.deepEqual(dimension.supportingSources, ['OONI'], 'an outside-in source never supports an access claim');
 });
 
 test('country-level Censored Planet cannot cover or support a selected-ASN claim', () => {
@@ -71,7 +71,7 @@ test('country-level Censored Planet cannot cover or support a selected-ASN claim
   assert.equal(dimension.coverage, 'limited');
   assert.deepEqual(dimension.availableSources, ['OONI']);
   const cpEvidence = dimension.evidence.find((item) => item.source === 'Censored Planet');
-  assert.equal(cpEvidence.state, 'out-of-scope');
+  assert.equal(cpEvidence.state, 'outside-in');
   assert.equal(cpEvidence.value, null);
   assert.equal(quiet.signals.find((item) => item.source === 'Censored Planet').usableForAssessment, false);
 
@@ -88,13 +88,13 @@ test('country-level Censored Planet cannot cover a selected target or non-web te
   }
 });
 
-test('country-level Censored Planet still covers a country-level web claim', () => {
+test('Censored Planet measures from outside Iran and never covers an access claim', () => {
   const result = buildAssessment({ ooni: ooni({ rate: 0 }), censoredPlanet: cp(), radar: { status: 'token_required' }, selection: { ...selection, asn: '' }, scopeLabel: 'Iran' });
   const dimension = result.interpretation.dimensions.interference;
-  assert.equal(dimension.state, 'no-interference-signals-detected');
-  assert.equal(dimension.coverage, 'adequate');
-  assert.deepEqual(dimension.availableSources, ['OONI', 'Censored Planet']);
-  assert.equal(result.signals.find((item) => item.source === 'Censored Planet').usableForAssessment, true);
+  assert.equal(dimension.state, 'insufficient-data', 'a quiet OONI source alone is not enough');
+  assert.deepEqual(dimension.availableSources, ['OONI']);
+  assert.equal(dimension.evidence.find((item) => item.source === 'Censored Planet').state, 'outside-in');
+  assert.equal(result.signals.find((item) => item.source === 'Censored Planet').usableForAssessment, false);
 });
 
 test('source-native OONI confirmation confirms only the measured blocking claim', () => {

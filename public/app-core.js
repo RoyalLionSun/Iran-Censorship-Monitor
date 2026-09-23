@@ -676,7 +676,7 @@ function renderOoniDomainDetails() {
       : rows.length ? [t('ooni.details.count', { count: number(rows.length, 0) }), payload.limitReached ? t('ooni.details.limit') : ''].filter(Boolean).join(' ')
         : t('ooni.details.empty');
   $('#ooni-detail-state').textContent = message;
-  $('#ooni-detail-table').innerHTML = rows.map((row) => `<tr><td><span class="ooni-url" dir="ltr" data-i18n-external>${escapeHtml(row.url)}</span></td><td>${escapeHtml(t(`ooni.details.outcome.${row.outcome}`))}</td><td dir="ltr">${escapeHtml(row.timestamp)}</td><td>${row.explorerUrl || row.rawUrl ? `<a href="${escapeHtml(row.explorerUrl || row.rawUrl)}" target="_blank" rel="noreferrer">${escapeHtml(t(row.explorerUrl ? 'ooni.details.uid' : 'ooni.details.raw'))}</a>` : escapeHtml(t('ooni.details.noEvidence'))}</td></tr>`).join('');
+  $('#ooni-detail-table').innerHTML = rows.map((row) => `<tr><td><span class="ooni-url" dir="ltr" data-i18n-external>${escapeHtml(row.url)}</span></td><td>${escapeHtml(t(`ooni.details.outcome.${row.outcome}`))}${row.outsideIran ? `<small class="ooni-outside"> · ${escapeHtml(t('ooni.details.outsideIran', { asn: row.asn || '—' }))}</small>` : ''}</td><td dir="ltr">${escapeHtml(row.timestamp)}</td><td>${row.explorerUrl || row.rawUrl ? `<a href="${escapeHtml(row.explorerUrl || row.rawUrl)}" target="_blank" rel="noreferrer">${escapeHtml(t(row.explorerUrl ? 'ooni.details.uid' : 'ooni.details.raw'))}</a>` : escapeHtml(t('ooni.details.noEvidence'))}</td></tr>`).join('');
   const more = $('#ooni-detail-more');
   more.textContent = t('ooni.details.more');
   more.classList.toggle('hidden', !payload?.hasMore);

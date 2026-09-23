@@ -15,12 +15,28 @@ Every public statement belongs to one dimension:
 | Dimension | User question | Primary evidence | Explicit boundary |
 |---|---|---|---|
 | `connectivity` | Are broad connectivity/outage signals present? | IODA; eligible Cloudflare Radar outage/anomaly channels | Does not establish filtering, censorship, cause or intent |
-| `interference` | Do tested websites/services show access or blocking signals? | OONI; fully observed Censored Planet results for country-level web claims only | Does not describe the whole Internet or identify an actor |
+| `interference` | Do tested websites/services show access or blocking signals? | OONI probes on networks registered in Iran | Does not describe the whole Internet or identify an actor |
 | `routing` | Are selected-ASN routes visible to RIPE RIS peers? | time-aligned RIPEstat/RIPE RIS routing status | Does not prove end-user or website reachability |
 | `quality` | Are usable path/performance observations available? | RIPE Atlas; Cloudflare Radar quality for the selected window; M-Lab NDT as bounded context | Does not represent national quality without adequate coverage |
 | `shutdown` | Is a nationwide intentional shutdown established? | source-native nationwide technical impact from two independent connectivity roots, matched in time by a confirmed or acknowledged national Internet Society Pulse record | Establishes the incident, never the responsible actor or intent |
 
 Tor, BridgeDB, topology, ASN inventory, RPKI, APNIC, STOP, Pulse, GDELT and specialist reporting retain their documented context roles. They do not become additional censorship votes.
+
+## Where each source measures from
+
+Only a measurement that starts inside an Iranian network and goes outward can show what people in Iran can reach. A vantage point abroad cannot check that. Access claims (websites, services, apps) therefore rest only on inside-out measurements; outside-in sources describe whether Iranian networks are reachable or connected, never what users inside can reach.
+
+| Source | Where it measures from | Direction | May support |
+|---|---|---|---|
+| OONI Probe | volunteers' devices in networks registered in Iran | inside → out | access claims (service, website, app) |
+| Cloudflare Radar traffic, quality, outage annotations | traffic from Iranian networks reaching Cloudflare | inside → out | connectivity, depth, quality |
+| RIPE Atlas, Globalping | probes in Iranian networks | inside → out | path quality |
+| IODA | active probing, BGP and telescope from outside | outside → in / control plane | connectivity only |
+| RIPEstat / RIPE RIS | global route collectors | control plane | routing only |
+| Censored Planet | servers abroad querying servers in Iran | outside → in | nothing; context only |
+| APNIC, M-Lab, Tor Metrics | client geolocation | varies | context only |
+
+**Geolocation is not network.** OONI files a measurement under Iran by the probe's geolocation. In the 2026 blackouts most "Iranian" Web Connectivity tests came from networks registered abroad (1–20 March 2026: 66% from AS142578, Hong Kong; 10–20 January 2026: all from AS9009, a hosting/VPN provider). They show what works outside Iran. Country-wide OONI figures therefore count only probes on networks in the RIPEstat country resource list for Iran; excluded tests are subtracted day by day, reported to the reader, and individual records from such networks are marked in the URL drilldown. Without the registry the exclusion is reported as not applied.
 
 ## Independent axes
 
@@ -145,9 +161,9 @@ An uncached RIPEstat `routing-status` lookup can take far longer than the 12 s r
 
 Historical `/api/overview` selections pass the selected `until` time to RIPEstat `routing-status`. RIPEstat may align the request to one of its collection snapshots; returned query time within the accepted collection interval is marked `aligned`. Current-window selections request RIPEstat's latest snapshot without a timestamp; a query time within the same interval of now is marked `latest`. RIPEstat reports `query_time` without a zone designator and it is read as UTC. Unknown alignment lowers routing confidence and suppresses the control-/data-plane divergence comparison.
 
-## Scope of country-level sources
+## Censored Planet
 
-Censored Planet is queried for Iran as a whole. Its results can cover or support only a country-level web claim. When an ASN, a single target or a non-web OONI test is selected, Censored Planet remains visible as country-level context (`state: out-of-scope`) but does not count toward coverage or support. A quiet country-level source therefore cannot turn a single-network or single-service claim into `no-interference-signals-detected`.
+Censored Planet measures from servers abroad towards servers inside Iran. It remains visible as context (`state: outside-in`) but never counts toward coverage or support of any access claim, at country level or for a selected network, target or test.
 
 ## Public payload invariants
 
