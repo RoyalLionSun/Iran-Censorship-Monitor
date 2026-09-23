@@ -122,8 +122,23 @@ select:hover, input:hover { border-color: var(--border-strong); }
 .service-finding > div { display: flex; flex-wrap: wrap; gap: 3px 7px; min-width: 0; }
 .service-finding > div span { color: var(--muted); font: 10px var(--mono); }
 .service-finding > b { color: var(--muted); font-size: 11px; text-align: end; }
+/* Source panels: the edge is the source's status, in the colours of the source-status legend. */
+.panel[data-source-state] { border-top: 3px solid var(--border); }
+.panel[data-source-state="ok"] { border-top-color: var(--green); }
+.panel[data-source-state="partial"] { border-top-color: var(--yellow); }
+.panel[data-source-state="error"] { border-top-color: var(--red); }
+.panel[data-source-state="nodata"] { border-top-color: var(--muted); }
+/* A comparison that found a split is a finding, not a source status. */
+#divergence-panel[data-finding="warn"] { border-top: 3px solid #f5a524; }
+#divergence-panel[data-finding="info"] { border-top: 3px solid var(--blue); }
 .service-finding[data-status="confirmed"] > b { color: var(--red); }
 .service-finding[data-status="anomaly"] > b { color: var(--yellow); }
+.service-finding[data-status="no_signal"] > b { color: var(--green); }
+/* The card itself carries its result, not only the small label. */
+.service-finding[data-status="confirmed"] { border-color: rgba(239,109,109,.45); border-inline-start: 3px solid var(--red); background: linear-gradient(90deg, rgba(239,109,109,.08), var(--bg-elevated) 60%); }
+.service-finding[data-status="anomaly"] { border-color: rgba(226,189,89,.4); border-inline-start: 3px solid var(--yellow); background: linear-gradient(90deg, rgba(226,189,89,.07), var(--bg-elevated) 60%); }
+.service-finding[data-status="no_signal"] { border-color: rgba(85,199,138,.4); border-inline-start: 3px solid var(--green); background: linear-gradient(90deg, rgba(85,199,138,.07), var(--bg-elevated) 60%); }
+.service-finding[data-status="inconclusive"], .service-finding[data-status="untested"] { border-inline-start: 3px solid var(--muted); }
 .service-finding > small { grid-column: 1 / -1; color: var(--muted); font-size: 10px; }
 .service-finding > button { grid-column: 1 / -1; justify-self: start; min-height: 26px; padding: 3px 7px; }
 .service-finding > a { grid-column: 1 / -1; justify-self: start; font-size: 11px; }

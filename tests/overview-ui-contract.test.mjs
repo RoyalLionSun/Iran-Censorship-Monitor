@@ -25,7 +25,10 @@ test('overview is the default view and the established dashboard remains technic
 test('overview does not reuse source-health colors as severity colors', () => {
   assert.doesNotMatch(css, /var\(--(?:red|yellow|green)\)/);
   assert.match(css, /var\(--blue\)/);
-  assert.doesNotMatch(situation, /heroTone|dimensionTone|data-tone/);
+  // Findings use their own status palette, never the source-health colours; there is no
+  // single overall tone for the whole page.
+  assert.doesNotMatch(situation, /heroTone/);
+  assert.match(css, /\.interpretation-card\[data-finding="bad"\][^}]*var\(--status-blocked\)/);
 });
 
 test('real overview loader delivers success and errors directly; incompatible responses cannot remain loading', () => {

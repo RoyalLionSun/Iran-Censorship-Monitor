@@ -139,6 +139,26 @@ tr[data-level="blocked"] .access-level b { color: var(--status-blocked); }
 .interpretation-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
 .interpretation-card { position: relative; padding: 17px; border: 1px solid var(--border); border-top: 3px solid var(--blue); border-radius: var(--radius); background: var(--bg-elevated); box-shadow: var(--shadow); }
 .interpretation-card header { display: flex; align-items: flex-start; gap: 11px; }
+/* The edge says what was found; the tint keeps it readable without shouting. */
+.interpretation-card[data-finding="bad"] { border-top-color: var(--status-blocked); background: linear-gradient(180deg, rgba(255,92,122,.07), var(--bg-elevated) 45%); }
+.interpretation-card[data-finding="warn"] { border-top-color: var(--status-restricted); background: linear-gradient(180deg, rgba(245,165,36,.06), var(--bg-elevated) 45%); }
+.interpretation-card[data-finding="ok"] { border-top-color: var(--status-reachable); background: linear-gradient(180deg, rgba(46,196,165,.06), var(--bg-elevated) 45%); }
+.interpretation-card[data-finding="unknown"] { border-top-color: var(--status-unknown); }
+.interpretation-card[data-finding="info"] { border-top-color: var(--blue); }
+/* Impact is a severity: status colours. */
+.interpretation-card [data-axis="severity"][data-value="widespread"] dd, .interpretation-card [data-axis="severity"][data-value="severe"] dd { color: var(--status-blocked); }
+.interpretation-card [data-axis="severity"][data-value="moderate"] dd, .interpretation-card [data-axis="severity"][data-value="minor"] dd { color: var(--status-restricted); }
+.interpretation-card [data-axis="severity"][data-value="none"] dd { color: var(--status-reachable); }
+.interpretation-card [data-axis="severity"][data-value="unknown"] dd { color: var(--muted); }
+/* Confidence, verification and coverage are strength of evidence: one hue, strong to faint. */
+.interpretation-card [data-axis="confidence"][data-value="high"] dd, .interpretation-card [data-axis="verification"][data-value="confirmed"] dd,
+.interpretation-card [data-axis="verification"][data-value="acknowledged"] dd, .interpretation-card [data-axis="coverage"][data-value="broad"] dd { color: #8cc4ff; }
+.interpretation-card [data-axis="confidence"][data-value="medium"] dd, .interpretation-card [data-axis="verification"][data-value="supported"] dd,
+.interpretation-card [data-axis="coverage"][data-value="adequate"] dd { color: #6fa4dd; }
+.interpretation-card [data-axis="confidence"][data-value="low"] dd, .interpretation-card [data-axis="verification"][data-value="signal"] dd,
+.interpretation-card [data-axis="coverage"][data-value="limited"] dd { color: #5b7a9e; }
+.interpretation-card [data-axis="confidence"][data-value="none"] dd, .interpretation-card [data-axis="verification"][data-value="not-established"] dd,
+.interpretation-card [data-axis="coverage"][data-value="none"] dd { color: var(--muted); font-weight: 600; }
 .dimension-icon { display: grid; place-items: center; flex: 0 0 34px; height: 34px; border: 1px solid var(--border-strong); border-radius: 8px; background: rgba(89,168,255,.06); color: var(--text-soft); font-size: 17px; }
 .interpretation-card header span:not(.dimension-icon) { color: var(--muted); font-size: 12px; font-weight: 750; text-transform: uppercase; letter-spacing: .045em; }
 .interpretation-card h2 { margin: 3px 0 0; font-size: 20px; line-height: 1.25; }
@@ -160,6 +180,10 @@ tr[data-level="blocked"] .access-level b { color: var(--status-blocked); }
 .finding-list article:first-child { border-top: 0; }
 .finding-marker { width: 8px; height: 8px; margin-top: 7px; border-radius: 50%; background: var(--blue); }
 .finding-marker[data-state="unknown"], .finding-marker[data-state="not-established"] { background: transparent; border: 1px solid var(--muted); }
+/* A finding's marker says what it is: confirmed, a signal, or an observation. */
+.finding-marker[data-state="confirmed"] { background: var(--status-blocked); }
+.finding-marker[data-state="signal"] { background: var(--status-restricted); }
+.finding-marker[data-state="observed"] { background: var(--blue); }
 .finding-list h3 { margin: 0; font-size: 14.5px; }
 .finding-list p { margin: 2px 0; color: var(--text-soft); font-size: 13px; line-height: 1.55; }
 .finding-list small { color: var(--muted); font-size: 11px; }
@@ -169,6 +193,15 @@ tr[data-level="blocked"] .access-level b { color: var(--status-blocked); }
 .evidence-matrix { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 7px; margin-top: 11px; }
 .evidence-matrix > div { min-width: 0; padding: 9px; border: 1px solid var(--border); border-radius: 6px; background: rgba(11,16,23,.34); }
 .evidence-matrix strong, .evidence-matrix span, .evidence-matrix small { display: block; }
+/* Coverage is strength of evidence: one hue, strong to faint. */
+.evidence-matrix > div { border-top: 3px solid var(--border); }
+.evidence-matrix > div[data-coverage="broad"] { border-top-color: #8cc4ff; }
+.evidence-matrix > div[data-coverage="adequate"] { border-top-color: #6fa4dd; }
+.evidence-matrix > div[data-coverage="limited"] { border-top-color: #5b7a9e; }
+.evidence-matrix > div[data-coverage="broad"] span { color: #8cc4ff; }
+.evidence-matrix > div[data-coverage="adequate"] span { color: #6fa4dd; }
+.evidence-matrix > div[data-coverage="limited"] span { color: #7d9bbd; }
+.evidence-matrix > div[data-coverage="none"] span { color: var(--muted); }
 .evidence-matrix strong { font-size: 12.5px; }
 .evidence-matrix span { margin-top: 3px; color: var(--text-soft); font-size: 12px; }
 .evidence-matrix small { margin-top: 5px; color: var(--muted); font-size: 10.5px; line-height: 1.45; }

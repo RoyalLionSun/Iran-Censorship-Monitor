@@ -112,6 +112,8 @@ function applyUrlState() {
 function writeUrlState() {
   const params = new URLSearchParams(queryString());
   if (getLanguage() !== 'en') params.set('lang', getLanguage());
+  const view = new URLSearchParams(window.location.search).get('view');
+  if (view === 'technical') params.set('view', view);
   window.history.replaceState(null, '', `${window.location.pathname}?${params}`);
 }
 
@@ -270,6 +272,7 @@ function renderOoniChart(ooni) {
 function renderDivergence(assessment) {
   const item = assessment?.controlDataPlane;
   const box = $('#divergence-card');
+  $('#divergence-panel').dataset.finding = item?.classification === 'control-data-plane-divergence' ? 'warn' : item && item.classification !== 'insufficient-data' ? 'info' : 'unknown';
   if (!item || item.classification === 'insufficient-data') {
     $('#divergence-state').textContent = 'Insufficient data';
     box.dataset.state = 'neutral';
@@ -754,8 +757,32 @@ async function loadOoniDomains(serial, signal) {
 }
 
 
+// Every source panel shows at its edge whether its source answered, with the same colours as
+// the source-status legend: available, partial, error, or no data for this selection.
+const PANEL_SOURCES = {
+  'ooni-panel': 'ooni', 'ripe-panel': 'ripe', 'radar-panel': 'radar', 'ioda-panel': 'ioda', 'tor-panel': 'tor',
+  'routing-panel': 'ripestat', 'censoredplanet-panel': 'censoredPlanet', 'globalping-panel': 'globalping',
+  'apnic-panel': 'apnic', 'mlab-panel': 'mlab', 'asrank-panel': 'asrank', 'rpki-panel': 'rpki', 'topology-panel': 'peeringdb',
+};
+
+function sourceState(source) {
+  if (!source) return 'nodata';
+  if (source.ok === false || source.status === 'error') return 'error';
+  if (['partial', 'stale'].includes(source.status)) return 'partial';
+  if (source.status === 'observed') return 'ok';
+  return 'nodata';
+}
+
+function markSourcePanels(overview) {
+  for (const [id, key] of Object.entries(PANEL_SOURCES)) {
+    const panel = document.getElementById(id);
+    if (panel) panel.dataset.sourceState = sourceState(overview?.[key]);
+  }
+}
+
 function renderOverview(overview) {
   state.overview = overview;
+  markSourcePanels(overview);
   renderServiceFindings();
   renderAssessment(overview.assessment);
   renderKpis(overview);

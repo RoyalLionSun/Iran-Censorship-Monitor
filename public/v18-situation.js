@@ -59,7 +59,8 @@ function insertViews() {
     setView('technical');
     document.querySelector('#overview-details-head')?.scrollIntoView({ block: 'start' });
   });
-  setView('overview');
+  // A shared link can open the technical view directly.
+  setView(new URLSearchParams(window.location.search).get('view') === 'technical' ? 'technical' : 'overview');
 }
 
 function setView(view) {
@@ -74,6 +75,11 @@ function setView(view) {
     button.classList.toggle('active', selected);
     button.setAttribute('aria-pressed', String(selected));
   });
+  // The view is part of a shared link, like the selection.
+  const params = new URLSearchParams(window.location.search);
+  if (technical) params.set('view', 'technical'); else params.delete('view');
+  const query = params.toString();
+  window.history.replaceState(null, '', `${window.location.pathname}${query ? `?${query}` : ''}`);
 }
 
 function translateStaticView() {
@@ -134,6 +140,21 @@ function meaningKey(dimension) {
   return `interpretation.${dimension.id}.meaning.${dimension.state}${unaligned ? '-unaligned' : ''}`;
 }
 
+// The card edge says what was found: a confirmed block or a nationwide outage, signals,
+// nothing found, too little data, or plain information.
+function dimensionFinding(dimension) {
+  if (dimension.pending) return 'unknown';
+  const { id, state, severity } = dimension;
+  if (id === 'interference') return { 'blocking-confirmed-in-measurements': 'bad', 'interference-signals': 'warn', 'no-interference-signals-detected': 'ok' }[state] ?? 'unknown';
+  if (id === 'connectivity') {
+    if (['widespread', 'severe'].includes(severity)) return 'bad';
+    return { 'disruption-signals': 'warn', 'no-disruption-events-detected': 'ok' }[state] ?? 'unknown';
+  }
+  if (id === 'routing') return { 'routes-not-visible': 'bad', 'routes-visible': 'info' }[state] ?? 'unknown';
+  if (id === 'quality') return state === 'path-observations-available' ? 'info' : 'unknown';
+  return 'unknown';
+}
+
 function renderDimension(dimension) {
   const metadata = [
     ['severity', dimension.severity],
@@ -142,13 +163,13 @@ function renderDimension(dimension) {
     ['coverage', dimension.coverage],
   ];
   return `
-    <article class="interpretation-card">
+    <article class="interpretation-card" data-finding="${escapeHtml(dimensionFinding(dimension))}">
       <header>
         <span class="dimension-icon" aria-hidden="true">${escapeHtml(t(`interpretation.${dimension.id}.icon`))}</span>
         <div><span>${escapeHtml(t(`interpretation.${dimension.id}.title`))}</span><h2>${escapeHtml(t(stateKey(dimension)))}</h2></div>
       </header>
       <p>${escapeHtml(t(meaningKey(dimension)))}</p>
-      <dl>${metadata.map(([label, value]) => `<div><dt>${escapeHtml(t(`interpretation.axis.${label}`))}</dt><dd>${escapeHtml(t(`interpretation.${label}.${value}`))}</dd></div>`).join('')}</dl>
+      <dl>${metadata.map(([label, value]) => `<div data-axis="${escapeHtml(label)}" data-value="${escapeHtml(value)}"><dt>${escapeHtml(t(`interpretation.axis.${label}`))}</dt><dd>${escapeHtml(t(`interpretation.${label}.${value}`))}</dd></div>`).join('')}</dl>
       <ul class="dimension-evidence">${renderEvidenceItems(dimension)}</ul>
       <small>${escapeHtml(t(dimension.limitationKey))}</small>
     </article>`;
@@ -804,7 +825,7 @@ function renderEvidenceOverview(assessment) {
   element.innerHTML = `<header><span class="section-label">${escapeHtml(t('interpretation.evidence.kicker'))}</span><h2>${escapeHtml(t('interpretation.evidence.title'))}</h2></header>
     <p>${escapeHtml(t('interpretation.evidence.intro'))}</p>
     <div class="evidence-matrix">${dimensions.map((dimension) => `
-      <div><strong>${escapeHtml(t(`interpretation.${dimension.id}.title`))}</strong><span>${escapeHtml(t(`interpretation.coverage.${dimension.coverage}`))}</span><small>${escapeHtml(dimension.availableSources.join(' · ') || t('interpretation.noUsableSources'))}</small></div>`).join('')}</div>
+      <div data-coverage="${escapeHtml(dimension.coverage)}"><strong>${escapeHtml(t(`interpretation.${dimension.id}.title`))}</strong><span>${escapeHtml(t(`interpretation.coverage.${dimension.coverage}`))}</span><small>${escapeHtml(dimension.availableSources.join(' · ') || t('interpretation.noUsableSources'))}</small></div>`).join('')}</div>
     <p class="method-boundary">${escapeHtml(assessment.methodologicalBoundary)}</p>`;
 }
 
