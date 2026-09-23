@@ -438,7 +438,7 @@ function renderServiceTiles(services, selection, connectivity = null) {
         const status = country ? country.status : item.status;
         return `
         <article class="service-tile" data-status="${escapeHtml(status)}"${country ? ' data-scope="country"' : ''}>
-          <div class="service-tile-head"><span class="status-mark" aria-hidden="true"></span><h3 class="${item.id === 'selected-target' ? 'technical-ltr' : ''}">${escapeHtml(brandName(item.id, services))}</h3></div>
+          <div class="service-tile-head"><h3 class="${item.id === 'selected-target' ? 'technical-ltr' : ''}">${escapeHtml(brandName(item.id, services))}</h3></div>
           <b class="service-tile-status">${escapeHtml(country ? t(`board.country.status.${country.status}`)
             : item.status === 'restricted' && item.app?.status === 'anomaly' && item.web?.status !== 'anomaly' ? t('board.status.appFailed')
               : t(`board.status.${item.status}`))}</b>

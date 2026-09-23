@@ -231,6 +231,6 @@ The **Overview** is written for readers without technical background and holds t
 
 A selection names a service, not a hostname: selecting Facebook covers facebook.com and www.facebook.com, and selecting WhatsApp or Telegram includes their OONI app test. An unrelated website target never pulls app findings into the answer.
 
-Service tiles use their own status colors, always paired with a text label and a symbol. Source-health colors keep describing data availability only, and a single unavailable side source is not shown as an alarm.
+Service tiles use their own status colors, always paired with a text label. Source-health colors keep describing data availability only, and a single unavailable side source is not shown as an alarm.
 
 Technical analysis preserves the former source cards, charts, source-health legend and raw drill-down. Its observations do not override the interpretation contract.

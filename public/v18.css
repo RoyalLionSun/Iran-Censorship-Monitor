@@ -19,7 +19,7 @@
 .situation-top { display: grid; gap: 6px; }
 .situation-scope { margin: 0; color: var(--muted); font-size: 13.5px; }
 .situation-scope strong { color: var(--text-soft); font-weight: 750; }
-.situation-top h1 { margin: 4px 0 2px; max-width: 36ch; text-wrap: balance; font-size: clamp(27px, 2.7vw, 42px); line-height: 1.12; letter-spacing: -.02em; }
+.situation-top h1 { margin: 4px 0 2px; max-width: 44ch; text-wrap: balance; font-size: clamp(22px, 2vw, 31px); line-height: 1.18; letter-spacing: -.015em; }
 .situation-lede { margin: 0; max-width: 82ch; color: var(--text-soft); font-size: 16.5px; line-height: 1.6; }
 .situation-board[data-headline="loading"] h1 { color: var(--text-soft); }
 
@@ -33,17 +33,7 @@
 .service-tile[data-status="reachable"] { --tile: var(--status-reachable); }
 .service-tile-head { display: flex; align-items: center; gap: 8px; }
 .service-tile h3 { margin: 0; font-size: 16px; line-height: 1.2; }
-.status-mark { position: relative; flex: 0 0 20px; height: 20px; border-radius: 50%; background: var(--tile); }
 /* Symbols are drawn with CSS so no font can turn the "blocked" cross into a check-like glyph. */
-.status-mark::before, .status-mark::after { content: ""; position: absolute; inset: 0; margin: auto; background: #0b1017; }
-.service-tile[data-status="blocked"] .status-mark::before, .service-tile[data-status="blocked"] .status-mark::after { width: 11px; height: 2.5px; border-radius: 2px; transform: rotate(45deg); }
-.service-tile[data-status="blocked"] .status-mark::after { transform: rotate(-45deg); }
-.service-tile[data-status="restricted"] .status-mark::before { width: 2.5px; height: 8px; border-radius: 2px; transform: translateY(-2px); }
-.service-tile[data-status="restricted"] .status-mark::after { width: 2.5px; height: 2.5px; border-radius: 50%; transform: translateY(5px); }
-.service-tile[data-status="reachable"] .status-mark::before { width: 5px; height: 9px; background: transparent; border: solid #0b1017; border-width: 0 2.5px 2.5px 0; transform: translate(0, -1px) rotate(45deg); }
-.service-tile[data-status="reachable"] .status-mark::after { display: none; }
-.service-tile:not([data-status="blocked"]):not([data-status="restricted"]):not([data-status="reachable"]) .status-mark::before { width: 8px; height: 2.5px; border-radius: 2px; }
-.service-tile:not([data-status="blocked"]):not([data-status="restricted"]):not([data-status="reachable"]) .status-mark::after { display: none; }
 .service-tile-status { color: var(--tile); font-size: 17px; line-height: 1.25; }
 .service-tile ul { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 3px; }
 .service-tile li { color: var(--muted); font-size: 12px; line-height: 1.45; }
