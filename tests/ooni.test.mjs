@@ -327,3 +327,39 @@ test('each network is classified on its own and repeated or inconsistent rows fa
     { probe_asn: 'AS58224', measurement_count: 9, anomaly_count: 0, confirmed_count: 0, failure_count: 0, ok_count: 1 },
   ]), /Inconsistent OONI network counts/);
 });
+
+test('an input that is not a plain host name is skipped and counted, never blinding the window', () => {
+  // Real values from the September 2022 Iran window that used to abort the whole aggregation.
+  const rows = aggregateOoniDomains([
+    { domain: 'www.instagram.com', measurement_start_day: '2022-09-20', measurement_count: 5, anomaly_count: 3, confirmed_count: 0, failure_count: 1, ok_count: 1 },
+    { domain: '128.31.0.39:9131', measurement_start_day: '2022-09-20', measurement_count: 2, anomaly_count: 0, confirmed_count: 0, failure_count: 0, ok_count: 2 },
+    { domain: 'doh.seby.io:8443', measurement_start_day: '2022-09-20', measurement_count: 1, anomaly_count: 0, confirmed_count: 0, failure_count: 0, ok_count: 1 },
+    { domain: 'varzesh', measurement_start_day: '2022-09-20', measurement_count: 1, anomaly_count: 1, confirmed_count: 0, failure_count: 0, ok_count: 0 },
+    { domain: 'telegram.org', measurement_start_day: '2022-09-21', measurement_count: 4, anomaly_count: 4, confirmed_count: 0, failure_count: 0, ok_count: 0 },
+  ]);
+  assert.deepEqual(rows.map((row) => row.domain), ['telegram.org', 'www.instagram.com']);
+  assert.deepEqual(rows.skippedInputs, ['128.31.0.39:9131', 'doh.seby.io:8443', 'varzesh']);
+  assert.equal(rows.find((row) => row.domain === 'www.instagram.com').measurements, 5, 'skipped rows never merge into another domain');
+
+  assert.throws(() => aggregateOoniDomains([
+    { domain: 'www.instagram.com', measurement_start_day: 'not-a-day', measurement_count: 1, anomaly_count: 0, confirmed_count: 0, failure_count: 0, ok_count: 1 },
+  ]), /Invalid OONI domain or observation day/, 'a broken response shape still fails closed');
+});
+
+test('one host in several spellings is one domain group, and its days are counted once', () => {
+  // The September 2022 Iran window lists both "Instagram.com" and "instagram.com".
+  const rows = aggregateOoniDomains([
+    { domain: 'Instagram.com', measurement_start_day: '2022-09-20', measurement_count: 3, anomaly_count: 2, confirmed_count: 0, failure_count: 0, ok_count: 1 },
+    { domain: 'instagram.com', measurement_start_day: '2022-09-20', measurement_count: 5, anomaly_count: 1, confirmed_count: 1, failure_count: 0, ok_count: 3 },
+    { domain: 'instagram.com', measurement_start_day: '2022-09-21', measurement_count: 2, anomaly_count: 0, confirmed_count: 0, failure_count: 0, ok_count: 2 },
+  ]);
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].measurements, 10, 'the spellings are merged, not dropped');
+  assert.equal(rows[0].confirmed, 1);
+  assert.equal(rows[0].observedDays, 2, 'two spellings on one day remain one measured day');
+
+  assert.throws(() => aggregateOoniDomains([
+    { domain: 'instagram.com', measurement_start_day: '2022-09-20', measurement_count: 1, anomaly_count: 0, confirmed_count: 0, failure_count: 0, ok_count: 1 },
+    { domain: 'instagram.com', measurement_start_day: '2022-09-20', measurement_count: 1, anomaly_count: 0, confirmed_count: 0, failure_count: 0, ok_count: 1 },
+  ]), /Repeated OONI domain observation day/, 'an identical row twice is still a broken response');
+});

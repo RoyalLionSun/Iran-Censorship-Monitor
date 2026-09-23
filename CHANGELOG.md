@@ -89,6 +89,12 @@
 - the mechanism comes from the OONI blocking type and confirmed block fingerprints, is only counted for measurements that actually have a finding, and an unspecified mechanism is never presented as one;
 - the evidence samples for the affected services run in one parallel round, which kept the cold Overview at about 14 s and a warm one at 2.6 s.
 
+### Historical robustness (2026-09-23)
+
+- a tested input that is not a plain host name (`128.31.0.39:9131`, `doh.seby.io:8443`, `varzesh`) is skipped and counted instead of discarding the whole window; five such rows had blinded the dashboard for September 2022;
+- the same host in several spellings (`Instagram.com` and `instagram.com`) is merged into one domain group, and a day measured under two spellings counts once; an identical row twice still fails closed;
+- validated against the documented September 2022 event: AS58224, AS44244 and AS197207 reproduce blocked services, 5 to 9 connectivity events and a country-wide pattern across 56 measured networks.
+
 ### Network scope of a finding (2026-09-23)
 
 - the plain-language panel states in how many measured Iranian networks the headline service is blocked, shows problems or stays reachable, which separates a provider decision from a country-wide pattern;
