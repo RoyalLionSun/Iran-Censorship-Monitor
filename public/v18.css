@@ -51,6 +51,18 @@
 /* A tile answered from tests across Iran, not from this network: same colour, dashed edge. */
 .service-tile[data-scope="country"] { border-style: dashed; }
 .service-tile .tile-country { color: var(--text-soft); }
+/* Which providers did not block which service, named. */
+.network-breakdown header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin-bottom: 8px; }
+.network-breakdown h2 { margin: 0; font-size: 13px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--text-soft); }
+.network-breakdown header p { margin: 0; color: var(--muted); font-size: 12.5px; }
+.network-breakdown-scroll { overflow-x: auto; }
+.network-breakdown table { width: 100%; min-width: 0; border-collapse: collapse; font-size: 13px; }
+.network-breakdown th, .network-breakdown td { padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: start; vertical-align: top; }
+.network-breakdown thead th { color: var(--muted); font-size: 11.5px; font-weight: 750; letter-spacing: .04em; text-transform: uppercase; }
+.network-breakdown tbody th { color: var(--text); font-weight: 750; white-space: nowrap; }
+.network-breakdown .networks-open { color: var(--status-reachable); }
+.network-breakdown .networks-partial { color: var(--status-restricted); }
+.network-breakdown .networks-none { color: var(--muted); }
 .status-row { margin: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .status-row > div { --row: var(--status-unknown); min-width: 0; padding: 11px 13px; border: 1px solid var(--border); border-inline-start: 4px solid var(--row); border-radius: 8px; background: rgba(11,16,23,.42); }
 .status-row > div[data-status="ok"] { --row: var(--status-reachable); }

@@ -286,6 +286,49 @@ function countryLine(country, item) {
   }))}</li>`;
 }
 
+function networkName(asn, names, selection) {
+  const name = names?.[asn];
+  const label = name ? `${name} (${asn})` : asn;
+  return asn === selection?.asn ? t('board.networks.this', { network: label }) : label;
+}
+
+function networkList(entries, names, selection, key) {
+  return entries.map((entry) => escapeHtml(t(key, {
+    network: networkName(entry.asn, names, selection),
+    ok: formatNumber(entry.ok), total: formatNumber(entry.measurements),
+    count: formatNumber(entry.anomalous), confirmed: formatNumber(entry.confirmed),
+  }))).join('<br>');
+}
+
+// Which providers did not block which service, by name, on the first screen: a reader should
+// not have to switch networks one by one to find where a service still works.
+function renderNetworkBreakdown(services, selection) {
+  const breakdown = services?.networkBreakdown;
+  if (!breakdown?.items?.length) return '';
+  const { items, names } = breakdown;
+  const rows = items.map((item) => {
+    const open = [...item.reachable];
+    const partial = [...item.partial, ...item.restricted];
+    return `<tr>
+      <th scope="row">${escapeHtml(brandName(item.id, services))}</th>
+      <td>${escapeHtml(t('board.networks.blockedCount', { blocked: formatNumber(item.blocked.length + item.partial.length), measured: formatNumber(item.measured) }))}</td>
+      <td class="networks-open">${open.length ? networkList(open, names, selection, 'board.networks.reachable') : `<span class="networks-none">${escapeHtml(t('board.networks.noneOpen'))}</span>`}</td>
+      <td class="networks-partial">${partial.length ? [
+        item.partial.length ? networkList(item.partial, names, selection, 'board.networks.partial') : '',
+        item.restricted.length ? networkList(item.restricted, names, selection, 'board.networks.restricted') : '',
+      ].filter(Boolean).join('<br>') : '—'}</td>
+    </tr>`;
+  }).join('');
+  return `
+    <section class="network-breakdown" aria-labelledby="network-breakdown-title">
+      <header><h2 id="network-breakdown-title">${escapeHtml(t('board.networks.title'))}</h2><p>${escapeHtml(t('board.networks.note'))}</p></header>
+      <div class="network-breakdown-scroll"><table>
+        <thead><tr><th scope="col">${escapeHtml(t('board.networks.service'))}</th><th scope="col">${escapeHtml(t('board.networks.blockedIn'))}</th><th scope="col">${escapeHtml(t('board.networks.notBlocked'))}</th><th scope="col">${escapeHtml(t('board.networks.partlyCol'))}</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>
+    </section>`;
+}
+
 function renderServiceTiles(services, selection, connectivity = null) {
   if (!services) return '';
   const items = services.visible ?? services.items;
@@ -531,6 +574,7 @@ function renderHero(interpretation) {
       <p class="situation-lede">${escapeHtml(ledeText(interpretation))}</p>
     </header>
     ${renderServiceTiles(interpretation.services, selection, interpretation.dimensions.connectivity)}
+    ${renderNetworkBreakdown(interpretation.services, selection)}
     ${statusRow(interpretation)}
     ${renderOutageTraffic(interpretation)}`;
   bindOutageChart(hero, interpretation);
@@ -615,7 +659,7 @@ function meaningSentences(interpretation) {
     if (shutdown.contextComparison === 'radar-no-nationwide-outage') sentences.push(t('meaning.shutdown.radarNone'));
     if (shutdown.contextComparison === 'radar-dates-differ') sentences.push(t('meaning.shutdown.radarDiffers'));
   }
-  const scope = services?.networkScope;
+  const scope = services?.networkBreakdown ? null : services?.networkScope;
   if (scope?.measured) {
     const service = scope.serviceId ? brandName(scope.serviceId, services) : scope.domain;
     if (scope.blocked > 0) sentences.push(t('meaning.networks.blocked', { service, blocked: formatNumber(scope.blocked), measured: formatNumber(scope.measured) }));

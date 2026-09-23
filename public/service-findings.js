@@ -189,3 +189,34 @@ export function summarizeServiceBrands(domainPayload, appPayload, selection = {}
   const countryBlocked = visible.filter((item) => ['untested', 'unclear'].includes(item.status) && item.country?.status === 'blocked').map((item) => item.id);
   return { state, scoped, items, visible, blocked, restricted, reachable, tested, latestObserved, countryBlocked };
 }
+
+// How each priority service fared in each Iranian network. Tests of a brand's hosts in one
+// network are added up. A network counts as partly blocking only when at least as many tests
+// got through as were blocked; a handful of successes among hundreds of blocks is a block.
+export function networkStatus({ confirmed, anomalous, ok }) {
+  if (confirmed > 0 && ok >= confirmed) return 'partial';
+  if (confirmed > 0) return 'blocked';
+  if (anomalous > 0) return 'restricted';
+  if (ok > 0) return 'reachable';
+  return 'inconclusive';
+}
+
+export function summarizeServiceNetworks(rows = []) {
+  return SERVICE_BRANDS.map((brand) => {
+    const byAsn = new Map();
+    for (const row of rows) {
+      if (!brand.domains.includes(row.domain)) continue;
+      const entry = byAsn.get(row.asn) ?? { asn: row.asn, measurements: 0, confirmed: 0, anomalous: 0, ok: 0, failures: 0 };
+      for (const key of ['measurements', 'confirmed', 'anomalous', 'ok', 'failures']) entry[key] += row[key] ?? 0;
+      byAsn.set(row.asn, entry);
+    }
+    const networks = [...byAsn.values()].map((entry) => ({ ...entry, status: networkStatus(entry) }))
+      .sort((a, b) => b.measurements - a.measurements);
+    const pick = (status) => networks.filter((entry) => entry.status === status);
+    return {
+      id: brand.id, name: brand.name, measured: networks.length,
+      blocked: pick('blocked'), partial: pick('partial'), restricted: pick('restricted'),
+      reachable: pick('reachable'), inconclusive: pick('inconclusive'),
+    };
+  }).filter((item) => item.measured > 0);
+}

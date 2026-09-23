@@ -199,3 +199,22 @@ test('a service without usable tests in the network is answered from tests acros
   const everywhere = summarizeServiceBrands(country, null, { ...selection, asn: '' }, country);
   assert.equal(everywhere.items.find((item) => item.id === 'facebook').country, null, 'no fallback when Iran is already the scope');
 });
+
+test('networks are named per service: blocked, partly blocked, reachable', async () => {
+  const { networkStatus, summarizeServiceNetworks } = await import('../public/service-findings.js');
+  assert.equal(networkStatus({ confirmed: 224, anomalous: 107, ok: 2 }), 'blocked', 'two successes among hundreds of blocks are a block');
+  assert.equal(networkStatus({ confirmed: 32, anomalous: 1, ok: 35 }), 'partial');
+  assert.equal(networkStatus({ confirmed: 0, anomalous: 7, ok: 0 }), 'restricted');
+  assert.equal(networkStatus({ confirmed: 0, anomalous: 0, ok: 6 }), 'reachable');
+  const rows = [
+    { domain: 'www.instagram.com', asn: 'AS58224', measurements: 428, confirmed: 224, anomalous: 107, ok: 2, failures: 95 },
+    { domain: 'instagram.com', asn: 'AS52140', measurements: 6, confirmed: 0, anomalous: 0, ok: 6, failures: 0 },
+    { domain: 'www.instagram.com', asn: 'AS31549', measurements: 68, confirmed: 32, anomalous: 1, ok: 35, failures: 0 },
+    { domain: 'unrelated.example', asn: 'AS1', measurements: 5, confirmed: 5, anomalous: 0, ok: 0, failures: 0 },
+  ];
+  const instagram = summarizeServiceNetworks(rows).find((item) => item.id === 'instagram');
+  assert.equal(instagram.measured, 3);
+  assert.deepEqual(instagram.reachable.map((entry) => entry.asn), ['AS52140']);
+  assert.deepEqual(instagram.partial.map((entry) => entry.asn), ['AS31549']);
+  assert.deepEqual(instagram.blocked.map((entry) => entry.asn), ['AS58224']);
+});

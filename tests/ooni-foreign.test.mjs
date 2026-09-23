@@ -61,3 +61,15 @@ test('unfiltered Iran-wide results never stand in for a network', async () => {
   const checked = buildInterpretation({ ooniDomains: network, countryOoniDomains: { ...country, foreignExclusion: { checked: true, networks: [], excludedMeasurements: 0, notExcludedMeasurements: 0 } }, selection });
   assert.equal(checked.services.items.find((item) => item.id === 'facebook').country.status, 'blocked');
 });
+
+test('the per-network service comparison keeps only Iranian networks and the service hosts', async () => {
+  const { parseOoniServiceNetworks } = await import('../lib/ooni.mjs');
+  const row = (domain, probe_asn, measurement_count, ok_count) => ({ domain, probe_asn, measurement_count, ok_count, confirmed_count: measurement_count - ok_count, anomaly_count: 0, failure_count: 0 });
+  const result = parseOoniServiceNetworks([
+    row('www.instagram.com', 58224, 10, 0),
+    row('www.instagram.com', 142578, 90, 90),
+    row('example.org', 58224, 5, 5),
+  ], { domains: ['www.instagram.com'], iranAsns: new Set(['AS58224']) });
+  assert.deepEqual(result.rows.map((item) => item.asn), ['AS58224']);
+  assert.equal(result.excludedMeasurements, 90, 'the foreign network is left out and counted');
+});
