@@ -165,7 +165,11 @@ The following invariants are executable regression assertions:
 
 ### Connection quality sources
 
-Cloudflare Radar contributes latency and bandwidth estimated from real user traffic in the selected network. Only the daily time series is used, because the ASN-level summary endpoint silently answers with a 90-day window regardless of the requested period. Every response is checked against the requested window and counts as coverage only while it stays inside it; otherwise it remains visible without speaking for the selected period. The values are rolling averages of measured traffic, not a controlled speed test.
+Cloudflare Radar contributes latency, bandwidth and DNS response time estimated from real user traffic in the selected network, each with its quartile spread, because a median alone hides how widely the experience varies. Only the daily time series is used, because the ASN-level summary endpoint silently answers with a 90-day window regardless of the requested period. Every response is checked against the requested window and counts as coverage only while it stays inside it; otherwise it remains visible without speaking for the selected period. The values are rolling averages of measured traffic, not a controlled speed test.
+
+### Network scope of a service claim
+
+The same finding in many networks is a country-wide pattern; in one network it is a provider decision. One aggregation per headline service, grouped by `probe_asn` and unrestricted by network, reports in how many measured Iranian networks the service was confirmed blocked, showed problems, or stayed reachable. Networks where every measurement failed remain `inconclusive`. This is scope evidence for the reader: it never raises severity, and it never turns OONI into a second source.
 
 ### Coverage of a service claim
 

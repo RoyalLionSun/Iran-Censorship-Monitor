@@ -5,7 +5,7 @@ import { extname, join, normalize, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildAssessment } from './lib/assessment.mjs';
 import { errorPayload, jsonResponse, mapLimit, normalizeAsn, validateRange } from './lib/common.mjs';
-import { getCircumventionSignals, getOoniDomainMeasurements, getOoniDomains, getOoniMeasurementDetail, getOoniTimeline, getOoniSample, listOoniMeasurements, OONI_TESTS } from './lib/ooni.mjs';
+import { getCircumventionSignals, getOoniDomainMeasurements, getOoniDomains, getOoniMeasurementDetail, getOoniNetworks, getOoniTimeline, getOoniSample, listOoniMeasurements, OONI_TESTS } from './lib/ooni.mjs';
 import { getRipeSignals } from './lib/ripe.mjs';
 import { getRadarConnectionQuality, getRadarSignals } from './lib/radar.mjs';
 import { getIodaSignals } from './lib/ioda.mjs';
@@ -227,8 +227,13 @@ async function handleApi(req, res, url) {
     if (focusDomain && !sampleDomains.includes(focusDomain)) sampleDomains.unshift(focusDomain);
     const ooniSamples = (await mapLimit(sampleDomains.slice(0, 2), 2, (domain) =>
       safeSource('OONI evidence sample', () => getOoniSample(ooniScope(input), domain)))).filter((sample) => sample?.ok);
+    // One aggregation answers whether the headline service is blocked in one network or in many.
+    const headlineDomain = sampleDomains[0] ?? null;
+    const ooniNetworks = headlineDomain
+      ? await safeSource('OONI network comparison', () => getOoniNetworks(ooniScope(input), headlineDomain))
+      : null;
     const scopeLabel = input.asn ? `${input.asn} / Iran` : 'Iran / all measured networks';
-    const assessment = buildAssessment({ ooni, ripe, radar, radarQuality, ioda, ripestat, censoredPlanet, tor, mlab, apnic, globalping, peeringdb, ihr, asrank, rpki, pulse, ooniDomains, circumvention, ooniSamples, selection: input, scopeLabel });
+    const assessment = buildAssessment({ ooni, ripe, radar, radarQuality, ioda, ripestat, censoredPlanet, tor, mlab, apnic, globalping, peeringdb, ihr, asrank, rpki, pulse, ooniDomains, circumvention, ooniSamples, ooniNetworks, selection: input, scopeLabel });
     const asnProfile = input.asn ? asns.find((item) => item.asn === input.asn) || null : null;
     jsonResponse(res, 200, { ok: true, input, asnProfile, fetchedAt: new Date().toISOString(), assessment, ooni, ripe, radar, radarQuality, ioda, tor, mlab, apnic, ripestat, globalping, censoredPlanet, peeringdb, ihr, asrank, rpki, pulse });
     return true;

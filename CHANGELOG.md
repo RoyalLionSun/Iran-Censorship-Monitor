@@ -89,11 +89,18 @@
 - the mechanism comes from the OONI blocking type and confirmed block fingerprints, is only counted for measurements that actually have a finding, and an unspecified mechanism is never presented as one;
 - the evidence samples for the affected services run in one parallel round, which kept the cold Overview at about 14 s and a warm one at 2.6 s.
 
+### Network scope of a finding (2026-09-23)
+
+- the plain-language panel states in how many measured Iranian networks the headline service is blocked, shows problems or stays reachable, which separates a provider decision from a country-wide pattern;
+- one additional aggregation grouped by `probe_asn` answers this for the headline service, so the check costs a single request;
+- the comparison is scope evidence: it never raises severity and never counts as a second source.
+
 ### Connection quality and OONI quota (2026-09-23)
 
 - Cloudflare Radar quality (latency and bandwidth from real user traffic in the selected network) is a second source for the connection-quality claim, so that claim no longer rests on 2 to 9 RIPE Atlas probes alone;
 - the Radar summary endpoint silently answers ASN queries with a 90-day window, so only the daily time series is used and every response is checked against the requested window before it counts;
 - the status row states the measured values a reader can relate to (`5.1 Mbit/s · 115 ms`) instead of ping arrival alone;
+- the connection-quality claim carries the quartile spread and the DNS response time, so a median no longer stands alone;
 - OONI answered `429 quota exceeded` once a dashboard load fired a dozen parallel queries: OONI traffic now passes one gate with at most two parallel requests, daily-grained results are cached for ten minutes, evidence samples are capped at two per load, and a rate limit is reported as such and followed by a cooldown that serves cached values instead of hammering upstream.
 
 ## 1.8.0 — 2026-09-10

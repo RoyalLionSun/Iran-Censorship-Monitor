@@ -351,7 +351,8 @@ test('a selected test outside the service tiles still gets its own headline', ()
 
 test('connection quality gains a second source only when Radar stayed in the selected window', () => {
   const radarQuality = (extra = {}) => ({ ok: true, source: 'Cloudflare Radar', status: 'observed', windowAligned: true,
-    latency: { median: 115.1 }, bandwidth: { median: 5.1 }, ...extra });
+    latency: { median: 115.1, typicalLow: 94.1, typicalHigh: 158.3 }, bandwidth: { median: 5.1, typicalLow: 3.8, typicalHigh: 6.9 },
+    dns: { median: 100.1 }, ...extra });
 
   const both = buildAssessment({ ripe: ripe({ loss: 2 }), radarQuality: radarQuality(), radar: { status: 'token_required' }, selection, scopeLabel: 'AS58224 / Iran' });
   const dimension = both.interpretation.dimensions.quality;
@@ -359,6 +360,8 @@ test('connection quality gains a second source only when Radar stayed in the sel
   assert.equal(dimension.coverage, 'adequate');
   assert.equal(dimension.evidence.find((item) => item.metric === 'latency-ms').value, 115.1);
   assert.equal(dimension.evidence.find((item) => item.metric === 'download-mbps').value, 5.1);
+  assert.equal(dimension.evidence.find((item) => item.metric === 'dns-ms').value, 100.1);
+  assert.deepEqual(dimension.typicalRange.latency, { low: 94.1, high: 158.3 }, 'the spread travels with the claim');
 
   const widened = buildAssessment({ ripe: ripe({ samples: 0, status: 'no_data' }), radarQuality: radarQuality({ windowAligned: false }), radar: { status: 'token_required' }, selection, scopeLabel: 'AS58224 / Iran' });
   const widenedQuality = widened.interpretation.dimensions.quality;
@@ -369,4 +372,14 @@ test('connection quality gains a second source only when Radar stayed in the sel
   const radarOnly = buildAssessment({ ripe: ripe({ samples: 0, status: 'no_data' }), radarQuality: radarQuality(), radar: { status: 'token_required' }, selection, scopeLabel: 'AS58224 / Iran' });
   assert.equal(radarOnly.interpretation.dimensions.quality.state, 'path-observations-available');
   assert.equal(radarOnly.interpretation.dimensions.quality.coverage, 'limited');
+});
+
+test('the network comparison travels with the service claim without changing its severity', () => {
+  const networks = { ok: true, domain: 'www.instagram.com', measured: 6, blocked: 5, restricted: 0, reachable: 1, inconclusive: 0, networks: [] };
+  const result = buildAssessment({ ooni: ooni({ rate: 45, confirmed: 3 }), ooniDomains: serviceDomains, ooniNetworks: networks, radar: { status: 'token_required' }, selection, scopeLabel: 'AS58224 / Iran' });
+  const scope = result.interpretation.services.networkScope;
+  assert.equal(scope.blocked, 5);
+  assert.equal(scope.measured, 6);
+  assert.equal(scope.serviceId, 'instagram', 'the comparison is bound to the service it describes');
+  assert.equal(result.interpretation.dimensions.interference.severity, 'unknown', 'a wider pattern is scope, not severity');
 });

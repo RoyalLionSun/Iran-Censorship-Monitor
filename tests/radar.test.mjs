@@ -126,15 +126,20 @@ test('Radar quality parses daily percentiles and reports the window median', asy
     timestamps: ['2026-09-16T00:00:00Z', '2026-09-17T00:00:00Z', '2026-09-18T00:00:00Z'],
     p25: values.map((value) => String(value - 10)), p50: values.map(String), p75: values.map((value) => String(value + 10)),
   }, meta: { dateRange: [{ startTime: '2026-09-16T00:00:00Z', endTime: '2026-09-18T00:00:00Z' }], normalization: 'ROLLING_AVERAGE' } } });
+  const seriesFor = (url) => String(url).includes('metric=latency') ? [120, 110, 130]
+    : String(url).includes('metric=dns') ? [95, 90, 100] : [5, 4, 6];
   t.mock.method(globalThis, 'fetch', async (url) => ({
-    ok: true, status: 200, statusText: 'OK',
-    json: async () => payload(String(url).includes('metric=latency') ? [120, 110, 130] : [5, 4, 6]),
+    ok: true, status: 200, statusText: 'OK', json: async () => payload(seriesFor(url)),
   }));
   const result = await getRadarConnectionQuality({ asn: 'AS58224', since: '2026-09-16', until: '2026-09-18', now: new Date('2026-09-19T08:00:00Z') });
   assert.equal(result.status, 'observed');
   assert.equal(result.windowAligned, true);
   assert.equal(result.latency.median, 120);
   assert.equal(result.bandwidth.median, 5);
+  assert.equal(result.latency.typicalLow, 110, 'the quartiles keep the spread visible');
+  assert.equal(result.latency.typicalHigh, 130);
+  assert.equal(result.dns.median, 95, 'DNS response time is fetched as a third metric');
+  assert.match(new URL(result.sourceUrls.dns).search, /metric=dns/);
   assert.equal(result.latency.points.length, 3);
   assert.equal(result.latency.normalization, 'ROLLING_AVERAGE');
   delete process.env.CLOUDFLARE_RADAR_API_TOKEN;

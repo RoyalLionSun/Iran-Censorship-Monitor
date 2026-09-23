@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { OONI_CACHE_TTL_MS, OONI_MAX_PARALLEL_REQUESTS, OONI_RATE_LIMIT_MESSAGE, OONI_SAMPLE_SIZE, getCircumventionSignals, getOoniDomains, sampleMechanism, aggregateOoniAggregationRows, aggregateOoniDomains, aggregateOoniRows, buildOoniAggregationQuery, buildOoniDomainMeasurementsQuery, buildOoniDomainQuery, buildOoniQuery, buildOoniSampleQuery, inferDetailedMethods, parseOoniDomainMeasurements, summarizeOoniSample } from '../lib/ooni.mjs';
+import { aggregateOoniNetworks, buildOoniNetworkQuery, summarizeOoniNetworks, OONI_CACHE_TTL_MS, OONI_MAX_PARALLEL_REQUESTS, OONI_RATE_LIMIT_MESSAGE, OONI_SAMPLE_SIZE, getCircumventionSignals, getOoniDomains, sampleMechanism, aggregateOoniAggregationRows, aggregateOoniDomains, aggregateOoniRows, buildOoniAggregationQuery, buildOoniDomainMeasurementsQuery, buildOoniDomainQuery, buildOoniQuery, buildOoniSampleQuery, inferDetailedMethods, parseOoniDomainMeasurements, summarizeOoniSample } from '../lib/ooni.mjs';
 
 const domainInput = { country:'IR', asn:'AS44244', since:'2026-09-01', until:'2026-09-02', testName:'web_connectivity', target:'' };
 
@@ -294,4 +294,36 @@ test('an OONI rate limit is named and not hammered against', async (t) => {
   const afterFirst = calls;
   await assert.rejects(() => getOoniDomains({ ...input, until: '2026-08-03' }), /rate limit/);
   assert.equal(calls, afterFirst, 'during the cooldown no further request is sent upstream');
+});
+
+test('the network comparison asks one aggregation for one service across all Iranian networks', () => {
+  const params = buildOoniNetworkQuery(vantageInput, 'www.instagram.com');
+  assert.equal(params.get('axis_x'), 'probe_asn');
+  assert.equal(params.get('axis_y'), null, 'a second axis would return a domain-by-network matrix');
+  assert.equal(params.get('domain'), 'www.instagram.com');
+  assert.equal(params.get('probe_cc'), 'IR');
+  assert.equal(params.get('probe_asn'), null, 'the comparison must not be limited to the selected network');
+  assert.equal(params.get('input'), null);
+});
+
+test('each network is classified on its own and repeated or inconsistent rows fail closed', () => {
+  const networks = aggregateOoniNetworks([
+    { probe_asn: 'AS58224', measurement_count: 10, anomaly_count: 2, confirmed_count: 6, failure_count: 0, ok_count: 2 },
+    { probe_asn: 'AS44244', measurement_count: 5, anomaly_count: 5, confirmed_count: 0, failure_count: 0, ok_count: 0 },
+    { probe_asn: 'AS12880', measurement_count: 4, anomaly_count: 0, confirmed_count: 0, failure_count: 0, ok_count: 4 },
+    { probe_asn: 'AS31549', measurement_count: 3, anomaly_count: 0, confirmed_count: 0, failure_count: 3, ok_count: 0 },
+  ]);
+  assert.deepEqual(networks.map((row) => [row.asn, row.status]), [
+    ['AS58224', 'blocked'], ['AS44244', 'restricted'], ['AS12880', 'reachable'], ['AS31549', 'inconclusive'],
+  ]);
+  const summary = summarizeOoniNetworks(networks, 'www.instagram.com');
+  assert.deepEqual([summary.measured, summary.blocked, summary.restricted, summary.reachable], [4, 1, 1, 1]);
+
+  assert.throws(() => aggregateOoniNetworks([
+    { probe_asn: 'AS58224', measurement_count: 1, anomaly_count: 0, confirmed_count: 0, failure_count: 0, ok_count: 1 },
+    { probe_asn: 'AS58224', measurement_count: 1, anomaly_count: 0, confirmed_count: 0, failure_count: 0, ok_count: 1 },
+  ]), /Repeated OONI network/);
+  assert.throws(() => aggregateOoniNetworks([
+    { probe_asn: 'AS58224', measurement_count: 9, anomaly_count: 0, confirmed_count: 0, failure_count: 0, ok_count: 1 },
+  ]), /Inconsistent OONI network counts/);
 });

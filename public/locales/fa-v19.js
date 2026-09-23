@@ -375,4 +375,10 @@ export default Object.freeze({
   'interpretation.metric.latency-ms': 'میانه تأخیر',
   'interpretation.metric.download-mbps': 'میانه دریافت',
   'meaning.quality.user': 'برای ترافیک معمول در این شبکه، Cloudflare در این بازه حدود {download} مگابیت بر ثانیه دریافت و {latency} میلی‌ثانیه تأخیر اندازه گرفت.',
+  'board.quality.userRange': 'معمولاً {low} تا {high} میلی‌ثانیه در این شبکه (ترافیک کاربران Cloudflare)',
+  'meaning.quality.userRange': 'برای ترافیک معمول در این شبکه، Cloudflare در این بازه حدود {download} مگابیت بر ثانیه دریافت و {latency} میلی‌ثانیه تأخیر اندازه گرفت، معمولاً بین {low} تا {high} میلی‌ثانیه.',
+  'interpretation.metric.dns-ms': 'زمان پاسخ DNS',
+  'meaning.networks.blocked': 'در سراسر ایران، مسدود بودن {service} در {blocked} از {measured} شبکه‌ای که در این بازه اندازه‌گیری شدند تأیید شد.',
+  'meaning.networks.restricted': 'در سراسر ایران، {service} در {restricted} از {measured} شبکه‌ای که در این بازه اندازه‌گیری شدند مشکل نشان داد.',
+  'meaning.networks.reachable': 'در {reachable} شبکه از آن‌ها {service} در آزمون‌ها همچنان در دسترس بود، بنابراین وضعیت همه‌جا یکسان نیست.',
 });

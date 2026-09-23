@@ -375,4 +375,10 @@ export default Object.freeze({
   'interpretation.metric.latency-ms': 'median latency',
   'interpretation.metric.download-mbps': 'median download',
   'meaning.quality.user': 'For regular traffic in this network, Cloudflare measured about {download} Mbit/s download and {latency} ms latency in this period.',
+  'board.quality.userRange': 'Typically {low}–{high} ms in this network (Cloudflare user traffic)',
+  'meaning.quality.userRange': 'For regular traffic in this network, Cloudflare measured about {download} Mbit/s download and {latency} ms latency in this period, typically between {low} and {high} ms.',
+  'interpretation.metric.dns-ms': 'DNS response time',
+  'meaning.networks.blocked': 'Across Iran, {service} was confirmed blocked in {blocked} of {measured} networks that were measured in this period.',
+  'meaning.networks.restricted': 'Across Iran, {service} showed problems in {restricted} of {measured} networks that were measured in this period.',
+  'meaning.networks.reachable': 'In {reachable} of them {service} was still reachable in the tests, so the picture is not the same everywhere.',
 });

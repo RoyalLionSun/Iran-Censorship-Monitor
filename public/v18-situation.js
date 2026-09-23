@@ -100,7 +100,7 @@ function valueText(evidence) {
   if (['anomaly-rate', 'visibility-percent', 'packet-loss-percent'].includes(evidence.metric)) {
     return `${new Intl.NumberFormat(localeFor(), { maximumFractionDigits: 1 }).format(value)}%`;
   }
-  if (['rtt-ms', 'latency-ms'].includes(evidence.metric)) return `${new Intl.NumberFormat(localeFor(), { maximumFractionDigits: 1 }).format(value)} ms`;
+  if (['rtt-ms', 'latency-ms', 'dns-ms'].includes(evidence.metric)) return `${new Intl.NumberFormat(localeFor(), { maximumFractionDigits: 1 }).format(value)} ms`;
   if (evidence.metric === 'download-mbps') return `${new Intl.NumberFormat(localeFor(), { maximumFractionDigits: 1 }).format(value)} Mbit/s`;
   return new Intl.NumberFormat(localeFor(), { maximumFractionDigits: 1 }).format(value);
 }
@@ -110,7 +110,7 @@ function relevantEvidence(dimension) {
     connectivity: new Set(['events']),
     interference: new Set(['measurements', 'anomaly-rate', 'confirmed', 'events']),
     routing: new Set(['visibility-percent', 'peers-seeing', 'total-peers']),
-    quality: new Set(['probes', 'samples', 'packet-loss-percent', 'rtt-ms', 'latency-ms', 'download-mbps']),
+    quality: new Set(['probes', 'samples', 'packet-loss-percent', 'rtt-ms', 'latency-ms', 'download-mbps', 'dns-ms']),
   }[dimension.id] ?? new Set();
   return (dimension.evidence ?? []).filter((item) => allowed.has(item.metric) && item.value !== null && item.value !== undefined);
 }
@@ -277,6 +277,7 @@ function statusRow(interpretation) {
   const rtt = evidenceValue(quality, 'rtt-ms');
   const radarLatency = evidenceValue(quality, 'latency-ms');
   const radarDownload = evidenceValue(quality, 'download-mbps');
+  const range = quality.typicalRange?.latency?.low != null ? quality.typicalRange : null;
   const items = [
     {
       id: 'connection',
@@ -286,7 +287,8 @@ function statusRow(interpretation) {
     },
     radarLatency !== null
       // Real user traffic in this network says more to a reader than a probe ping.
-      ? { id: 'quality', status: 'info', hint: t('board.quality.userHint'),
+      ? { id: 'quality', status: 'info',
+        hint: range ? t('board.quality.userRange', { low: formatNumber(range.latency.low, 0), high: formatNumber(range.latency.high, 0) }) : t('board.quality.userHint'),
         value: t('board.quality.user', { download: radarDownload === null ? '—' : formatNumber(radarDownload, 1), latency: formatNumber(radarLatency, 0) }) }
       : quality.state === 'path-observations-available' && loss !== null
         ? { id: 'quality', status: 'info', value: t('board.quality.value', { delivered: formatNumber(100 - loss, 1), rtt: rtt === null ? '—' : formatNumber(rtt, 0) }), hint: t('board.quality.hint') }
@@ -342,10 +344,22 @@ function meaningSentences(interpretation) {
   const radarLatency = evidenceValue(dimensions.quality, 'latency-ms');
   const radarDownload = evidenceValue(dimensions.quality, 'download-mbps');
   if (radarLatency !== null) {
-    sentences.push(t('meaning.quality.user', {
+    const range = dimensions.quality.typicalRange;
+    sentences.push(t(range?.latency?.low != null ? 'meaning.quality.userRange' : 'meaning.quality.user', {
       download: radarDownload === null ? '—' : formatNumber(radarDownload, 1),
       latency: formatNumber(radarLatency, 0),
+      low: range?.latency?.low != null ? formatNumber(range.latency.low, 0) : '—',
+      high: range?.latency?.high != null ? formatNumber(range.latency.high, 0) : '—',
     }));
+  }
+  const scope = services?.networkScope;
+  if (scope?.measured) {
+    const service = scope.serviceId ? brandName(scope.serviceId, services) : scope.domain;
+    if (scope.blocked > 0) sentences.push(t('meaning.networks.blocked', { service, blocked: formatNumber(scope.blocked), measured: formatNumber(scope.measured) }));
+    else if (scope.restricted > 0) sentences.push(t('meaning.networks.restricted', { service, restricted: formatNumber(scope.restricted), measured: formatNumber(scope.measured) }));
+    if (scope.reachable > 0 && (scope.blocked > 0 || scope.restricted > 0)) {
+      sentences.push(t('meaning.networks.reachable', { service, reachable: formatNumber(scope.reachable) }));
+    }
   }
   const vantage = services?.vantage;
   const dominant = vantage?.dominantMechanism;
