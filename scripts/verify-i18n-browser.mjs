@@ -235,7 +235,7 @@ try {
   if (!address || typeof address === 'string') throw new Error('i18n fixture server did not expose a TCP port.');
   const browser = findBrowser();
   const { stdout } = await execFileAsync(browser, [
-    '--headless', '--disable-gpu', '--no-sandbox', '--disable-dev-shm-usage', '--virtual-time-budget=4500', '--dump-dom',
+    '--headless=new', '--disable-gpu', '--no-sandbox', '--disable-dev-shm-usage', '--virtual-time-budget=4500', '--dump-dom',
     `http://127.0.0.1:${address.port}/fixture`,
   ], { encoding: 'utf8', timeout: 30_000, maxBuffer: 4 * 1024 * 1024 });
   const required = [

@@ -147,6 +147,9 @@ npm run verify:ui
 npm run verify:radar   # optional token
 ```
 
+The browser gates can use an installed Chrome:
+`CHROME_BIN=<path to chrome> npm run verify:ui`. The gates start it with `--headless=new`, which runs as its own process instead of joining an open browser session.
+
 v1.8.0 contains **301 deterministic tests** and retains the production build, real Headless Chrome presentation, committed-secret/private-key leakage and runtime/404/traversal gates.
 
 ## Optional passive routing collectors

@@ -1,0 +1,54 @@
+{
+ "_note": "Cloudflare Radar outage annotations for Iran, 2026-03-01..2026-03-20, recorded 2026-09-23. The ASN-scoped answer (AS58224) is empty while the country answer holds the nationwide shutdown.",
+ "asnScoped": {
+  "success": true,
+  "errors": [],
+  "result": {
+   "annotations": []
+  }
+ },
+ "country": {
+  "success": true,
+  "errors": [],
+  "result": {
+   "annotations": [
+    {
+     "id": "1531",
+     "dataSource": "ALL",
+     "description": "Iran Internet shutdown amid military actions",
+     "tags": [],
+     "scope": null,
+     "startDate": "2026-02-28T07:00:00Z",
+     "endDate": "2026-05-26T12:00:00Z",
+     "locations": [
+      "IR"
+     ],
+     "asns": [],
+     "geoIds": [],
+     "origins": [],
+     "entities": [
+      {
+       "entityType": "LOCATION",
+       "entityValue": "IR",
+       "entityName": "Iran"
+      }
+     ],
+     "eventType": "OUTAGE",
+     "linkedUrl": "https://x.com/CloudflareRadar/status/2027709437981450502?s=20",
+     "asnsDetails": [],
+     "locationsDetails": [
+      {
+       "name": "Iran",
+       "code": "IR"
+      }
+     ],
+     "originsDetails": [],
+     "outage": {
+      "outageCause": "GOVERNMENT_DIRECTED",
+      "outageType": "NATIONWIDE"
+     }
+    }
+   ]
+  }
+ }
+}

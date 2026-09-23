@@ -1,4 +1,4 @@
-import { t } from './i18n.js';
+import { getLanguage, localeFor, setLanguage, t } from './i18n.js';
 import { summarizeMessagingAppTests, summarizeServiceFindings } from './service-findings.js';
 
 const $ = (selector) => document.querySelector(selector);
@@ -75,6 +75,83 @@ function queryString() {
   });
   if ($('#test-select').value === 'web_connectivity' && $('#target-select').value) params.set('target', $('#target-select').value);
   return params.toString();
+}
+
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+const DAY_MS = 86_400_000;
+const MAX_RANGE_DAYS = 120;
+
+// A selection lives in the URL, so a view can be shared and reopened exactly as it was.
+function applyUrlState() {
+  const params = new URLSearchParams(window.location.search);
+  const pick = (selector, value) => {
+    const element = $(selector);
+    if (!value || ![...element.options].some((option) => option.value === value)) return false;
+    element.value = value;
+    return true;
+  };
+  pick('#asn-select', params.get('asn'));
+  if (pick('#test-select', params.get('testName'))) updateTargetVisibility();
+  pick('#target-select', params.get('target'));
+  const since = params.get('since');
+  const until = params.get('until');
+  if (ISO_DAY.test(since ?? '') && ISO_DAY.test(until ?? '') && since <= until) {
+    $('#since-input').value = since;
+    $('#until-input').value = until;
+    markPreset(null);
+  }
+  const language = params.get('lang');
+  if (['en', 'fa'].includes(language) && language !== getLanguage()) setLanguage(language, { persist: false });
+}
+
+function writeUrlState() {
+  const params = new URLSearchParams(queryString());
+  if (getLanguage() !== 'en') params.set('lang', getLanguage());
+  window.history.replaceState(null, '', `${window.location.pathname}?${params}`);
+}
+
+// Nationwide outages Radar has dated, so a reader can open one without knowing its dates.
+async function loadOutageHistory() {
+  try {
+    const result = await api('/api/outages');
+    state.outages = result?.ok && Array.isArray(result.outages) ? result.outages : [];
+  } catch {
+    state.outages = [];
+  }
+  renderOutageOptions();
+}
+
+function outageLabel(outage) {
+  const format = new Intl.DateTimeFormat(localeFor(), { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+  const causeKey = `outages.cause.${outage.cause}`;
+  const cause = t(causeKey) === causeKey ? t('outages.cause.UNKNOWN') : t(causeKey);
+  const end = outage.end ? format.format(Date.parse(outage.end)) : t('outages.ongoing');
+  return `${format.format(Date.parse(outage.start))} – ${end} · ${cause}`;
+}
+
+function renderOutageOptions() {
+  const picker = $('#outage-picker');
+  const select = $('#outage-select');
+  if (!picker || !select) return;
+  const outages = state.outages ?? [];
+  picker.hidden = !outages.length;
+  const current = select.value;
+  select.innerHTML = `<option value="">${escapeHtml(t('outages.choose'))}</option>`
+    + outages.map((outage, index) => `<option value="${index}">${escapeHtml(outageLabel(outage))}</option>`).join('');
+  select.value = current;
+}
+
+// The week before shows the normal level, the week after what came back; the range stays
+// inside the selectable limit.
+function selectOutage(outage) {
+  const today = Math.floor(Date.now() / DAY_MS) * DAY_MS;
+  const since = Math.floor(Date.parse(outage.start) / DAY_MS) * DAY_MS - 7 * DAY_MS;
+  const end = outage.end ? Date.parse(outage.end) : Date.now();
+  const until = Math.min(Math.floor(end / DAY_MS) * DAY_MS + 7 * DAY_MS, today, since + (MAX_RANGE_DAYS - 1) * DAY_MS);
+  $('#since-input').value = new Date(since).toISOString().slice(0, 10);
+  $('#until-input').value = new Date(until).toISOString().slice(0, 10);
+  markPreset(null);
+  loadAll();
 }
 
 function setLoading(value) {
@@ -720,6 +797,7 @@ async function loadAll() {
     $('#assessment-label').textContent = 'Invalid date range';
     return;
   }
+  writeUrlState();
   if (activeController) activeController.abort();
   activeController = new AbortController();
   const serial = ++state.requestSerial;
@@ -940,7 +1018,9 @@ async function init() {
     state.config = config;
     renderConfig(config);
     updateTargetVisibility();
+    applyUrlState();
     renderSavedRuns();
+    loadOutageHistory();
     await loadAll();
   } catch (error) {
     publishOverview('error');
@@ -980,6 +1060,8 @@ $('#ooni-detail-more').addEventListener('click', () => {
   if (payload?.hasMore && !state.ooniDomainDetailsLoading) loadOoniDomainPage(payload.offset + payload.pageSize);
 });
 window.addEventListener('iran-monitor-languagechange', () => {
+  renderOutageOptions();
+  if (state.config) writeUrlState();
   renderOoniDomains();
   renderOoniDomainDetails();
   renderServiceFindings();
@@ -1000,6 +1082,10 @@ $('#vpn-form').addEventListener('input', renderVpnCalculation);
 $('#vpn-form').addEventListener('reset', () => setTimeout(renderVpnCalculation, 0));
 $('#test-select').addEventListener('change', () => { updateTargetVisibility(); scheduleLoad(); });
 ['#asn-select','#target-select','#since-input','#until-input'].forEach((selector)=>$(selector).addEventListener('change', scheduleLoad));
+$('#outage-select').addEventListener('change', (event) => {
+  const outage = state.outages?.[Number(event.target.value)];
+  if (event.target.value !== '' && outage) selectOutage(outage);
+});
 $$('.presets button').forEach((button)=>button.addEventListener('click',()=>{
   if (button.dataset.days) setPreset(Number(button.dataset.days));
   else { $('#since-input').value='2022-09-15'; $('#until-input').value='2022-09-30'; }

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildRadarOutageTrafficUrls, buildRadarQualityUrls, buildRadarUrls, getRadarConnectionQuality, getRadarOutageTraffic, getRadarSignals, radarAggregationInterval, radarEffectiveDateEnd, radarQualityWindowAligned, summarizeOutageTraffic } from '../lib/radar.mjs';
+import { buildRadarOutageTrafficUrls, buildRadarQualityUrls, buildRadarUrls, getRadarConnectionQuality, getRadarOutageTraffic, getRadarSignals, radarAggregationInterval, radarEffectiveDateEnd, radarQualityWindowAligned, summarizeOutageTraffic, listNationwideOutages } from '../lib/radar.mjs';
 
 test('Radar aggregation interval follows monitoring range', () => {
   assert.equal(radarAggregationInterval('2026-09-07', '2026-09-08'), '15m');
@@ -265,4 +265,36 @@ test('outage traffic for a selected network is scoped to that network', () => {
   const { urls } = buildRadarOutageTrafficUrls({ start: '2026-01-08T16:30:00Z', end: '2026-02-01T00:00:00Z', asn: 'AS197207', now: new Date('2026-09-23T00:00:00Z') });
   assert.equal(new URL(urls[0]).searchParams.get('asn'), '197207');
   assert.equal(new URL(urls[0]).searchParams.get('location'), 'IR');
+});
+
+test('regression: the recorded 2026 blackout reaches a selected network as a nationwide outage', async (t) => {
+  const { readFile } = await import('node:fs/promises');
+  const { buildAssessment } = await import('../lib/assessment.mjs');
+  const recorded = JSON.parse(await readFile(new URL('./fixtures/radar-outages-2026-03.json', import.meta.url), 'utf8'));
+  mockRadar(t, (url) => {
+    if (!url.pathname.endsWith('/annotations/outages')) return emptyResult;
+    return url.searchParams.get('asn') ? recorded.asnScoped : recorded.country;
+  });
+  // A window of its own, so no earlier test answers from the shared fetch cache.
+  const radar = await getRadarSignals({ asn: 'AS58224', since: '2026-03-02', until: '2026-03-19' });
+  const selection = { asn: 'AS58224', since: '2026-03-02', until: '2026-03-19', testName: 'web_connectivity', target: '' };
+  const { interpretation } = buildAssessment({ radar, selection, scopeLabel: 'AS58224 / Iran' });
+  assert.equal(interpretation.dimensions.connectivity.severity, 'widespread');
+  assert.equal(interpretation.dimensions.connectivity.outagePeriods[0].start, '2026-02-28T07:00:00Z');
+  assert.equal(interpretation.summary.headline.state, 'major-outage', 'never "services show signs of blocking" in a blackout');
+});
+
+test('the outage list keeps Radar dates and only drops entries lying inside another', () => {
+  const outage = (startDate, endDate, outageType = 'NATIONWIDE') => ({ startDate, endDate, outageType, outageCause: 'GOVERNMENT_DIRECTED' });
+  const list = listNationwideOutages([
+    outage('2025-06-17T14:00:00Z', '2025-06-18T06:00:00Z'),
+    outage('2025-06-17T14:00:00Z', '2025-06-17T15:00:00Z'), // inside the first
+    outage('2025-06-17T14:00:00Z', '2025-06-18T06:00:00Z'), // exact duplicate
+    outage('2025-06-18T12:50:00Z', '2025-06-25T05:00:00Z'), // overlaps nothing: stays separate
+    outage('2025-06-18T00:00:00Z', '2025-06-19T00:00:00Z', 'REGIONAL'),
+  ]);
+  assert.deepEqual(list.map((item) => [item.start, item.end]), [
+    ['2025-06-18T12:50:00Z', '2025-06-25T05:00:00Z'],
+    ['2025-06-17T14:00:00Z', '2025-06-18T06:00:00Z'],
+  ]);
 });

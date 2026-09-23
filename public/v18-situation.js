@@ -265,13 +265,19 @@ function coverageLine(item, selection) {
   return `<li class="tile-coverage">${escapeHtml(t('board.coverage.days', { days: formatNumber(days), window: formatNumber(window) }))}</li>`;
 }
 
-function renderServiceTiles(services, selection) {
+function renderServiceTiles(services, selection, connectivity = null) {
   if (!services) return '';
   const items = services.visible ?? services.items;
   const title = services.scoped ? t('board.services.selected') : t('board.services.title');
+  // During a nationwide outage the volunteers' probes are cut off too: a missing test is a
+  // consequence of the outage, not a gap that could hide a working service.
+  const sparse = items.some((item) => ['untested', 'unclear', 'unavailable'].includes(item.status));
+  const note = services.stale?.since ? t('board.services.staleNote')
+    : nationwidePeriod(connectivity) && sparse ? t('board.services.outageNote')
+      : t('board.services.note');
   return `
     <section class="service-board" aria-labelledby="service-board-title">
-      <header><h2 id="service-board-title">${escapeHtml(title)}</h2><p>${escapeHtml(services.stale?.since ? t('board.services.staleNote') : t('board.services.note'))}</p></header>
+      <header><h2 id="service-board-title">${escapeHtml(title)}</h2><p>${escapeHtml(note)}</p></header>
       ${items.length ? `<div class="service-tiles">${items.map((item) => `
         <article class="service-tile" data-status="${escapeHtml(item.status)}">
           <div class="service-tile-head"><span class="status-mark" aria-hidden="true"></span><h3 class="${item.id === 'selected-target' ? 'technical-ltr' : ''}">${escapeHtml(brandName(item.id, services))}</h3></div>
@@ -480,7 +486,7 @@ function renderHero(interpretation) {
       <h1 id="situation-headline">${escapeHtml(headlineText(summary, interpretation.services))}</h1>
       <p class="situation-lede">${escapeHtml(ledeText(interpretation))}</p>
     </header>
-    ${renderServiceTiles(interpretation.services, selection)}
+    ${renderServiceTiles(interpretation.services, selection, interpretation.dimensions.connectivity)}
     ${statusRow(interpretation)}
     ${renderOutageTraffic(interpretation)}`;
   bindOutageChart(hero, interpretation);

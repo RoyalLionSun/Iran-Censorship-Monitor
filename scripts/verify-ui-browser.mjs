@@ -229,7 +229,7 @@ try {
   if (!address || typeof address === 'string') throw new Error('UI fixture server did not expose a TCP port.');
   const browser = findBrowser();
   const args = [
-    '--headless', '--disable-gpu', '--no-sandbox', '--disable-dev-shm-usage', '--virtual-time-budget=6000', '--dump-dom',
+    '--headless=new', '--disable-gpu', '--no-sandbox', '--disable-dev-shm-usage', '--virtual-time-budget=6000', '--dump-dom',
     `http://127.0.0.1:${address.port}/fixture`,
   ];
   let stdout;

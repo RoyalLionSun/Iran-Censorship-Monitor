@@ -98,7 +98,7 @@ async function runScenario(browser, scenario) {
   try {
     const port = server.address().port;
     const { stdout } = await execFileAsync(browser, [
-      '--headless', '--disable-gpu', '--no-sandbox', '--disable-dev-shm-usage',
+      '--headless=new', '--disable-gpu', '--no-sandbox', '--disable-dev-shm-usage',
       '--virtual-time-budget=7000', '--dump-dom', `http://127.0.0.1:${port}/`,
     ], { encoding: 'utf8', timeout: 40_000, maxBuffer: 8 * 1024 * 1024 });
     if (!requests.includes('/api/config') || !requests.includes('/api/overview')) {

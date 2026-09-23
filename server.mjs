@@ -4,10 +4,10 @@ import { createReadStream, existsSync } from 'node:fs';
 import { extname, join, normalize, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildAssessment } from './lib/assessment.mjs';
-import { createLastGoodStore, errorPayload, jsonResponse, mapLimit, normalizeAsn, validateRange } from './lib/common.mjs';
+import { createLastGoodStore, errorPayload, isCleanOverview, isSettledPeriod, jsonResponse, mapLimit, normalizeAsn, validateRange } from './lib/common.mjs';
 import { getCircumventionSignals, getOoniDomainMeasurements, getOoniDomains, getOoniMeasurementDetail, getOoniNetworks, getOoniTimeline, getOoniSample, listOoniMeasurements, OONI_TESTS } from './lib/ooni.mjs';
 import { getRipeSignals } from './lib/ripe.mjs';
-import { getRadarConnectionQuality, getRadarOutageTraffic, getRadarSignals, isNationwideAnnotation } from './lib/radar.mjs';
+import { getRadarConnectionQuality, getRadarOutageHistory, getRadarOutageTraffic, getRadarSignals, isNationwideAnnotation } from './lib/radar.mjs';
 import { getIodaSignals } from './lib/ioda.mjs';
 import { getTorMetrics } from './lib/tor.mjs';
 import { getRipeBgpUpdates, getRipeStatSignals } from './lib/ripestat.mjs';
@@ -71,6 +71,23 @@ function defaultRange() {
   const start = new Date(end);
   start.setUTCDate(start.getUTCDate() - 6);
   return { since: start.toISOString().slice(0, 10), until: end.toISOString().slice(0, 10) };
+}
+
+// A period that ended two or more days ago no longer changes upstream, so its complete answer
+// can be served again for a day. Only a clean answer is kept: a failed, stale or still-pending
+// source must be retried, never frozen.
+const HISTORICAL_OVERVIEW_TTL_MS = 24 * 60 * 60 * 1000;
+const HISTORICAL_OVERVIEW_LIMIT = 40;
+const historicalOverviews = new Map();
+
+function historicalOverviewKey(input) {
+  return JSON.stringify([input.asn, input.since, input.until, input.testName, input.target]);
+}
+
+function rememberHistoricalOverview(key, payload) {
+  historicalOverviews.delete(key);
+  historicalOverviews.set(key, { expires: Date.now() + HISTORICAL_OVERVIEW_TTL_MS, payload });
+  while (historicalOverviews.size > HISTORICAL_OVERVIEW_LIMIT) historicalOverviews.delete(historicalOverviews.keys().next().value);
 }
 
 function queryInput(url) {
@@ -201,8 +218,20 @@ async function handleApi(req, res, url) {
     return true;
   }
 
+  if (url.pathname === '/api/outages') {
+    const result = await safeSource('Cloudflare Radar outage history', () => getRadarOutageHistory(), 'Radar outage history');
+    jsonResponse(res, 200, result);
+    return true;
+  }
+
   if (url.pathname === '/api/overview') {
     const input = queryInput(url);
+    const cacheKey = isSettledPeriod(input.until) ? historicalOverviewKey(input) : null;
+    const cached = cacheKey ? historicalOverviews.get(cacheKey) : null;
+    if (cached && cached.expires > Date.now()) {
+      jsonResponse(res, 200, cached.payload);
+      return true;
+    }
     const [ooni, ripe, radar, radarQuality, ioda, tor, mlab, apnic, ripestat, globalping, censoredPlanet, peeringdb, ihr, asrank, rpki, pulse, ooniDomains, circumvention] = await Promise.all([
       safeSource('OONI', () => getOoniTimeline(ooniScope(input)), sourceKey('OONI', input)),
       safeSource('RIPE Atlas', () => getRipeSignals(input), sourceKey('RIPE Atlas', input)),
@@ -252,7 +281,11 @@ async function handleApi(req, res, url) {
     const scopeLabel = input.asn ? `${input.asn} / Iran` : 'Iran / all measured networks';
     const assessment = buildAssessment({ ooni, ripe, radar, radarQuality, ioda, ripestat, censoredPlanet, tor, mlab, apnic, globalping, peeringdb, ihr, asrank, rpki, pulse, ooniDomains, circumvention, ooniSamples, ooniNetworks, outageTraffic, networkOutageTraffic, selection: input, scopeLabel });
     const asnProfile = input.asn ? asns.find((item) => item.asn === input.asn) || null : null;
-    jsonResponse(res, 200, { ok: true, input, asnProfile, fetchedAt: new Date().toISOString(), assessment, ooni, ripe, radar, radarQuality, ioda, tor, mlab, apnic, ripestat, globalping, censoredPlanet, peeringdb, ihr, asrank, rpki, pulse });
+    const payload = { ok: true, input, asnProfile, fetchedAt: new Date().toISOString(), assessment, ooni, ripe, radar, radarQuality, ioda, tor, mlab, apnic, ripestat, globalping, censoredPlanet, peeringdb, ihr, asrank, rpki, pulse };
+    if (cacheKey && isCleanOverview([ooni, ripe, radar, radarQuality, ioda, tor, mlab, apnic, ripestat, censoredPlanet, pulse, ooniDomains, circumvention, outageTraffic, networkOutageTraffic, ooniNetworks, ...ooniSamples])) {
+      rememberHistoricalOverview(cacheKey, payload);
+    }
+    jsonResponse(res, 200, payload);
     return true;
   }
 

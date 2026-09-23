@@ -57,6 +57,8 @@ button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-v
 main { max-width: 1760px; margin: 0 auto; padding: 14px 18px 34px; }
 .filterbar { display: grid; grid-template-columns: 1.5fr 1.35fr 1.45fr .8fr .8fr auto; gap: 8px; align-items: end; padding: 10px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
 .filterbar label { min-width: 0; display: grid; gap: 4px; }
+.filterbar .outage-picker { grid-column: 1 / -1; grid-template-columns: auto minmax(0, 420px); align-items: center; gap: 10px; }
+.filterbar .outage-picker[hidden] { display: none; }
 .filterbar label > span, .vpn-form label > span { color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
 select, input[type="date"], input[type="text"], input[type="number"] { width: 100%; min-height: 34px; border: 1px solid var(--border); background: #0e151e; color: var(--text); border-radius: 6px; padding: 6px 9px; font-size: 13px; }
 select:hover, input:hover { border-color: var(--border-strong); }

@@ -64,3 +64,16 @@ test('a failed source falls back to its last successful answer, marked as histor
   assert.equal(store.size(), 2, 'the store stays bounded');
   assert.equal(store.stale('a'), null, 'the oldest entry is dropped first');
 });
+
+test('only a settled period with a clean answer may be kept', async () => {
+  const { isCleanOverview, isSettledPeriod } = await import('../lib/common.mjs');
+  const now = Date.parse('2026-09-23T12:00:00Z');
+  assert.equal(isSettledPeriod('2026-09-20', now), true);
+  assert.equal(isSettledPeriod('2026-09-21', now), false, 'the last two days can still change upstream');
+  assert.equal(isCleanOverview([{ ok: true, status: 'observed' }, { ok: true, status: 'no_data' }, null]), true);
+  assert.equal(isCleanOverview([{ ok: true, status: 'observed' }, { ok: false, status: 'error' }]), false);
+  assert.equal(isCleanOverview([{ ok: true, status: 'stale' }]), false);
+  assert.equal(isCleanOverview([{ ok: true, status: 'no_data', routingRetryInProgress: true }]), false);
+  assert.equal(isCleanOverview([{ ok: true, status: 'partial', assessmentEligible: false }]), false, 'a Radar answer missing an event channel');
+  assert.equal(isCleanOverview([{ ok: true, status: 'token_required', assessmentEligible: false }]), true, 'a missing token does not heal by retrying');
+});
