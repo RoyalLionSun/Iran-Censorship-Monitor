@@ -1,6 +1,7 @@
-.view-switch { margin: 12px 0 8px; display: inline-flex; gap: 4px; padding: 4px; border: 1px solid var(--border); border-radius: 9px; background: rgba(11,16,23,.72); }
+.view-switch { margin: 12px 0 8px; display: inline-flex; gap: 4px; padding: 4px; border: 1px solid var(--border); border-radius: 9px; background: rgba(16,32,53,.8); }
 .view-switch button { min-height: 34px; padding: 7px 14px; border: 0; border-radius: 6px; background: transparent; color: var(--muted); cursor: pointer; font: 700 13px/1.2 var(--sans); }
-.view-switch button.active { background: var(--panel-2); color: var(--text); box-shadow: inset 0 0 0 1px var(--border-strong); }
+.view-switch button.active { background: linear-gradient(180deg, #2b7fd0, #1f63a8); color: #fff; box-shadow: 0 3px 10px rgba(43,127,208,.3); }
+.view-switch button:not(.active):hover { color: var(--text); background: rgba(89,168,255,.1); }
 [hidden] { display: none !important; }
 .overview-view { display: grid; gap: 12px; }
 .technical-view { display: block; }
@@ -239,3 +240,7 @@ html[dir="rtl"] .topbar-actions { justify-content: flex-start; }
   #technical-view[hidden] { display: none !important; }
   .interpretation-card, .overview-panel, .situation-board, .service-tile { break-inside: avoid; }
 }
+/* Alternating rows keep the long access table readable on the blue ground. */
+.access-board tbody tr:nth-child(odd) { background: rgba(89,168,255,.045); }
+.access-board tbody tr:hover { background: rgba(89,168,255,.1); }
+.access-board thead th { background: #172a44; }

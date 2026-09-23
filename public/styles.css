@@ -1,14 +1,19 @@
 :root {
-  --bg: #0b1017;
-  --bg-elevated: #101722;
-  --panel: #121b27;
-  --panel-2: #162130;
-  --panel-hover: #1a2737;
-  --border: #263445;
-  --border-strong: #35465b;
-  --text: #e8edf3;
-  --text-soft: #b4bfcc;
-  --muted: #78879a;
+  /* Deep blue instead of near-black: surfaces lift off the page and read as layers. */
+  --bg: #0d1624;
+  --bg-elevated: #132033;
+  --panel: #15243a;
+  --panel-2: #1b2d48;
+  --panel-hover: #213654;
+  --border: #2a3d58;
+  --border-strong: #3b557a;
+  --text: #eaf0f7;
+  --text-soft: #bccadb;
+  --muted: #8396ae;
+  /* Chrome accents: identity and navigation only, never a status. */
+  --accent: #59a8ff;
+  --accent-2: #52c9c4;
+  --accent-3: #a78bfa;
   --blue: #59a8ff;
   --cyan: #52c9c4;
   --green: #55c78a;
@@ -376,3 +381,42 @@ footer { max-width: 1760px; margin: 0 auto; padding: 14px 20px 24px; color: var(
 .intelligence-chip { display: inline-flex; gap: 6px; align-items: center; padding: 4px 7px; border: 1px solid var(--border); border-radius: 999px; background: #0f1721; min-width: 0; }
 .intelligence-chip strong { font-size: 10px; }
 .intelligence-chip span { color: var(--muted); font: 8.5px var(--mono); text-transform: uppercase; }
+
+/* ---------------------------------------------------------------------------------------
+   Colour layer. Blue, cyan and violet mark identity and navigation; red, amber and green
+   stay reserved for findings and source status, so decoration never reads as a verdict.
+   --------------------------------------------------------------------------------------- */
+body { background:
+  radial-gradient(1100px 520px at 8% -8%, rgba(89,168,255,.12), transparent 62%),
+  radial-gradient(900px 480px at 100% 0%, rgba(167,139,250,.09), transparent 60%),
+  var(--bg) fixed; }
+
+.topbar { background: linear-gradient(90deg, rgba(19,36,62,.96), rgba(27,30,64,.96)); border-bottom: 0; }
+.topbar::after { content: ""; position: absolute; inset: auto 0 0 0; height: 2px; background: linear-gradient(90deg, var(--accent), var(--accent-2) 55%, var(--accent-3)); opacity: .85; }
+.brand-mark { border: 0; background: linear-gradient(140deg, var(--accent), var(--accent-3)); box-shadow: 0 4px 14px rgba(89,168,255,.28); }
+.brand-mark span { background: #fff; }
+.brand small { color: #86d6d2; }
+.scope-chip { border-color: rgba(82,201,196,.45); background: rgba(82,201,196,.08); color: #bfeeea; }
+.button { background: #182a44; border-color: #34507a; color: #d3e1f1; }
+.button:hover { background: #20375a; border-color: #4a6c9c; }
+.button.primary { background: linear-gradient(180deg, #2b7fd0, #1f63a8); border-color: #3a8de0; box-shadow: 0 4px 14px rgba(43,127,208,.3); }
+.button.primary:hover { background: linear-gradient(180deg, #3490e6, #2470bd); }
+
+.filterbar { background: linear-gradient(180deg, rgba(89,168,255,.09), rgba(19,32,51,.96) 70%); border-color: #2f4768; }
+.filterbar label > span { color: #86bff5; }
+select, input[type="date"], input[type="text"], input[type="number"] { background: #102035; border-color: #2e4668; }
+select:hover, input:hover { border-color: #4a6c9c; }
+select:focus-visible, input:focus-visible { border-color: var(--accent-2); box-shadow: 0 0 0 2px rgba(82,201,196,.35); }
+.presets button { background: #102035; border-color: #2e4668; color: #9fb4cd; }
+.presets button:hover { color: var(--text); border-color: #4a6c9c; }
+.presets button.active { background: linear-gradient(180deg, #2b7fd0, #1f63a8); border-color: #3a8de0; color: #fff; }
+.filterbar .outage-picker > span { color: #c4b1ff; }
+.filterbar .outage-picker select { border-color: rgba(167,139,250,.55); background: linear-gradient(90deg, rgba(167,139,250,.12), #102035 60%); }
+
+.section-label { color: #7fcbe0; }
+.panel { background: linear-gradient(180deg, rgba(89,168,255,.035), transparent 40%), var(--panel); }
+.kpi-card { background: linear-gradient(180deg, rgba(89,168,255,.05), transparent 55%), var(--panel); }
+@media print {
+  body { background: #fff !important; }
+  .topbar::after { display: none; }
+}
