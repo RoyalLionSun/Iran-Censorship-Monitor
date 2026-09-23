@@ -33,7 +33,7 @@ button, select, input { outline: none; }
 button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-visible { box-shadow: 0 0 0 2px rgba(89,168,255,.5); }
 
 .app-shell { min-height: 100vh; }
-.topbar { min-height: 58px; display: grid; grid-template-columns: minmax(250px,1fr) auto auto; align-items: center; gap: 22px; padding: 8px 22px; border-bottom: 1px solid var(--border); background: rgba(11,16,23,.95); position: sticky; top: 0; z-index: 20; backdrop-filter: blur(14px); }
+.topbar { min-height: 58px; display: grid; grid-template-columns: minmax(250px,1fr) minmax(0,auto) auto; align-items: center; gap: 22px; padding: 8px 22px; border-bottom: 1px solid var(--border); background: rgba(11,16,23,.95); position: sticky; top: 0; z-index: 20; backdrop-filter: blur(14px); }
 .brand { display: flex; align-items: center; gap: 11px; min-width: 0; }
 .brand strong { display: block; font-size: 14px; letter-spacing: .015em; }
 .brand small { display: block; color: var(--muted); font-size: 11px; margin-top: 1px; letter-spacing: .08em; text-transform: uppercase; }
@@ -42,7 +42,9 @@ button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-v
 .brand-mark span:nth-child(1) { height: 6px; opacity: .55; }
 .brand-mark span:nth-child(2) { height: 12px; }
 .brand-mark span:nth-child(3) { height: 9px; opacity: .78; }
-.topbar-meta { display: flex; align-items: center; gap: 14px; color: var(--muted); font-size: 11px; white-space: nowrap; }
+.topbar-meta { min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; color: var(--muted); font-size: 11px; }
+.topbar-meta > * { white-space: nowrap; }
+.topbar-meta .source-state { white-space: normal; }
 .scope-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 8px; border: 1px solid var(--border); border-radius: 999px; color: var(--text-soft); font-family: var(--mono); font-size: 11px; }
 .scope-chip i { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 3px rgba(85,199,138,.1); }
 .topbar-actions { display: flex; gap: 7px; justify-content: flex-end; }

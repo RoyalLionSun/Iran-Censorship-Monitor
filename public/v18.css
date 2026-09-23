@@ -58,6 +58,35 @@
 .status-row dd { margin: 4px 0 3px; color: var(--text); font-size: 15.5px; font-weight: 750; line-height: 1.3; }
 .status-row small { display: block; color: var(--muted); font-size: 11.5px; line-height: 1.45; }
 
+/* Traffic around a nationwide outage: one series against the week before, the outage as a band. */
+.outage-traffic { margin: 0; padding: 14px 16px 12px; border: 1px solid var(--border); border-radius: 8px; background: rgba(11,16,23,.42); display: grid; gap: 8px; }
+.outage-traffic figcaption { display: grid; gap: 2px; }
+.outage-traffic figcaption strong { color: var(--text-soft); font-size: 13px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.outage-traffic figcaption span { color: var(--muted); font-size: 12.5px; }
+.outage-chart { position: relative; }
+.outage-chart svg { display: block; width: 100%; height: auto; overflow: visible; touch-action: pan-y; }
+.outage-band { fill: rgba(138,152,171,.14); }
+.outage-grid { stroke: var(--border); stroke-width: 1; }
+.outage-grid-baseline { stroke: var(--border-strong); }
+.outage-area { fill: rgba(89,168,255,.10); }
+.outage-line { fill: none; stroke: var(--blue); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+/* With a selected network, the country recedes and the network carries the accent. */
+.outage-traffic:has(.outage-legend) .outage-line[data-line="country"] { stroke: var(--muted); }
+.outage-traffic:has(.outage-legend) .outage-dot[data-line="country"] { fill: var(--muted); }
+.outage-legend { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 4px 16px; color: var(--text-soft); font-size: 12px; }
+.outage-legend li { display: flex; align-items: center; gap: 6px; }
+.outage-legend i { width: 14px; height: 2px; border-radius: 1px; background: var(--blue); }
+.outage-legend li[data-line="country"] i { background: var(--muted); }
+.outage-crosshair { stroke: var(--text-soft); stroke-width: 1; }
+.outage-dot { fill: var(--blue); stroke: var(--bg-elevated); stroke-width: 2; }
+.outage-axis-y span { position: absolute; left: 0; transform: translateY(-50%); color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.outage-axis-x { position: relative; height: 16px; }
+.outage-axis-x span { position: absolute; top: 0; transform: translateX(-50%); color: var(--muted); font-size: 11px; white-space: nowrap; }
+.outage-tooltip { position: absolute; top: 0; transform: translateX(-50%); padding: 4px 8px; border: 1px solid var(--border-strong); border-radius: 6px; background: var(--panel); color: var(--text); font-size: 12px; white-space: nowrap; pointer-events: none; }
+.outage-values summary { cursor: pointer; color: var(--muted); font-size: 12px; }
+.outage-values-scroll { margin-top: 8px; max-width: 360px; max-height: 220px; overflow-y: auto; }
+.outage-values table { width: 100%; min-width: 0; font-size: 12px; }
+
 .meaning-line { margin: 9px 0 0; color: var(--text-soft); font-size: 15px; line-height: 1.65; }
 .meaning-line:last-child { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); color: var(--muted); font-size: 13px; }
 .overview-more { margin: 2px 0 0; }

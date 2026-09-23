@@ -51,6 +51,7 @@ function insertContextPanels() {
           <a id="apnic-source-link" href="https://stats.labs.apnic.net/ipv6" target="_blank" rel="noreferrer">APNIC Labs ↗</a>
         </header>
         <p class="panel-note">APNIC client-side protocol deployment context. Capability/preference shifts remain sample-qualified protocol observations and are not interpreted as censorship or availability on their own.</p>
+        <p id="apnic-reference-note" class="panel-note" hidden>A low IPv6 share only signals a disruption where IPv6 was in use before. Compare it with the 12 months before this period: most fixed-line networks in Iran never deployed IPv6.</p>
         <div id="apnic-summary" class="mini-stats"><div class="mini-stat"><span>Status</span><b>Pending</b></div></div>
         <div class="table-wrap compact-table-wrap"><table><thead><tr><th>Date</th><th>IPv6 capable</th><th>IPv6 preferred</th><th>Raw samples</th><th>30d capable</th></tr></thead><tbody id="apnic-table"><tr><td colspan="5" class="table-empty">No APNIC context loaded.</td></tr></tbody></table></div>
       </article>`);
@@ -118,10 +119,14 @@ function renderApnic(apnic) {
   summary.innerHTML = `
     <div class="mini-stat"><span>Status</span><b>${contextEscape(apnic.status || '—')}</b></div>
     <div class="mini-stat"><span>IPv6 capable</span><b>${contextPercent(latest?.raw?.capablePercent)}</b></div>
+    <div class="mini-stat"><span>IPv6 capable, 12 months before</span><b>${contextPercent(apnic.reference?.capablePercent)}</b></div>
     <div class="mini-stat"><span>IPv6 preferred</span><b>${contextPercent(latest?.raw?.preferredPercent)}</b></div>
     <div class="mini-stat"><span>Latest raw samples</span><b>${contextNumber(latest?.raw?.seen, 0)}</b></div>
     <div class="mini-stat"><span>Observed days</span><b>${contextNumber(apnic.coverage?.observedDays, 0)}</b></div>
     <div class="mini-stat"><span>Median samples/day</span><b>${contextNumber(apnic.coverage?.dailySamplesMedian, 0)}</b></div>`;
+  // Most Iranian fixed networks never deployed IPv6; a low value there is no disruption signal.
+  const referenceNote = document.querySelector('#apnic-reference-note');
+  if (referenceNote) referenceNote.hidden = !apnic.reference;
   table.innerHTML = apnic.points?.length ? apnic.points.slice(-12).reverse().map((row) => `<tr><td>${contextEscape(contextShortDate(row.date))}</td><td>${contextPercent(row.raw?.capablePercent)}</td><td>${contextPercent(row.raw?.preferredPercent)}</td><td>${contextNumber(row.raw?.seen, 0)}</td><td>${contextPercent(row.smoothed30?.capablePercent)}</td></tr>`).join('') : '<tr><td colspan="5" class="table-empty">No APNIC IPv6 observations for this exact scope/window.</td></tr>';
   const link = document.querySelector('#apnic-source-link');
   if (link && apnic.sourceUrl) link.href = safeExternalUrl(apnic.sourceUrl, link.href);

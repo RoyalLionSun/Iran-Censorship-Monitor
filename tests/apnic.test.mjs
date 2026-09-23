@@ -57,3 +57,19 @@ test('APNIC parser returns explicit no-data shape rather than fabricating zero o
   assert.equal(parsed.coverage.totalRawSamples, 0);
   assert.equal(parsed.coverage.dailySamplesMedian, null);
 });
+
+test('APNIC reports the year before the window as the scope reference level', () => {
+  const row = (date, seen, capable, cc = 'IR') => ({ date, cc, raw: { seen, capable, capable_pc: (capable / seen) * 100 } });
+  const payload = { data: [
+    row('2025-08-01', 100, 50), // older than a year before the window: ignored
+    row('2025-10-01', 900, 180),
+    row('2026-03-01', 100, 0), // a disrupted day with few samples barely moves the weighted level
+    row('2026-09-01', 50, 1),
+    row('2026-03-01', 5000, 5000, 'FR'),
+  ] };
+  const parsed = parseApnicIpv6(payload, { since: '2026-09-01', until: '2026-09-02' });
+  assert.equal(parsed.points.length, 1, 'the reference never enters the window points');
+  assert.deepEqual(parsed.reference, { since: '2025-09-01', until: '2026-08-31', observedDays: 2, samples: 1000, capablePercent: 18 });
+  const none = parseApnicIpv6({ data: [row('2026-09-01', 50, 1)] }, { since: '2026-09-01', until: '2026-09-02' });
+  assert.equal(none.reference, null, 'no history, no invented reference');
+});

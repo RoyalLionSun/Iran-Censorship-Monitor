@@ -201,6 +201,12 @@ function headlineText(summary, services) {
   if (NAMED_HEADLINES.includes(headline.state) && names.length) {
     return plural(`board.headline.${headline.state}`, names.length, { services: listOf(names) });
   }
+  if (headline.state === 'outage-ended') {
+    const date = formatDay(headline.endedOn);
+    return names.length
+      ? plural('board.headline.outage-ended.blocked', names.length, { date, services: listOf(names) })
+      : t('board.headline.outage-ended', { date });
+  }
   return t(`board.headline.${headline.state}`);
 }
 
@@ -276,6 +282,141 @@ function renderServiceTiles(services, selection) {
     </section>`;
 }
 
+function nationwidePeriod(connectivity) {
+  return (connectivity?.outagePeriods ?? []).filter((period) => period.scope === 'nationwide').at(-1) ?? null;
+}
+
+// The dates Radar gives an outage tell a reader more than the name of the monitor.
+function periodHint(connectivity) {
+  const period = nationwidePeriod(connectivity);
+  if (!period) return null;
+  return period.end
+    ? t('board.connection.period', { from: formatDay(period.start), to: formatDay(period.end) })
+    : t('board.connection.periodOngoing', { from: formatDay(period.start) });
+}
+
+function formatPercent(value) {
+  if (value === null || value === undefined) return '—';
+  if (value > 0 && value < 0.1) return t('board.outage.belowTenth');
+  return t('board.outage.percent', { value: formatNumber(value, value < 10 ? 1 : 0) });
+}
+
+const CHART = { width: 640, height: 170, left: 44, right: 12, top: 12, bottom: 24 };
+
+function chartGeometry(lines, traffic) {
+  const { width, height, left, right, top, bottom } = CHART;
+  const days = [...new Set(lines.flatMap((line) => line.series.map((point) => point.date)))].sort();
+  const first = Date.parse(`${days[0]}T00:00:00Z`);
+  const last = Date.parse(`${days.at(-1)}T00:00:00Z`);
+  const max = Math.max(100, ...lines.flatMap((line) => line.series.map((point) => point.percent)));
+  const yMax = Math.ceil(max / 50) * 50;
+  const x = (ms) => left + ((ms - first) / Math.max(1, last - first)) * (width - left - right);
+  const y = (value) => top + (1 - value / yMax) * (height - top - bottom);
+  const clampX = (ms) => Math.min(width - right, Math.max(left, x(ms)));
+  return {
+    days, first, last, yMax, x, y,
+    bandStart: clampX(Date.parse(traffic.start)),
+    bandEnd: traffic.end ? clampX(Date.parse(traffic.end)) : width - right,
+  };
+}
+
+function chartLines(connectivity, interpretation) {
+  const traffic = connectivity?.outageTraffic;
+  if (!traffic) return [];
+  const lines = [{ id: 'country', label: t('board.outage.country'), series: traffic.series ?? [] }];
+  // The selected network is what the page is about, so it carries the accent.
+  if (traffic.network?.series?.length) lines.push({ id: 'network', label: networkLabel(interpretation), series: traffic.network.series });
+  return lines.filter((line) => line.series.length >= 3);
+}
+
+// Traffic against the week before; the outage is a shaded band dated by Radar. With a selected
+// network, its own line sits next to the country, because networks recover differently.
+function renderOutageTraffic(interpretation) {
+  const connectivity = interpretation.dimensions.connectivity;
+  const traffic = connectivity?.outageTraffic;
+  const lines = chartLines(connectivity, interpretation);
+  if (!lines.length) return '';
+  const { width, height, left, right, top, bottom } = CHART;
+  const geometry = chartGeometry(lines, traffic);
+  const { days, first, last, yMax, x, y, bandStart, bandEnd } = geometry;
+  const path = (series) => series.map((point, index) => `${index ? 'L' : 'M'}${x(Date.parse(`${point.date}T00:00:00Z`)).toFixed(1)},${y(point.percent).toFixed(1)}`).join('');
+  const ticks = [0, 100, yMax].filter((value, index, list) => list.indexOf(value) === index);
+  const label = t('board.outage.chartLabel', { from: formatDay(traffic.start), to: traffic.end ? formatDay(traffic.end) : '—' });
+  const byDay = lines.map((line) => new Map(line.series.map((point) => [point.date, point.percent])));
+  const data = days.map((date) => [date, ...byDay.map((map) => map.get(date) ?? '')].join('|')).join(';');
+  const accent = lines.at(-1);
+  return `
+    <figure class="outage-traffic" dir="ltr">
+      <figcaption dir="auto"><strong>${escapeHtml(t('board.outage.title'))}</strong><span>${escapeHtml(t('board.outage.subtitle'))}</span></figcaption>
+      ${lines.length > 1 ? `<ul class="outage-legend" dir="${document.documentElement.dir === 'rtl' ? 'rtl' : 'ltr'}">${lines.map((line) => `<li data-line="${line.id}"><i aria-hidden="true"></i><bdi>${escapeHtml(line.label)}</bdi></li>`).join('')}</ul>` : ''}
+      <div class="outage-chart" data-points="${escapeHtml(data)}" data-labels="${escapeHtml(lines.map((line) => line.label).join('|'))}">
+        <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHtml(label)}">
+          <rect class="outage-band" x="${bandStart.toFixed(1)}" y="${top}" width="${Math.max(1, bandEnd - bandStart).toFixed(1)}" height="${height - top - bottom}"></rect>
+          ${ticks.map((value) => `<line class="outage-grid${value === 100 ? ' outage-grid-baseline' : ''}" x1="${left}" x2="${width - right}" y1="${y(value).toFixed(1)}" y2="${y(value).toFixed(1)}"></line>`).join('')}
+          <path class="outage-area" d="${path(accent.series)}L${x(Date.parse(`${accent.series.at(-1).date}T00:00:00Z`)).toFixed(1)},${y(0).toFixed(1)}L${x(Date.parse(`${accent.series[0].date}T00:00:00Z`)).toFixed(1)},${y(0).toFixed(1)}Z"></path>
+          ${lines.map((line) => `<path class="outage-line" data-line="${line.id}" d="${path(line.series)}"></path>`).join('')}
+          <line class="outage-crosshair" x1="0" x2="0" y1="${top}" y2="${height - bottom}" hidden></line>
+          ${lines.map((line) => `<circle class="outage-dot" data-line="${line.id}" r="4" cx="0" cy="0" hidden></circle>`).join('')}
+        </svg>
+        <div class="outage-axis-y">${ticks.map((value) => `<span data-top="${((y(value) / height) * 100).toFixed(2)}">${escapeHtml(t('board.outage.percent', { value: formatNumber(value) }))}</span>`).join('')}</div>
+        <div class="outage-axis-x"><span data-left="${((bandStart / width) * 100).toFixed(2)}">${escapeHtml(formatDay(traffic.start))}</span>${traffic.end ? `<span data-left="${((bandEnd / width) * 100).toFixed(2)}">${escapeHtml(formatDay(traffic.end))}</span>` : ''}</div>
+        <div class="outage-tooltip" role="status" hidden></div>
+      </div>
+      <details class="outage-values" dir="auto"><summary>${escapeHtml(t('board.outage.table'))}</summary>
+        <div class="outage-values-scroll"><table><thead><tr><th>${escapeHtml(t('board.outage.day'))}</th>${lines.map((line) => `<th><bdi>${escapeHtml(line.label)}</bdi></th>`).join('')}</tr></thead>
+        <tbody>${days.map((date) => `<tr><td><bdi>${escapeHtml(formatDay(date))}</bdi></td>${byDay.map((map) => `<td><bdi>${escapeHtml(map.has(date) ? formatPercent(map.get(date)) : '—')}</bdi></td>`).join('')}</tr>`).join('')}</tbody></table></div>
+      </details>
+    </figure>`;
+}
+
+// The crosshair finds the day nearest the pointer; readers aim at a date, not at a 2px line.
+function bindOutageChart(root, interpretation) {
+  const chart = root?.querySelector('.outage-chart');
+  if (!chart) return;
+  // The CSP forbids inline style attributes; place the axis labels through the CSSOM.
+  for (const label of chart.querySelectorAll('[data-top]')) label.style.top = `${label.dataset.top}%`;
+  for (const label of chart.querySelectorAll('[data-left]')) label.style.left = `${label.dataset.left}%`;
+  const connectivity = interpretation.dimensions.connectivity;
+  const lines = chartLines(connectivity, interpretation);
+  const { x, y, first, last } = chartGeometry(lines, connectivity.outageTraffic);
+  const { width, left, right } = CHART;
+  const svg = chart.querySelector('svg');
+  const crosshair = chart.querySelector('.outage-crosshair');
+  const dots = [...chart.querySelectorAll('.outage-dot')];
+  const tooltip = chart.querySelector('.outage-tooltip');
+  const rows = chart.dataset.points.split(';').map((entry) => {
+    const [date, ...values] = entry.split('|');
+    return { date, ms: Date.parse(`${date}T00:00:00Z`), values: values.map((value) => (value === '' ? null : Number(value))) };
+  });
+  const hide = () => { crosshair.hidden = true; tooltip.hidden = true; for (const dot of dots) dot.hidden = true; };
+  svg.addEventListener('pointerleave', hide);
+  svg.addEventListener('pointermove', (event) => {
+    const box = svg.getBoundingClientRect();
+    const ms = first + ((((event.clientX - box.left) / box.width) * width - left) / (width - left - right)) * (last - first);
+    const row = rows.reduce((best, item) => (Math.abs(item.ms - ms) < Math.abs(best.ms - ms) ? item : best), rows[0]);
+    const px = x(row.ms);
+    crosshair.setAttribute('x1', px); crosshair.setAttribute('x2', px); crosshair.hidden = false;
+    dots.forEach((dot, index) => {
+      const value = row.values[index];
+      dot.hidden = value === null;
+      if (value !== null) { dot.setAttribute('cx', px); dot.setAttribute('cy', y(value)); }
+    });
+    const parts = lines.map((line, index) => (row.values[index] === null ? null
+      : lines.length > 1 ? `${line.label}: ${formatPercent(row.values[index])}` : formatPercent(row.values[index]))).filter(Boolean);
+    tooltip.textContent = `${formatDay(row.date)} · ${parts.join(' · ')}`;
+    tooltip.style.left = `${Math.min(75, Math.max(18, (px / width) * 100))}%`;
+    tooltip.hidden = false;
+  });
+}
+
+// Sparse days are part of the value: 4 measured days of 20 are not a typical week.
+function qualityDaysNote(quality, selection) {
+  const days = quality?.measuredDays;
+  const window = windowDays(selection);
+  if (!days || !window || days >= window) return '';
+  return t('board.quality.days', { days: formatNumber(days), window: formatNumber(window) });
+}
+
 function statusRow(interpretation) {
   const { connectivity, quality, shutdown } = interpretation.dimensions;
   const connection = connectionState(connectivity);
@@ -284,17 +425,21 @@ function statusRow(interpretation) {
   const radarLatency = evidenceValue(quality, 'latency-ms');
   const radarDownload = evidenceValue(quality, 'download-mbps');
   const range = quality.typicalRange?.latency?.low != null ? quality.typicalRange : null;
+  // An outage that ended inside the period is reported as ended, not as the current state.
+  const ended = nationwidePeriod(connectivity)?.endedInWindow ? nationwidePeriod(connectivity) : null;
   const items = [
     {
       id: 'connection',
-      status: { none: 'ok', signals: 'warn', unknown: 'unknown' }[connection] ?? 'bad',
-      value: connection === 'signals' ? plural('board.connection.signals', connectivity.eventCount ?? 0) : t(`board.connection.${connection}`),
-      hint: t('board.connection.hint'),
+      status: ended ? 'warn' : { none: 'ok', signals: 'warn', unknown: 'unknown' }[connection] ?? 'bad',
+      value: ended ? t('board.connection.ended', { date: formatDay(ended.end) })
+        : connection === 'signals' ? plural('board.connection.signals', connectivity.eventCount ?? 0) : t(`board.connection.${connection}`),
+      hint: periodHint(connectivity) ?? t('board.connection.hint'),
     },
     radarLatency !== null
       // Real user traffic in this network says more to a reader than a probe ping.
       ? { id: 'quality', status: 'info',
-        hint: range ? t('board.quality.userRange', { low: formatNumber(range.latency.low, 0), high: formatNumber(range.latency.high, 0) }) : t('board.quality.userHint'),
+        hint: [range ? t('board.quality.userRange', { low: formatNumber(range.latency.low, 0), high: formatNumber(range.latency.high, 0) }) : t('board.quality.userHint'),
+          qualityDaysNote(quality, interpretation.selection)].filter(Boolean).join(' · '),
         value: t('board.quality.user', { download: radarDownload === null ? '—' : formatNumber(radarDownload, 1), latency: formatNumber(radarLatency, 0) }) }
       : quality.state === 'path-observations-available' && loss !== null
         ? { id: 'quality', status: 'info', value: t('board.quality.value', { delivered: formatNumber(100 - loss, 1), rtt: rtt === null ? '—' : formatNumber(rtt, 0) }), hint: t('board.quality.hint') }
@@ -336,7 +481,9 @@ function renderHero(interpretation) {
       <p class="situation-lede">${escapeHtml(ledeText(interpretation))}</p>
     </header>
     ${renderServiceTiles(interpretation.services, selection)}
-    ${statusRow(interpretation)}`;
+    ${statusRow(interpretation)}
+    ${renderOutageTraffic(interpretation)}`;
+  bindOutageChart(hero, interpretation);
 }
 
 function meaningSentences(interpretation) {
@@ -353,10 +500,32 @@ function meaningSentences(interpretation) {
   }
   const connection = connectionState(dimensions.connectivity);
   const loss = evidenceValue(dimensions.quality, 'packet-loss-percent');
-  sentences.push(connection === 'none' && loss !== null ? t('meaning.connection.fine', { delivered: formatNumber(100 - loss, 1) })
+  // A dated nationwide outage says more than the generic sentence, and stays true once it ended.
+  if (!nationwidePeriod(dimensions.connectivity)) sentences.push(connection === 'none' && loss !== null ? t('meaning.connection.fine', { delivered: formatNumber(100 - loss, 1) })
     : connection === 'none' ? t('meaning.connection.noOutage')
       : connection === 'signals' ? plural('meaning.connection.signals', dimensions.connectivity.eventCount ?? 0)
         : t(`meaning.connection.${connection}`));
+  const period = nationwidePeriod(dimensions.connectivity);
+  if (period) {
+    sentences.push(period.end
+      ? t('meaning.outage.period', { from: formatDay(period.start), to: formatDay(period.end) })
+      : t('meaning.outage.periodOngoing', { from: formatDay(period.start) }));
+    const traffic = dimensions.connectivity.outageTraffic;
+    if (traffic) {
+      sentences.push(t('meaning.outage.depth', { lowest: formatPercent(traffic.lowestPercent), typical: formatPercent(traffic.typicalPercent) }));
+      // A remainder of traffic says nothing about who could still connect; say so plainly.
+      if (traffic.lowestPercent > 0) sentences.push(t('meaning.outage.residual'));
+      if (traffic.afterPercent !== null) sentences.push(t('meaning.outage.after', { after: formatPercent(traffic.afterPercent) }));
+      const own = traffic.network;
+      if (own) {
+        sentences.push(t(own.afterPercent !== null ? 'meaning.outage.network' : 'meaning.outage.networkOngoing', {
+          network: networkLabel(interpretation), typical: formatPercent(own.typicalPercent), after: formatPercent(own.afterPercent),
+        }));
+      }
+    }
+    // A restored connection is not open access.
+    if (period.endedInWindow && (services?.blocked?.length || services?.restricted?.length)) sentences.push(t('meaning.outage.notOpen'));
+  }
   const radarLatency = evidenceValue(dimensions.quality, 'latency-ms');
   const radarDownload = evidenceValue(dimensions.quality, 'download-mbps');
   if (radarLatency !== null) {
@@ -378,6 +547,8 @@ function meaningSentences(interpretation) {
       verification: t(`board.shutdown.verification.${shutdown.contextEvent.verificationLevel ?? 'unconfirmed'}`),
       from: formatDay(shutdown.contextEvent.startDate), to: formatDay(shutdown.contextEvent.endDate),
     }));
+    if (shutdown.contextComparison === 'radar-no-nationwide-outage') sentences.push(t('meaning.shutdown.radarNone'));
+    if (shutdown.contextComparison === 'radar-dates-differ') sentences.push(t('meaning.shutdown.radarDiffers'));
   }
   const scope = services?.networkScope;
   if (scope?.measured) {

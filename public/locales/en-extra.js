@@ -81,5 +81,7 @@ export default Object.freeze({
   'legacy.checkedAnnounced': 'Checked / announced',
   'legacy.boundComparisons': 'Bound comparisons',
   'legacy.nonOverlap': 'Non-overlapping directions',
-  'legacy.bridgeScope': 'BridgeDB scope'
+  'legacy.bridgeScope': 'BridgeDB scope',
+  'legacy.ipv6Reference': 'IPv6 capable, 12 months before',
+  'legacy.ipv6ReferenceNote': 'A low IPv6 share only signals a disruption where IPv6 was in use before. Compare it with the 12 months before this period: most fixed-line networks in Iran never deployed IPv6.',
 });

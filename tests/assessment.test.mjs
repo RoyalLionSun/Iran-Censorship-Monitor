@@ -451,3 +451,52 @@ test('a curated national record that misses the rule is still shown as context',
   assert.equal(shutdown.contextEvent.verificationLevel, 'unconfirmed');
   assert.equal(shutdown.establishedEvent, null);
 });
+
+const blackout = { id: 'n2', outageType: 'NATIONWIDE', startDate: '2026-02-28T07:00:00Z', endDate: '2026-05-26T12:00:00Z', outageCause: 'GOVERNMENT_DIRECTED' };
+const pulseRecord = { ok: true, status: 'observed', events: [{ type: 'national', verificationLevel: 'unconfirmed', cause: 'protests', startTime: '2026-01-08T16:30:00.000Z', endTime: '2026-05-26T14:00:00.000Z', startDate: '2026-01-08', endDate: '2026-05-26' }] };
+
+test('Radar dates a nationwide outage for the reader, including whether it ended in the period', () => {
+  const during = buildAssessment({ radar: radar({ outages: [blackout] }), ioda: ioda([{ datasource: 'bgp' }]), selection: { ...selection, since: '2026-03-01', until: '2026-03-20' }, scopeLabel: 'Iran' });
+  const [period] = during.interpretation.dimensions.connectivity.outagePeriods;
+  assert.equal(period.scope, 'nationwide');
+  assert.equal(period.start, blackout.startDate);
+  assert.equal(period.startedBeforeWindow, true);
+  assert.equal(period.endedInWindow, false);
+  assert.equal(during.interpretation.summary.headline.state, 'major-outage');
+
+  const after = buildAssessment({ radar: radar({ outages: [blackout] }), ooniDomains: serviceDomains, selection: { ...selection, since: '2026-05-15', until: '2026-06-10' }, scopeLabel: 'Iran' });
+  const headline = after.interpretation.summary.headline;
+  assert.equal(headline.state, 'outage-ended', 'an outage that ended is not the situation at the end of the period');
+  assert.equal(headline.endedOn, blackout.endDate);
+});
+
+test('a curated shutdown record is set against the outages Radar dates', () => {
+  const differs = buildAssessment({ radar: radar({ outages: [blackout] }), pulse: pulseRecord, selection: { ...selection, since: '2026-03-01', until: '2026-03-20' }, scopeLabel: 'Iran' });
+  assert.equal(differs.interpretation.dimensions.shutdown.contextComparison, 'radar-dates-differ');
+  const gap = buildAssessment({ radar: radar(), pulse: pulseRecord, selection: { ...selection, since: '2026-02-05', until: '2026-02-25' }, scopeLabel: 'Iran' });
+  assert.equal(gap.interpretation.dimensions.shutdown.contextComparison, 'radar-no-nationwide-outage');
+  const blind = buildAssessment({ radar: radar({ eligible: false }), pulse: pulseRecord, selection, scopeLabel: 'Iran' });
+  assert.equal(blind.interpretation.dimensions.shutdown.contextComparison, null, 'no comparison without a usable Radar answer');
+});
+
+test('outage traffic is context for the charted outage and never a vote', () => {
+  const traffic = { ok: true, status: 'observed', start: blackout.startDate, end: blackout.endDate, baselineDays: 7, outageDays: 86, lowestPercent: 0.06, typicalPercent: 0.68, afterPercent: 95.58, series: [] };
+  const base = { radar: radar({ outages: [blackout] }), ioda: ioda([{ datasource: 'bgp' }]), selection: { ...selection, since: '2026-03-01', until: '2026-03-20' }, scopeLabel: 'Iran' };
+  const withTraffic = buildAssessment({ ...base, outageTraffic: traffic }).interpretation.dimensions.connectivity;
+  const without = buildAssessment(base).interpretation.dimensions.connectivity;
+  assert.equal(withTraffic.outageTraffic.typicalPercent, 0.68);
+  for (const key of ['state', 'severity', 'confidence', 'verification', 'coverage']) assert.equal(withTraffic[key], without[key]);
+  const other = buildAssessment({ ...base, outageTraffic: { ...traffic, start: '2026-01-08T16:30:00Z' } }).interpretation.dimensions.connectivity;
+  assert.equal(other.outageTraffic, null, 'traffic of a different outage is not shown for this one');
+});
+
+test('the selected network traffic is shown only for that network and only next to the country', () => {
+  const traffic = { ok: true, status: 'observed', start: blackout.startDate, end: blackout.endDate, baselineDays: 7, outageDays: 86, lowestPercent: 0.06, typicalPercent: 0.68, afterPercent: 95.58, series: [] };
+  const base = { radar: radar({ outages: [blackout] }), ioda: ioda([{ datasource: 'bgp' }]), selection: { ...selection, since: '2026-03-01', until: '2026-03-20' }, scopeLabel: 'AS58224 / Iran' };
+  const own = buildAssessment({ ...base, outageTraffic: traffic, networkOutageTraffic: { ...traffic, asn: 'AS58224', typicalPercent: 0.4 } });
+  assert.equal(own.interpretation.dimensions.connectivity.outageTraffic.network.typicalPercent, 0.4);
+  const foreign = buildAssessment({ ...base, outageTraffic: traffic, networkOutageTraffic: { ...traffic, asn: 'AS197207' } });
+  assert.equal(foreign.interpretation.dimensions.connectivity.outageTraffic.network, null, 'another network never stands in for the selected one');
+  const alone = buildAssessment({ ...base, networkOutageTraffic: { ...traffic, asn: 'AS58224' } });
+  assert.equal(alone.interpretation.dimensions.connectivity.outageTraffic, null);
+});

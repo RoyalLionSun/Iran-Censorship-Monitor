@@ -7,7 +7,7 @@ import { buildAssessment } from './lib/assessment.mjs';
 import { createLastGoodStore, errorPayload, jsonResponse, mapLimit, normalizeAsn, validateRange } from './lib/common.mjs';
 import { getCircumventionSignals, getOoniDomainMeasurements, getOoniDomains, getOoniMeasurementDetail, getOoniNetworks, getOoniTimeline, getOoniSample, listOoniMeasurements, OONI_TESTS } from './lib/ooni.mjs';
 import { getRipeSignals } from './lib/ripe.mjs';
-import { getRadarConnectionQuality, getRadarSignals } from './lib/radar.mjs';
+import { getRadarConnectionQuality, getRadarOutageTraffic, getRadarSignals, isNationwideAnnotation } from './lib/radar.mjs';
 import { getIodaSignals } from './lib/ioda.mjs';
 import { getTorMetrics } from './lib/tor.mjs';
 import { getRipeBgpUpdates, getRipeStatSignals } from './lib/ripestat.mjs';
@@ -239,8 +239,18 @@ async function handleApi(req, res, url) {
     const ooniNetworks = headlineDomain
       ? await safeSource('OONI network comparison', () => getOoniNetworks(ooniScope(input), headlineDomain), sourceKey(`OONI networks ${headlineDomain}`, input))
       : null;
+    // How deep a nationwide outage went is the plainest measure of it: traffic against the week before.
+    const outage = radar?.assessmentEligible === true && radar.status !== 'stale'
+      ? (radar.outages?.annotations ?? []).filter((item) => isNationwideAnnotation(item) && item.startDate)
+        .sort((a, b) => b.startDate.localeCompare(a.startDate))[0] ?? null
+      : null;
+    // For a selected network its own traffic sits next to the country: networks recover differently.
+    const trafficFor = (asn) => safeSource('Cloudflare Radar outage traffic', () => getRadarOutageTraffic({ start: outage.startDate, end: outage.endDate, asn }), `Radar outage traffic|${outage.startDate}|${outage.endDate ?? ''}|${asn}`);
+    const [outageTraffic, networkOutageTraffic] = outage
+      ? await Promise.all([trafficFor(''), input.asn ? trafficFor(input.asn) : null])
+      : [null, null];
     const scopeLabel = input.asn ? `${input.asn} / Iran` : 'Iran / all measured networks';
-    const assessment = buildAssessment({ ooni, ripe, radar, radarQuality, ioda, ripestat, censoredPlanet, tor, mlab, apnic, globalping, peeringdb, ihr, asrank, rpki, pulse, ooniDomains, circumvention, ooniSamples, ooniNetworks, selection: input, scopeLabel });
+    const assessment = buildAssessment({ ooni, ripe, radar, radarQuality, ioda, ripestat, censoredPlanet, tor, mlab, apnic, globalping, peeringdb, ihr, asrank, rpki, pulse, ooniDomains, circumvention, ooniSamples, ooniNetworks, outageTraffic, networkOutageTraffic, selection: input, scopeLabel });
     const asnProfile = input.asn ? asns.find((item) => item.asn === input.asn) || null : null;
     jsonResponse(res, 200, { ok: true, input, asnProfile, fetchedAt: new Date().toISOString(), assessment, ooni, ripe, radar, radarQuality, ioda, tor, mlab, apnic, ripestat, globalping, censoredPlanet, peeringdb, ihr, asrank, rpki, pulse });
     return true;

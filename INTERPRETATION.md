@@ -121,6 +121,22 @@ Confidence stops at `medium` even when the rule is met, because root lineage bet
 
 A national Pulse record that does not meet the rule — for example one that Pulse itself marks `unconfirmed` — is shown as context with its verification level and period, so a reader learns that the record exists without it being treated as established. Without a Pulse token the dimension says plainly that the question cannot be answered by this deployment.
 
+## Outage periods and depth
+
+Cloudflare Radar files a nationwide outage under the country and lists no ASNs, so an ASN-scoped annotation query never returns it. For a selected network the country query is therefore made as well, and only its **nationwide** annotations are applied to the network (marked `appliesVia: 'country'`); a regional country annotation does not speak for one network. A selected network stays Radar-ineligible when that country check fails, because a quiet answer without it cannot mean that no outage was reported.
+
+`connectivity.outagePeriods` lists the nationwide, regional and network outages with the start and end Radar itself gives them, and whether each started before or ended inside the selected period. The dates are source-native; the dashboard never shortens, joins or splits them.
+
+For the latest nationwide period, `connectivity.outageTraffic` compares Cloudflare-observed HTTP traffic from Iran per day with the median day of the week before the outage. Start and end days mix both states and are excluded; a baseline that cannot be measured yields no value rather than an assumed one. Radar scales each response to its own maximum and refuses daily data for more than 90 days, so a longer window is fetched as two overlapping requests joined through their largest shared day. The depth is context for the reader: it never changes state, severity, confidence, verification or coverage.
+
+When a network is selected, its own traffic is fetched the same way and shown as a second line against its own week before (`outageTraffic.network`), only for that network and only next to the country line. Networks recover differently: after 26 May 2026 MCI (AS197207) returned more slowly than TCI or Irancell, so a mobile/fixed label alone would say too little.
+
+A remainder of traffic during an outage is reported as a remainder. It does not show who could still connect or why, and the dashboard does not infer allow-listed users, SIM classes or other access tiers from it.
+
+When every nationwide outage in the period ended inside it, the headline reports the end and names the services that stayed blocked (`outage-ended`), because a restored connection is not open access.
+
+A national Pulse record is set against these periods in `shutdown.contextComparison`: `radar-dates-match`, `radar-dates-differ` (for example one Pulse record spanning two Radar outages), or `radar-no-nationwide-outage` for a period in which Radar reports none. Without a usable Radar answer there is no comparison.
+
 ## Slow routing lookups
 
 An uncached RIPEstat `routing-status` lookup can take far longer than the 12 s request timeout. The response stays fast: routing then reports `insufficient-data` with `pending: true`, the Overview states that the lookup is still being fetched, and a background revalidation stores the result for the next request. A pending lookup never becomes a routing claim.
@@ -169,7 +185,7 @@ The following invariants are executable regression assertions:
 
 ### Connection quality sources
 
-Cloudflare Radar contributes latency, bandwidth and DNS response time estimated from real user traffic in the selected network, each with its quartile spread, because a median alone hides how widely the experience varies. Only the daily time series is used, because the ASN-level summary endpoint silently answers with a 90-day window regardless of the requested period. Every response is checked against the requested window and counts as coverage only while it stays inside it; otherwise it remains visible without speaking for the selected period. The values are rolling averages of measured traffic, not a controlled speed test.
+Cloudflare Radar contributes latency, bandwidth and DNS response time estimated from real user traffic in the selected network, each with its quartile spread, because a median alone hides how widely the experience varies. A day whose quartiles are all zero had no sampled traffic, as happens during a shutdown; it is dropped rather than read as zero latency, and the number of measured days is reported with the value. Only the daily time series is used, because the ASN-level summary endpoint silently answers with a 90-day window regardless of the requested period. Every response is checked against the requested window and counts as coverage only while it stays inside it; otherwise it remains visible without speaking for the selected period. The values are rolling averages of measured traffic, not a controlled speed test.
 
 ### Network scope of a service claim
 
@@ -183,7 +199,7 @@ OONI deliberately publishes no stable probe identity, so a claim's coverage is e
 
 The mechanism is source-native and never inferred by this project. For each affected measurement in the sample, OONI reports an analysed `blocking_type` and, for confirmed cases, where the block fingerprint was found. A confirmed DNS fingerprint outranks the analysed type; otherwise `dns`, `tcp_ip`, `http-diff` and `http-failure` map to name-lookup blocking, blocked connections, a block page and an interrupted encrypted connection. Measurements without a finding contribute no mechanism, and an unspecified mechanism is never presented as one. The dominant mechanism is reported with its count out of the affected tests in the sample, for the named service only.
 
-`summary.headline` selects the first-screen statement in this order: established nationwide shutdown; source-native `widespread`/`severe` connectivity impact; confirmed blocked services (named); unconfirmed service problems (named); generic connectivity events; `no-problems-detected` only when every tested service is reachable and connectivity has adequate no-event coverage; otherwise `limited-evidence`. When services were tested, the open unknown becomes `other-services` instead of `affected-services`.
+`summary.headline` selects the first-screen statement in this order: established nationwide shutdown; a nationwide outage that ended inside the period (with the services that stayed blocked); source-native `widespread`/`severe` connectivity impact; confirmed blocked services (named); unconfirmed service problems (named); generic connectivity events; `no-problems-detected` only when every tested service is reachable and connectivity has adequate no-event coverage; otherwise `limited-evidence`. When services were tested, the open unknown becomes `other-services` instead of `affected-services`.
 
 ## Presentation order
 

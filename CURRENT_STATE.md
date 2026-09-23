@@ -1,6 +1,6 @@
 # Current State — unreleased v1.9 UX/interpretation work
 
-Date: **2026-09-22**
+Date: **2026-09-23**
 
 Implementation basis: **`main` at `21938941e7b5e2da3f4fee55eb744879be1f76aa`**
 
@@ -28,17 +28,37 @@ Package version: **`1.8.0` intentionally unchanged**
 - a selection means a service and covers all of its hosts plus its app test, so the Overview cannot contradict itself for a selected service;
 - the Overview opens with a plain-language situation board: headline naming confirmed blocked services, six service tiles (website and app separate) and a status row for connection, test connections, global routing and complete shutdown;
 - Censored Planet, RIPE Atlas and APNIC deliver data again after fixes for an upstream country-code change, an upstream response-format change and a too-short connect attempt window;
-- the deterministic suite passes **359/359 tests**; build and release-notes gate pass;
+- the deterministic suite passes **406/406 tests**; build and release-notes gate pass;
 - `npm run verify:ui`, including the real-app Overview gate and the EN/FA/RTL fixture, passes with headless Chrome; live public sources were checked for `AS58224`, `2026-09-15..2026-09-22`;
 - the earlier screenshot was caused by an old long-lived server process returning `publicSummary` while the newly served Overview expected `assessment.interpretation`; static assets and server modules were out of sync;
 - a nationwide shutdown is established only when source-native nationwide impact, two independent technical roots and a confirmed or acknowledged national Pulse record overlap in time; confidence stops at medium because root lineage is unverified;
 - line endings are LF and pinned by `.gitattributes`;
+- a nationwide Radar outage now also applies to a selected network: Radar files it under the country without ASNs, so the default `AS58224` view previously reported only "WhatsApp and Telegram show signs of blocking" in the middle of the 2026 blackout;
+- the Overview dates each Radar outage, shows how far Cloudflare-observed traffic from Iran fell against the week before (chart with daily values), reports an outage that ended inside the period as ended and names what stayed blocked, and sets the Pulse record against the Radar dates;
+- Radar quality days without sampled traffic are no longer read as 0 ms / 0 Mbit/s;
+- the Farsi top bar no longer pushes the action buttons off-screen when the source summary is long;
+- a third-party dossier (Iran "digital apartheid" report v4.5, 23 Sep 2026) was checked against primary sources; only claims the project's own sources confirm were used, see below;
 - no commit, push, release, tag or deployment authorization has been made for this working state.
 
-## Open decisions
+## Decisions
 
-- **Maximum selectable period (currently 120 days).** The limit protects against very large OONI queries. Internet Society Pulse records a 138-day national shutdown for Iran (8 January to 26 May 2026), which therefore cannot be selected as one period; it is visible as context in every sub-period instead. Whether to raise the limit, and to what, is deliberately left open.
+- **Maximum selectable period (currently 120 days) — decided: keep.** Internet Society Pulse lists one *unconfirmed* national record for 8 January to 26 May 2026 (138 days). Cloudflare Radar, a technical source, dates two separate nationwide outages inside it: 8 January 16:30 UTC to 1 February 2026 and 28 February 07:00 UTC to 26 May 12:00 UTC (about 23 and 87 days). Both fit the limit, each is now charted with its week before and after, and the Pulse record stays visible with the note that Radar dates it differently. Raising the limit is therefore not needed to show the 2026 blackout.
+- **IPv6 — decided: keep measuring, read against the network's own history.** IPv6 is not switched off in Iran as a whole: APNIC measures about 14% of Iranian users as IPv6-capable in October 2025, about 0.2% in June 2026 and about 24% on 20 September 2026. It is in practice a mobile protocol there: MCI (about 14–17%) and Irancell (about 18–20%) use it, while TCI and the other fixed, business and backbone networks stayed below 2% before, during and after the blackout — they never deployed it. The country and mobile values are therefore a real disruption indicator (the January collapse, the February gap and June), while a low value in a fixed network means nothing. The Technical analysis now shows APNIC's sample-weighted level for the 12 months before the selected period next to the current value, with a note that a low share only signals a disruption where IPv6 was in use before. No Overview sentence and no Radar IPv6 series were added: the APNIC table already gives the daily values, and a fixed "normal" share would be a project-defined threshold.
 - **Internet Society Pulse API surface.** Only `/shutdowns` is used. The other 25 documented endpoints (IPv6, HTTPS, TLS, DNSSEC, ROA/ROV, IXP and market concentration) duplicate sources this project already has, and `/net-loss` is a modelled economic estimate rather than a measurement.
+
+## Checked against primary sources: the 2026 blackout
+
+| Claim in the dossier | Primary source check | Used |
+|---|---|---|
+| Two blackout phases, not one continuous block | Radar: two nationwide annotations (8 Jan–1 Feb, 28 Feb–26 May) | yes, as Radar dates |
+| Traffic near zero but not zero | Radar daily traffic: lowest 0.01% (phase 1) and 0.06% (phase 2) of the week before, typically 2.1% and 0.7% | yes, as traffic share only |
+| Remaining traffic belongs to allow-listed users | not measurable with the project's sources | no — the dashboard says the remainder does not show who could connect |
+| Restored connectivity is not open access | OONI after 26 May: Instagram, Telegram, YouTube, X, Facebook still confirmed blocked in AS58224 | yes |
+| BGP path to one hosting provider carried only allow-listed traffic | BGP shows routes, not who sends traffic over them | no |
+| Loss of IPv6 before the traffic collapse | Radar IPv6 share: usually 6–7%; on 8 Jan it fell to ~0 from about 12:00 UTC, hours before the traffic collapse (16:30–18:45 UTC); it stayed near 0 through the February gap and until early July, back to ~5–6% by September | as context in Technical analysis, read against each network's own 12-month level |
+| Mobile was unstable after 26 May, fixed-line recovered | Radar per network: MCI (mobile) recovered more slowly than TCI, but Irancell (mobile) as fast as TCI | yes, as a per-network line in the traffic chart; no mobile/fixed generalisation |
+
+The dossier's account-forensics and legal sections are outside this project's scope.
 
 The exact model is documented in [INTERPRETATION.md](INTERPRETATION.md). Validation results for this uncommitted state are recorded at the top of [VERIFICATION.md](VERIFICATION.md).
 
