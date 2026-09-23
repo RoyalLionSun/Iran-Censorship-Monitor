@@ -255,26 +255,29 @@ async function handleApi(req, res, url) {
       input.testName === 'web_connectivity' ? safeSource('OONI domains', () => getOoniDomains(ooniScope(input)), sourceKey('OONI domains', input)) : Promise.resolve(null),
       safeSource('OONI circumvention', () => getCircumventionSignals(input), sourceKey('OONI circumvention', input)),
     ]);
-    // For an explicit service selection, sample how many independent measurement runs and
-    // days stand behind the finding that the Overview reports.
+    // The follow-up questions below do not depend on each other; asked one after another they
+    // made a first load take close to half a minute, so they run side by side.
     const visibleServices = ooniDomains?.ok ? summarizeServiceBrands(ooniDomains, circumvention, input).visible : [];
     // A service with no usable test in the selected network still has an answer across Iran.
     const needsCountry = Boolean(input.asn && ooniDomains?.ok && visibleServices.some((item) => ['untested', 'inconclusive'].includes(item.web?.status)));
-    const countryOoniDomains = needsCountry
-      ? await safeSource('OONI domains (Iran)', () => getOoniDomains(ooniScope({ ...input, asn: '' })), sourceKey('OONI domains', { ...input, asn: '' }))
-      : null;
+    const countryTask = needsCountry
+      ? safeSource('OONI domains (Iran)', () => getOoniDomains(ooniScope({ ...input, asn: '' })), sourceKey('OONI domains', { ...input, asn: '' }))
+      : Promise.resolve(null);
+    // For an explicit service selection, sample how many independent measurement runs and
+    // days stand behind the finding that the Overview reports.
     const sampleDomains = visibleServices
       .filter((item) => ['blocked', 'restricted'].includes(item.status) && item.web?.measurements > 0)
       .map((item) => item.web.domain);
     const focusDomain = (input.serviceId || input.target) && visibleServices[0]?.web?.measurements > 0 ? visibleServices[0].web.domain : null;
     if (focusDomain && !sampleDomains.includes(focusDomain)) sampleDomains.unshift(focusDomain);
-    const ooniSamples = (await mapLimit(sampleDomains.slice(0, 2), 2, (domain) =>
-      safeSource('OONI evidence sample', () => getOoniSample(ooniScope(input), domain), sourceKey(`OONI sample ${domain}`, input)))).filter((sample) => sample?.ok);
+    const samplesTask = mapLimit(sampleDomains.slice(0, 2), 2, (domain) =>
+      safeSource('OONI evidence sample', () => getOoniSample(ooniScope(input), domain), sourceKey(`OONI sample ${domain}`, input)))
+      .then((samples) => samples.filter((sample) => sample?.ok));
     // One aggregation answers whether the headline service is blocked in one network or in many.
     const headlineDomain = sampleDomains[0] ?? null;
-    const ooniNetworks = headlineDomain
-      ? await safeSource('OONI network comparison', () => getOoniNetworks(ooniScope(input), headlineDomain), sourceKey(`OONI networks ${headlineDomain}`, input))
-      : null;
+    const networksTask = headlineDomain
+      ? safeSource('OONI network comparison', () => getOoniNetworks(ooniScope(input), headlineDomain), sourceKey(`OONI networks ${headlineDomain}`, input))
+      : Promise.resolve(null);
     // How deep a nationwide outage went is the plainest measure of it: traffic against the week before.
     const outage = radar?.assessmentEligible === true && radar.status !== 'stale'
       ? (radar.outages?.annotations ?? []).filter((item) => isNationwideAnnotation(item) && item.startDate)
@@ -282,41 +285,39 @@ async function handleApi(req, res, url) {
       : null;
     // For a selected network its own traffic sits next to the country: networks recover differently.
     const trafficFor = (asn) => safeSource('Cloudflare Radar outage traffic', () => getRadarOutageTraffic({ start: outage.startDate, end: outage.endDate, asn }), `Radar outage traffic|${outage.startDate}|${outage.endDate ?? ''}|${asn}`);
-    const [outageTraffic, networkOutageTraffic] = outage
-      ? await Promise.all([trafficFor(''), input.asn ? trafficFor(input.asn) : null])
-      : [null, null];
+    const trafficTask = outage ? Promise.all([trafficFor(''), input.asn ? trafficFor(input.asn) : null]) : Promise.resolve([null, null]);
     // Where each service was and was not blocked, by named Iranian network.
-    let serviceNetworks = null;
-    if (input.testName === 'web_connectivity') {
+    const serviceNetworksTask = input.testName !== 'web_connectivity' ? Promise.resolve(null) : (async () => {
       const domains = SERVICE_BRANDS.flatMap((brand) => brand.domains);
       const raw = await safeSource('OONI service networks', () => getOoniServiceNetworks({ ...input, asn: '', target: '' }, domains), sourceKey('OONI service networks', { ...input, asn: '', target: '' }));
-      if (raw?.ok && raw.status !== 'stale') {
-        const breakdown = summarizeServiceNetworks(raw.rows);
-        const access = summarizeNetworkAccess(raw.rows);
-        const shown = access.map((entry) => entry.asn);
-        // Who a network is: the reviewed catalogue first, then the Iranian network directory,
-        // then RIPEstat for a name. Institutional and public networks are named as such.
-        const directory = await readAsnDirectory();
-        const kinds = Object.fromEntries(shown.map((asn) => [asn, asns.find((item) => item.asn === asn)?.type ?? directory?.entries?.[asn]?.kind ?? null]));
-        const known = [...asns, ...shown.filter((asn) => directory?.entries?.[asn]?.name).map((asn) => ({ asn, name: directory.entries[asn].name }))];
-        const names = await getAsnNames(shown, known);
-        // Networks without any test in the period: nothing can be said about them, and the
-        // reader has to know that, especially for public bodies.
-        const inventory = await iranRegisteredAsns();
-        const unmeasured = inventory ? [...inventory].filter((asn) => !shown.includes(asn)) : [];
-        const unmeasuredKinds = {};
-        for (const asn of unmeasured) {
-          const kind = directory?.entries?.[asn]?.kind ?? 'unknown';
-          unmeasuredKinds[kind] = (unmeasuredKinds[kind] ?? 0) + 1;
-        }
-        const publicUnmeasured = unmeasured.filter((asn) => ['government_admin', 'institutional'].includes(directory?.entries?.[asn]?.kind))
-          .map((asn) => ({ asn, name: directory.entries[asn].name }));
-        serviceNetworks = {
-          ok: true, breakdown, access, names, types: kinds, excludedMeasurements: raw.excludedMeasurements, sourceUrl: raw.sourceUrl,
-          coverage: inventory ? { registered: inventory.size, measured: shown.length, unmeasuredKinds, publicUnmeasured, directory: Boolean(directory) } : null,
-        };
-      } else serviceNetworks = { ok: false };
-    }
+      if (!raw?.ok || raw.status === 'stale') return { ok: false };
+      const breakdown = summarizeServiceNetworks(raw.rows);
+      const access = summarizeNetworkAccess(raw.rows);
+      const shown = access.map((entry) => entry.asn);
+      // Who a network is: the reviewed catalogue first, then the Iranian network directory,
+      // then RIPEstat for a name. Institutional and public networks are named as such.
+      const directory = await readAsnDirectory();
+      const kinds = Object.fromEntries(shown.map((asn) => [asn, asns.find((item) => item.asn === asn)?.type ?? directory?.entries?.[asn]?.kind ?? null]));
+      const known = [...asns, ...shown.filter((asn) => directory?.entries?.[asn]?.name).map((asn) => ({ asn, name: directory.entries[asn].name }))];
+      const [names, inventory] = await Promise.all([getAsnNames(shown, known), iranRegisteredAsns()]);
+      // Networks without any test in the period: nothing can be said about them, and the
+      // reader has to know that, especially for public bodies.
+      const unmeasured = inventory ? [...inventory].filter((asn) => !shown.includes(asn)) : [];
+      const unmeasuredKinds = {};
+      for (const asn of unmeasured) {
+        const kind = directory?.entries?.[asn]?.kind ?? 'unknown';
+        unmeasuredKinds[kind] = (unmeasuredKinds[kind] ?? 0) + 1;
+      }
+      const publicUnmeasured = unmeasured.filter((asn) => ['government_admin', 'institutional'].includes(directory?.entries?.[asn]?.kind))
+        .map((asn) => ({ asn, name: directory.entries[asn].name }));
+      return {
+        ok: true, breakdown, access, names, types: kinds, excludedMeasurements: raw.excludedMeasurements, sourceUrl: raw.sourceUrl,
+        coverage: inventory ? { registered: inventory.size, measured: shown.length, unmeasuredKinds, publicUnmeasured, directory: Boolean(directory) } : null,
+      };
+    })();
+    const [countryOoniDomains, ooniSamples, ooniNetworks, [outageTraffic, networkOutageTraffic], serviceNetworks] = await Promise.all([
+      countryTask, samplesTask, networksTask, trafficTask, serviceNetworksTask,
+    ]);
     const scopeLabel = input.asn ? `${input.asn} / Iran` : 'Iran / all measured networks';
     const assessment = buildAssessment({ ooni, ripe, radar, radarQuality, ioda, ripestat, censoredPlanet, tor, mlab, apnic, globalping, peeringdb, ihr, asrank, rpki, pulse, ooniDomains, countryOoniDomains, circumvention, ooniSamples, ooniNetworks, outageTraffic, networkOutageTraffic, serviceNetworks, selection: input, scopeLabel });
     const asnProfile = input.asn ? asns.find((item) => item.asn === input.asn) || null : null;
