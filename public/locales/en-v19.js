@@ -242,6 +242,8 @@ export default Object.freeze({
   'services.confirmed': 'confirmed',
   'services.anomalies': 'anomalous',
   'services.inspect': 'Inspect URLs',
+  'services.total': '{count} tests of these websites · last observed {date} UTC',
+  'services.noTests': 'No tests for {domains} in this selection',
   'services.other': 'Show {count} other target statuses (untested or outside this selection)',
   'services.status.loading': 'Loading',
   'services.status.unavailable': 'Source unavailable',

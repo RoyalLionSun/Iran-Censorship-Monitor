@@ -539,3 +539,18 @@ select option:disabled { color: #7d8ea6; }
 
 /* The report's print frame is never shown on screen; it only feeds the print dialog. */
 .report-print-frame { position: fixed; inset-inline-start: -10000px; top: 0; width: 800px; height: 600px; border: 0; }
+
+/* Test results per website: one card per service, its addresses as rows. */
+.service-brand > ul, .service-brand > p { grid-column: 1 / -1; margin: 0; }
+.service-domains { list-style: none; padding: 0; display: grid; gap: 6px; }
+.service-domains li { display: grid; grid-template-columns: 1fr auto; gap: 1px 10px; align-items: center; padding-top: 6px; border-top: 1px solid var(--border); }
+.service-domains .service-domain { font: 12px var(--mono); color: var(--text); overflow-wrap: anywhere; }
+.service-domains small { grid-column: 1; color: var(--text-soft); font-size: 11.5px; }
+.service-domains .button { grid-column: 2; grid-row: 1 / span 2; min-height: 28px; padding: 3px 10px; font-size: 12px; }
+.service-app-servers { color: var(--text-soft); font-size: 11.5px; padding-top: 6px; border-top: 1px dashed var(--border); }
+.service-untested { color: var(--muted); font-size: 11px; }
+.service-brand > div strong { font-size: 16px; }
+/* Six services in two rows of three, wide enough for the figures on one line. */
+#service-findings-list:has(.service-brand) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 1100px) { #service-findings-list:has(.service-brand) { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 700px) { #service-findings-list:has(.service-brand) { grid-template-columns: 1fr; } }

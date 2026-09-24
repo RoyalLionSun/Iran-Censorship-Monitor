@@ -242,6 +242,8 @@ export default Object.freeze({
   'services.confirmed': 'تأییدشده',
   'services.anomalies': 'ناهنجار',
   'services.inspect': 'بررسی URLها',
+  'services.total': '{count} آزمون این وب‌سایت‌ها · آخرین مشاهده {date} به وقت UTC',
+  'services.noTests': 'برای {domains} در این انتخاب آزمونی نیست',
   'services.other': 'نمایش وضعیت {count} هدف دیگر (آزمایش‌نشده یا خارج از این انتخاب)',
   'services.status.loading': 'در حال بارگذاری',
   'services.status.unavailable': 'منبع در دسترس نیست',

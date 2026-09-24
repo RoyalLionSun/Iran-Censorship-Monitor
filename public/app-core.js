@@ -1,5 +1,5 @@
 import { getLanguage, localeFor, setLanguage, t } from './i18n.js';
-import { summarizeMessagingAppTests, summarizeServiceFindings } from './service-findings.js';
+import { SERVICE_BRANDS, summarizeMessagingAppTests, summarizeServiceFindings } from './service-findings.js';
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
@@ -663,28 +663,39 @@ function renderServiceFindings() {
     asn: $('#asn-select').value === 'ALL' ? 'IR / all networks' : $('#asn-select').value,
     since: $('#since-input').value, until: $('#until-input').value,
   }) + (selection.target ? ` · ${t('services.target', { target: selection.target })}` : '')
-    + (focus ? ` · ${t('services.focus', { count: number(focus.measurements, 0), date: focus.lastObserved })}` : '');
+    + (focus ? ` · ${t('services.total', {
+      count: number(rows.reduce((sum, row) => sum + (row.status === 'out_of_scope' ? 0 : row.measurements), 0), 0),
+      date: rows.map((row) => row.lastObserved).filter(Boolean).sort().at(-1) ?? '—',
+    })}` : '');
   $('#service-findings-boundary').textContent = t('services.boundary');
   source.classList.toggle('hidden', !sourceUrl);
   if (sourceUrl) source.href = sourceUrl;
   source.textContent = t('services.source');
-  const renderRow = (row) => {
-    const detail = ['confirmed', 'anomaly', 'no_signal', 'inconclusive'].includes(row.status)
-      ? `${number(row.measurements, 0)} ${t('services.tests')} · ${number(row.confirmed, 0)} ${t('services.confirmed')} · ${number(row.anomalous, 0)} ${t('services.anomalies')} · ${escapeHtml(row.lastObserved)} UTC`
-      : '';
-    const button = detail ? `<button type="button" class="button" data-service-domain="${escapeHtml(row.domain)}">${escapeHtml(t('services.inspect'))}</button>` : '';
-    return `<div class="service-finding" data-status="${row.status}"><div><strong>${escapeHtml(row.name)}</strong><span dir="ltr">${escapeHtml(row.domain)}</span></div><b>${escapeHtml(t(`services.status.${row.status}`))}</b><small>${detail}</small>${button}</div>`;
+  // One card per service: its tested addresses as rows, the servers its app uses, and the
+  // addresses nobody tested in one line, so a service never appears as several cards and an
+  // untested alias (instagram.com) never looks like an untested service.
+  const RANK = { confirmed: 6, anomaly: 5, no_signal: 4, inconclusive: 3, loading: 2, unavailable: 1, untested: 0 };
+  const tested = (row) => ['confirmed', 'anomaly', 'no_signal', 'inconclusive'].includes(row.status);
+  const interpretationItems = state.overview?.assessment?.interpretation?.services?.items ?? [];
+  const lri = (value) => `\u2066${value}\u2069`;
+  const cards = SERVICE_BRANDS.map((brand) => {
+    const brandRows = rows.filter((row) => brand.domains.includes(row.domain) && row.status !== 'out_of_scope');
+    if (!brandRows.length) return null;
+    const measuredRows = brandRows.filter(tested).sort((a, b) => b.measurements - a.measurements);
+    const strongest = [...brandRows].sort((a, b) => (RANK[b.status] ?? 0) - (RANK[a.status] ?? 0) || b.confirmed - a.confirmed)[0];
+    const servers = interpretationItems.find((item) => item.id === brand.id)?.appServers ?? null;
+    return { brand, rows: measuredRows, untested: brandRows.filter((row) => !tested(row)).map((row) => row.domain), status: strongest.status, servers };
+  }).filter(Boolean).sort((a, b) => (RANK[b.status] ?? 0) - (RANK[a.status] ?? 0) || b.rows.reduce((sum, row) => sum + row.confirmed, 0) - a.rows.reduce((sum, row) => sum + row.confirmed, 0));
+  const renderCard = (card) => {
+    const domains = card.rows.map((row) => `<li><span class="service-domain" dir="ltr">${escapeHtml(row.domain)}</span><small>${number(row.measurements, 0)} ${t('services.tests')} · ${number(row.confirmed, 0)} ${t('services.confirmed')} · ${number(row.anomalous, 0)} ${t('services.anomalies')} · ${escapeHtml(row.lastObserved)} UTC</small><button type="button" class="button" data-service-domain="${escapeHtml(row.domain)}">${escapeHtml(t('services.inspect'))}</button></li>`).join('');
+    const servers = card.servers && card.servers.status !== 'inconclusive' ? `<p class="service-app-servers">${escapeHtml((card.servers.country ? (text) => t('board.appServers.country', { text }) : (text) => text)(t(`board.appServers.${card.servers.status}`, {
+      hosts: card.servers.hosts.length > 1 ? t('board.appServers.more', { host: lri(card.servers.hosts[0]), count: number(card.servers.hosts.length - 1, 0) }) : lri(card.servers.hosts[0]),
+      total: number(card.servers.measurements, 0), failed: number(card.servers.confirmed + card.servers.anomalous, 0), confirmed: number(card.servers.confirmed, 0), ok: number(card.servers.ok, 0),
+    })))}</p>` : '';
+    const untested = card.untested.length ? `<p class="service-untested">${escapeHtml(t('services.noTests', { domains: lri(card.untested.join(', ')) }))}</p>` : '';
+    return `<div class="service-finding service-brand" data-status="${card.status}"><div><strong>${escapeHtml(t(`board.brand.${card.brand.id}`) === `board.brand.${card.brand.id}` ? card.brand.name : t(`board.brand.${card.brand.id}`))}</strong></div><b>${escapeHtml(t(`services.status.${card.status}`))}</b>${domains ? `<ul class="service-domains">${domains}</ul>` : ''}${servers}${untested}</div>`;
   };
-  const visibleStatuses = ['confirmed', 'anomaly', 'no_signal', 'inconclusive', 'loading', 'unavailable'];
-  const measured = rows.filter((row) => visibleStatuses.includes(row.status))
-    .sort((a, b) => Number(b.status === 'confirmed') - Number(a.status === 'confirmed')
-      || Number(b.status === 'anomaly') - Number(a.status === 'anomaly')
-      || Number(b.status === 'loading') - Number(a.status === 'loading')
-      || Number(b.status === 'unavailable') - Number(a.status === 'unavailable')
-      || b.confirmed - a.confirmed || b.anomalous - a.anomalous || a.domain.localeCompare(b.domain));
-  const other = rows.filter((row) => row.status === 'untested' || row.status === 'out_of_scope');
-  $('#service-findings-list').innerHTML = measured.map(renderRow).join('')
-    + (other.length ? `<details class="service-findings-other"><summary>${escapeHtml(t('services.other', { count: number(other.length, 0) }))}</summary><div class="service-findings-list">${other.map(renderRow).join('')}</div></details>` : '');
+  $('#service-findings-list').innerHTML = cards.map(renderCard).join('');
   const countryStatus = { blocked: 'confirmed', restricted: 'anomaly', reachable: 'no_signal' };
   $('#service-country-title').hidden = !countryItems.length;
   $('#service-country-list').hidden = !countryItems.length;
