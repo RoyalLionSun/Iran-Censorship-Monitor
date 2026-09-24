@@ -36,3 +36,15 @@ test('unsupported languages fail closed', () => {
   assert.throws(() => setLanguage('de'), /Unsupported language/);
   setLanguage('en');
 });
+
+test('no interface text is spelled like a service name, or the page would translate that name', async () => {
+  // Static texts are translated by their English wording; a label "Signal" once turned the
+  // messenger Signal into "indicator" in Farsi.
+  const { SERVICE_BRANDS, MORE_SERVICE_GROUPS } = await import('../public/service-findings.js');
+  const names = new Set([...SERVICE_BRANDS, ...MORE_SERVICE_GROUPS.flatMap((group) => group.services)].map((service) => service.name));
+  const modules = await Promise.all(['en.js', 'en-v19.js', 'en-runtime.js', 'en-extra.js'].map((file) => import(`../public/locales/${file}`)));
+  const clashes = modules.flatMap((module) => Object.entries(module.default))
+    .filter(([key, value]) => names.has(value) && !key.startsWith('board.brand.'))
+    .map(([key, value]) => `${key} = ${value}`);
+  assert.deepEqual(clashes, []);
+});

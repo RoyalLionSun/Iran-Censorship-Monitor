@@ -39,6 +39,8 @@ export default Object.freeze({
   'ui.refresh': 'به‌روزرسانی',
   'ui.exportCsv': 'خروجی CSV',
   'ui.exportContextCsv': 'خروجی CSV زمینه',
+  'ui.exportPdf': 'گزارش PDF',
+  'ui.exportDocx': 'گزارش Word (.docx)',
   'ui.print': 'چاپ',
   'ui.networkScope': 'محدوده شبکه',
   'ui.ooniTest': 'آزمون OONI',

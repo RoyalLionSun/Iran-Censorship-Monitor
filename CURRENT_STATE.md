@@ -83,6 +83,9 @@ Package version: **`1.8.0` intentionally unchanged**
 
 - **use of Cloudflare's WARP VPN among users in Iran** (APNIC Labs, AS13335's share of all samples filed under Iran, 30-day averages): shown under "VPN & circumvention tools" with today's share, a year ago, the lowest month and twelve monthly bars. It shows when this way around the filter stopped working: about 2.5–4% in 2025, under 1% from February to August 2026 (0.1% in July), 6.4% on 20 September 2026. Days with fewer than 1,000 samples for all of Iran (the blackouts) are left out rather than turned into shares. An estimate and circumvention context, never an access claim for a service; about 5 MB from APNIC every 12 hours;
 
+- **report export** (Export menu): "Word report (.docx)" builds a real Word file in the browser (no library: WordprocessingML in a stored ZIP), Farsi set right to left, statuses coloured; "PDF report" opens the same report in a print layout (`report-print.css`) and the browser's "Save as PDF" writes the file, because a PDF generated in code cannot set Farsi without shipping fonts and a shaping engine. Both take their text from the rendered Overview, so language, wording and figures match the screen. Checked on the real page in both languages: valid .docx (ZIP checksums, well-formed XML) and a clean A4 layout;
+- a new label "Signal" once made the page translate the messenger Signal into "indicator" in Farsi (static texts are translated by their English wording); a test now fails if any interface text is spelled like a service name;
+
 ## Next steps (agreed, not started)
 
 - **The dashboard itself must be reachable from Iran** before it is published: the Farsi version is for people there. Plan hosting so it is not behind a provider Iran blocks (e.g. not solely behind Cloudflare), offer mirrors and an .onion address for Tor users, and once online, check our own address from inside Iran (OONI Run link with the dashboard URL, or a Citizen Lab list entry).

@@ -8,6 +8,7 @@ import './v18-situation.js';
 import './v19-runtime.js';
 import './app-core.js';
 import './v18-i18n-ui.js';
+import './v20-report.js';
 
 // Production release marker.
 const footerVersion = document.querySelector('#footer-version');

@@ -536,3 +536,6 @@ select optgroup { background-color: #0b1624; color: #c4b1ff; font-weight: 700; f
 select option:disabled { color: #7d8ea6; }
 /* The outage picker runs from its label to the end of the row. */
 .filterbar .outage-picker { grid-template-columns: auto minmax(0, 1fr); }
+
+/* The report's print frame is never shown on screen; it only feeds the print dialog. */
+.report-print-frame { position: fixed; inset-inline-start: -10000px; top: 0; width: 800px; height: 600px; border: 0; }

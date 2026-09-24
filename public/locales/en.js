@@ -39,6 +39,8 @@ export default Object.freeze({
   'ui.refresh': 'Refresh',
   'ui.exportCsv': 'Export CSV',
   'ui.exportContextCsv': 'Export context CSV',
+  'ui.exportPdf': 'PDF report',
+  'ui.exportDocx': 'Word report (.docx)',
   'ui.print': 'Print',
   'ui.networkScope': 'Network scope',
   'ui.ooniTest': 'OONI test',
