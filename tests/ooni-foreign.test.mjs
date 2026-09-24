@@ -5,7 +5,7 @@ test('country OONI figures leave out networks registered outside Iran and say so
   const { getOoniTimeline, iranRegisteredAsns, resetIranAsnCache, subtractOoniRows } = await import('../lib/ooni.mjs');
   resetIranAsnCache();
   t.after(resetIranAsnCache);
-  await iranRegisteredAsns({ loader: async () => ({ asns: ['AS58224', 'AS197207'] }) });
+  await iranRegisteredAsns({ loader: async () => ({ asns: ['AS58224', 'AS197207'] }), storePath: null });
   const day = (date, measurements, ok, anomaly = 0) => ({ measurement_start_day: date, measurement_count: measurements, ok_count: ok, anomaly_count: anomaly, confirmed_count: 0, failure_count: measurements - ok - anomaly });
   t.mock.method(globalThis, 'fetch', async (url) => {
     const params = new URL(String(url)).searchParams;
@@ -47,6 +47,14 @@ test('a stored registry answers when RIPEstat does not, and a stale one is not t
   resetIranAsnCache();
   await writeFile(storePath, JSON.stringify({ savedAt: '2020-01-01T00:00:00Z', asns: ['AS58224'] }));
   assert.equal(await iranRegisteredAsns({ loader: offline, storePath }), null, 'a registry years old is not a fallback');
+  resetIranAsnCache();
+  // A full stored registry is never replaced by a far shorter answer.
+  const full = Array.from({ length: 800 }, (_, index) => `AS${1000 + index}`);
+  await iranRegisteredAsns({ loader: async () => ({ asns: full }), storePath });
+  resetIranAsnCache();
+  await iranRegisteredAsns({ loader: async () => ({ asns: ['AS58224', 'AS197207'] }), storePath });
+  const { readFile } = await import('node:fs/promises');
+  assert.equal(JSON.parse(await readFile(storePath, 'utf8')).asns.length, 800, 'a two-network answer does not overwrite 800 stored networks');
   resetIranAsnCache();
 });
 
