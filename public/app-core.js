@@ -28,7 +28,8 @@ function escapeHtml(value) {
 
 function number(value, digits = 1) {
   if (value === null || value === undefined || !Number.isFinite(Number(value))) return '—';
-  return Number(value).toLocaleString('en-US', { maximumFractionDigits: digits, minimumFractionDigits: 0 });
+  // Numbers in the reader's language (Persian digits in Farsi), like the Overview.
+  return Number(value).toLocaleString(localeFor(), { maximumFractionDigits: digits, minimumFractionDigits: 0 });
 }
 
 function percent(value, digits = 1) {
