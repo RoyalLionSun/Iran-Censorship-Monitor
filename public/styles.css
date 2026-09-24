@@ -599,3 +599,15 @@ main:focus { outline: none; }
   .toolbar .topbar-actions .button:not(.primary) { display: inline-flex; }
   .toolbar .export-menu-list .button { display: flex; }
 }
+
+/* VPN field measurement: control, tunnel and result side by side at equal width; the narrow
+   first column was meant for the protocol and squeezed the control values into it. */
+.vpn-form { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.vpn-form > .wide { grid-column: span 2; }
+.vpn-result { align-self: stretch; text-align: center; }
+.vpn-actions { grid-column: 1 / -1; }
+.vpn-actions .button { white-space: nowrap; }
+@media (max-width: 900px) {
+  .vpn-form { grid-template-columns: 1fr; }
+  .vpn-form > .wide, .vpn-actions { grid-column: auto; }
+}
