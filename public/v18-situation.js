@@ -346,6 +346,34 @@ function appServersLine(servers) {
   return `<li class="tile-app-servers" data-channel-status="${escapeHtml(servers.status)}" title="${escapeHtml(servers.hosts.join('\n'))}">${escapeHtml(servers.country ? t('board.appServers.country', { text }) : text)}</li>`;
 }
 
+// How long a service has been blocked (OONI, monthly since January 2022 on TCI, MCI and
+// Irancell), loaded once after the Overview; one line of text and a strip of months.
+let serviceHistory = null;
+let historyRequested = false;
+function requestHistory() {
+  if (historyRequested) return;
+  historyRequested = true;
+  fetch('/api/history', { headers: { accept: 'application/json' } }).then((response) => response.json()).then((payload) => {
+    if (!payload?.ok) return;
+    serviceHistory = payload;
+    if (lastAssessment) renderSituation(lastAssessment, lastViewState);
+  }).catch(() => { historyRequested = false; });
+}
+
+function historyLine(id) {
+  const history = serviceHistory?.services?.find((service) => service.id === id);
+  if (!history?.months?.length) return '';
+  const since = history.since;
+  const text = since
+    ? t(since.fromStart ? 'board.history.sinceStart' : 'board.history.since', { month: formatMonth(since.month) })
+    : t('board.history.notBlocked', { month: formatMonth(history.months[0].month) });
+  const cells = history.months.map((month, index) => {
+    const label = `${formatMonth(month.month)}: ${t(`board.history.status.${month.status}`)}${month.measurements ? ` · ${t('board.history.tests', { count: formatNumber(month.measurements) })}` : ''}`;
+    return `<rect class="history-cell" data-status="${escapeHtml(month.status)}" x="${index * 4}" y="0" width="3" height="12" rx="0.5"><title>${escapeHtml(label)}</title></rect>`;
+  }).join('');
+  return `<li class="tile-history"><span>${escapeHtml(text)}</span><svg class="history-strip" viewBox="0 0 ${history.months.length * 4} 12" preserveAspectRatio="none" role="img" aria-label="${escapeHtml(t('board.history.chart'))}">${cells}</svg></li>`;
+}
+
 // Tile colour for an independent answer; "failing" is a failed connection, not proof of a block.
 const INDEPENDENT_STATUS = { blocked: 'blocked', failing: 'restricted', partial: 'restricted', reachable: 'reachable' };
 const INDEPENDENT_SOURCE = { 'ripe-atlas': 'RIPE Atlas', globalping: 'Globalping' };
@@ -594,10 +622,10 @@ function renderServiceTiles(services, selection, connectivity = null) {
           <b class="service-tile-status">${escapeHtml(independent ? t(`board.independent.status.${independent.status}`) : country ? t(`board.country.status.${country.status}`)
             : item.status === 'restricted' && item.app?.status === 'anomaly' && item.web?.status !== 'anomaly' ? t('board.status.appFailed')
               : t(`board.status.${item.status}`))}</b>
-          <ul>${country ? countryLine(country, item) : ''}${!country && item.country && item.web?.status === 'untested' ? `<li class="tile-country">${escapeHtml(t(`board.country.web.${item.country.status}`, { confirmed: formatNumber(item.country.confirmed), count: formatNumber(item.country.anomalous), total: formatNumber(item.country.measurements) }))}</li>` : ''}${!country && ['unavailable', 'outage'].includes(services.countryCheck) && ['untested', 'unclear'].includes(item.status) ? `<li class="tile-country">${escapeHtml(t(`board.country.${services.countryCheck}`))}</li>` : ''}${item.country && item.web?.status === 'untested' ? '' : channelLine(item.web, 'web')}${channelLine(item.app, 'app')}${appServersLine(item.appServers)}${mechanismLine(item)}${coverageLine(item, selection)}${independentLine(item.independent)}</ul>
+          <ul>${country ? countryLine(country, item) : ''}${!country && item.country && item.web?.status === 'untested' ? `<li class="tile-country">${escapeHtml(t(`board.country.web.${item.country.status}`, { confirmed: formatNumber(item.country.confirmed), count: formatNumber(item.country.anomalous), total: formatNumber(item.country.measurements) }))}</li>` : ''}${!country && ['unavailable', 'outage'].includes(services.countryCheck) && ['untested', 'unclear'].includes(item.status) ? `<li class="tile-country">${escapeHtml(t(`board.country.${services.countryCheck}`))}</li>` : ''}${item.country && item.web?.status === 'untested' ? '' : channelLine(item.web, 'web')}${channelLine(item.app, 'app')}${appServersLine(item.appServers)}${mechanismLine(item)}${coverageLine(item, selection)}${independentLine(item.independent)}${historyLine(item.id)}</ul>
         </article>`;
       }).join('')}
-      </div>` : `<p class="service-board-empty">${escapeHtml(t('board.services.noneInSelection'))}</p>`}
+      </div>${serviceHistory ? `<p class="history-legend"><span class="history-key" data-status="blocked"></span>${escapeHtml(t('board.history.status.blocked'))} <span class="history-key" data-status="restricted"></span>${escapeHtml(t('board.history.status.restricted'))} <span class="history-key" data-status="reachable"></span>${escapeHtml(t('board.history.status.reachable'))} <span class="history-key" data-status="outage"></span>${escapeHtml(t('board.history.status.outage'))} · ${escapeHtml(t('board.history.scope'))}</p>` : ''}` : `<p class="service-board-empty">${escapeHtml(t('board.services.noneInSelection'))}</p>`}
     </section>`;
 }
 
@@ -1067,6 +1095,7 @@ function renderSituation(assessment, state = assessment ? 'ready' : 'loading') {
   translateStaticView();
   const interpretation = assessment?.interpretation;
   allIran = Boolean(interpretation) && !interpretation.selection?.asn;
+  if (interpretation) requestHistory();
   const valid = interpretation?.schemaVersion === 1 && interpretation.summary &&
     ['connectivity', 'interference', 'routing', 'quality', 'shutdown'].every((id) => interpretation.dimensions?.[id]);
   for (const selector of ['#overview-details-head', '#interpretation-dimensions', '.overview-lower-grid', '#current-findings', '#evidence-overview', '.overview-more']) {

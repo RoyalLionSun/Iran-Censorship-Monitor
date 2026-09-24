@@ -35,6 +35,7 @@ import { getGdeltIranIntelligence } from './lib/osint.mjs';
 import { getMlabPerformance } from './lib/mlab.mjs';
 import { getAccessNowStopIncidents } from './lib/accessnow.mjs';
 import { getApnicCountryComposition, getApnicIpv6, getApnicVpnShare } from './lib/apnic.mjs';
+import { getServiceHistory } from './lib/history.mjs';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
 
@@ -87,6 +88,21 @@ function rememberHistoricalOverview(key, payload, ttlMs = HISTORICAL_OVERVIEW_TT
   historicalOverviews.delete(key);
   historicalOverviews.set(key, { expires: Date.now() + ttlMs, payload });
   while (historicalOverviews.size > HISTORICAL_OVERVIEW_LIMIT) historicalOverviews.delete(historicalOverviews.keys().next().value);
+}
+
+let historyCache = null;
+let historyInFlight = null;
+async function serviceHistory() {
+  if (historyCache && Date.now() - historyCache.at < 60 * 60 * 1000) return historyCache.value;
+  historyInFlight ??= (async () => {
+    // Nationwide shutdowns (Cloudflare Radar) mark months whose few tests do not stand for them.
+    const outages = await getRadarOutageHistory().then((result) => result?.outages ?? []).catch(() => []);
+    return getServiceHistory({ storeDir: join(root, 'var/history'), outages });
+  })()
+    // A complete answer is kept for an hour; one with a failed request is asked again soon.
+    .then((value) => { if (value.ok) historyCache = { at: Date.now() - (value.errors.length ? 55 * 60 * 1000 : 0), value }; return value; })
+    .finally(() => { historyInFlight = null; });
+  return historyInFlight;
 }
 
 function queryInput(url) {
@@ -229,6 +245,11 @@ async function handleApi(req, res, url) {
     return true;
   }
 
+  // How long each main service has been blocked (monthly since 2022, TCI/MCI/Irancell).
+  if (url.pathname === '/api/history') {
+    jsonResponse(res, 200, await serviceHistory());
+    return true;
+  }
   if (url.pathname === '/api/outages') {
     const result = await safeSource('Cloudflare Radar outage history', () => getRadarOutageHistory(), 'Radar outage history');
     // Network episodes name their operators the way the network selector does.

@@ -90,6 +90,9 @@ Package version: **`1.8.0` intentionally unchanged**
 
 - audit of 24 September 2026 (`AUDIT_2026-09.md`): Brotli/gzip and ETags (a page view from about 1.2 MB to about 200 KB; unchanged files cost nothing on return), an offline copy of exactly the viewed page with a dated notice (`public/sw.js`, online always fresh), link previews with a header-style image, installable app manifest, skip link, reduced motion, one main heading, Persian digits in the technical view, reports reachable on phones, Persian browsers open in Farsi, footer mirrors the header. Proposals needing a decision are listed there;
 
+- **"Blocked since"** per service on the Overview tiles: monthly OONI results since January 2022 on TCI, MCI and Irancell (about 92% of users; inside-out only), majority rule per month, as a sentence ("Blocked throughout since at least Jan 2022", "Blocked without interruption since Feb 2023") and a strip of one bar per month. Months more than half covered by a nationwide shutdown (Cloudflare Radar) are purple and neutral, as are months with fewer than 10 tests; more than three such months in a row end a "since". Completed months are stored in `var/history/` and only the current month is asked again, at most once a day (initially 18 OONI queries of about 8 s each). WhatsApp's strip shows the 2024–2026 period when it was reachable;
+- visible "Install app" button (where the browser offers it; iPhone gets a short guide) and "Share this finding" (the phone's share sheet, or Telegram/WhatsApp/X links and "Copy link");
+
 ## Next steps (agreed, not started)
 
 - **The dashboard itself must be reachable from Iran** before it is published: the Farsi version is for people there. Plan hosting so it is not behind a provider Iran blocks (e.g. not solely behind Cloudflare), offer mirrors and an .onion address for Tor users, and once online, check our own address from inside Iran (OONI Run link with the dashboard URL, or a Citizen Lab list entry).
