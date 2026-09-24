@@ -36,6 +36,7 @@ import { getMlabPerformance } from './lib/mlab.mjs';
 import { getAccessNowStopIncidents } from './lib/accessnow.mjs';
 import { getApnicCountryComposition, getApnicIpv6, getApnicVpnShare } from './lib/apnic.mjs';
 import { getServiceHistory } from './lib/history.mjs';
+import { buildFeedEntry, postToTelegram, readEntries, renderAtom, upsertEntry } from './lib/feed.mjs';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
 
@@ -623,11 +624,57 @@ async function serveStatic(req, res, pathname) {
   return true;
 }
 
+// "What changed" as an Atom feed (English, or Farsi with ?lang=fa), one entry per day for
+// all of Iran. Built from the same cached Overview answer as the page, at most every 6 hours.
+const FEED_REFRESH_MS = 6 * 60 * 60 * 1000;
+const feedInFlight = new Map();
+async function feedEntries(lang, base) {
+  const path = join(root, `var/feed/${lang}.json`);
+  const entries = await readEntries(path);
+  const today = new Date().toISOString().slice(0, 10);
+  if (entries[0]?.id === today && Date.now() - Date.parse(entries[0].updated) < FEED_REFRESH_MS) return entries;
+  if (!feedInFlight.has(lang)) {
+    feedInFlight.set(lang, (async () => {
+      const { since, until } = defaultRange();
+      const link = `${base}/?asn=ALL&testName=web_connectivity&since=${since}&until=${until}&lang=${lang}`;
+      const response = await fetch(`http://${HOST}:${PORT}/api/overview?asn=ALL&testName=web_connectivity&since=${since}&until=${until}`);
+      const overview = await response.json();
+      const history = await serviceHistory().catch(() => null);
+      const entry = buildFeedEntry({ interpretation: overview?.assessment?.interpretation, lang, date: today, link, history });
+      if (!entry) return entries;
+      // The first entry of a new day goes to the language's Telegram channel, if one is set.
+      if (entries[0]?.id !== today) {
+        postToTelegram(entry, { token: process.env.TELEGRAM_BOT_TOKEN?.trim(), chat: process.env[`TELEGRAM_CHANNEL_${lang.toUpperCase()}`]?.trim() })
+          .then((result) => { if (!result.ok && !result.skipped) console.log(`telegram ${lang}: ${result.error}`); })
+          .catch((error) => console.log(`telegram ${lang}: ${error?.message ?? error}`));
+      }
+      return upsertEntry(path, entry);
+    })().catch(() => entries).finally(() => feedInFlight.delete(lang)));
+  }
+  return feedInFlight.get(lang);
+}
+
+async function serveFeed(req, res, url) {
+  const lang = url.searchParams.get('lang') === 'fa' ? 'fa' : 'en';
+  const base = process.env.PUBLIC_URL?.replace(/\/+$/, '') || `http://${req.headers.host || `${HOST}:${PORT}`}`;
+  const entries = await feedEntries(lang, base);
+  let body = Buffer.from(renderAtom({ entries, lang, selfUrl: `${base}/feed.xml${lang === 'fa' ? '?lang=fa' : ''}`, siteUrl: `${base}/` }));
+  const encoding = pickEncoding(req.headers['accept-encoding']);
+  if (encoding) body = compressBody(body, encoding);
+  res.writeHead(200, {
+    'content-type': 'application/atom+xml; charset=utf-8', 'cache-control': 'public, max-age=1800', vary: 'accept-encoding',
+    'x-content-type-options': 'nosniff', ...(encoding ? { 'content-encoding': encoding } : {}), 'content-length': body.length,
+  });
+  res.end(body);
+}
+
 const server = http.createServer(async (req, res) => {
   const started = Date.now();
   try {
     const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
-    if (url.pathname.startsWith('/api/')) {
+    if (url.pathname === '/feed.xml') {
+      await serveFeed(req, res, url);
+    } else if (url.pathname.startsWith('/api/')) {
       const handled = await handleApi(req, res, url);
       if (!handled) jsonResponse(res, 404, { ok: false, error: 'API route not found.' });
     } else if (!(await serveStatic(req, res, url.pathname))) {

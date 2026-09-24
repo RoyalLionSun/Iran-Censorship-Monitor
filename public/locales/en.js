@@ -45,6 +45,7 @@ export default Object.freeze({
   'ui.offlineCopy': 'No connection: showing the copy saved on {date} UTC. It updates as soon as you are online again.',
   'ui.installApp': 'Install app',
   'ui.installIos': 'On iPhone or iPad: tap the Share button in Safari, then "Add to Home Screen".',
+  'ui.feedEnglish': 'Feed (English)',
   'ui.print': 'Print',
   'ui.networkScope': 'Network scope',
   'ui.ooniTest': 'OONI test',

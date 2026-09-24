@@ -615,3 +615,7 @@ main:focus { outline: none; }
 .install-button { border-color: rgba(246,200,96,.55); color: #f6c860; }
 .install-button:hover { background: rgba(246,200,96,.1); }
 .install-hint { margin: 0 0 12px; padding: 10px 14px; border: 1px solid var(--border-strong); border-radius: 9px; background: var(--panel); color: var(--text); }
+
+.footer-feeds { font-size: 12px; }
+.footer-feeds a { color: #f6c860; text-decoration: none; }
+.footer-feeds a:hover { text-decoration: underline; }
