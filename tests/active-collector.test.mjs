@@ -159,3 +159,9 @@ test('an Atlas round the credit balance cannot pay is skipped with a clear reaso
   assert.equal(store.getMeta('ripe-atlas:lastCreated'), null, 'the round is tried again next time');
   store.close();
 });
+
+test('active targets are only the six mass services (ethics decision)', async () => {
+  const { ACTIVE_HOSTS } = await import('../lib/active-collector.mjs');
+  assert.deepEqual([...ACTIVE_HOSTS], ['www.instagram.com', 'web.whatsapp.com', 'web.telegram.org', 'www.youtube.com', 'x.com', 'www.facebook.com']);
+  assert.ok(Object.isFrozen(ACTIVE_HOSTS));
+});

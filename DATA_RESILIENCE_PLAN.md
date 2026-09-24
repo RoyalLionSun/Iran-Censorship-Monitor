@@ -81,10 +81,13 @@ A path that fails leaves the others untouched; the next run retries it.
 
 - Measure what OONI measures at the network level: does the DNS answer point to Iran's known
   block addresses (10.10.34.x) or a wrong address; does a TLS handshake to the service complete.
-- Priority hosts: the six main services plus the news and circumvention groups.
-- **Ethics gate (required before switching on):** probes belong to private hosts in Iran.
-  Measurements run only when `ACTIVE_MEASUREMENTS_ENABLED=true` is set deliberately, only DNS and
-  TLS (no page content), only towards public services, and the decision is recorded here.
+- **Ethics decision (owner, 24 September 2026):** probes belong to private hosts in Iran who
+  never agreed to test blocked sites. Active checks therefore target **only the six mass
+  services** millions in Iran contact daily (Instagram, WhatsApp, Telegram, YouTube, X,
+  Facebook). News outlets and circumvention tools are **not** measured from these probes; OONI,
+  whose volunteers consented, covers them. Only DNS and TLS/HTTPS HEAD, never page content,
+  every 6 hours at most. `ACTIVE_MEASUREMENTS_ENABLED=true` records the decision on a host; the
+  target list is fixed in `lib/active-collector.mjs` and the round script refuses other hosts.
 - Without an API key or with the gate off, the paths report "not configured" and the page
   says so; nothing else changes.
 

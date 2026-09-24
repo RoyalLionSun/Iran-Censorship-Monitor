@@ -17,7 +17,12 @@ if (process.env.ACTIVE_MEASUREMENTS_ENABLED !== 'true') {
   process.exit(2);
 }
 const source = option('source', 'ripe-atlas');
-const hosts = option('hosts', ACTIVE_HOSTS.join(',')).split(',').map((host) => host.trim()).filter(Boolean);
+const hosts = option('hosts', ACTIVE_HOSTS.join(',')).split(',').map((host) => host.trim().toLowerCase()).filter(Boolean);
+const refused = hosts.filter((host) => !ACTIVE_HOSTS.includes(host));
+if (refused.length) {
+  console.error(`Not allowed as an active target (ethics decision, DATA_RESILIENCE_PLAN.md): ${refused.join(', ')}`);
+  process.exit(2);
+}
 const probes = Math.max(1, Math.min(Number(option('probes', '5')), 20));
 const key = process.env.RIPE_ATLAS_API_KEY?.trim();
 if (source === 'ripe-atlas' && !key) { console.error('RIPE_ATLAS_API_KEY is missing in .env.'); process.exit(2); }
