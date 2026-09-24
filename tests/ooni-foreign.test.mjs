@@ -73,3 +73,9 @@ test('the per-network service comparison keeps only Iranian networks and the ser
   assert.deepEqual(result.rows.map((item) => item.asn), ['AS58224']);
   assert.equal(result.excludedMeasurements, 90, 'the foreign network is left out and counted');
 });
+
+test('app tests that all failed are an error, so the last good answer can stand in', async (t) => {
+  const { getCircumventionSignals } = await import('../lib/ooni.mjs');
+  t.mock.method(globalThis, 'fetch', async () => ({ ok: false, status: 500, statusText: 'Server Error', text: async () => 'down' }));
+  await assert.rejects(getCircumventionSignals({ since: '2026-07-01', until: '2026-07-02', asn: 'AS64513' }));
+});

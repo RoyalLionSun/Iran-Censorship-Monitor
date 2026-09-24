@@ -28,7 +28,7 @@ Package version: **`1.8.0` intentionally unchanged**
 - a selection means a service and covers all of its hosts plus its app test, so the Overview cannot contradict itself for a selected service;
 - the Overview opens with a plain-language situation board: headline naming confirmed blocked services, six service tiles (website and app separate) and a status row for connection, test connections, global routing and complete shutdown;
 - Censored Planet, RIPE Atlas and APNIC deliver data again after fixes for an upstream country-code change, an upstream response-format change and a too-short connect attempt window;
-- the deterministic suite passes **427/427 tests**; build and release-notes gate pass;
+- the deterministic suite passes **429/429 tests**; build and release-notes gate pass;
 - `npm run verify:ui`, including the real-app Overview gate and the EN/FA/RTL fixture, passes with headless Chrome; live public sources were checked for `AS58224`, `2026-09-15..2026-09-22`;
 - the earlier screenshot was caused by an old long-lived server process returning `publicSummary` while the newly served Overview expected `assessment.interpretation`; static assets and server modules were out of sync;
 - a nationwide shutdown is established only when source-native nationwide impact, two independent technical roots and a confirmed or acknowledged national Pulse record overlap in time; confidence stops at medium because root lineage is unverified;
@@ -64,6 +64,7 @@ Package version: **`1.8.0` intentionally unchanged**
 - the server warms the default Overview on start and every few minutes; a current period's answer is kept for ten minutes (one minute if a part is missing), identical requests arriving together share one computation, so the default view opens at once instead of after 8–12 s;
 - a short table of contents under the headline links to the Overview's sections;
 - OONI answers are cached 15 minutes and a current Overview 10 minutes, warmed every 9.5 minutes, to stay inside OONI's request quota with the added queries; when OONI limits requests, the service board says so instead of only "No data";
+- OONI meters query time per address. With the added queries and a day of testing the quota ran out ("quota exceeded", HTTP 429) and every panel showed no data. Now: after "quota exceeded" the server waits 15 minutes before asking again; windows that ended two or more days ago are cached for a day and the expensive domain-by-network query for an hour; the last good answers are stored in `var/last-good/sources.json` and survive a restart, so an outage upstream shows the dated last known state instead of empty panels; app tests that all failed no longer overwrite the last good answer;
 - regional outages cannot be charted: Radar's regional annotations for Iran name no region;
 - a third-party dossier (Iran "digital apartheid" report v4.5, 23 Sep 2026) was checked against primary sources; only claims the project's own sources confirm were used, see below;
 - no commit, push, release, tag or deployment authorization has been made for this working state.

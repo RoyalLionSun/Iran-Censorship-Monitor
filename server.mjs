@@ -124,7 +124,7 @@ function ooniScope(input) {
   return input.serviceId ? { ...input, target: '' } : input;
 }
 
-const lastGoodSources = createLastGoodStore();
+const lastGoodSources = createLastGoodStore({ path: join(root, 'var/last-good/sources.json') });
 
 function sourceKey(name, input) {
   return [name, input.asn || 'ALL', input.since, input.until, input.testName || '', input.target || ''].join('|');

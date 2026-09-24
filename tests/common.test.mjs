@@ -77,3 +77,21 @@ test('only a settled period with a clean answer may be kept', async () => {
   assert.equal(isCleanOverview([{ ok: true, status: 'partial', assessmentEligible: false }]), false, 'a Radar answer missing an event channel');
   assert.equal(isCleanOverview([{ ok: true, status: 'token_required', assessmentEligible: false }]), true, 'a missing token does not heal by retrying');
 });
+
+test('last good answers survive a restart when the store has a path', async () => {
+  const { mkdtemp, readFile } = await import('node:fs/promises');
+  const { tmpdir } = await import('node:os');
+  const { join } = await import('node:path');
+  const dir = await mkdtemp(join(tmpdir(), 'last-good-'));
+  const path = join(dir, 'sources.json');
+  const { writeFileSync } = await import('node:fs');
+  writeFileSync(path, JSON.stringify([['OONI|x', { value: { ok: true, status: 'observed', n: 1 }, at: '2026-09-24T08:00:00Z' }]]));
+  const restarted = createLastGoodStore({ path });
+  const stale = restarted.stale('OONI|x', new Error('quota exceeded'));
+  assert.equal(stale.status, 'stale');
+  assert.equal(stale.n, 1);
+  assert.equal(stale.staleSince, '2026-09-24T08:00:00Z');
+  assert.equal(restarted.remember('OONI|y', { ok: true, status: 'stale' }).status, 'stale', 'a stale answer is never remembered as good');
+  assert.equal(restarted.stale('OONI|y'), null);
+  await readFile(path, 'utf8');
+});
