@@ -48,6 +48,7 @@ export default Object.freeze({
   'ui.feedEnglish': 'خوراک انگلیسی',
   'ui.embedWidget': 'ابزارک برای وب‌سایت شما',
   'ui.licenseResults': 'نتایج:',
+  'ui.monthlyReports': 'گزارش‌های ماهانه',
   'ui.print': 'چاپ',
   'ui.networkScope': 'محدوده شبکه',
   'ui.ooniTest': 'آزمون OONI',

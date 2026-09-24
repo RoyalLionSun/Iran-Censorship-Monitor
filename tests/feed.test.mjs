@@ -74,3 +74,24 @@ test('the widget shows the six services with status and "since", in both languag
   assert.match(fa, /direction="rtl"[^>]*>اینستاگرام</);
   assert.doesNotMatch(fa, /<script/i);
 });
+
+test('the monthly report covers the month, credits the sources and follows Farsi conventions', async () => {
+  const { monthRange, recentMonths, renderMonthlyReport } = await import('../lib/report.mjs');
+  assert.deepEqual(monthRange('2026-08', '2026-09-25'), { month: '2026-08', since: '2026-08-01', until: '2026-08-31', complete: true });
+  assert.deepEqual(monthRange('2026-09', '2026-09-25'), { month: '2026-09', since: '2026-09-01', until: '2026-09-25', complete: false });
+  assert.equal(monthRange('2026-10', '2026-09-25'), null, 'no future months');
+  assert.equal(monthRange('2021-12', '2026-09-25'), null, 'nothing before the history starts');
+  assert.deepEqual(recentMonths(3, '2026-09-25'), ['2026-09', '2026-08', '2026-07']);
+  const interpretation = { summary: { headline: { state: 'services-blocked', services: ['instagram'] } },
+    services: { items: [{ id: 'instagram', status: 'blocked', web: { measurements: 10, confirmed: 8 } }],
+      changes: { compared: 3, worse: [{ name: 'Zoom', from: 'reachable', to: 'partial' }, { name: 'GitHub', from: 'reachable', to: 'partial' }], better: [] } } };
+  const history = { services: [{ id: 'instagram', months: [{ month: '2026-07', status: 'blocked' }, { month: '2026-08', status: 'blocked' }, { month: '2026-09', status: 'reachable' }] }] };
+  const range = monthRange('2026-08', '2026-09-25');
+  const en = renderMonthlyReport({ interpretation, history, range, lang: 'en', dashboardUrl: 'https://m.example/' });
+  assert.match(en, /Blocked without interruption since Jul 2026/, '"since" is judged at the end of the reported month, not today');
+  assert.match(en, /CC BY-NC-SA 4\.0/);
+  assert.match(en, /Zoom \(reachable → partly\), GitHub/);
+  const fa = renderMonthlyReport({ interpretation, history, range, lang: 'fa', dashboardUrl: 'https://m.example/' });
+  assert.match(fa, /<html lang="fa" dir="rtl">/);
+  assert.match(fa, /Zoom \([^)]*\)، GitHub/, 'Persian list separator');
+});

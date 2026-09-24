@@ -48,6 +48,7 @@ export default Object.freeze({
   'ui.feedEnglish': 'Feed (English)',
   'ui.embedWidget': 'Widget for your website',
   'ui.licenseResults': 'Results:',
+  'ui.monthlyReports': 'Monthly reports',
   'ui.print': 'Print',
   'ui.networkScope': 'Network scope',
   'ui.ooniTest': 'OONI test',

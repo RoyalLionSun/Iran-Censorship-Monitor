@@ -1,8 +1,8 @@
 import http from 'node:http';
-import { readFile, stat } from 'node:fs/promises';
+import { mkdir, readFile, rename, stat, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
-import { extname, join, normalize, resolve, sep } from 'node:path';
+import { dirname, extname, join, normalize, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildAssessment } from './lib/assessment.mjs';
 import { compressBody, createLastGoodStore, errorPayload, isCleanOverview, isSettledPeriod, jsonResponse, loadEnvFile, pickEncoding, mapLimit, normalizeAsn, validateRange } from './lib/common.mjs';
@@ -38,6 +38,7 @@ import { getApnicCountryComposition, getApnicIpv6, getApnicVpnShare } from './li
 import { getServiceHistory } from './lib/history.mjs';
 import { buildFeedEntry, postToTelegram, readEntries, renderAtom, upsertEntry } from './lib/feed.mjs';
 import { renderWidget } from './lib/widget.mjs';
+import { monthRange, recentMonths, renderMonthlyReport, renderReportIndex } from './lib/report.mjs';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
 
@@ -703,6 +704,69 @@ async function serveWidget(req, res, url) {
   res.end(body);
 }
 
+// Monthly reports (/report?month=YYYY-MM, /reports): a completed month is written once to
+// var/reports and never computed again; the month in progress is kept for an hour.
+const reportMemory = new Map();
+const reportInFlight = new Map();
+async function monthlyReportHtml(range, lang, base) {
+  const file = join(root, 'var/reports', `${range.month}-${lang}.html`);
+  if (range.complete) {
+    try { return await readFile(file, 'utf8'); } catch { /* not written yet */ }
+  }
+  const key = `${range.month}|${lang}`;
+  const cached = reportMemory.get(key);
+  if (cached && Date.now() - cached.at < 60 * 60 * 1000) return cached.html;
+  if (!reportInFlight.has(key)) {
+    reportInFlight.set(key, (async () => {
+      const response = await fetch(`http://${HOST}:${PORT}/api/overview?asn=ALL&testName=web_connectivity&since=${range.since}&until=${range.until}`);
+      const overview = await response.json();
+      const interpretation = overview?.assessment?.interpretation ?? null;
+      const history = await serviceHistory().catch(() => null);
+      const outages = await getRadarOutageHistory().then((result) => result?.outages ?? []).catch(() => []);
+      const dashboardUrl = `${base}/?asn=ALL&testName=web_connectivity&since=${range.since}&until=${range.until}&lang=${lang}`;
+      const html = renderMonthlyReport({ interpretation, history, outages, range, lang, dashboardUrl });
+      // Only a complete answer for a finished month becomes the permanent report.
+      if (range.complete && interpretation && isCleanOverview([overview.ooni])) {
+        await mkdir(dirname(file), { recursive: true });
+        await writeFile(`${file}.tmp`, html);
+        await rename(`${file}.tmp`, file);
+      }
+      reportMemory.set(key, { at: Date.now(), html });
+      return html;
+    })().finally(() => reportInFlight.delete(key)));
+  }
+  return reportInFlight.get(key);
+}
+
+async function serveReport(req, res, url) {
+  const lang = url.searchParams.get('lang') === 'fa' ? 'fa' : 'en';
+  const base = process.env.PUBLIC_URL?.replace(/\/+$/, '') || `http://${req.headers.host || `${HOST}:${PORT}`}`;
+  const today = new Date().toISOString().slice(0, 10);
+  let html;
+  if (url.pathname === '/reports') {
+    html = renderReportIndex({ lang, months: recentMonths(12, today), today });
+  } else {
+    const months = recentMonths(2, today);
+    const range = monthRange(url.searchParams.get('month') || months[1], today);
+    if (!range) {
+      res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' });
+      res.end('Unknown month');
+      return;
+    }
+    html = await monthlyReportHtml(range, lang, base);
+  }
+  let body = Buffer.from(html);
+  const encoding = pickEncoding(req.headers['accept-encoding']);
+  if (encoding) body = compressBody(body, encoding);
+  res.writeHead(200, {
+    'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache', vary: 'accept-encoding',
+    'x-content-type-options': 'nosniff', 'referrer-policy': 'strict-origin-when-cross-origin',
+    'content-security-policy': "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+    ...(encoding ? { 'content-encoding': encoding } : {}), 'content-length': body.length,
+  });
+  res.end(body);
+}
+
 const server = http.createServer(async (req, res) => {
   const started = Date.now();
   try {
@@ -711,6 +775,8 @@ const server = http.createServer(async (req, res) => {
       await serveFeed(req, res, url);
     } else if (url.pathname === '/widget.svg') {
       await serveWidget(req, res, url);
+    } else if (url.pathname === '/report' || url.pathname === '/reports') {
+      await serveReport(req, res, url);
     } else if (url.pathname.startsWith('/api/')) {
       const handled = await handleApi(req, res, url);
       if (!handled) jsonResponse(res, 404, { ok: false, error: 'API route not found.' });
