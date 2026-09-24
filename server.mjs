@@ -81,14 +81,19 @@ function defaultRange() {
 const HISTORICAL_OVERVIEW_TTL_MS = 24 * 60 * 60 * 1000;
 const HISTORICAL_OVERVIEW_LIMIT = 40;
 const historicalOverviews = new Map();
+const inflightOverviews = new Map();
 
 function historicalOverviewKey(input) {
   return JSON.stringify([input.asn, input.since, input.until, input.testName, input.target]);
 }
 
-function rememberHistoricalOverview(key, payload) {
+// A current period is kept only for a few minutes: long enough that the next reader does not
+// wait, short enough that the page stays current. Its age is shown in the header.
+const CURRENT_OVERVIEW_TTL_MS = 5 * 60 * 1000;
+
+function rememberHistoricalOverview(key, payload, ttlMs = HISTORICAL_OVERVIEW_TTL_MS) {
   historicalOverviews.delete(key);
-  historicalOverviews.set(key, { expires: Date.now() + HISTORICAL_OVERVIEW_TTL_MS, payload });
+  historicalOverviews.set(key, { expires: Date.now() + ttlMs, payload });
   while (historicalOverviews.size > HISTORICAL_OVERVIEW_LIMIT) historicalOverviews.delete(historicalOverviews.keys().next().value);
 }
 
@@ -231,12 +236,23 @@ async function handleApi(req, res, url) {
 
   if (url.pathname === '/api/overview') {
     const input = queryInput(url);
-    const cacheKey = isSettledPeriod(input.until) ? historicalOverviewKey(input) : null;
+    const settled = isSettledPeriod(input.until);
+    const cacheKey = historicalOverviewKey(input);
     const cached = cacheKey ? historicalOverviews.get(cacheKey) : null;
     if (cached && cached.expires > Date.now()) {
       jsonResponse(res, 200, cached.payload);
       return true;
     }
+    // The same question already being answered (for example by the warm-up) is waited for,
+    // not asked of every upstream source a second time.
+    const pending = inflightOverviews.get(cacheKey);
+    if (pending) {
+      const shared = await pending;
+      if (shared) { jsonResponse(res, 200, shared); return true; }
+    }
+    let settleShared;
+    inflightOverviews.set(cacheKey, new Promise((resolve) => { settleShared = resolve; }));
+    try {
     const [ooni, ripe, radar, radarQuality, ioda, tor, mlab, apnic, ripestat, globalping, censoredPlanet, peeringdb, ihr, asrank, rpki, pulse, ooniDomains, circumvention] = await Promise.all([
       safeSource('OONI', () => getOoniTimeline(ooniScope(input)), sourceKey('OONI', input)),
       safeSource('RIPE Atlas', () => getRipeSignals(input), sourceKey('RIPE Atlas', input)),
@@ -350,11 +366,19 @@ async function handleApi(req, res, url) {
     const assessment = buildAssessment({ ooni, ripe, radar, radarQuality, ioda, ripestat, censoredPlanet, tor, mlab, apnic, globalping, peeringdb, ihr, asrank, rpki, pulse, ooniDomains, countryOoniDomains, circumvention, ooniSamples, ooniNetworks, outageTraffic, networkOutageTraffic, serviceNetworks, previousOoniDomains: previousOoniDomains ? { ...previousOoniDomains, period: previous, outageOverlap: comparisonBlockedByOutage } : null, selection: input, scopeLabel });
     const asnProfile = input.asn ? asns.find((item) => item.asn === input.asn) || null : null;
     const payload = { ok: true, input, asnProfile, fetchedAt: new Date().toISOString(), assessment, ooni, ripe, radar, radarQuality, ioda, tor, mlab, apnic, ripestat, globalping, censoredPlanet, peeringdb, ihr, asrank, rpki, pulse };
-    if (cacheKey && isCleanOverview([ooni, ripe, radar, radarQuality, ioda, tor, mlab, apnic, ripestat, censoredPlanet, pulse, ooniDomains, countryOoniDomains, circumvention, outageTraffic, networkOutageTraffic, ooniNetworks, serviceNetworks, previousOoniDomains, ...ooniSamples])) {
-      rememberHistoricalOverview(cacheKey, payload);
+    if (isCleanOverview([ooni, ripe, radar, radarQuality, ioda, tor, mlab, apnic, ripestat, censoredPlanet, pulse, ooniDomains, countryOoniDomains, circumvention, outageTraffic, networkOutageTraffic, ooniNetworks, serviceNetworks, previousOoniDomains, ...ooniSamples])) {
+      rememberHistoricalOverview(cacheKey, payload, settled ? HISTORICAL_OVERVIEW_TTL_MS : CURRENT_OVERVIEW_TTL_MS);
+    } else if (!settled) {
+      // A current answer with a missing part is kept for a minute only, so the part is retried soon.
+      rememberHistoricalOverview(cacheKey, payload, 60 * 1000);
     }
+    settleShared(payload);
     jsonResponse(res, 200, payload);
     return true;
+    } finally {
+      settleShared(null);
+      inflightOverviews.delete(cacheKey);
+    }
   }
 
   if (url.pathname === '/api/circumvention') {
@@ -547,4 +571,14 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, HOST, () => {
   console.log(`Iran Censorship Monitor listening on http://${HOST}:${PORT}`);
+  // Warm the view most readers open first, and keep it warm, so the first visitor does not wait
+  // for a dozen upstream sources. MONITOR_PREWARM=0 turns it off.
+  if (process.env.MONITOR_PREWARM !== '0') {
+    const warm = () => {
+      const { since, until } = defaultRange();
+      fetch(`http://${HOST}:${PORT}/api/overview?asn=AS58224&testName=web_connectivity&since=${since}&until=${until}`).catch(() => {});
+    };
+    setTimeout(warm, 1_000).unref();
+    setInterval(warm, CURRENT_OVERVIEW_TTL_MS - 30_000).unref();
+  }
 });
