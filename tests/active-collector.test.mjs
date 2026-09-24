@@ -23,11 +23,15 @@ const iran = new Set(['AS58224', 'AS197207']);
 test('paths are off until switched on, and each names what it still needs', () => {
   const off = collectorPlan({});
   assert.equal(off['ooni-api'].enabled, false);
+  assert.deepEqual(off['ooni-s3'].missing, ['MONITOR_COLLECTOR=1', 'OONI_S3_ENABLED=1'], 'raw files are heavy and never on by default');
+  assert.equal(collectorPlan({ MONITOR_COLLECTOR: '1' })['ooni-s3'].enabled, false);
   assert.deepEqual(off['ripe-atlas'].missing, ['MONITOR_COLLECTOR=1', 'ACTIVE_MEASUREMENTS_ENABLED=true', 'RIPE_ATLAS_API_KEY']);
   const on = collectorPlan({ MONITOR_COLLECTOR: '1', ACTIVE_MEASUREMENTS_ENABLED: 'true' });
   assert.equal(on['ooni-api'].enabled, true);
   assert.equal(on.globalping.enabled, true);
   assert.deepEqual(on['ripe-atlas'].missing, ['RIPE_ATLAS_API_KEY'], 'no key, no Atlas');
+  const paused = collectorPlan({ MONITOR_COLLECTOR: '1', MONITOR_COLLECTOR_PAUSE: 'ooni-api' });
+  assert.deepEqual([paused['ooni-api'].enabled, paused['ooni-api'].paused, paused['ripe-atlas'].paused], [false, true, undefined], 'one path paused, the others unaffected');
 });
 
 test('the block address and private answers count as DNS blocking; an empty answer is a failure, not a block', () => {

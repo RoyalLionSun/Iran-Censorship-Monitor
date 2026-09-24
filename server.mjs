@@ -22,6 +22,7 @@ import { readAsnDirectory } from './lib/asn-directory.mjs';
 import { openStore } from './lib/store.mjs';
 import { storeCircumvention, storeCovers, storeDomains, storeNetworks, storeSample, storeServiceNetworks, storeTimeline } from './lib/store-payloads.mjs';
 import { collectOoniApi, runCollectors } from './lib/collector.mjs';
+import { collectOoniS3 } from './lib/ooni-raw.mjs';
 import { activeHttp, atlasPath, collectActivePath, collectorPlan, globalpingPath } from './lib/active-collector.mjs';
 import { getAsnNames } from './lib/asn-names.mjs';
 import { getCitizenLabIranTargets } from './lib/citizenlab.mjs';
@@ -597,10 +598,12 @@ server.listen(PORT, HOST, () => {
   // The collector fills the store from all paths in parallel, hourly. Off until switched on
   // (MONITOR_COLLECTOR=1), so no upstream request is made before the owner decides.
   const plan = collectorPlan();
-  if (plan['ooni-api'].enabled) {
+  if (Object.values(plan).some((entry) => entry.enabled)) {
     // Every enabled path runs in parallel; the active ones start a new round every 6 hours.
     const activeRun = (name, build) => async (target) => collectActivePath(target, name, build(), { iranAsns: await iranRegisteredAsns() });
-    const paths = { 'ooni-api': (target) => collectOoniApi(target) };
+    const paths = {};
+    if (plan['ooni-api'].enabled) paths['ooni-api'] = (target) => collectOoniApi(target);
+    if (plan['ooni-s3'].enabled) paths['ooni-s3'] = (target) => collectOoniS3(target);
     if (plan['ripe-atlas'].enabled) paths['ripe-atlas'] = activeRun('ripe-atlas', () => atlasPath({ http: activeHttp, key: process.env.RIPE_ATLAS_API_KEY.trim() }));
     if (plan.globalping.enabled) paths.globalping = activeRun('globalping', () => globalpingPath({ http: activeHttp, token: process.env.GLOBALPING_API_TOKEN?.trim() ?? '' }));
     const collect = async () => {

@@ -71,7 +71,7 @@ function pathsDetail(paths) {
   const time = (value) => (value ? `${value.replace('T', ' ').slice(0, 16)} UTC` : '—');
   const lines = [t(paths.via === 'store' ? 'sourceHealth.path.store' : 'sourceHealth.path.live')];
   for (const [name, health] of Object.entries(paths.paths ?? {})) {
-    const key = health.enabled === false ? 'sourceHealth.path.off' : health.lastError ? 'sourceHealth.path.failing'
+    const key = health.paused ? 'sourceHealth.path.paused' : health.enabled === false ? 'sourceHealth.path.off' : health.lastError ? 'sourceHealth.path.failing'
       : health.lastRun ? 'sourceHealth.path.ok' : 'sourceHealth.path.waiting';
     lines.push(t(key, { path: t(`sourceHealth.pathName.${name}`), newest: time(health.newest), error: String(health.lastError ?? '').slice(0, 80) }));
   }

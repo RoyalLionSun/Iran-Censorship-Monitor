@@ -559,6 +559,7 @@ export default Object.freeze({
   'sourceHealth.path.ok': '{path}: working, newest measurement {newest}',
   'sourceHealth.path.failing': '{path}: failing ({error}), newest measurement {newest}',
   'sourceHealth.path.off': '{path}: not switched on yet',
+  'sourceHealth.path.paused': '{path}: paused by the operator',
   'sourceHealth.path.waiting': '{path}: switched on, first run pending',
   'sourceHealth.pathName.ooni-api': 'OONI (API)',
   'sourceHealth.pathName.ooni-s3': 'OONI (raw files)',

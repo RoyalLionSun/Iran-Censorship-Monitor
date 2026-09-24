@@ -1,6 +1,13 @@
 # Data resilience plan — no single point of failure for access evidence
 
-Status: **steps 1–3, 5 and 6 built and tested offline; all paths off until switched on.** Accounts and credits (RIPE Atlas, Globalping) are settled
+Status: **all seven steps built; default operation stays live and lightweight.**
+
+**Owner decision, 24 September 2026:** the project is public on GitHub and hosted by others, so
+no host may be made to download OONI's raw files (about 400 MB per day for Iran) or keep an
+archive. The raw-file path and the backfill are therefore **opt-in only** (`OONI_S3_ENABLED=1`,
+`scripts/backfill-ooni-s3.mjs`) and never part of default operation; the 8-day test backfill was
+deleted. Default: live OONI API with caches and the dated last-good state; the collector and the
+independent RIPE Atlas / Globalping paths stay off until switched on. Accounts and credits (RIPE Atlas, Globalping) are settled
 at the end; everything is built so that it runs without them and switches on when they exist.
 
 ## Problem
@@ -88,8 +95,19 @@ A path that fails leaves the others untouched; the next run retries it.
 3. Store-backed payloads for the existing interpretation. **Done** — `lib/store-payloads.mjs`; the
    server reads the store for a period the collector covers completely and asks OONI otherwise;
    parity with the live aggregation is tested. A live side-by-side comparison follows the first run.
-4. OONI S3 path: verify bucket layout and daily volume for Iran once the owner agrees to the
-   first download; stream-parse, reduce, dedup.
+4. OONI S3 path. **Done** — `lib/ooni-raw.mjs`. Checked on 24 September 2026 with the owner's
+   agreement: `raw/YYYYMMDD/HH/IR/<test>/*.jsonl.gz` in the public bucket `ooni-data-eu-fra`,
+   about 400 MB compressed per day for Iran (99% Web Connectivity, ~17 MB per hour), one hour
+   reads in about 5 s with ~120 MB of memory.
+   **The raw files carry no verdicts and no measurement id** — OONI computes anomaly/confirmed/
+   failure afterwards. This path therefore derives the verdict itself: Web Connectivity from the
+   probe's `blocking` field, "confirmed" from Iran's block-page fingerprints (DNS answer
+   10.10.34.34-36, or a body framing http://10.10.34.34); app tests from their status fields
+   (`registration_server_status`, `telegram_*_blocking`, `signal_backend_status`,
+   `facebook_*_blocking`, Psiphon tunnel failure, Tor directory authorities unreachable).
+   Measurements are matched across routes by report id + input + start time; **when the API
+   delivers the same measurement, OONI's own verdict replaces the derived one**, never the other
+   way round. Open: a side-by-side comparison of derived and OONI verdicts once the API answers.
 5. Source health per path in the header badge. **Done** — the overview carries `dataPaths`
    (which route answered, and per path: switched on or what is missing, last run, last error,
    newest measurement); the header badge's tooltip lists it in EN and FA.
@@ -101,7 +119,13 @@ A path that fails leaves the others untouched; the next run retries it.
    (10.10.34.x) or another private answer, `failure` for errors and resets, `ok` otherwise.
    Pending measurement ids are kept in the store, so a restart loses nothing; a new round every
    6 hours. The page does not use these rows yet (step 6b: show them as a separate family).
-7. History backfill from S3 for the last 120 days.
+7. History backfill from S3. **Done** — `node scripts/backfill-ooni-s3.mjs --days N` reads newest
+   hour first and extends the covered period back only without a gap; it can be stopped and run
+   again. Opt-in only: 120 days would be about 47 GB of downloads.
+
+Operation: `MONITOR_COLLECTOR=1` runs every enabled path hourly; `MONITOR_COLLECTOR_PAUSE=ooni-api`
+pauses single paths while the others continue. The raw-file path additionally needs
+`OONI_S3_ENABLED=1` and is not recommended for ordinary hosts.
 
 ## Open for the owner
 

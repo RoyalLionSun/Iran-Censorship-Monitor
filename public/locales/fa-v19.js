@@ -559,6 +559,7 @@ export default Object.freeze({
   'sourceHealth.path.ok': 'مسیر {path}: فعال، تازه‌ترین اندازه‌گیری {newest}',
   'sourceHealth.path.failing': 'مسیر {path}: ناموفق ({error})، تازه‌ترین اندازه‌گیری {newest}',
   'sourceHealth.path.off': 'مسیر {path}: هنوز روشن نشده است',
+  'sourceHealth.path.paused': 'مسیر {path}: به‌دست گرداننده متوقف شده است',
   'sourceHealth.path.waiting': 'مسیر {path}: روشن است، نخستین اجرا در انتظار',
   'sourceHealth.pathName.ooni-api': 'رابط برنامه‌نویسی OONI',
   'sourceHealth.pathName.ooni-s3': 'فایل‌های خام OONI',

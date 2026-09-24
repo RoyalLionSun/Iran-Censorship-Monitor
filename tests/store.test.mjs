@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { normalizeOoniMeasurement, ooniOutcome, openStore } from '../lib/store.mjs';
 
-const m = (uid, { asn = 58224, test = 'web_connectivity', input = 'https://www.instagram.com/', time = '2026-09-20T10:00:00Z', anomaly = false, confirmed = false, failure = false, blocking = null, report = 'r1' } = {}) => ({
+const m = (uid, { asn = 58224, test = 'web_connectivity', input = 'https://www.instagram.com/', time = '2026-09-20T10:00:00Z', anomaly = false, confirmed = false, failure = false, blocking = null, report = `r-${uid}` } = {}) => ({
   measurement_uid: uid, measurement_start_time: time, probe_asn: asn, test_name: test, input,
   anomaly, confirmed, failure, report_id: report, scores: blocking ? { analysis: { blocking_type: blocking } } : {},
 });
@@ -21,16 +21,26 @@ test('a measurement is reduced to the stored fields; one without identity or tim
   const row = normalizeOoniMeasurement(m('u1', { input: 'https://WWW.Instagram.com./x', confirmed: true, blocking: 'dns' }));
   assert.deepEqual({ asn: row.asn, host: row.host, day: row.day, outcome: row.outcome, blocking: row.blocking_type },
     { asn: 'AS58224', host: 'www.instagram.com', day: '2026-09-20', outcome: 'confirmed', blocking: 'dns' });
-  assert.equal(normalizeOoniMeasurement({ ...m('u2'), measurement_uid: '' }), null);
+  assert.equal(normalizeOoniMeasurement({ ...m('u2'), measurement_uid: '', report_id: null }), null);
+  assert.equal(normalizeOoniMeasurement({ ...m('u2'), measurement_uid: '' }).uid, 'nk:r-u2|https://www.instagram.com/|2026-09-20T10:00:00.000Z',
+    'a raw-file measurement without id is identified by report, input and time');
+  assert.equal(normalizeOoniMeasurement({ ...m('u4'), measurement_start_time: '2026-09-20 10:00:00' }).ts, '2026-09-20T10:00:00.000Z', 'raw-file times are UTC');
   assert.equal(normalizeOoniMeasurement({ ...m('u3'), measurement_start_time: 'never' }), null);
 });
 
 test('the same measurement from the API and from raw files is stored once, with both routes', () => {
   const store = openStore();
+  const raw = (uid, extra = {}) => ({ ...m(uid, extra), measurement_uid: undefined });
   assert.equal(store.addOoniMeasurements([m('u1'), m('u2')], 'api'), 2);
-  assert.equal(store.addOoniMeasurements([m('u1'), m('u3')], 's3'), 1);
-  const routes = store.db.prepare('SELECT uid, routes FROM ooni_measurement ORDER BY uid').all().map((row) => [row.uid, row.routes]);
-  assert.deepEqual(routes, [['u1', 'api,s3'], ['u2', 'api'], ['u3', 's3']]);
+  assert.equal(store.addOoniMeasurements([raw('u1'), raw('u3', { anomaly: true })], 's3'), 1);
+  // OONI's own verdict replaces the one derived from the raw file when the API delivers later.
+  assert.equal(store.addOoniMeasurements([m('u3', { confirmed: true, blocking: 'dns' })], 'api'), 0);
+  const rows = store.db.prepare('SELECT uid, routes, outcome FROM ooni_measurement ORDER BY uid').all().map((row) => [row.uid, row.routes, row.outcome]);
+  assert.deepEqual(rows, [['u1', 'api,s3', 'ok'], ['u2', 'api', 'ok'], ['u3', 's3,api', 'confirmed']]);
+  assert.equal(store.addOoniMeasurements([raw('u3')], 's3'), 0);
+  assert.equal(store.db.prepare("SELECT outcome FROM ooni_measurement WHERE uid = 'u3'").get().outcome, 'confirmed', 'a raw file never overwrites OONI');
+  assert.deepEqual(store.verdictAgreement().map((row) => [row.ooni, row.derived, row.n]), [['confirmed', 'anomaly', 1], ['ok', 'ok', 1]],
+    'the derived verdict stays next to OONI\'s for comparison, whichever route came first');
   store.close();
 });
 
