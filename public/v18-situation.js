@@ -227,7 +227,7 @@ function evidenceValue(dimension, metric) {
   return dimension?.evidence?.find((item) => item.metric === metric)?.value ?? null;
 }
 
-const NAMED_HEADLINES = ['services-blocked', 'services-restricted', 'services-reachable', 'services-untested'];
+const NAMED_HEADLINES = ['services-blocked', 'services-restricted', 'services-reachable', 'services-untested', 'services-blocked-independent'];
 
 function headlineText(summary, services) {
   const headline = summary.headline;
@@ -309,6 +309,24 @@ function coverageLine(item, selection) {
   const window = windowDays(selection);
   if (!days || !window) return '';
   return `<li class="tile-coverage">${escapeHtml(t('board.coverage.days', { days: formatNumber(days), window: formatNumber(window) }))}</li>`;
+}
+
+// Tile colour for an independent answer; "failing" is a failed connection, not proof of a block.
+const INDEPENDENT_STATUS = { blocked: 'blocked', failing: 'restricted', partial: 'restricted', reachable: 'reachable' };
+const INDEPENDENT_SOURCE = { 'ripe-atlas': 'RIPE Atlas', globalping: 'Globalping' };
+
+// Independent inside-out checks, as their own line: which source, how many devices in how many
+// networks, and what they saw. Never merged into OONI's figures.
+function independentLine(independent) {
+  if (!independent || independent.status === 'inconclusive') return '';
+  const key = independent.status === 'blocked' && independent.dns.blocked >= independent.connect.blocked ? 'board.independent.line.blockedDns'
+    : `board.independent.line.${independent.status}`;
+  const networks = independent.blockedNetworks.length ? independent.blockedNetworks : independent.networks;
+  return `<li class="tile-independent">${escapeHtml(t(key, {
+    sources: listOf(independent.sources.map((source) => INDEPENDENT_SOURCE[source] ?? source)),
+    probes: plural('board.independent.devices', independent.probes), networks: plural('board.independent.networks', independent.networks.length),
+    named: networks.slice(0, 3).join(', '),
+  }))}</li>`;
 }
 
 function countryLine(country, item) {
@@ -510,14 +528,17 @@ function renderServiceTiles(services, selection, connectivity = null) {
         // Without a usable test in this network, the tile answers with the result across Iran,
         // labelled as such, instead of stopping at "not tested".
         const country = ['untested', 'unclear'].includes(item.status) ? item.country : null;
-        const status = country ? country.status : item.status;
+        // Without any OONI answer, an independent check (RIPE Atlas, Globalping) answers, labelled.
+        const independent = !country && ['untested', 'unclear', 'unavailable'].includes(item.status) && INDEPENDENT_STATUS[item.independent?.status]
+          ? item.independent : null;
+        const status = country ? country.status : independent ? INDEPENDENT_STATUS[independent.status] : item.status;
         return `
-        <article class="service-tile" data-status="${escapeHtml(status)}"${country ? ' data-scope="country"' : ''}>
+        <article class="service-tile" data-status="${escapeHtml(status)}"${country ? ' data-scope="country"' : independent ? ' data-scope="independent"' : ''}>
           <div class="service-tile-head"><h3 class="${item.id === 'selected-target' ? 'technical-ltr' : ''}">${escapeHtml(brandName(item.id, services))}</h3></div>
-          <b class="service-tile-status">${escapeHtml(country ? t(`board.country.status.${country.status}`)
+          <b class="service-tile-status">${escapeHtml(independent ? t(`board.independent.status.${independent.status}`) : country ? t(`board.country.status.${country.status}`)
             : item.status === 'restricted' && item.app?.status === 'anomaly' && item.web?.status !== 'anomaly' ? t('board.status.appFailed')
               : t(`board.status.${item.status}`))}</b>
-          <ul>${country ? countryLine(country, item) : ''}${!country && item.country && item.web?.status === 'untested' ? `<li class="tile-country">${escapeHtml(t(`board.country.web.${item.country.status}`, { confirmed: formatNumber(item.country.confirmed), count: formatNumber(item.country.anomalous), total: formatNumber(item.country.measurements) }))}</li>` : ''}${!country && ['unavailable', 'outage'].includes(services.countryCheck) && ['untested', 'unclear'].includes(item.status) ? `<li class="tile-country">${escapeHtml(t(`board.country.${services.countryCheck}`))}</li>` : ''}${item.country && item.web?.status === 'untested' ? '' : channelLine(item.web, 'web')}${channelLine(item.app, 'app')}${mechanismLine(item)}${coverageLine(item, selection)}</ul>
+          <ul>${country ? countryLine(country, item) : ''}${!country && item.country && item.web?.status === 'untested' ? `<li class="tile-country">${escapeHtml(t(`board.country.web.${item.country.status}`, { confirmed: formatNumber(item.country.confirmed), count: formatNumber(item.country.anomalous), total: formatNumber(item.country.measurements) }))}</li>` : ''}${!country && ['unavailable', 'outage'].includes(services.countryCheck) && ['untested', 'unclear'].includes(item.status) ? `<li class="tile-country">${escapeHtml(t(`board.country.${services.countryCheck}`))}</li>` : ''}${item.country && item.web?.status === 'untested' ? '' : channelLine(item.web, 'web')}${channelLine(item.app, 'app')}${mechanismLine(item)}${coverageLine(item, selection)}${independentLine(item.independent)}</ul>
         </article>`;
       }).join('')}
       </div>` : `<p class="service-board-empty">${escapeHtml(t('board.services.noneInSelection'))}</p>`}

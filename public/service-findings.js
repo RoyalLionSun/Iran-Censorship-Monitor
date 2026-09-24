@@ -385,3 +385,38 @@ export function compareServicePeriods(previousPayload, currentPayload) {
   }
   return { compared, worse, better };
 }
+
+// Independent inside-out checks (RIPE Atlas, Globalping) per service: a second family next to
+// OONI, never added to its counts. Rows: { host, source, kind, asn, probe, outcome, n, newest }.
+// DNS pointing to the block address is blocking; a failed TLS/HTTPS connection is a failure
+// that fits blocking but is not proof of it on its own. Majorities decide, as for OONI.
+export function summarizeIndependentChecks(rows = [], brands = [...SERVICE_BRANDS, ...MORE_SERVICE_GROUPS.flatMap((group) => group.services)]) {
+  const byBrand = new Map();
+  for (const row of rows ?? []) {
+    const brand = brands.find((entry) => entry.domains.includes(String(row.host ?? '').toLowerCase()));
+    if (!brand || !['ok', 'blocked', 'failure'].includes(row.outcome)) continue;
+    if (!byBrand.has(brand.id)) {
+      byBrand.set(brand.id, { id: brand.id, sources: new Set(), probes: new Set(), networks: new Set(), blockedNetworks: new Set(),
+        dns: { ok: 0, blocked: 0, failure: 0 }, connect: { ok: 0, blocked: 0, failure: 0 }, newest: null });
+    }
+    const entry = byBrand.get(brand.id);
+    const count = Number(row.n) || 0;
+    (row.kind === 'dns' ? entry.dns : entry.connect)[row.outcome] += count;
+    entry.sources.add(row.source);
+    if (row.probe) entry.probes.add(`${row.source}:${row.probe}`);
+    if (row.asn) entry.networks.add(row.asn);
+    if (row.asn && (row.outcome === 'blocked' || (row.kind !== 'dns' && row.outcome === 'failure'))) entry.blockedNetworks.add(row.asn);
+    if (row.newest && (!entry.newest || row.newest > entry.newest)) entry.newest = row.newest;
+  }
+  return Object.fromEntries([...byBrand.values()].map((entry) => {
+    const { dns, connect } = entry;
+    const status = dns.blocked > dns.ok || connect.blocked > connect.ok ? 'blocked'
+      : connect.failure > connect.ok ? 'failing'
+        : dns.ok + connect.ok === 0 ? 'inconclusive'
+          : dns.blocked + connect.blocked + connect.failure > 0 ? 'partial' : 'reachable';
+    return [entry.id, {
+      id: entry.id, status, sources: [...entry.sources].sort(), probes: entry.probes.size, networks: [...entry.networks].sort(),
+      blockedNetworks: [...entry.blockedNetworks].sort(), dns, connect, newest: entry.newest,
+    }];
+  }));
+}

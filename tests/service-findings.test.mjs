@@ -271,3 +271,16 @@ test('what changed: status moves between periods, only with enough tests in both
   assert.equal(result.compared, 2, 'Signal had too few tests before');
   assert.equal(compareServicePeriods(null, now), null);
 });
+
+test('independent checks: DNS to the block address is blocking, failed connections alone are "failing"', async () => {
+  const { summarizeIndependentChecks } = await import('../public/service-findings.js');
+  const row = (host, kind, outcome, probe, n = 1) => ({ host, source: 'globalping', kind, asn: 'AS202468', probe, outcome, n });
+  const result = summarizeIndependentChecks([
+    row('web.telegram.org', 'http', 'failure', 'a'), row('web.telegram.org', 'http', 'failure', 'b'), row('web.telegram.org', 'dns', 'ok', 'a'),
+    row('signal.org', 'dns', 'blocked', 'a'), row('signal.org', 'dns', 'ok', 'b'), row('signal.org', 'http', 'ok', 'b'),
+    row('example.org', 'dns', 'blocked', 'a'),
+  ]);
+  assert.equal(result.telegram.status, 'failing');
+  assert.equal(result.signal.status, 'partial', 'one block against one success is not a majority');
+  assert.equal(result.example, undefined, 'hosts outside the service list are ignored');
+});

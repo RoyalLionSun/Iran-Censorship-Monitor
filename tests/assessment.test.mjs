@@ -547,3 +547,28 @@ test('missing service results, not a minor connectivity signal, lead the headlin
   assert.equal(result.summary.headline.state, 'services-unavailable');
   assert.equal(result.services.rateLimited, true);
 });
+
+test('when OONI has no answer, an independent check names the blocked service, labelled as such', () => {
+  const atlas = (host, kind, outcome, probe, asn = 'AS58224') => ({ host, source: 'ripe-atlas', kind, asn, probe, outcome, n: 1, newest: '2026-09-23T10:00:00.000Z' });
+  const result = buildAssessment({ radar: radar(),
+    ooniDomains: { ok: false, error: 'OONI rate limit reached.' }, circumvention: { ok: false, error: 'OONI rate limit reached.' },
+    activeChecks: [atlas('www.instagram.com', 'dns', 'blocked', '1'), atlas('www.instagram.com', 'dns', 'blocked', '2', 'AS44244'),
+      atlas('www.youtube.com', 'dns', 'ok', '1'), atlas('www.youtube.com', 'tls', 'ok', '1')],
+    selection: { ...selection, asn: '' }, scopeLabel: 'Iran' }).interpretation;
+  assert.equal(result.summary.headline.state, 'services-blocked-independent');
+  assert.deepEqual(result.summary.headline.services, ['instagram']);
+  const instagram = result.services.items.find((item) => item.id === 'instagram').independent;
+  assert.deepEqual({ status: instagram.status, probes: instagram.probes, blocked: instagram.blockedNetworks }, { status: 'blocked', probes: 2, blocked: ['AS44244', 'AS58224'] });
+  assert.equal(result.services.items.find((item) => item.id === 'youtube').independent.status, 'reachable');
+  assert.deepEqual(result.services.independentSources, ['ripe-atlas']);
+});
+
+test('an independent check never replaces an OONI result', () => {
+  const domains = { ok: true, domains: [{ domain: 'www.instagram.com', measurements: 20, confirmed: 0, anomalous: 0, ok: 20, failures: 0, observedDays: 3 }] };
+  const result = buildAssessment({ radar: radar(), ooniDomains: domains, selection: { ...selection, asn: 'AS58224' }, scopeLabel: 'AS58224 / Iran',
+    activeChecks: [{ host: 'www.instagram.com', source: 'ripe-atlas', kind: 'dns', asn: 'AS58224', probe: '1', outcome: 'blocked', n: 3 }] }).interpretation;
+  const instagram = result.services.items.find((item) => item.id === 'instagram');
+  assert.equal(instagram.status, 'reachable', 'OONI keeps its own answer');
+  assert.equal(instagram.independent.status, 'blocked', 'the independent result stands next to it');
+  assert.deepEqual(result.services.independentBlocked, []);
+});

@@ -61,7 +61,9 @@ const ooniDomains = { ok: true, sourceUrl: 'https://api.ooni.io/', domains: [
   { domain: 'www.instagram.com', measurements: 40, confirmed: 12, anomalous: 8, ok: 20, failures: 0, lastObserved: '2026-09-12' },
 ] };
 const circumvention = { ok: true, signals: [{ testName: 'whatsapp', status: 'observed', measurements: 30, anomalies: 21, lastObservation: '2026-09-12' }] };
-overview.assessment = buildAssessment({ ...overview, ooniDomains, circumvention, selection: input, scopeLabel: 'AS58224 / Iran' });
+// YouTube has no OONI result here; an independent RIPE Atlas check answers for it, labelled.
+const activeChecks = ['1', '2'].map((probe) => ({ host: 'www.youtube.com', source: 'ripe-atlas', kind: 'dns', asn: 'AS58224', probe, outcome: 'blocked', n: 1, newest: '2026-09-12T10:00:00.000Z' }));
+overview.assessment = buildAssessment({ ...overview, ooniDomains, circumvention, activeChecks, selection: input, scopeLabel: 'AS58224 / Iran' });
 if (overview.assessment.interpretation?.schemaVersion !== 1) throw new Error('Fixture must use the current server interpretation contract.');
 
 const config = {
@@ -110,7 +112,8 @@ async function runScenario(browser, scenario) {
     if (scenario === 'ready') {
       const tiles = (stdout.match(/class="service-tile"/g) || []).length;
       if (headline !== 'Instagram is blocked' || tiles !== 6 || !stdout.includes('class="status-row"') ||
-          !/<article class="service-tile" data-status="restricted">[\s\S]*?WhatsApp/.test(stdout)) {
+          !/<article class="service-tile" data-status="restricted">[\s\S]*?WhatsApp/.test(stdout) ||
+          !/<article class="service-tile" data-status="blocked" data-scope="independent">[\s\S]*?YouTube[\s\S]*?Independent check \(RIPE Atlas\): 2 devices in 1 network; DNS points to Iran’s block address \(AS58224\)/.test(stdout)) {
         throw new Error(`ready: situation board incomplete (headline=${headline}, tiles=${tiles})`);
       }
       if (cards !== 4 || !stdout.includes('Dimension-specific evidence assessment') ||

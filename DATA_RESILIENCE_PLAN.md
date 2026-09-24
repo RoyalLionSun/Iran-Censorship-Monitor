@@ -118,7 +118,14 @@ A path that fails leaves the others untouched; the next run retries it.
    Iran and drops probes on foreign networks. Results: `blocked` only for the block address
    (10.10.34.x) or another private answer, `failure` for errors and resets, `ok` otherwise.
    Pending measurement ids are kept in the store, so a restart loses nothing; a new round every
-   6 hours. The page does not use these rows yet (step 6b: show them as a separate family).
+   6 hours.
+6b. Independent results on the page. **Done** — per service, a separate tile line
+   "Independent check (RIPE Atlas): N devices in M networks; DNS points to Iran's block address
+   (AS…)". It never changes OONI's counts or an OONI verdict. Only where OONI has no answer for a
+   service (untested, unclear, unavailable) does the tile take the independent status, dashed and
+   labelled "(independent check)", and the headline can then read "… is blocked, according to an
+   independent check". A failed TLS/HTTPS connection alone shows as "connection fails", not
+   "blocked".
 7. History backfill from S3. **Done** — `node scripts/backfill-ooni-s3.mjs --days N` reads newest
    hour first and extends the covered period back only without a gap; it can be stopped and run
    again. Opt-in only: 120 days would be about 47 GB of downloads.

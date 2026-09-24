@@ -110,3 +110,13 @@ test('the store persists on disk and prunes old days', async () => {
   assert.equal(second.db.prepare('SELECT count(*) AS n FROM ooni_measurement').get().n, 1);
   second.close();
 });
+
+test('independent checks are read per host, network and probe; a selected network is its own scope', () => {
+  const store = openStore();
+  const row = (id, probeId, asn, outcome) => ({ id, source: 'ripe-atlas', probeId, asn, host: 'www.instagram.com', kind: 'dns', outcome, ts: '2026-09-20T10:00:00Z' });
+  store.addActiveMeasurements([row('1', 'p1', 58224, 'blocked'), row('2', 'p1', 58224, 'blocked'), row('3', 'p2', 44244, 'ok'), row('4', 'p3', 9009, 'ok')]);
+  const all = store.activeChecks({ hosts: ['WWW.instagram.com'], since: '2026-09-20', until: '2026-09-20', iranAsns: new Set(['AS58224', 'AS44244']) });
+  assert.deepEqual(all.map((entry) => [entry.asn, entry.probe, entry.outcome, entry.n]), [['AS44244', 'p2', 'ok', 1], ['AS58224', 'p1', 'blocked', 2]]);
+  assert.equal(store.activeChecks({ hosts: ['www.instagram.com'], since: '2026-09-20', until: '2026-09-20', asn: 'AS58224' }).length, 1);
+  store.close();
+});

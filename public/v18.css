@@ -40,8 +40,9 @@
 .service-tile li[data-channel-status="confirmed"], .service-tile li[data-channel-status="anomaly"] { color: var(--text-soft); }
 
 /* A tile answered from tests across Iran, not from this network: same colour, dashed edge. */
-.service-tile[data-scope="country"] { border-style: dashed; }
+.service-tile[data-scope="country"], .service-tile[data-scope="independent"] { border-style: dashed; }
 .service-tile .tile-country { color: var(--text-soft); }
+.service-tile .tile-independent { color: var(--text-soft); border-top: 1px dashed var(--border); padding-top: .35rem; margin-top: .25rem; }
 /* Who has access: every measured Iranian network, its access level and each service. */
 .access-board header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin-bottom: 4px; }
 .access-board h2 { margin: 0; font-size: 13px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--text-soft); }

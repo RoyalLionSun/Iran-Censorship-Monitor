@@ -23,7 +23,7 @@ import { openStore } from './lib/store.mjs';
 import { storeCircumvention, storeCovers, storeDomains, storeNetworks, storeSample, storeServiceNetworks, storeTimeline } from './lib/store-payloads.mjs';
 import { collectOoniApi, runCollectors } from './lib/collector.mjs';
 import { collectOoniS3 } from './lib/ooni-raw.mjs';
-import { activeHttp, atlasPath, collectActivePath, collectorPlan, globalpingPath } from './lib/active-collector.mjs';
+import { ACTIVE_HOSTS, activeHttp, atlasPath, collectActivePath, collectorPlan, globalpingPath } from './lib/active-collector.mjs';
 import { getAsnNames } from './lib/asn-names.mjs';
 import { getCitizenLabIranTargets } from './lib/citizenlab.mjs';
 import { getPeeringDbTopology } from './lib/peeringdb.mjs';
@@ -380,7 +380,10 @@ async function handleApi(req, res, url) {
       Date.parse(item.start) <= Date.parse(`${to}T23:59:59Z`) && (!item.end || Date.parse(item.end) >= Date.parse(`${from}T00:00:00Z`)));
     const comparisonBlockedByOutage = overlapsOutage(previous.since, previous.until) || overlapsOutage(input.since, input.until);
     const scopeLabel = input.asn ? `${input.asn} / Iran` : 'Iran / all measured networks';
-    const assessment = buildAssessment({ ooni, ripe, radar, radarQuality, ioda, ripestat, censoredPlanet, tor, mlab, apnic, globalping, peeringdb, ihr, asrank, rpki, pulse, ooniDomains, countryOoniDomains, circumvention, ooniSamples, ooniNetworks, outageTraffic, networkOutageTraffic, serviceNetworks, previousOoniDomains: previousOoniDomains ? { ...previousOoniDomains, period: previous, outageOverlap: comparisonBlockedByOutage } : null, selection: input, scopeLabel });
+    // Independent inside-out checks (RIPE Atlas, Globalping) from the local store; empty unless
+    // those paths were switched on. Probes were limited to Iranian networks when measuring.
+    const activeChecks = store.activeChecks({ hosts: ACTIVE_HOSTS, since: input.since, until: input.until, asn: input.asn });
+    const assessment = buildAssessment({ activeChecks, ooni, ripe, radar, radarQuality, ioda, ripestat, censoredPlanet, tor, mlab, apnic, globalping, peeringdb, ihr, asrank, rpki, pulse, ooniDomains, countryOoniDomains, circumvention, ooniSamples, ooniNetworks, outageTraffic, networkOutageTraffic, serviceNetworks, previousOoniDomains: previousOoniDomains ? { ...previousOoniDomains, period: previous, outageOverlap: comparisonBlockedByOutage } : null, selection: input, scopeLabel });
     const asnProfile = input.asn ? asns.find((item) => item.asn === input.asn) || null : null;
     // Which route answered the access evidence, and how current each collector path is.
     const health = store.health();
