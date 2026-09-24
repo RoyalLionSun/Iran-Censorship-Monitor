@@ -593,3 +593,9 @@ main:focus { outline: none; }
 }
 
 .offline-banner { margin: 0 0 12px; padding: 10px 14px; border: 1px solid rgba(226,189,89,.55); border-inline-start: 4px solid var(--yellow); border-radius: 9px; background: rgba(226,189,89,.1); color: var(--text); font-weight: 600; }
+/* Phones are how most readers in Iran open the page: reports stay reachable there. */
+@media (max-width: 760px) {
+  .toolbar .export-menu { display: inline-block; }
+  .toolbar .topbar-actions .button:not(.primary) { display: inline-flex; }
+  .toolbar .export-menu-list .button { display: flex; }
+}

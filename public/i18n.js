@@ -20,7 +20,9 @@ function initialLanguage() {
     const stored = window.localStorage?.getItem(storageKey);
     if (stored && Object.hasOwn(dictionaries, stored)) return stored;
   } catch {}
-  return 'en';
+  // A first visit from a browser set to Persian opens in Farsi; a choice made once is kept.
+  const preferred = (typeof navigator !== 'undefined' && (navigator.languages?.length ? navigator.languages : [navigator.language])) || [];
+  return preferred.some((tag) => /^fa\b/i.test(String(tag ?? ''))) ? 'fa' : 'en';
 }
 
 let language = initialLanguage();
