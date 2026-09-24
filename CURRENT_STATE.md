@@ -78,6 +78,9 @@ Package version: **`1.8.0` intentionally unchanged**
 
 - with "All networks in Iran" selected, sentences no longer speak of "this network": each such text has an all-Iran wording (locale key + `.iran`, chosen centrally in `v18-situation.js`), e.g. "Confirmed by tests that people ran inside Iran". The network selection reads "All networks in Iran" instead of the technical "may hit OONI row limit";
 
+- network selection checked against RIPE Atlas's population coverage for Iran (sg-pub.ripe.net/petros/population_coverage): the six Iranian networks with estimated users that were missing were added (Negin Ertebatate Ava AS56548, IsIran AS25306, MahanNet AS44090, Petiak AS51469, Sari System Bandarabbas AS59573, AS210705, registered to a private person and shown by number only; type "unclassified" until known). Cloudflare AS13335 and NetCrafters AS203273 are registered abroad and stay out. "All networks in Iran" already counts all 858 networks registered in Iran. The same list shows that MCI (AS197207, about 48% of users) has no RIPE Atlas probe at all, Irancell 2 and TCI 8, so RIPE Atlas can never answer for MCI; OONI does;
+- a test wrote its two sample networks into the stored Iran registry (`var/iran-asns.json`); fixed, and a far shorter answer can no longer replace a stored registry;
+
 ## Next steps (agreed, not started)
 
 - Test the "More services" chips live and correct what does not fit.
