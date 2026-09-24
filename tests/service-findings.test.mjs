@@ -250,3 +250,10 @@ test('more services: own network first, other Iranian networks only where it has
   assert.equal(find('snapchat').status, 'untested');
   assert.equal(summarizeMoreServices({ ok: false }), null);
 });
+
+test('a network with only a handful of tests per service is marked and sorted after well-covered ones', async () => {
+  const { summarizeNetworkAccess } = await import('../public/service-findings.js');
+  const row = (domain, asn, ok) => ({ domain, asn, measurements: ok, confirmed: 0, anomalous: 0, ok, failures: 0 });
+  const access = summarizeNetworkAccess([row('www.instagram.com', 'AS1', 2), row('www.instagram.com', 'AS2', 30)]);
+  assert.deepEqual(access.map((entry) => [entry.asn, entry.level, entry.thin]), [['AS2', 'full', false], ['AS1', 'full', true]]);
+});

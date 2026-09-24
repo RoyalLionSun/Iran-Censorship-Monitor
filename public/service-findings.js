@@ -201,8 +201,8 @@ export function networkStatus({ confirmed, anomalous, ok }) {
   return confirmed > 0 ? 'partial' : 'reachable';
 }
 
-export function summarizeServiceNetworks(rows = []) {
-  return SERVICE_BRANDS.map((brand) => {
+export function summarizeServiceNetworks(rows = [], brands = SERVICE_BRANDS) {
+  return brands.map((brand) => {
     const byAsn = new Map();
     for (const row of rows) {
       if (!brand.domains.includes(row.domain)) continue;
@@ -224,8 +224,10 @@ export function summarizeServiceNetworks(rows = []) {
 // Who has access: every Iranian network with tests, and how far the popular services worked
 // there. "full" only when every service tested in that network was reachable; "partial" when
 // at least one got through at least half the time; otherwise "blocked".
-export function summarizeNetworkAccess(rows = []) {
-  const perService = summarizeServiceNetworks(rows);
+const THIN_TESTS = 5;
+
+export function summarizeNetworkAccess(rows = [], brands = SERVICE_BRANDS) {
+  const perService = summarizeServiceNetworks(rows, brands);
   const networks = new Map();
   for (const service of perService) {
     for (const status of ['blocked', 'partial', 'restricted', 'reachable', 'inconclusive']) {
@@ -243,8 +245,11 @@ export function summarizeNetworkAccess(rows = []) {
     const level = !statuses.length ? 'unclear'
       : statuses.every((status) => status === 'reachable') ? 'full'
         : statuses.some((status) => status === 'reachable' || status === 'partial') ? 'partial' : 'blocked';
-    return { ...network, level };
-  }).sort((a, b) => rank[a.level] - rank[b.level] || b.measurements - a.measurements);
+    // One tester can make a network look open or closed; below a handful of tests per service
+    // the row is marked and sorted after the well-covered networks of its level.
+    const thin = Math.max(...Object.values(network.services).map((item) => item.measurements)) < THIN_TESTS;
+    return { ...network, level, thin };
+  }).sort((a, b) => rank[a.level] - rank[b.level] || Number(a.thin) - Number(b.thin) || b.measurements - a.measurements);
 }
 
 // Further services an information site should cover, in four groups. Website tests only: the
@@ -324,4 +329,12 @@ export function summarizeMoreServices(networkPayload, countryPayload = null) {
       };
     }),
   }));
+}
+
+// The same per-network view for each group of further services, keyed by group id.
+export function summarizeNetworkAccessByGroup(rows = []) {
+  return Object.fromEntries([
+    ['main', summarizeNetworkAccess(rows)],
+    ...MORE_SERVICE_GROUPS.map((group) => [group.id, summarizeNetworkAccess(rows, group.services)]),
+  ]);
 }

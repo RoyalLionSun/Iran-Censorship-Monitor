@@ -1,4 +1,5 @@
 import { localeFor, t } from './i18n.js';
+import { MORE_SERVICE_GROUPS } from './service-findings.js';
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>'"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[char]));
@@ -352,12 +353,27 @@ function accessCell(entry) {
 
 // Who has access to the internet services, by named Iranian network, full or partial, on the
 // first screen: a reader should not have to switch networks one by one to find out.
+// Which service group the access table shows; the six main services by default.
+let accessGroup = 'main';
+const ACCESS_GROUPS = ['main', ...MORE_SERVICE_GROUPS.map((group) => group.id)];
+
+function accessColumns(groupId, services) {
+  if (groupId === 'main') return ['instagram', 'whatsapp', 'telegram', 'youtube', 'x', 'facebook'].map((id) => ({ id, name: brandName(id, services) }));
+  return MORE_SERVICE_GROUPS.find((group) => group.id === groupId)?.services.map(({ id, name }) => ({ id, name })) ?? [];
+}
+
 function renderAccess(services, selection) {
   const breakdown = services?.networkBreakdown;
-  const access = breakdown?.access ?? [];
+  const byGroup = breakdown?.accessByGroup;
+  const groupId = byGroup?.[accessGroup]?.length ? accessGroup : 'main';
+  const access = (groupId === 'main' ? breakdown?.access : byGroup?.[groupId]) ?? [];
   if (!access.length) return '';
   const { names, types = {}, coverage } = breakdown;
-  const brands = ['instagram', 'whatsapp', 'telegram', 'youtube', 'x', 'facebook'];
+  const columns = accessColumns(groupId, services);
+  const brands = columns.map((column) => column.id);
+  const tabs = byGroup ? `<div class="access-tabs" role="tablist" aria-label="${escapeHtml(t('board.access.groups'))}">${ACCESS_GROUPS
+    .filter((id) => byGroup[id]?.length)
+    .map((id) => `<button type="button" role="tab" data-access-group="${id}" aria-selected="${id === groupId}">${escapeHtml(t(id === 'main' ? 'board.access.group.main' : `board.more.group.${id}`))}</button>`).join('')}</div>` : '';
   const count = (level) => access.filter((entry) => entry.level === level).length;
   const VISIBLE_ROWS = 10;
   const rows = access.map((entry, index) => {
@@ -365,9 +381,9 @@ function renderAccess(services, selection) {
     const note = types[entry.asn] === 'institutional' ? `<small class="network-note">${escapeHtml(t('board.networks.institutional'))}</small>` : '';
     // The selected network always stays visible, even beyond the first rows.
     const extra = index >= VISIBLE_ROWS && entry.asn !== selection?.asn;
-    return `<tr data-level="${escapeHtml(entry.level)}"${entry.asn === selection?.asn ? ' data-selected="yes"' : ''}${extra ? ' data-extra="yes" hidden' : ''}>
+    return `<tr data-level="${escapeHtml(entry.level)}"${entry.thin ? ' data-thin="yes"' : ''}${entry.asn === selection?.asn ? ' data-selected="yes"' : ''}${extra ? ' data-extra="yes" hidden' : ''}>
       <th scope="row"><a href="${escapeHtml(networkHref(entry.asn))}">${escapeHtml(networkName(entry.asn, names, selection))}</a>${kind ? `<small>${escapeHtml(kind)}</small>` : ''}${note}</th>
-      <td class="access-level"><b>${escapeHtml(t(`board.access.level.${entry.level}`))}</b><small>${escapeHtml(t('board.access.tests', { count: formatNumber(entry.measurements) }))}</small></td>
+      <td class="access-level"><b>${escapeHtml(t(`board.access.level.${entry.level}`))}</b><small>${escapeHtml(t(entry.thin ? 'board.access.testsThin' : 'board.access.tests', { count: formatNumber(entry.measurements) }))}</small></td>
       ${brands.map((id) => accessCell(entry.services[id])).join('')}
     </tr>`;
   }).join('');
@@ -380,9 +396,10 @@ function renderAccess(services, selection) {
         <h2 id="access-title">${escapeHtml(t('board.access.title'))}</h2>
         <p>${escapeHtml(t('board.access.summary', { measured: formatNumber(access.length), full: formatNumber(count('full')), partial: formatNumber(count('partial')), blocked: formatNumber(count('blocked')) }))}</p>
       </header>
+      ${tabs}
       <p class="access-legend">${escapeHtml(t('board.access.legend'))}</p>
       <div class="access-scroll"><table id="access-table">
-        <thead><tr><th scope="col">${escapeHtml(t('board.access.network'))}</th><th scope="col">${escapeHtml(t('board.access.access'))}</th>${brands.map((id) => `<th scope="col">${escapeHtml(brandName(id, services))}</th>`).join('')}</tr></thead>
+        <thead><tr><th scope="col">${escapeHtml(t('board.access.network'))}</th><th scope="col">${escapeHtml(t('board.access.access'))}</th>${columns.map((column) => `<th scope="col">${escapeHtml(column.name)}</th>`).join('')}</tr></thead>
         <tbody>${rows}</tbody>
       </table></div>
       ${access.length > VISIBLE_ROWS ? `<button type="button" class="button access-more" data-access-more>${escapeHtml(t('board.access.showAll', { count: formatNumber(access.length) }))}</button>` : ''}
@@ -699,10 +716,26 @@ function renderHero(interpretation) {
     ${renderAccess(interpretation.services, selection)}
     ${renderPrivileged()}`;
   bindOutageChart(hero, interpretation);
+  bindAccess(hero, interpretation);
+}
+
+function bindAccess(hero, interpretation) {
   hero.querySelector('[data-access-more]')?.addEventListener('click', (event) => {
     hero.querySelectorAll('#access-table tr[data-extra]').forEach((row) => { row.hidden = false; });
     event.currentTarget.remove();
   });
+  // Switching the group redraws only the access section.
+  hero.querySelectorAll('[data-access-group]').forEach((button) => button.addEventListener('click', () => {
+    accessGroup = button.dataset.accessGroup;
+    const section = hero.querySelector('.access-board');
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = renderAccess(interpretation.services, interpretation.selection ?? {});
+    if (section && wrapper.firstElementChild) {
+      section.replaceWith(wrapper.firstElementChild);
+      bindAccess(hero, interpretation);
+      hero.querySelector(`[data-access-group="${accessGroup}"]`)?.focus();
+    }
+  }));
 }
 
 function meaningSentences(interpretation) {

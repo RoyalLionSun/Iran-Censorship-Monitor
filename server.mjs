@@ -17,7 +17,7 @@ import { compareAsnIdentity, getAsnRegistryIdentity } from './lib/asn-registry.m
 import { readAsnCoverageSnapshot } from './lib/asn-coverage-snapshot.mjs';
 import { authorizeGlobalpingControl, createGlobalpingMeasurement, getGlobalpingIranProbes, getGlobalpingMeasurement, globalpingRateLimit } from './lib/globalping.mjs';
 import { getCensoredPlanetSignals } from './lib/censoredplanet.mjs';
-import { SERVICE_BRANDS, selectionBrand, summarizeMoreServices, summarizeNetworkAccess, summarizeServiceBrands, summarizeServiceNetworks } from './public/service-findings.js';
+import { SERVICE_BRANDS, selectionBrand, MORE_SERVICE_GROUPS, summarizeMoreServices, summarizeNetworkAccess, summarizeNetworkAccessByGroup, summarizeServiceBrands, summarizeServiceNetworks } from './public/service-findings.js';
 import { readAsnDirectory } from './lib/asn-directory.mjs';
 import { getAsnNames } from './lib/asn-names.mjs';
 import { getCitizenLabIranTargets } from './lib/citizenlab.mjs';
@@ -293,12 +293,13 @@ async function handleApi(req, res, url) {
     const trafficTask = outage ? Promise.all([trafficFor(''), input.asn ? trafficFor(input.asn) : null]) : Promise.resolve([null, null]);
     // Where each service was and was not blocked, by named Iranian network.
     const serviceNetworksTask = input.testName !== 'web_connectivity' ? Promise.resolve(null) : (async () => {
-      const domains = SERVICE_BRANDS.flatMap((brand) => brand.domains);
+      const domains = [...SERVICE_BRANDS, ...MORE_SERVICE_GROUPS.flatMap((group) => group.services)].flatMap((brand) => brand.domains);
       const raw = await safeSource('OONI service networks', () => getOoniServiceNetworks({ ...input, asn: '', target: '' }, domains), sourceKey('OONI service networks', { ...input, asn: '', target: '' }));
       if (!raw?.ok || raw.status === 'stale') return { ok: false };
       const breakdown = summarizeServiceNetworks(raw.rows);
       const access = summarizeNetworkAccess(raw.rows);
-      const shown = access.map((entry) => entry.asn);
+      const accessByGroup = summarizeNetworkAccessByGroup(raw.rows);
+      const shown = [...new Set(Object.values(accessByGroup).flat().map((entry) => entry.asn))];
       // Who a network is: the reviewed catalogue first, then the Iranian network directory,
       // then RIPEstat for a name. Institutional and public networks are named as such.
       const directory = await readAsnDirectory();
@@ -316,7 +317,7 @@ async function handleApi(req, res, url) {
       const publicUnmeasured = unmeasured.filter((asn) => ['government_admin', 'institutional'].includes(directory?.entries?.[asn]?.kind))
         .map((asn) => ({ asn, name: directory.entries[asn].name }));
       return {
-        ok: true, breakdown, access, names, types: kinds, excludedMeasurements: raw.excludedMeasurements, sourceUrl: raw.sourceUrl,
+        ok: true, breakdown, access, accessByGroup, names, types: kinds, excludedMeasurements: raw.excludedMeasurements, sourceUrl: raw.sourceUrl,
         coverage: inventory ? { registered: inventory.size, measured: shown.length, unmeasuredKinds, publicUnmeasured, directory: Boolean(directory) } : null,
       };
     })();

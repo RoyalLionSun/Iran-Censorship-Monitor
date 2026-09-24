@@ -257,3 +257,12 @@ html[dir="rtl"] .topbar-actions { justify-content: flex-start; }
 .more-chip[data-status="partial"], .more-chip[data-status="restricted"] { --chip: var(--status-restricted); }
 .more-chip[data-status="reachable"] { --chip: var(--status-reachable); }
 @media (max-width: 760px) { .more-group { grid-template-columns: 1fr; } }
+
+/* Group switch of the access table, styled like the view switch. */
+.access-tabs { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0 8px; padding: 3px; border: 1px solid var(--border); border-radius: 9px; background: rgba(16,32,53,.8); width: fit-content; max-width: 100%; }
+.access-tabs button { min-height: 30px; padding: 5px 11px; border: 0; border-radius: 6px; background: transparent; color: var(--muted); cursor: pointer; font-weight: 700; font-size: 12.5px; }
+.access-tabs button:hover { color: var(--text); background: rgba(89,168,255,.1); }
+.access-tabs button[aria-selected="true"] { background: linear-gradient(180deg, #2b7fd0, #1f63a8); color: #fff; }
+
+.access-board tr[data-thin="yes"] > * { opacity: .62; }
+.access-board tr[data-thin="yes"]:hover > * { opacity: 1; }

@@ -57,6 +57,7 @@ Package version: **`1.8.0` intentionally unchanged**
 - Citizen Lab's analysis of leaked documents on a per-subscriber control interface (data cut-off, 2G restriction, per-user blocking or slowing) is added to the privileged-access block as sourced context; problems without a confirmed block are described as either a block or a deliberate slowdown, which the tests cannot tell apart;
 - "More services" on the Overview adds 36 services in four groups (social and messaging, Persian-language news, VPN and circumvention tools, everyday services), chosen from what OONI tests regularly in Iran; website tests only. A service is judged by majority: reachable when most tests got through, partly when most got through but some were confirmed blocked, blocked when most failed and confirmed blocks outnumber successes, otherwise problems. The same rule now applies to the per-network access table;
 - during a nationwide outage, results from other Iranian networks no longer stand in for a network: only the few networks that kept access can send tests then, so their results do not stand for Iran. The all-Iran view says so;
+- "Who has access" switches between the six main services and the four further groups; a network whose services each had fewer than five tests is marked "few, may be one person", dimmed and sorted after well-covered networks of its level;
 - regional outages cannot be charted: Radar's regional annotations for Iran name no region;
 - a third-party dossier (Iran "digital apartheid" report v4.5, 23 Sep 2026) was checked against primary sources; only claims the project's own sources confirm were used, see below;
 - no commit, push, release, tag or deployment authorization has been made for this working state.
@@ -64,7 +65,6 @@ Package version: **`1.8.0` intentionally unchanged**
 ## Next steps (agreed, not started)
 
 - Test the "More services" chips live and correct what does not fit.
-- "Who has access": let the reader switch the columns by group (the four new groups) instead of only the six main services.
 - Find a way to check mobile apps, not only websites (only WhatsApp and Telegram have OONI app tests today).
 - Tor Metrics, M-Lab and APNIC also assign users by geolocation; check whether foreign VPN exits distort them as they did OONI.
 
