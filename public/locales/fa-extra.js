@@ -84,4 +84,7 @@ export default Object.freeze({
   'legacy.bridgeScope': 'محدوده BridgeDB',
   'legacy.ipv6Reference': 'قابلیت IPv6، دوازده ماه پیش از این بازه',
   'legacy.ipv6ReferenceNote': 'سهم پایین IPv6 فقط در شبکه‌هایی نشانهٔ اختلال است که پیش‌تر از IPv6 استفاده می‌کردند. آن را با دوازده ماه پیش از این بازه مقایسه کنید: بیشتر شبکه‌های ثابت ایران هرگز IPv6 را راه‌اندازی نکرده‌اند.',
+  'legacy.apnicForeign': "سهم نمونه‌های شبکه‌های ثبت‌شده در خارج از ایران (خروجی‌های وی‌پی‌ان) در رقم ایرانِ APNIC:",
+  'legacy.apnicAll': "قابلیت IPv6، همهٔ نمونه‌ها:",
+  'legacy.apnicIranOnly': "فقط شبکه‌های ایرانی:",
 });

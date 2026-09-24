@@ -73,3 +73,15 @@ test('APNIC reports the year before the window as the scope reference level', ()
   const none = parseApnicIpv6({ data: [row('2026-09-01', 50, 1)] }, { since: '2026-09-01', until: '2026-09-02' });
   assert.equal(none.reference, null, 'no history, no invented reference');
 });
+
+test('APNIC Iran figure is split into Iranian networks and networks registered abroad', async () => {
+  const { parseApnicCountryTable } = await import('../lib/apnic.mjs');
+  const html = `[" | AS58224 | ","TCI - Iran Telecommunication Company PJS",{v: 0.25, f:'0.25%'},{v: 0.21, f: '0.21%'},9000], [" | AS13335 | ","CLOUDFLARENET - Cloudflare, Inc.",{v: 86.55, f:'86.55%'},{v: 83.66, f: '83.66%'},1000]`;
+  const result = parseApnicCountryTable(html, new Set(['AS58224']));
+  assert.equal(result.samples, 10000);
+  assert.equal(result.foreignSharePercent, 10);
+  assert.equal(result.capableIranianPercent, 0.3);
+  assert.equal(result.capableAllPercent, 8.9);
+  assert.equal(result.foreign[0].asn, 'AS13335');
+  assert.equal(parseApnicCountryTable('no table', new Set()), null);
+});

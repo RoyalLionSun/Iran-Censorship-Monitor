@@ -84,4 +84,7 @@ export default Object.freeze({
   'legacy.bridgeScope': 'BridgeDB scope',
   'legacy.ipv6Reference': 'IPv6 capable, 12 months before',
   'legacy.ipv6ReferenceNote': 'A low IPv6 share only signals a disruption where IPv6 was in use before. Compare it with the 12 months before this period: most fixed-line networks in Iran never deployed IPv6.',
+  'legacy.apnicForeign': "Samples from networks registered outside Iran (VPN exits) in APNIC's Iran figure:",
+  'legacy.apnicAll': "IPv6 capable, all samples:",
+  'legacy.apnicIranOnly': "Iranian networks only:",
 });

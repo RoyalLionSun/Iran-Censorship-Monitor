@@ -51,6 +51,7 @@ function insertContextPanels() {
           <a id="apnic-source-link" href="https://stats.labs.apnic.net/ipv6" target="_blank" rel="noreferrer">APNIC Labs ↗</a>
         </header>
         <p class="panel-note">APNIC client-side protocol deployment context. Capability/preference shifts remain sample-qualified protocol observations and are not interpreted as censorship or availability on their own.</p>
+        <p id="apnic-foreign-note" class="panel-note apnic-foreign-note" hidden><span>Samples from networks registered outside Iran (VPN exits) in APNIC's Iran figure:</span> <b data-foreign-share></b> <span dir="ltr" data-foreign-names></span>. <span>IPv6 capable, all samples:</span> <b data-capable-all></b> · <span>Iranian networks only:</span> <b data-capable-iran></b></p>
         <p id="apnic-reference-note" class="panel-note" hidden>A low IPv6 share only signals a disruption where IPv6 was in use before. Compare it with the 12 months before this period: most fixed-line networks in Iran never deployed IPv6.</p>
         <div id="apnic-summary" class="mini-stats"><div class="mini-stat"><span>Status</span><b>Pending</b></div></div>
         <div class="table-wrap compact-table-wrap"><table><thead><tr><th>Date</th><th>IPv6 capable</th><th>IPv6 preferred</th><th>Raw samples</th><th>30d capable</th></tr></thead><tbody id="apnic-table"><tr><td colspan="5" class="table-empty">No APNIC context loaded.</td></tr></tbody></table></div>
@@ -127,6 +128,18 @@ function renderApnic(apnic) {
   // Most Iranian fixed networks never deployed IPv6; a low value there is no disruption signal.
   const referenceNote = document.querySelector('#apnic-reference-note');
   if (referenceNote) referenceNote.hidden = !apnic.reference;
+  // Country scope: how much of APNIC's Iran figure comes from networks registered abroad.
+  const composition = apnic.composition;
+  const foreignNote = document.querySelector('#apnic-foreign-note');
+  if (foreignNote) {
+    foreignNote.hidden = !composition?.foreignSamples;
+    if (composition?.foreignSamples) {
+      foreignNote.querySelector('[data-foreign-share]').textContent = contextPercent(composition.foreignSharePercent);
+      foreignNote.querySelector('[data-foreign-names]').textContent = composition.foreign.map((row) => `${row.asn} ${row.name.split(' - ')[0]}`).join(', ');
+      foreignNote.querySelector('[data-capable-all]').textContent = contextPercent(composition.capableAllPercent);
+      foreignNote.querySelector('[data-capable-iran]').textContent = contextPercent(composition.capableIranianPercent);
+    }
+  }
   table.innerHTML = apnic.points?.length ? apnic.points.slice(-12).reverse().map((row) => `<tr><td>${contextEscape(contextShortDate(row.date))}</td><td>${contextPercent(row.raw?.capablePercent)}</td><td>${contextPercent(row.raw?.preferredPercent)}</td><td>${contextNumber(row.raw?.seen, 0)}</td><td>${contextPercent(row.smoothed30?.capablePercent)}</td></tr>`).join('') : '<tr><td colspan="5" class="table-empty">No APNIC IPv6 observations for this exact scope/window.</td></tr>';
   const link = document.querySelector('#apnic-source-link');
   if (link && apnic.sourceUrl) link.href = safeExternalUrl(apnic.sourceUrl, link.href);

@@ -28,7 +28,7 @@ import { correlateShutdownContext } from './lib/shutdown-context.mjs';
 import { getGdeltIranIntelligence } from './lib/osint.mjs';
 import { getMlabPerformance } from './lib/mlab.mjs';
 import { getAccessNowStopIncidents } from './lib/accessnow.mjs';
-import { getApnicIpv6 } from './lib/apnic.mjs';
+import { getApnicCountryComposition, getApnicIpv6 } from './lib/apnic.mjs';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
 
@@ -245,7 +245,13 @@ async function handleApi(req, res, url) {
       safeSource('IODA', () => getIodaSignals(input), sourceKey('IODA', input)),
       safeSource('Tor Metrics', () => getTorMetrics(input)),
       safeSource('M-Lab NDT', () => getMlabPerformance(input)),
-      safeSource('APNIC Labs IPv6', () => getApnicIpv6(input)),
+      // For all of Iran, APNIC's country figure also counts networks registered abroad (VPN exits);
+      // their share and the Iranian-only value are attached.
+      safeSource('APNIC Labs IPv6', async () => {
+        const result = await getApnicIpv6(input);
+        if (!input.asn && result?.ok) result.composition = await getApnicCountryComposition(await iranRegisteredAsns());
+        return result;
+      }),
       input.asn ? safeSource('RIPEstat / RIPE RIS', () => getRipeStatSignals(input), sourceKey('RIPEstat', input)) : Promise.resolve(scopeRequired('RIPEstat / RIPE RIS', input)),
       safeSource('Globalping', () => getGlobalpingIranProbes(input)),
       safeSource('Censored Planet', () => getCensoredPlanetSignals(input), sourceKey('Censored Planet', input)),
