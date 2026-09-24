@@ -84,9 +84,10 @@ A path that fails leaves the others untouched; the next run retries it.
 ## Steps
 
 1. Store and schema, with tests (no network). **Done** — `lib/store.mjs`, `tests/store.test.mjs`.
-2. OONI API collector path (list endpoint, paging, dedup), tests with recorded responses.
-3. Store-backed payloads for the existing interpretation; the server switches from live
-   queries to the store behind a flag, both compared on the same period before switching.
+2. OONI API collector path (list endpoint, paging, dedup), tests with recorded responses. **Done** — `lib/collector.mjs`; switched on with `MONITOR_COLLECTOR=1`, first live run pending until OONI lifts the block.
+3. Store-backed payloads for the existing interpretation. **Done** — `lib/store-payloads.mjs`; the
+   server reads the store for a period the collector covers completely and asks OONI otherwise;
+   parity with the live aggregation is tested. A live side-by-side comparison follows the first run.
 4. OONI S3 path: verify bucket layout and daily volume for Iran once the owner agrees to the
    first download; stream-parse, reduce, dedup.
 5. Source health per path in the header badge and technical analysis.

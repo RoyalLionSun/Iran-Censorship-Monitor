@@ -19,6 +19,9 @@ import { authorizeGlobalpingControl, createGlobalpingMeasurement, getGlobalpingI
 import { getCensoredPlanetSignals } from './lib/censoredplanet.mjs';
 import { SERVICE_BRANDS, selectionBrand, MORE_SERVICE_GROUPS, summarizeMoreServices, summarizeNetworkAccess, summarizeNetworkAccessByGroup, summarizeServiceBrands, summarizeServiceNetworks } from './public/service-findings.js';
 import { readAsnDirectory } from './lib/asn-directory.mjs';
+import { openStore } from './lib/store.mjs';
+import { storeCircumvention, storeCovers, storeDomains, storeNetworks, storeSample, storeServiceNetworks, storeTimeline } from './lib/store-payloads.mjs';
+import { collectOoniApi, runCollectors } from './lib/collector.mjs';
 import { getAsnNames } from './lib/asn-names.mjs';
 import { getCitizenLabIranTargets } from './lib/citizenlab.mjs';
 import { getPeeringDbTopology } from './lib/peeringdb.mjs';
@@ -122,6 +125,18 @@ function queryInput(url) {
 // applied to the returned domain groups instead.
 function ooniScope(input) {
   return input.serviceId ? { ...input, target: '' } : input;
+}
+
+// Access evidence is read from the local store when it covers the whole period; otherwise
+// from OONI directly, as before. The collector fills the store (see DATA_RESILIENCE_PLAN.md).
+const store = openStore(join(root, 'var/store/monitor.db'));
+
+async function viaStore(scope, build, live) {
+  if (!scope.target && storeCovers(store, scope)) {
+    const iran = await iranRegisteredAsns();
+    if (iran) return build(iran);
+  }
+  return live();
 }
 
 const lastGoodSources = createLastGoodStore({ path: join(root, 'var/last-good/sources.json') });
@@ -254,7 +269,7 @@ async function handleApi(req, res, url) {
     inflightOverviews.set(cacheKey, new Promise((resolve) => { settleShared = resolve; }));
     try {
     const [ooni, ripe, radar, radarQuality, ioda, tor, mlab, apnic, ripestat, globalping, censoredPlanet, peeringdb, ihr, asrank, rpki, pulse, ooniDomains, circumvention] = await Promise.all([
-      safeSource('OONI', () => getOoniTimeline(ooniScope(input)), sourceKey('OONI', input)),
+      safeSource('OONI', () => viaStore(ooniScope(input), (iran) => storeTimeline(store, ooniScope(input), iran), () => getOoniTimeline(ooniScope(input))), sourceKey('OONI', input)),
       safeSource('RIPE Atlas', () => getRipeSignals(input), sourceKey('RIPE Atlas', input)),
       safeSource('Cloudflare Radar', () => getRadarSignals(input), sourceKey('Cloudflare Radar', input)),
       safeSource('Cloudflare Radar quality', () => getRadarConnectionQuality(input), sourceKey('Cloudflare Radar quality', input)),
@@ -277,8 +292,8 @@ async function handleApi(req, res, url) {
       input.asn ? safeSource('RIPEstat RPKI', () => getRpkiIntegrity(input)) : Promise.resolve(scopeRequired('RIPEstat RPKI', input)),
       safeSource('Internet Society Pulse', () => getPulseShutdowns(input), sourceKey('Pulse', input)),
       // Priority-service summary for the Overview. The full domain list stays on /api/ooni/domains.
-      input.testName === 'web_connectivity' ? safeSource('OONI domains', () => getOoniDomains(ooniScope(input)), sourceKey('OONI domains', input)) : Promise.resolve(null),
-      safeSource('OONI circumvention', () => getCircumventionSignals(input), sourceKey('OONI circumvention', input)),
+      input.testName === 'web_connectivity' ? safeSource('OONI domains', () => viaStore(ooniScope(input), (iran) => storeDomains(store, ooniScope(input), iran), () => getOoniDomains(ooniScope(input))), sourceKey('OONI domains', input)) : Promise.resolve(null),
+      safeSource('OONI circumvention', () => viaStore(input, (iran) => storeCircumvention(store, input, iran), () => getCircumventionSignals(input)), sourceKey('OONI circumvention', input)),
     ]);
     // The follow-up questions below do not depend on each other; asked one after another they
     // made a first load take close to half a minute, so they run side by side.
@@ -288,7 +303,7 @@ async function handleApi(req, res, url) {
       && (summarizeMoreServices(ooniDomains) ?? []).some((group) => group.services.some((service) => !service.scope));
     const needsCountry = Boolean(input.asn && ooniDomains?.ok && (moreUntested || visibleServices.some((item) => ['untested', 'inconclusive'].includes(item.web?.status))));
     const countryTask = needsCountry
-      ? safeSource('OONI domains (Iran)', () => getOoniDomains(ooniScope({ ...input, asn: '' })), sourceKey('OONI domains', { ...input, asn: '' }))
+      ? safeSource('OONI domains (Iran)', () => viaStore(ooniScope({ ...input, asn: '' }), (iran) => storeDomains(store, ooniScope({ ...input, asn: '' }), iran), () => getOoniDomains(ooniScope({ ...input, asn: '' }))), sourceKey('OONI domains', { ...input, asn: '' }))
       : Promise.resolve(null);
     // For an explicit service selection, sample how many independent measurement runs and
     // days stand behind the finding that the Overview reports.
@@ -298,12 +313,12 @@ async function handleApi(req, res, url) {
     const focusDomain = (input.serviceId || input.target) && visibleServices[0]?.web?.measurements > 0 ? visibleServices[0].web.domain : null;
     if (focusDomain && !sampleDomains.includes(focusDomain)) sampleDomains.unshift(focusDomain);
     const samplesTask = mapLimit(sampleDomains.slice(0, 2), 2, (domain) =>
-      safeSource('OONI evidence sample', () => getOoniSample(ooniScope(input), domain), sourceKey(`OONI sample ${domain}`, input)))
+      safeSource('OONI evidence sample', () => viaStore(ooniScope(input), (iran) => storeSample(store, ooniScope(input), domain, iran), () => getOoniSample(ooniScope(input), domain)), sourceKey(`OONI sample ${domain}`, input)))
       .then((samples) => samples.filter((sample) => sample?.ok));
     // One aggregation answers whether the headline service is blocked in one network or in many.
     const headlineDomain = sampleDomains[0] ?? null;
     const networksTask = headlineDomain
-      ? safeSource('OONI network comparison', () => getOoniNetworks(ooniScope(input), headlineDomain), sourceKey(`OONI networks ${headlineDomain}`, input))
+      ? safeSource('OONI network comparison', () => viaStore(ooniScope(input), (iran) => storeNetworks(store, ooniScope(input), headlineDomain, iran), () => getOoniNetworks(ooniScope(input), headlineDomain)), sourceKey(`OONI networks ${headlineDomain}`, input))
       : Promise.resolve(null);
     // How deep a nationwide outage went is the plainest measure of it: traffic against the week before.
     const outage = radar?.assessmentEligible === true && radar.status !== 'stale'
@@ -316,7 +331,7 @@ async function handleApi(req, res, url) {
     // Where each service was and was not blocked, by named Iranian network.
     const serviceNetworksTask = input.testName !== 'web_connectivity' ? Promise.resolve(null) : (async () => {
       const domains = [...SERVICE_BRANDS, ...MORE_SERVICE_GROUPS.flatMap((group) => group.services)].flatMap((brand) => brand.domains);
-      const raw = await safeSource('OONI service networks', () => getOoniServiceNetworks({ ...input, asn: '', target: '' }, domains), sourceKey('OONI service networks', { ...input, asn: '', target: '' }));
+      const raw = await safeSource('OONI service networks', () => viaStore({ ...input, asn: '', target: '' }, (iran) => storeServiceNetworks(store, { ...input, asn: '', target: '' }, domains, iran), () => getOoniServiceNetworks({ ...input, asn: '', target: '' }, domains)), sourceKey('OONI service networks', { ...input, asn: '', target: '' }));
       if (!raw?.ok || raw.status === 'stale') return { ok: false };
       const breakdown = summarizeServiceNetworks(raw.rows);
       const access = summarizeNetworkAccess(raw.rows);
@@ -351,7 +366,7 @@ async function handleApi(req, res, url) {
       until: new Date(Date.parse(`${input.since}T00:00:00Z`) - DAY).toISOString().slice(0, 10),
     };
     const previousTask = input.testName === 'web_connectivity' && !input.target
-      ? safeSource('OONI domains (previous period)', () => getOoniDomains(ooniScope({ ...input, ...previous })), sourceKey('OONI domains', { ...input, ...previous }))
+      ? safeSource('OONI domains (previous period)', () => viaStore(ooniScope({ ...input, ...previous }), (iran) => storeDomains(store, ooniScope({ ...input, ...previous }), iran), () => getOoniDomains(ooniScope({ ...input, ...previous }))), sourceKey('OONI domains', { ...input, ...previous }))
       : Promise.resolve(null);
     const historyTask = safeSource('Cloudflare Radar outage history', () => getRadarOutageHistory(), 'Radar outage history');
     const [countryOoniDomains, ooniSamples, ooniNetworks, [outageTraffic, networkOutageTraffic], serviceNetworks, previousOoniDomains, outageHistory] = await Promise.all([
@@ -573,6 +588,17 @@ server.listen(PORT, HOST, () => {
   console.log(`Iran Censorship Monitor listening on http://${HOST}:${PORT}`);
   // Warm the view most readers open first, and keep it warm, so the first visitor does not wait
   // for a dozen upstream sources. MONITOR_PREWARM=0 turns it off.
+  // The collector fills the store from all paths in parallel, hourly. Off until switched on
+  // (MONITOR_COLLECTOR=1), so no upstream request is made before the owner decides.
+  if (process.env.MONITOR_COLLECTOR === '1') {
+    const collect = async () => {
+      const result = await runCollectors(store, { 'ooni-api': (target) => collectOoniApi(target) });
+      store.prune(new Date(Date.now() - 400 * 86_400_000).toISOString().slice(0, 10));
+      console.log('collector', JSON.stringify(result));
+    };
+    setTimeout(collect, 5_000).unref();
+    setInterval(collect, 60 * 60 * 1000).unref();
+  }
   if (process.env.MONITOR_PREWARM !== '0') {
     const warm = () => {
       const { since, until } = defaultRange();

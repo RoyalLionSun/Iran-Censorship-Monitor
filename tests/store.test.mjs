@@ -53,7 +53,7 @@ test('domain counts match the OONI aggregation shape and leave out networks regi
   const network = store.domainCounts({ asn: 'AS142578', since: '2026-09-20', until: '2026-09-23' });
   assert.equal(network.domains[0].measurements, 1, 'a selected network is its own scope');
   assert.deepEqual(store.mechanisms({ host: 'www.instagram.com', since: '2026-09-20', until: '2026-09-23', iranAsns: iran }).map((row) => [row.type, row.n]),
-    [['dns', 1], ['tcp_ip', 1]]);
+    [['dns', 1], ['tcp', 1]]);
   store.close();
 });
 
