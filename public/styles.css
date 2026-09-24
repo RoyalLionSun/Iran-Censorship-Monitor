@@ -634,3 +634,5 @@ main:focus { outline: none; }
 
 .footer-license { font-size: 11px; color: var(--muted); }
 .footer-license a { color: var(--text-soft); }
+
+.offline-banner[data-kind="updating"] { border-color: rgba(89,168,255,.5); border-inline-start-color: var(--accent, #59a8ff); background: rgba(89,168,255,.08); font-weight: 500; }

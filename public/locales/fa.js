@@ -49,6 +49,7 @@ export default Object.freeze({
   'ui.embedWidget': 'ابزارک برای وب‌سایت شما',
   'ui.licenseResults': 'نتایج:',
   'ui.monthlyReports': 'گزارش‌های ماهانه',
+  'ui.savedCopyUpdating': 'وضعیت ذخیره‌شده در {date} به وقت UTC نمایش داده می‌شود · در حال به‌روزرسانی…',
   'ui.print': 'چاپ',
   'ui.networkScope': 'محدوده شبکه',
   'ui.ooniTest': 'آزمون OONI',

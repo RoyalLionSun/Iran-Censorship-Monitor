@@ -69,10 +69,34 @@ async function api(path, signal) {
   return payload;
 }
 
+// A returning reader sees the last saved state of the same view at once, marked "updating",
+// instead of waiting for OONI; the fresh answer replaces it as soon as it arrives.
+async function showSavedCopy(serial, path) {
+  if (typeof caches === 'undefined') return;
+  try {
+    const cache = await caches.open('icm-offline-v1');
+    const saved = await cache.match(new URL(path, location.origin).href, { ignoreVary: true });
+    if (!saved || serial !== state.requestSerial || state.freshSerial === serial) return;
+    const overview = await saved.json();
+    if (serial !== state.requestSerial || state.freshSerial === serial || !overview?.assessment) return;
+    publishOverview('ready', overview.assessment, overview.dataPaths ?? null);
+    renderOverview(overview);
+    const banner = $('#offline-banner');
+    if (banner && state.freshSerial !== serial) {
+      const date = Date.parse(overview.fetchedAt ?? '');
+      const when = Number.isFinite(date) ? new Intl.DateTimeFormat(document.documentElement.lang === 'fa' ? 'fa-IR' : 'en-GB', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' }).format(date) : '';
+      banner.textContent = t('ui.savedCopyUpdating', { date: when });
+      banner.dataset.kind = 'updating';
+      banner.hidden = false;
+    }
+  } catch { /* no saved copy */ }
+}
+
 function showOfflineCopy(savedAt) {
   const banner = $('#offline-banner');
   if (!banner) return;
   banner.hidden = !savedAt;
+  banner.dataset.kind = savedAt ? 'offline' : '';
   if (!savedAt) return;
   const date = Date.parse(savedAt);
   const when = Number.isFinite(date)
@@ -920,9 +944,11 @@ async function loadAll() {
   $('#bgp-updates-table').innerHTML = '<tr><td colspan="5" class="table-empty">Load updates for a selected ASN.</td></tr>';
   $('#providers-table').innerHTML = '<tr><td colspan="7" class="table-empty">Provider comparison has not been requested for this filter state.</td></tr>';
   loadOoniDomains(serial, activeController.signal);
+  showSavedCopy(serial, `/api/overview?${queryString()}`);
   try {
     const overview = await api(`/api/overview?${queryString()}`, activeController.signal);
     if (serial !== state.requestSerial) return;
+    state.freshSerial = serial;
     publishOverview('ready', overview.assessment, overview.dataPaths ?? null);
     renderOverview(overview);
     loadCircumvention(serial, activeController.signal);

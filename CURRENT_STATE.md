@@ -101,6 +101,8 @@ Package version: **`1.8.0` intentionally unchanged**
 - **monthly reports** (`/report?month=YYYY-MM`, `&lang=fa`; index `/reports`, linked in the footer): a page per month for all of Iran — headline, the six services with website/app figures and "blocked since" as of the month's end, the comparison with the period before, further services by group, who had access, nationwide shutdowns and WARP use — light and printable ("Save as PDF"), in the Persian calendar in Farsi. A finished month is written once to `var/reports/` (only from a complete answer) and never recomputed;
 - licences: code MIT (`LICENSE`); published results CC BY-NC-SA 4.0 following OONI's data licence (`DATA_LICENSE.md`), credited in the footer, feed, widget and reports; logo and preview image excluded. Security headers: Permissions-Policy, and HSTS once `PUBLIC_URL` is https;
 
+- a returning reader sees the saved state of the same view at once, marked "updating…", while the fresh answer loads; the fresh answer replaces it (and a copy is never shown over a fresher answer);
+
 ## Next steps (agreed, not started)
 
 - **The dashboard itself must be reachable from Iran** before it is published: the Farsi version is for people there. Plan hosting so it is not behind a provider Iran blocks (e.g. not solely behind Cloudflare), offer mirrors and an .onion address for Tor users, and once online, check our own address from inside Iran (OONI Run link with the dashboard URL, or a Citizen Lab list entry).
