@@ -60,7 +60,7 @@ const overview = {
 const ooniDomains = { ok: true, sourceUrl: 'https://api.ooni.io/', domains: [
   { domain: 'www.instagram.com', measurements: 40, confirmed: 12, anomalous: 8, ok: 20, failures: 0, lastObserved: '2026-09-12' },
 ] };
-const circumvention = { ok: true, signals: [{ testName: 'whatsapp', status: 'observed', measurements: 30, anomalies: 9, lastObservation: '2026-09-12' }] };
+const circumvention = { ok: true, signals: [{ testName: 'whatsapp', status: 'observed', measurements: 30, anomalies: 21, lastObservation: '2026-09-12' }] };
 overview.assessment = buildAssessment({ ...overview, ooniDomains, circumvention, selection: input, scopeLabel: 'AS58224 / Iran' });
 if (overview.assessment.interpretation?.schemaVersion !== 1) throw new Error('Fixture must use the current server interpretation contract.');
 
