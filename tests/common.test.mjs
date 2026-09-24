@@ -95,3 +95,25 @@ test('last good answers survive a restart when the store has a path', async () =
   assert.equal(restarted.stale('OONI|y'), null);
   await readFile(path, 'utf8');
 });
+
+test('JSON answers are compressed when the browser offers it and stay readable', async () => {
+  const { brotliDecompressSync, gunzipSync } = await import('node:zlib');
+  const { jsonResponse, pickEncoding } = await import('../lib/common.mjs');
+  assert.equal(pickEncoding('gzip, deflate, br'), 'br');
+  assert.equal(pickEncoding('gzip;q=1.0'), 'gzip');
+  assert.equal(pickEncoding(''), null);
+  const payload = { ok: true, rows: Array.from({ length: 500 }, (_, index) => ({ domain: `site-${index}.example`, measurements: index })) };
+  const respond = (acceptEncoding) => {
+    const out = {};
+    jsonResponse({ req: { headers: { 'accept-encoding': acceptEncoding } }, writeHead: (status, headers) => Object.assign(out, { status, headers }), end: (body) => { out.body = body; } }, 200, payload);
+    return out;
+  };
+  const br = respond('br, gzip');
+  assert.equal(br.headers['content-encoding'], 'br');
+  assert.ok(br.body.length < JSON.stringify(payload).length / 4);
+  assert.deepEqual(JSON.parse(brotliDecompressSync(br.body)), payload);
+  assert.deepEqual(JSON.parse(gunzipSync(respond('gzip').body)), payload);
+  const plain = respond('');
+  assert.equal(plain.headers['content-encoding'], undefined);
+  assert.deepEqual(JSON.parse(plain.body), payload);
+});

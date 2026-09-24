@@ -1,10 +1,11 @@
 import http from 'node:http';
-import { readFile } from 'node:fs/promises';
-import { createReadStream, existsSync } from 'node:fs';
+import { readFile, stat } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { existsSync } from 'node:fs';
 import { extname, join, normalize, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildAssessment } from './lib/assessment.mjs';
-import { createLastGoodStore, errorPayload, isCleanOverview, isSettledPeriod, jsonResponse, loadEnvFile, mapLimit, normalizeAsn, validateRange } from './lib/common.mjs';
+import { compressBody, createLastGoodStore, errorPayload, isCleanOverview, isSettledPeriod, jsonResponse, loadEnvFile, pickEncoding, mapLimit, normalizeAsn, validateRange } from './lib/common.mjs';
 import { getCircumventionSignals, getOoniDomainMeasurements, getOoniDomains, getOoniMeasurementDetail, getOoniNetworks, getOoniServiceNetworks, getOoniTimeline, iranRegisteredAsns, getOoniSample, listOoniMeasurements, OONI_TESTS } from './lib/ooni.mjs';
 import { getRipeSignals } from './lib/ripe.mjs';
 import { getRadarConnectionQuality, getRadarOutageHistory, getRadarOutageTraffic, getRadarSignals, isNationwideAnnotation } from './lib/radar.mjs';
@@ -547,19 +548,51 @@ function safeStaticPath(pathname) {
   return candidate;
 }
 
-async function serveStatic(res, pathname) {
+// Static files carry a content fingerprint (ETag): a returning browser gets "304 not modified"
+// and transfers nothing. Text files are sent compressed; each version is compressed once.
+const COMPRESSIBLE = new Set(['.html', '.js', '.css', '.json', '.svg', '.txt']);
+const staticCache = new Map();
+
+async function staticEntry(file) {
+  const info = await stat(file);
+  const cached = staticCache.get(file);
+  if (cached && cached.mtimeMs === info.mtimeMs && cached.size === info.size) return cached;
+  const body = await readFile(file);
+  const entry = { mtimeMs: info.mtimeMs, size: info.size, body, etag: `"${createHash('sha1').update(body).digest('base64url').slice(0, 22)}"`, encoded: new Map() };
+  staticCache.set(file, entry);
+  return entry;
+}
+
+async function serveStatic(req, res, pathname) {
   const file = safeStaticPath(pathname);
   if (!file) return false;
   if (!existsSync(file)) return false;
   const extension = extname(file).toLowerCase();
-  res.writeHead(200, {
+  const entry = await staticEntry(file);
+  const encoding = COMPRESSIBLE.has(extension) && entry.body.length >= 1024 ? pickEncoding(req.headers['accept-encoding']) : null;
+  const headers = {
     'content-type': mime[extension] || 'application/octet-stream',
-    'cache-control': ['.html', '.js', '.css'].includes(extension) ? 'no-cache' : 'public, max-age=3600',
+    'cache-control': ['.html', '.js', '.css'].includes(extension) ? 'no-cache' : 'public, max-age=86400',
+    etag: entry.etag,
+    vary: 'accept-encoding',
     'x-content-type-options': 'nosniff',
     'referrer-policy': 'strict-origin-when-cross-origin',
     'content-security-policy': "default-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
-  });
-  createReadStream(file).pipe(res);
+  };
+  if (req.headers['if-none-match'] === entry.etag) {
+    res.writeHead(304, headers);
+    res.end();
+    return true;
+  }
+  let body = entry.body;
+  if (encoding) {
+    if (!entry.encoded.has(encoding)) entry.encoded.set(encoding, compressBody(entry.body, encoding));
+    body = entry.encoded.get(encoding);
+    headers['content-encoding'] = encoding;
+  }
+  headers['content-length'] = body.length;
+  res.writeHead(200, headers);
+  res.end(req.method === 'HEAD' ? undefined : body);
   return true;
 }
 
@@ -570,7 +603,7 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname.startsWith('/api/')) {
       const handled = await handleApi(req, res, url);
       if (!handled) jsonResponse(res, 404, { ok: false, error: 'API route not found.' });
-    } else if (!(await serveStatic(res, url.pathname))) {
+    } else if (!(await serveStatic(req, res, url.pathname))) {
       res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' });
       res.end('Not found');
     }
