@@ -89,7 +89,7 @@ function historicalOverviewKey(input) {
 
 // A current period is kept only for a few minutes: long enough that the next reader does not
 // wait, short enough that the page stays current. Its age is shown in the header.
-const CURRENT_OVERVIEW_TTL_MS = 5 * 60 * 1000;
+const CURRENT_OVERVIEW_TTL_MS = 10 * 60 * 1000;
 
 function rememberHistoricalOverview(key, payload, ttlMs = HISTORICAL_OVERVIEW_TTL_MS) {
   historicalOverviews.delete(key);
@@ -579,6 +579,6 @@ server.listen(PORT, HOST, () => {
       fetch(`http://${HOST}:${PORT}/api/overview?asn=AS58224&testName=web_connectivity&since=${since}&until=${until}`).catch(() => {});
     };
     setTimeout(warm, 1_000).unref();
-    setInterval(warm, CURRENT_OVERVIEW_TTL_MS - 30_000).unref();
+    setInterval(warm, CURRENT_OVERVIEW_TTL_MS - 30_000).unref(); // every 9.5 minutes
   }
 });

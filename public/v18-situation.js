@@ -497,7 +497,8 @@ function renderServiceTiles(services, selection, connectivity = null) {
   // During a nationwide outage the volunteers' probes are cut off too: a missing test is a
   // consequence of the outage, not a gap that could hide a working service.
   const sparse = items.some((item) => ['untested', 'unclear', 'unavailable'].includes(item.status) && !item.country);
-  const note = services.stale?.since ? t('board.services.staleNote')
+  const note = services.rateLimited ? t('board.services.rateLimited')
+    : services.stale?.since ? t('board.services.staleNote')
     : services.survivorsOnly ? t('board.services.survivorsOnly')
     : items.some((item) => ['untested', 'unclear'].includes(item.status) && item.country) ? t('board.services.noteCountry')
     : nationwidePeriod(connectivity) && sparse ? t('board.services.outageNote')
@@ -714,9 +715,25 @@ function statusRow(interpretation) {
           : shutdown.quiet ? t('board.shutdown.noneHint') : t('board.shutdown.hint'),
     },
   ];
-  return `<dl class="status-row">${items.map((item) => `
+  return `<dl class="status-row" id="status-row">${items.map((item) => `
     <div data-status="${item.status}"><dt>${escapeHtml(t(`board.row.${item.id}`))}</dt><dd>${escapeHtml(item.value)}</dd><small>${escapeHtml(item.hint)}</small></div>`).join('')}
   </dl>`;
+}
+
+// A short table of contents for the long first page; only sections present are listed.
+function jumpBar(interpretation) {
+  const services = interpretation.services;
+  const links = [
+    services?.changes ? ['changes-title', 'board.jump.changes'] : null,
+    services ? ['service-board-title', 'board.jump.services'] : null,
+    ['status-row', 'board.jump.connection'],
+    services?.more?.some((group) => group.services.some((service) => service.scope)) ? ['more-services-title', 'board.jump.more'] : null,
+    services?.networkBreakdown?.access?.length ? ['access-title', 'board.jump.access'] : null,
+    ['privileged-title', 'board.jump.privileged'],
+    ['user-meaning', 'board.jump.meaning'],
+    ['sources-panel', 'board.jump.sources'],
+  ].filter(Boolean);
+  return `<nav class="jump-bar" aria-label="${escapeHtml(t('board.jump.label'))}">${links.map(([id, key]) => `<a href="#${id}">${escapeHtml(t(key))}</a>`).join('')}</nav>`;
 }
 
 function renderHero(interpretation) {
@@ -734,6 +751,7 @@ function renderHero(interpretation) {
       <p class="situation-scope"><strong><bdi>${escapeHtml(networkLabel(interpretation))}</bdi></strong>${period ? ` · <bdi>${escapeHtml(period)}</bdi>` : ''}${latest ? ` · <bdi>${escapeHtml(latest)}</bdi>` : ''}${stale ? ` · <bdi class="scope-stale">${escapeHtml(t('board.stale.since', { date: formatDateTime(stale) }))}</bdi>` : ''}</p>
       <h1 id="situation-headline">${escapeHtml(headlineText({ ...summary, headline: summary.headline && { ...summary.headline, period: nationwidePeriod(interpretation.dimensions.connectivity) } }, interpretation.services))}</h1>
       <p class="situation-lede">${escapeHtml(ledeText(interpretation))}</p>
+      ${jumpBar(interpretation)}
     </header>
     ${renderChanges(interpretation.services)}
     ${renderServiceTiles(interpretation.services, selection, interpretation.dimensions.connectivity)}
