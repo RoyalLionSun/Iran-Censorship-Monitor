@@ -486,10 +486,32 @@ html[dir="rtl"] input[type="date"] { text-align: right; }
 .topbar-title { justify-self: center; font-size: 21px; font-weight: 700; letter-spacing: .01em; white-space: nowrap; }
 .topbar-actions { justify-self: end; }
 #sources-panel .panel-header { align-items: center; }
+/* Below the header: the view switch on one side, language, update time and actions on the other. */
+.toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px 16px; margin: 0 0 12px; }
+.toolbar .view-switch { margin: 0; }
+.toolbar .topbar-actions { align-items: center; flex-wrap: wrap; margin-inline-start: auto; }
 @media (max-width: 760px) {
-  .topbar { grid-template-columns: auto 1fr; row-gap: 6px; }
+  .topbar { grid-template-columns: auto 1fr; }
   .topbar-title { justify-self: start; font-size: 16px; white-space: normal; }
-  .topbar-actions { grid-column: 1 / -1; justify-self: stretch; justify-content: flex-end; flex-wrap: wrap; }
+  .toolbar .view-switch { flex: 1 1 100%; }
 }
 /* The update time appears once data has arrived; before that the Refresh button says "Loading…". */
 .updated:empty { display: none; }
+
+/* The name in the colours of Iran's flag, word by word; the handle in the logo's gold, in a
+   modern display face (Righteous, SIL Open Font License, public/fonts/OFL-Righteous.txt). */
+@font-face { font-family: "Righteous"; src: url("/fonts/righteous-latin.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+.topbar-title .flag-green { color: #2fb454; }
+.topbar-title .flag-white { color: #ffffff; }
+.topbar-title .flag-red { color: #ef3b3b; }
+.topbar-handle {
+  justify-self: end; font-family: "Righteous", "Trebuchet MS", sans-serif; font-size: 24px; letter-spacing: .03em; white-space: nowrap;
+  background: linear-gradient(180deg, #f9e098 0%, #f6c860 30%, #deac41 58%, #c58f3b 80%, #97722e 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, .45));
+}
+@media (max-width: 760px) {
+  .topbar { grid-template-columns: auto 1fr auto; }
+  .topbar-handle { font-size: 16px; }
+}
+@media (max-width: 480px) { .topbar-handle { display: none; } }

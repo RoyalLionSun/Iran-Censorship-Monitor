@@ -20,11 +20,15 @@ function insertViews() {
   const filterbar = document.querySelector('.filterbar');
   if (!assessment || !filterbar || document.querySelector('#dashboard-view-switch')) return;
 
-  filterbar.insertAdjacentHTML('afterend', `
+  // The view switch opens the page, in the toolbar above the filters, next to the actions.
+  const viewSwitch = `
     <nav id="dashboard-view-switch" class="view-switch" aria-label="${escapeHtml(t('interpretation.view.label'))}">
       <button type="button" data-dashboard-view="overview" class="active" aria-pressed="true"></button>
       <button type="button" data-dashboard-view="technical" aria-pressed="false"></button>
-    </nav>
+    </nav>`;
+  const toolbar = document.querySelector('.toolbar');
+  if (toolbar) toolbar.insertAdjacentHTML('afterbegin', viewSwitch);
+  filterbar.insertAdjacentHTML('afterend', `${toolbar ? '' : viewSwitch}
     <section id="overview-view" class="overview-view" aria-live="polite">
       <section id="current-situation" class="situation-board"></section>
       <div class="overview-lower-grid">
