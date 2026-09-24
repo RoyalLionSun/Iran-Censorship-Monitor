@@ -17,7 +17,7 @@ import { compareAsnIdentity, getAsnRegistryIdentity } from './lib/asn-registry.m
 import { readAsnCoverageSnapshot } from './lib/asn-coverage-snapshot.mjs';
 import { authorizeGlobalpingControl, createGlobalpingMeasurement, getGlobalpingIranProbes, getGlobalpingMeasurement, globalpingRateLimit } from './lib/globalping.mjs';
 import { getCensoredPlanetSignals } from './lib/censoredplanet.mjs';
-import { SERVICE_BRANDS, selectionBrand, summarizeNetworkAccess, summarizeServiceBrands, summarizeServiceNetworks } from './public/service-findings.js';
+import { SERVICE_BRANDS, selectionBrand, summarizeMoreServices, summarizeNetworkAccess, summarizeServiceBrands, summarizeServiceNetworks } from './public/service-findings.js';
 import { readAsnDirectory } from './lib/asn-directory.mjs';
 import { getAsnNames } from './lib/asn-names.mjs';
 import { getCitizenLabIranTargets } from './lib/citizenlab.mjs';
@@ -262,7 +262,9 @@ async function handleApi(req, res, url) {
     // made a first load take close to half a minute, so they run side by side.
     const visibleServices = ooniDomains?.ok ? summarizeServiceBrands(ooniDomains, circumvention, input).visible : [];
     // A service with no usable test in the selected network still has an answer across Iran.
-    const needsCountry = Boolean(input.asn && ooniDomains?.ok && visibleServices.some((item) => ['untested', 'inconclusive'].includes(item.web?.status)));
+    const moreUntested = input.asn && ooniDomains?.ok && !input.target
+      && (summarizeMoreServices(ooniDomains) ?? []).some((group) => group.services.some((service) => !service.scope));
+    const needsCountry = Boolean(input.asn && ooniDomains?.ok && (moreUntested || visibleServices.some((item) => ['untested', 'inconclusive'].includes(item.web?.status))));
     const countryTask = needsCountry
       ? safeSource('OONI domains (Iran)', () => getOoniDomains(ooniScope({ ...input, asn: '' })), sourceKey('OONI domains', { ...input, asn: '' }))
       : Promise.resolve(null);

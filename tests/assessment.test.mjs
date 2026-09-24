@@ -529,3 +529,13 @@ test('all popular services reachable is the headline even when other sites had p
   assert.equal(result.interpretation.summary.headline.state, 'services-reachable');
   assert.equal(result.interpretation.dimensions.interference.state, 'interference-signals', 'the other sites stay visible as a signal');
 });
+
+test('during a nationwide outage, results from the few connected networks never stand in for a network', () => {
+  const country = { ok: true, foreignExclusion: { checked: true, networks: [], excludedMeasurements: 0, notExcludedMeasurements: 0 },
+    domains: [{ domain: 'www.facebook.com', measurements: 50, confirmed: 0, anomalous: 0, ok: 50, observedDays: 5 }] };
+  const result = buildAssessment({ radar: radar({ outages: [blackout] }), ooniDomains: { ok: true, domains: [] }, countryOoniDomains: country,
+    selection: { ...selection, since: '2026-03-01', until: '2026-03-20' }, scopeLabel: 'AS58224 / Iran' }).interpretation.services;
+  assert.equal(result.items.find((item) => item.id === 'facebook').country, null);
+  assert.equal(result.countryCheck, 'outage');
+  assert.ok(result.more.flatMap((group) => group.services).every((service) => service.scope !== 'country'));
+});

@@ -206,6 +206,9 @@ test('networks are named per service: blocked, partly blocked, reachable', async
   assert.equal(networkStatus({ confirmed: 32, anomalous: 1, ok: 35 }), 'partial');
   assert.equal(networkStatus({ confirmed: 0, anomalous: 7, ok: 0 }), 'restricted');
   assert.equal(networkStatus({ confirmed: 0, anomalous: 0, ok: 6 }), 'reachable');
+  assert.equal(networkStatus({ confirmed: 0, anomalous: 3, ok: 149 }), 'reachable', 'a few odd tests among many do not decide it');
+  assert.equal(networkStatus({ confirmed: 1, anomalous: 137, ok: 11 }), 'restricted', 'most failed, few confirmed');
+  assert.equal(networkStatus({ confirmed: 62, anomalous: 91, ok: 2 }), 'blocked', 'confirmed blocks far outnumber successes');
   const rows = [
     { domain: 'www.instagram.com', asn: 'AS58224', measurements: 428, confirmed: 224, anomalous: 107, ok: 2, failures: 95 },
     { domain: 'instagram.com', asn: 'AS52140', measurements: 6, confirmed: 0, anomalous: 0, ok: 6, failures: 0 },
@@ -230,4 +233,20 @@ test('who has access: full only when every tested service was reachable in that 
   assert.deepEqual(access.map((entry) => [entry.asn, entry.level]), [['AS52140', 'full'], ['AS31549', 'partial'], ['AS58224', 'blocked']]);
   assert.equal(access[1].services.instagram.status, 'partial');
   assert.equal(access[1].services.youtube.status, 'blocked');
+});
+
+test('more services: own network first, other Iranian networks only where it has no usable test', async () => {
+  const { summarizeMoreServices } = await import('../public/service-findings.js');
+  const row = (domain, confirmed, ok, anomalous = 0) => ({ domain, measurements: confirmed + ok + anomalous, confirmed, anomalous, ok, failures: 0, lastObserved: '2026-09-23' });
+  const network = { ok: true, domains: [row('signal.org', 20, 1), row('www.viber.com', 5, 40)] };
+  const country = { ok: true, domains: [row('www.tiktok.com', 30, 2), row('signal.org', 1, 99)] };
+  const groups = summarizeMoreServices(network, country);
+  const find = (id) => groups.flatMap((group) => group.services).find((service) => service.id === id);
+  assert.equal(find('signal').status, 'blocked');
+  assert.equal(find('signal').scope, 'network', 'the network own answer is never replaced');
+  assert.equal(find('viber').status, 'partial');
+  assert.equal(find('tiktok').scope, 'country');
+  assert.equal(find('tiktok').status, 'blocked');
+  assert.equal(find('snapchat').status, 'untested');
+  assert.equal(summarizeMoreServices({ ok: false }), null);
 });

@@ -427,6 +427,26 @@ function renderPrivileged() {
     </section>`;
 }
 
+// Further services as compact chips per group: blocked, partly, problems or reachable, with the
+// numbers on hover. A dashed chip was answered from other Iranian networks.
+function renderMoreServices(services) {
+  const groups = services?.more;
+  if (!groups?.some((group) => group.services.some((service) => service.scope))) return '';
+  const chip = (service) => {
+    const title = service.scope ? t('board.more.detail', {
+      total: formatNumber(service.measurements), confirmed: formatNumber(service.confirmed),
+      count: formatNumber(service.anomalous), ok: formatNumber(service.ok),
+    }) + (service.scope === 'country' ? ` · ${t('board.more.country')}` : '') : t('board.more.untested');
+    return `<li class="more-chip" data-status="${escapeHtml(service.status)}"${service.scope === 'country' ? ' data-scope="country"' : ''} title="${escapeHtml(title)}">
+      <span class="more-chip-name">${escapeHtml(service.name)}</span><span class="more-chip-status">${escapeHtml(t(`board.more.status.${service.status}`))}</span></li>`;
+  };
+  return `
+    <section class="more-services" aria-labelledby="more-services-title">
+      <header><h2 id="more-services-title">${escapeHtml(t('board.more.title'))}</h2><p>${escapeHtml(t('board.more.note'))}${services.countryCheck === 'outage' ? ` ${escapeHtml(t('board.country.outage'))}` : ''}${services.survivorsOnly ? ` ${escapeHtml(t('board.services.survivorsOnly'))}` : ''}</p></header>
+      ${groups.map((group) => `<div class="more-group"><h3>${escapeHtml(t(`board.more.group.${group.id}`))}</h3><ul>${group.services.map(chip).join('')}</ul></div>`).join('')}
+    </section>`;
+}
+
 function renderServiceTiles(services, selection, connectivity = null) {
   if (!services) return '';
   const items = services.visible ?? services.items;
@@ -435,6 +455,7 @@ function renderServiceTiles(services, selection, connectivity = null) {
   // consequence of the outage, not a gap that could hide a working service.
   const sparse = items.some((item) => ['untested', 'unclear', 'unavailable'].includes(item.status) && !item.country);
   const note = services.stale?.since ? t('board.services.staleNote')
+    : services.survivorsOnly ? t('board.services.survivorsOnly')
     : items.some((item) => ['untested', 'unclear'].includes(item.status) && item.country) ? t('board.services.noteCountry')
     : nationwidePeriod(connectivity) && sparse ? t('board.services.outageNote')
       : t('board.services.note');
@@ -452,7 +473,7 @@ function renderServiceTiles(services, selection, connectivity = null) {
           <b class="service-tile-status">${escapeHtml(country ? t(`board.country.status.${country.status}`)
             : item.status === 'restricted' && item.app?.status === 'anomaly' && item.web?.status !== 'anomaly' ? t('board.status.appFailed')
               : t(`board.status.${item.status}`))}</b>
-          <ul>${country ? countryLine(country, item) : ''}${!country && item.country && item.web?.status === 'untested' ? `<li class="tile-country">${escapeHtml(t(`board.country.web.${item.country.status}`, { confirmed: formatNumber(item.country.confirmed), count: formatNumber(item.country.anomalous), total: formatNumber(item.country.measurements) }))}</li>` : ''}${!country && services.countryCheck === 'unavailable' && ['untested', 'unclear'].includes(item.status) ? `<li class="tile-country">${escapeHtml(t('board.country.unavailable'))}</li>` : ''}${item.country && item.web?.status === 'untested' ? '' : channelLine(item.web, 'web')}${channelLine(item.app, 'app')}${mechanismLine(item)}${coverageLine(item, selection)}</ul>
+          <ul>${country ? countryLine(country, item) : ''}${!country && item.country && item.web?.status === 'untested' ? `<li class="tile-country">${escapeHtml(t(`board.country.web.${item.country.status}`, { confirmed: formatNumber(item.country.confirmed), count: formatNumber(item.country.anomalous), total: formatNumber(item.country.measurements) }))}</li>` : ''}${!country && ['unavailable', 'outage'].includes(services.countryCheck) && ['untested', 'unclear'].includes(item.status) ? `<li class="tile-country">${escapeHtml(t(`board.country.${services.countryCheck}`))}</li>` : ''}${item.country && item.web?.status === 'untested' ? '' : channelLine(item.web, 'web')}${channelLine(item.app, 'app')}${mechanismLine(item)}${coverageLine(item, selection)}</ul>
         </article>`;
       }).join('')}
       </div>` : `<p class="service-board-empty">${escapeHtml(t('board.services.noneInSelection'))}</p>`}
@@ -674,6 +695,7 @@ function renderHero(interpretation) {
     ${renderServiceTiles(interpretation.services, selection, interpretation.dimensions.connectivity)}
     ${statusRow(interpretation)}
     ${renderOutageTraffic(interpretation)}
+    ${renderMoreServices(interpretation.services)}
     ${renderAccess(interpretation.services, selection)}
     ${renderPrivileged()}`;
   bindOutageChart(hero, interpretation);
