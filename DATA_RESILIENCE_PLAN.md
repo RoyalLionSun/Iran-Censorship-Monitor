@@ -83,7 +83,7 @@ A path that fails leaves the others untouched; the next run retries it.
 
 ## Steps
 
-1. Store and schema, with tests (no network).
+1. Store and schema, with tests (no network). **Done** — `lib/store.mjs`, `tests/store.test.mjs`.
 2. OONI API collector path (list endpoint, paging, dedup), tests with recorded responses.
 3. Store-backed payloads for the existing interpretation; the server switches from live
    queries to the store behind a flag, both compared on the same period before switching.
