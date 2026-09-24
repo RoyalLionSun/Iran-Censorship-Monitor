@@ -514,3 +514,16 @@ html[dir="rtl"] input[type="date"] { text-align: right; }
   .topbar-handle { font-size: 30px; }
 }
 @media (max-width: 480px) { .topbar-handle { display: none; } }
+/* The header looks the same in both languages: handle left, name in the middle, logo right. */
+.topbar { direction: ltr; }
+.topbar-handle { order: 1; justify-self: start; }
+.topbar-title { order: 2; }
+.topbar .brand { order: 3; justify-self: end; }
+@media (max-width: 760px) {
+  .topbar { grid-template-columns: auto 1fr auto; }
+  .topbar-title { justify-self: center; }
+}
+@media (max-width: 480px) {
+  .topbar { grid-template-columns: 1fr auto; }
+  .topbar-title { justify-self: start; }
+}
