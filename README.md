@@ -192,3 +192,17 @@ The original prototype export under `legacy/prototype-export/` is audit/referenc
 Code: MIT (`LICENSE`). Published results (dashboard findings, feed, widget, reports, exports):
 CC BY-NC-SA 4.0, following OONI's data licence (`DATA_LICENSE.md`). Logo and preview image are not
 licensed for reuse.
+
+## Daily Telegram posts (optional)
+
+The dashboard can post each day's "What changed" entry (the same text as `/feed.xml`) to a
+Telegram channel, one per language:
+
+1. In Telegram, open **@BotFather**, send `/newbot` and follow the steps; copy the token it gives.
+2. Create a channel (e.g. one in English and one in Farsi) and add the bot as an **administrator**
+   with the right to post.
+3. In `.env` set `TELEGRAM_BOT_TOKEN=<token>`, `TELEGRAM_CHANNEL_EN=@your_channel` and/or
+   `TELEGRAM_CHANNEL_FA=@your_farsi_channel`, then restart the server.
+
+The first feed request of a new day builds the entry and posts it; nothing is posted without these
+settings. Readers without Telegram can subscribe to `/feed.xml` (or `/feed.xml?lang=fa`).
