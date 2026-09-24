@@ -121,9 +121,9 @@ function strongestWebRow(rows) {
 // services without an OONI app test. Close to an app test, not the same: apps may also use
 // other transports (QUIC, fixed addresses) or built-in fallbacks.
 export const APP_SERVERS = Object.freeze({
-  instagram: { hosts: ['i.instagram.com', 'edge-chat.instagram.com'], suffixes: ['.cdninstagram.com'], patterns: [/^instagram\.[a-z0-9-]+\.fna\.fbcdn\.net$/] },
+  instagram: { hosts: ['i.instagram.com', 'edge-chat.instagram.com', 'graph.instagram.com'], suffixes: ['.cdninstagram.com'], patterns: [/^instagram\.[a-z0-9-]+\.fna\.fbcdn\.net$/] },
   whatsapp: { hosts: [], suffixes: ['.whatsapp.net'], patterns: [] },
-  facebook: { hosts: ['graph.facebook.com', 'fbcdn.net'], suffixes: ['.xx.fbcdn.net'], patterns: [] },
+  facebook: { hosts: ['graph.facebook.com', 'edge-mqtt.facebook.com', 'fbcdn.net'], suffixes: ['.xx.fbcdn.net'], patterns: [] },
   x: { hosts: ['api.x.com', 'api.twitter.com'], suffixes: ['.twimg.com'], patterns: [] },
   youtube: { hosts: ['youtubei.googleapis.com'], suffixes: ['.ytimg.com', '.googlevideo.com'], patterns: [] },
 });

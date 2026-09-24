@@ -294,6 +294,10 @@ test('app servers: the servers a mobile app uses answer for services without an 
   assert.equal(isAppServer('x', 'pbs.twimg.com'), true);
   assert.equal(isAppServer('youtube', 'i.ytimg.com'), true);
   assert.equal(isAppServer('youtube', 'fcm.googleapis.com'), false);
+  for (const [brand, host] of [['youtube', 'youtubei.googleapis.com'], ['youtube', 'redirector.googlevideo.com'], ['x', 'api.x.com'], ['x', 'api.twitter.com'],
+    ['facebook', 'graph.facebook.com'], ['facebook', 'edge-mqtt.facebook.com'], ['instagram', 'graph.instagram.com']]) {
+    assert.equal(isAppServer(brand, host), true, `${host} counts for ${brand} once OONI tests it`);
+  }
   // Counts as measured across Iran, 17–23 September 2026.
   const payload = { ok: true, domains: [
     { domain: 'www.youtube.com', measurements: 0, confirmed: 0, anomalous: 0, ok: 0 },
