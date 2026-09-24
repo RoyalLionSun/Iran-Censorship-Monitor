@@ -81,7 +81,11 @@ Package version: **`1.8.0` intentionally unchanged**
 - network selection checked against RIPE Atlas's population coverage for Iran (sg-pub.ripe.net/petros/population_coverage): the six Iranian networks with estimated users that were missing were added (Negin Ertebatate Ava AS56548, IsIran AS25306, MahanNet AS44090, Petiak AS51469, Sari System Bandarabbas AS59573, AS210705, registered to a private person and shown by number only; type "unclassified" until known). Cloudflare AS13335 and NetCrafters AS203273 are registered abroad and stay out. "All networks in Iran" already counts all 858 networks registered in Iran. The same list shows that MCI (AS197207, about 48% of users) has no RIPE Atlas probe at all, Irancell 2 and TCI 8, so RIPE Atlas can never answer for MCI; OONI does;
 - a test wrote its two sample networks into the stored Iran registry (`var/iran-asns.json`); fixed, and a far shorter answer can no longer replace a stored registry;
 
+- **use of Cloudflare's WARP VPN among users in Iran** (APNIC Labs, AS13335's share of all samples filed under Iran, 30-day averages): shown under "VPN & circumvention tools" with today's share, a year ago, the lowest month and twelve monthly bars. It shows when this way around the filter stopped working: about 2.5–4% in 2025, under 1% from February to August 2026 (0.1% in July), 6.4% on 20 September 2026. Days with fewer than 1,000 samples for all of Iran (the blackouts) are left out rather than turned into shares. An estimate and circumvention context, never an access claim for a service; about 5 MB from APNIC every 12 hours;
+
 ## Next steps (agreed, not started)
+
+- **The dashboard itself must be reachable from Iran** before it is published: the Farsi version is for people there. Plan hosting so it is not behind a provider Iran blocks (e.g. not solely behind Cloudflare), offer mirrors and an .onion address for Tor users, and once online, check our own address from inside Iran (OONI Run link with the dashboard URL, or a Citizen Lab list entry).
 
 - Test the "More services" chips live and correct what does not fit.
 - Submit the missing app servers (YouTube API/video, X API, graph.facebook.com, TikTok) to Citizen Lab's test lists; optionally an OONI Run link with them for volunteers.

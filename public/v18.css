@@ -292,3 +292,10 @@ html[dir="rtl"] .topbar-actions { justify-content: flex-start; }
 .jump-bar a { padding: 4px 10px; border: 1px solid var(--border-strong); border-radius: 999px; background: rgba(16,32,53,.6); color: #bcd6f5; font-size: 12.5px; font-weight: 650; }
 .jump-bar a:hover { color: #fff; border-color: var(--accent); background: rgba(89,168,255,.14); }
 #changes-title, #service-board-title, #status-row, #more-services-title, #access-title, #privileged-title, #user-meaning, #sources-panel { scroll-margin-top: 96px; }
+
+.more-group-body { display: grid; gap: 7px; }
+.vpn-use { display: flex; align-items: center; gap: 10px; margin: 0; color: var(--text-soft); font-size: 12.5px; cursor: help; }
+.vpn-use-chart { flex: 0 0 auto; }
+.vpn-use-chart .vpn-bar { fill: #52c9c4; }
+.vpn-use-chart .vpn-bar-empty { fill: rgba(131, 150, 174, .35); }
+html[dir="rtl"] .vpn-use-chart { transform: scaleX(-1); }

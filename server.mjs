@@ -33,7 +33,7 @@ import { correlateShutdownContext } from './lib/shutdown-context.mjs';
 import { getGdeltIranIntelligence } from './lib/osint.mjs';
 import { getMlabPerformance } from './lib/mlab.mjs';
 import { getAccessNowStopIncidents } from './lib/accessnow.mjs';
-import { getApnicCountryComposition, getApnicIpv6 } from './lib/apnic.mjs';
+import { getApnicCountryComposition, getApnicIpv6, getApnicVpnShare } from './lib/apnic.mjs';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
 
@@ -255,6 +255,8 @@ async function handleApi(req, res, url) {
     let settleShared;
     inflightOverviews.set(cacheKey, new Promise((resolve) => { settleShared = resolve; }));
     try {
+    // Use of Cloudflare's WARP VPN among users in Iran (APNIC), for every scope: country context.
+    const vpnUsePromise = getApnicVpnShare({ until: input.until }).catch((error) => ({ ok: false, source: 'APNIC Labs', error: error?.message ?? String(error) }));
     const [ooni, ripe, radar, radarQuality, ioda, tor, mlab, apnic, ripestat, globalping, censoredPlanet, peeringdb, ihr, asrank, rpki, pulse, ooniDomains, circumvention] = await Promise.all([
       safeSource('OONI', () => viaStore(ooniScope(input), (iran) => storeTimeline(store, ooniScope(input), iran), () => getOoniTimeline(ooniScope(input))), sourceKey('OONI', input)),
       safeSource('RIPE Atlas', () => getRipeSignals(input), sourceKey('RIPE Atlas', input)),
@@ -368,14 +370,15 @@ async function handleApi(req, res, url) {
     // Independent inside-out checks (RIPE Atlas, Globalping) from the local store; empty unless
     // those paths were switched on. Probes were limited to Iranian networks when measuring.
     const activeChecks = store.activeChecks({ hosts: ACTIVE_HOSTS, since: input.since, until: input.until, asn: input.asn });
-    const assessment = buildAssessment({ activeChecks, ooni, ripe, radar, radarQuality, ioda, ripestat, censoredPlanet, tor, mlab, apnic, globalping, peeringdb, ihr, asrank, rpki, pulse, ooniDomains, countryOoniDomains, circumvention, ooniSamples, ooniNetworks, outageTraffic, networkOutageTraffic, serviceNetworks, previousOoniDomains: previousOoniDomains ? { ...previousOoniDomains, period: previous, outageOverlap: comparisonBlockedByOutage } : null, selection: input, scopeLabel });
+    const vpnUse = await vpnUsePromise;
+    const assessment = buildAssessment({ activeChecks, vpnUse, ooni, ripe, radar, radarQuality, ioda, ripestat, censoredPlanet, tor, mlab, apnic, globalping, peeringdb, ihr, asrank, rpki, pulse, ooniDomains, countryOoniDomains, circumvention, ooniSamples, ooniNetworks, outageTraffic, networkOutageTraffic, serviceNetworks, previousOoniDomains: previousOoniDomains ? { ...previousOoniDomains, period: previous, outageOverlap: comparisonBlockedByOutage } : null, selection: input, scopeLabel });
     const asnProfile = input.asn ? asns.find((item) => item.asn === input.asn) || null : null;
     // Which route answered the access evidence, and how current each collector path is.
     const health = store.health();
     const dataPaths = { via: ooniDomains?.via === 'store' || ooni?.via === 'store' ? 'store' : 'live',
       paths: Object.fromEntries(Object.entries(collectorPlan()).map(([name, planned]) => [name, { ...planned, ...(health[name] ?? {}) }])),
       coverage: Object.fromEntries(['ooni-api', 'ooni-s3'].map((path) => [path, { since: store.getMeta(`${path}:coveredSince`), until: store.getMeta(`${path}:coveredUntil`) }])) };
-    const payload = { ok: true, input, asnProfile, fetchedAt: new Date().toISOString(), dataPaths, assessment, ooni, ripe, radar, radarQuality, ioda, tor, mlab, apnic, ripestat, globalping, censoredPlanet, peeringdb, ihr, asrank, rpki, pulse };
+    const payload = { ok: true, input, asnProfile, fetchedAt: new Date().toISOString(), dataPaths, assessment, ooni, ripe, radar, radarQuality, ioda, tor, mlab, apnic, vpnUse, ripestat, globalping, censoredPlanet, peeringdb, ihr, asrank, rpki, pulse };
     if (isCleanOverview([ooni, ripe, radar, radarQuality, ioda, tor, mlab, apnic, ripestat, censoredPlanet, pulse, ooniDomains, countryOoniDomains, circumvention, outageTraffic, networkOutageTraffic, ooniNetworks, serviceNetworks, previousOoniDomains, ...ooniSamples])) {
       rememberHistoricalOverview(cacheKey, payload, settled ? HISTORICAL_OVERVIEW_TTL_MS : CURRENT_OVERVIEW_TTL_MS);
     } else if (!settled) {

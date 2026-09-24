@@ -85,3 +85,21 @@ test('APNIC Iran figure is split into Iranian networks and networks registered a
   assert.equal(result.foreign[0].asn, 'AS13335');
   assert.equal(parseApnicCountryTable('no table', new Set()), null);
 });
+
+test('WARP share: 30-day samples through Cloudflare over all of Iran, thin days left out', async () => {
+  const { parseApnicVpnShare } = await import('../lib/apnic.mjs');
+  const days = [];
+  for (let time = Date.parse('2025-09-01T00:00:00Z'); time <= Date.parse('2026-09-20T00:00:00Z'); time += 86_400_000) days.push(new Date(time).toISOString().slice(0, 10));
+  // 3% in 2025, a blackout with too few samples in March 2026, 0.2% until August, 5% in September.
+  const country = { data: days.map((date) => ({ date, '30': { seen: date.startsWith('2026-03') ? 40 : 10_000 } })) };
+  const share = (date) => (date < '2026-02-01' ? 0.03 : date < '2026-09-01' ? 0.002 : 0.05);
+  const warp = { data: days.map((date) => ({ date, '30': { seen: 10_000 * share(date) } })) };
+  const result = parseApnicVpnShare(country, warp, { until: '2026-09-24' });
+  assert.deepEqual(result.current, { date: '2026-09-20', share: 5, samples: 10_000 });
+  assert.equal(result.yearAgo.share, 3);
+  assert.equal(result.months.find((month) => month.month === '2026-03').share, null, 'a blackout month is not a share');
+  assert.equal(result.months.find((month) => month.month === '2026-06').share, 0.2);
+  assert.deepEqual({ month: result.lowest.month, share: result.lowest.share }, { month: '2026-02', share: 0.2 });
+  assert.equal(result.months.length, 12);
+  assert.equal(parseApnicVpnShare({ data: [] }, warp, { until: '2026-09-24' }), null);
+});

@@ -515,8 +515,29 @@ function renderMoreServices(services) {
   return `
     <section class="more-services" aria-labelledby="more-services-title">
       <header><h2 id="more-services-title">${escapeHtml(t('board.more.title'))}</h2><p>${escapeHtml(t('board.more.note'))}${services.countryCheck === 'outage' ? ` ${escapeHtml(t('board.country.outage'))}` : ''}${services.survivorsOnly ? ` ${escapeHtml(t('board.services.survivorsOnly'))}` : ''}</p></header>
-      ${groups.map((group) => `<div class="more-group"><h3>${escapeHtml(t(`board.more.group.${group.id}`))}</h3><ul>${group.services.map(chip).join('')}</ul></div>`).join('')}
+      ${groups.map((group) => `<div class="more-group"><h3>${escapeHtml(t(`board.more.group.${group.id}`))}</h3><div class="more-group-body"><ul>${group.services.map(chip).join('')}</ul>${group.id === 'circumvention' ? vpnUseLine(services.vpnUse) : ''}</div></div>`).join('')}
     </section>`;
+}
+
+function formatMonth(month) {
+  return new Intl.DateTimeFormat(localeFor(), { month: 'short', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${month}-01T00:00:00Z`));
+}
+
+// Use of Cloudflare's WARP VPN among users in Iran (APNIC estimate): today, a year ago, the
+// lowest month, and twelve monthly bars, so a collapse like February to August 2026 is visible.
+function vpnUseLine(use) {
+  if (!use?.current) return '';
+  const parts = [t('board.vpnUse.line', { share: formatPercent(use.current.share) })];
+  if (use.yearAgo) parts.push(t('board.vpnUse.yearAgo', { share: formatPercent(use.yearAgo.share) }));
+  if (use.lowest && use.lowest.share < use.current.share / 2) parts.push(t('board.vpnUse.lowest', { share: formatPercent(use.lowest.share), month: formatMonth(use.lowest.month) }));
+  const max = Math.max(...use.months.map((month) => month.share ?? 0), 0.1);
+  const bars = use.months.map((month, index) => {
+    const label = `${formatMonth(month.month)}: ${month.share === null ? t('board.vpnUse.noData') : formatPercent(month.share)}`;
+    const height = month.share === null ? 2 : Math.max(2, Math.round((month.share / max) * 22));
+    return `<rect class="${month.share === null ? 'vpn-bar-empty' : 'vpn-bar'}" x="${index * 10}" y="${24 - height}" width="7" height="${height}" rx="1"><title>${escapeHtml(label)}</title></rect>`;
+  }).join('');
+  const hint = t('board.vpnUse.hint', { date: formatDay(use.current.date) });
+  return `<p class="vpn-use" title="${escapeHtml(hint)}"><svg class="vpn-use-chart" viewBox="0 0 118 24" width="118" height="24" role="img" aria-label="${escapeHtml(t('board.vpnUse.chart'))}">${bars}</svg><span>${escapeHtml(parts.join(' · '))}</span></p>`;
 }
 
 // What changed against the period of the same length before: first thing a returning reader
