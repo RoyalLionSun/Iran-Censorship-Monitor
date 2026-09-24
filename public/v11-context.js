@@ -78,8 +78,6 @@ function insertContextPanels() {
     exportButton.insertAdjacentHTML('afterend', '<button id="export-context-button" class="button" type="button" disabled>Export context CSV</button>');
     document.querySelector('#export-context-button').addEventListener('click', exportContextCsv);
   }
-  const footer = document.querySelector('#footer-version');
-  if (footer) footer.textContent = 'v1.1.0-dev';
 }
 
 function renderMlab(mlab) {
