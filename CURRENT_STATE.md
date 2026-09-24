@@ -71,10 +71,13 @@ Package version: **`1.8.0` intentionally unchanged**
 
 - resilience work (`DATA_RESILIENCE_PLAN.md`): a local store, an hourly collector and store-backed answers exist, plus independent inside-out paths (RIPE Atlas DNS/TLS, Globalping DNS/HTTPS, only probes on Iranian-registered networks) and an OONI raw-file path. **Default operation stays live and lightweight** (owner decision, 24 September 2026: the project is public and self-hosted, so no host may be made to download OONI's raw files, about 400 MB per day, or keep an archive); everything above is off until switched on, and the raw-file path and backfill are opt-in only (`OONI_S3_ENABLED=1`). The header badge's tooltip names which route answered and each path's state. Independent results appear per service as their own tile line and answer only where OONI has none, labelled. Open: switching RIPE Atlas on (owner is checking credits; 60 connected probes in 33 Iranian networks, including TCI and Irancell) and the ethics decision; Globalping has only 6 probes in Iran, all in hosting and CDN networks.
 
+- mobile apps without an OONI app test are answered through their **app servers**: the servers the Instagram, WhatsApp, Facebook, X and YouTube apps talk to (`i.instagram.com`, `edge-chat.instagram.com`, `*.cdninstagram.com`, `*.whatsapp.net`, `*.fbcdn.net`, `*.twimg.com`, `*.ytimg.com` …) are already on Citizen Lab's global test list, so OONI devices in Iran test them. Each service tile shows them as their own line ("App servers (i.instagram.com and 4 more): blocked; 1,093 of 1,440 tests failed", TCI, 17–23 September 2026), decided by majority; a blocked majority counts for the service's status. Labelled "app servers", not "app test": apps may also use other transports (QUIC, fixed addresses) or fallbacks. Missing from the lists: YouTube's API and video servers, X's API, `graph.facebook.com`, TikTok's app servers (a pull request to Citizen Lab's test lists is being prepared);
+- Latin names inside Farsi sentences (servers, networks, sources) are isolated left-to-right, and the Farsi lines avoid brackets around them, because the browser rendered those brackets unmirrored;
+
 ## Next steps (agreed, not started)
 
 - Test the "More services" chips live and correct what does not fit.
-- Find a way to check mobile apps that have no OONI app test (Instagram, TikTok, YouTube and others); public data covers only WhatsApp, Telegram, Signal, Facebook Messenger, Psiphon and Tor.
+- Submit the missing app servers (YouTube API/video, X API, graph.facebook.com, TikTok) to Citizen Lab's test lists; optionally an OONI Run link with them for volunteers.
 
 ## Decisions
 

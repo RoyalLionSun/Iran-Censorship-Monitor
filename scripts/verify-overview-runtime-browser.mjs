@@ -113,7 +113,7 @@ async function runScenario(browser, scenario) {
       const tiles = (stdout.match(/class="service-tile"/g) || []).length;
       if (headline !== 'Instagram is blocked' || tiles !== 6 || !stdout.includes('class="status-row"') ||
           !/<article class="service-tile" data-status="restricted">[\s\S]*?WhatsApp/.test(stdout) ||
-          !/<article class="service-tile" data-status="blocked" data-scope="independent">[\s\S]*?YouTube[\s\S]*?Independent check \(RIPE Atlas\): 2 devices in 1 network; DNS points to Iran’s block address \(AS58224\)/.test(stdout)) {
+          !/<article class="service-tile" data-status="blocked" data-scope="independent">[\s\S]*?YouTube[\s\S]*?Independent check \(\u2066?RIPE Atlas\u2069?\): 2 devices in 1 network; DNS points to Iran’s block address \(\u2066?AS58224\u2069?\)/.test(stdout)) {
         throw new Error(`ready: situation board incomplete (headline=${headline}, tiles=${tiles})`);
       }
       if (cards !== 4 || !stdout.includes('Dimension-specific evidence assessment') ||

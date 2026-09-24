@@ -115,8 +115,45 @@ function strongestWebRow(rows) {
     || b.confirmed - a.confirmed || b.anomalous - a.anomalous || b.measurements - a.measurements)[0] ?? null;
 }
 
-function brandStatus(web, app) {
-  const channels = [web?.status, app?.status].filter(Boolean);
+// The servers a service's mobile app talks to, as far as OONI's test lists cover them (checked
+// against the Citizen Lab global list, September 2026). Blocking works on these server names
+// just as on the website, so their results answer "does the app reach its servers" for
+// services without an OONI app test. Close to an app test, not the same: apps may also use
+// other transports (QUIC, fixed addresses) or built-in fallbacks.
+export const APP_SERVERS = Object.freeze({
+  instagram: { hosts: ['i.instagram.com', 'edge-chat.instagram.com'], suffixes: ['.cdninstagram.com'], patterns: [/^instagram\.[a-z0-9-]+\.fna\.fbcdn\.net$/] },
+  whatsapp: { hosts: [], suffixes: ['.whatsapp.net'], patterns: [] },
+  facebook: { hosts: ['graph.facebook.com', 'fbcdn.net'], suffixes: ['.xx.fbcdn.net'], patterns: [] },
+  x: { hosts: ['api.x.com', 'api.twitter.com'], suffixes: ['.twimg.com'], patterns: [] },
+  youtube: { hosts: ['youtubei.googleapis.com'], suffixes: ['.ytimg.com', '.googlevideo.com'], patterns: [] },
+});
+
+export function isAppServer(brandId, host) {
+  const spec = APP_SERVERS[brandId];
+  const name = String(host ?? '').toLowerCase();
+  return Boolean(spec && (spec.hosts.includes(name) || spec.suffixes.some((suffix) => name.endsWith(suffix)) || spec.patterns.some((pattern) => pattern.test(name))));
+}
+
+// All tested app servers of a service together, decided by majority like a network.
+export function summarizeAppServers(payload, brandId) {
+  if (!APP_SERVERS[brandId] || payload?.ok !== true || !Array.isArray(payload.domains)) return null;
+  const rows = payload.domains.filter((row) => isAppServer(brandId, row.domain));
+  const sum = (key) => rows.reduce((total, row) => total + (Number(row[key]) || 0), 0);
+  const counts = { measurements: sum('measurements'), confirmed: sum('confirmed'), anomalous: sum('anomalous'), ok: sum('ok'), failures: sum('failures') };
+  if (!counts.measurements) return null;
+  const latest = (key) => rows.map((row) => row[key]).filter(Boolean).sort().at(-1) ?? null;
+  return {
+    ...counts, status: networkStatus(counts), hostCount: rows.length,
+    hosts: [...rows].sort((a, b) => b.measurements - a.measurements || a.domain.localeCompare(b.domain)).map((row) => row.domain),
+    observedDays: Math.max(0, ...rows.map((row) => Number(row.observedDays) || 0)), lastObserved: latest('lastObserved'),
+  };
+}
+
+// App servers count like a channel of their own: blocked by majority is a blocked service.
+const APP_SERVER_CHANNEL = { blocked: 'confirmed', restricted: 'anomaly', partial: 'anomaly', reachable: 'no_signal', inconclusive: 'inconclusive' };
+
+function brandStatus(web, app, appServers = null) {
+  const channels = [web?.status, app?.status, appServers && !appServers.country ? APP_SERVER_CHANNEL[appServers.status] : null].filter(Boolean);
   if (channels.includes('confirmed')) return 'blocked';
   if (channels.includes('anomaly')) return 'restricted';
   if (channels.includes('no_signal')) return 'reachable';
@@ -174,7 +211,12 @@ export function summarizeServiceBrands(domainPayload, appPayload, selection = {}
       status: appRow.status, measurements: appRow.measurements, anomalies: appRow.anomalies, lastObserved: appRow.lastObservation,
       name: brand.appName ?? null,
     } : null;
-    return { id: brand.id, name: brand.name, status: brandStatus(web, app), web, app, country: countryFallback(countryRows, brand, web) };
+    // App servers answer for the service only where the selection covers its website.
+    const inScope = strongest && strongest.status !== 'out_of_scope';
+    const networkServers = inScope ? summarizeAppServers(domainPayload, brand.id) : null;
+    const countryServers = inScope && !networkServers && selection.asn && countryPayload?.ok ? summarizeAppServers(countryPayload, brand.id) : null;
+    const appServers = networkServers ?? (countryServers ? { ...countryServers, country: true } : null);
+    return { id: brand.id, name: brand.name, status: brandStatus(web, app, appServers), web, app, appServers, country: countryFallback(countryRows, brand, web) };
   });
   if (targetItem) items.unshift(targetItem);
   // Only what the current selection actually covers is presented and summarized.

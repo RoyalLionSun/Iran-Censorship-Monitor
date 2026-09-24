@@ -284,3 +284,43 @@ test('independent checks: DNS to the block address is blocking, failed connectio
   assert.equal(result.signal.status, 'partial', 'one block against one success is not a majority');
   assert.equal(result.example, undefined, 'hosts outside the service list are ignored');
 });
+
+test('app servers: the servers a mobile app uses answer for services without an OONI app test', async () => {
+  const { isAppServer, summarizeAppServers, summarizeServiceBrands } = await import('../public/service-findings.js');
+  assert.equal(isAppServer('instagram', 'scontent-ams4-1.cdninstagram.com'), true);
+  assert.equal(isAppServer('instagram', 'instagram.fsaw1-13.fna.fbcdn.net'), true);
+  assert.equal(isAppServer('facebook', 'instagram.fsaw1-13.fna.fbcdn.net'), false, 'Instagram media on fbcdn belongs to Instagram');
+  assert.equal(isAppServer('facebook', 'static.xx.fbcdn.net'), true);
+  assert.equal(isAppServer('x', 'pbs.twimg.com'), true);
+  assert.equal(isAppServer('youtube', 'i.ytimg.com'), true);
+  assert.equal(isAppServer('youtube', 'fcm.googleapis.com'), false);
+  // Counts as measured across Iran, 17–23 September 2026.
+  const payload = { ok: true, domains: [
+    { domain: 'www.youtube.com', measurements: 0, confirmed: 0, anomalous: 0, ok: 0 },
+    { domain: 'i.instagram.com', measurements: 162, confirmed: 25, anomalous: 103, ok: 5, failures: 29, observedDays: 7, lastObserved: '2026-09-23' },
+    { domain: 'edge-chat.instagram.com', measurements: 161, confirmed: 37, anomalous: 85, ok: 3, failures: 36, observedDays: 7, lastObserved: '2026-09-23' },
+    { domain: 'i.ytimg.com', measurements: 9, confirmed: 8, anomalous: 0, ok: 0, failures: 1, observedDays: 3, lastObserved: '2026-09-22' },
+    { domain: 'mmg.whatsapp.net', measurements: 10, confirmed: 2, anomalous: 4, ok: 2, failures: 2 },
+    { domain: 'pps.whatsapp.net', measurements: 9, confirmed: 1, anomalous: 4, ok: 3, failures: 1 },
+  ] };
+  const instagram = summarizeAppServers(payload, 'instagram');
+  assert.deepEqual({ status: instagram.status, total: instagram.measurements, hosts: instagram.hosts }, { status: 'blocked', total: 323, hosts: ['i.instagram.com', 'edge-chat.instagram.com'] });
+  assert.equal(summarizeAppServers(payload, 'whatsapp').status, 'restricted', 'most failed, but confirmed blocks do not outnumber successes');
+  assert.equal(summarizeAppServers(payload, 'telegram'), null, 'Telegram has a real app test instead');
+  const brands = summarizeServiceBrands(payload, null, { testName: 'web_connectivity' });
+  const youtube = brands.items.find((item) => item.id === 'youtube');
+  assert.equal(youtube.status, 'blocked', 'a website without tests no longer hides blocked app servers');
+  assert.ok(brands.blocked.includes('youtube'));
+  const target = summarizeServiceBrands(payload, null, { testName: 'web_connectivity', target: 'https://www.bbc.com/' });
+  assert.equal(target.items.find((item) => item.id === 'instagram').appServers, null, 'an unrelated selected website does not bring app servers');
+});
+
+test('app servers fall back to all of Iran when the selected network has none, labelled and without changing the status', async () => {
+  const { summarizeServiceBrands } = await import('../public/service-findings.js');
+  const network = { ok: true, domains: [{ domain: 'www.instagram.com', measurements: 4, confirmed: 0, anomalous: 0, ok: 4 }] };
+  const country = { ok: true, domains: [{ domain: 'i.instagram.com', measurements: 50, confirmed: 30, anomalous: 15, ok: 5 }] };
+  const instagram = summarizeServiceBrands(network, null, { asn: 'AS58224', testName: 'web_connectivity' }, country).items.find((item) => item.id === 'instagram');
+  assert.equal(instagram.appServers.country, true);
+  assert.equal(instagram.appServers.status, 'blocked');
+  assert.equal(instagram.status, 'reachable', 'the network\'s own result stays its claim');
+});

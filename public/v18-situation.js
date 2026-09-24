@@ -311,6 +311,25 @@ function coverageLine(item, selection) {
   return `<li class="tile-coverage">${escapeHtml(t('board.coverage.days', { days: formatNumber(days), window: formatNumber(window) }))}</li>`;
 }
 
+// Latin technical names (servers, networks, sources) inside Farsi text keep their own
+// left-to-right order: a Unicode isolate stops brackets and numbers from jumping around.
+function ltr(value) {
+  return `\u2066${value}\u2069`;
+}
+
+// The servers the mobile app talks to, for services without an OONI app test.
+function appServersLine(servers) {
+  if (!servers || servers.status === 'inconclusive') return '';
+  // The main server by name, the rest counted; the full list is in the tooltip.
+  const more = servers.hosts.length - 1;
+  const text = t(`board.appServers.${servers.status}`, {
+    hosts: more > 0 ? t('board.appServers.more', { host: ltr(servers.hosts[0]), count: formatNumber(more) }) : ltr(servers.hosts[0]),
+    total: formatNumber(servers.measurements), failed: formatNumber(servers.confirmed + servers.anomalous),
+    confirmed: formatNumber(servers.confirmed), ok: formatNumber(servers.ok),
+  });
+  return `<li class="tile-app-servers" data-channel-status="${escapeHtml(servers.status)}" title="${escapeHtml(servers.hosts.join('\n'))}">${escapeHtml(servers.country ? t('board.appServers.country', { text }) : text)}</li>`;
+}
+
 // Tile colour for an independent answer; "failing" is a failed connection, not proof of a block.
 const INDEPENDENT_STATUS = { blocked: 'blocked', failing: 'restricted', partial: 'restricted', reachable: 'reachable' };
 const INDEPENDENT_SOURCE = { 'ripe-atlas': 'RIPE Atlas', globalping: 'Globalping' };
@@ -323,9 +342,9 @@ function independentLine(independent) {
     : `board.independent.line.${independent.status}`;
   const networks = independent.blockedNetworks.length ? independent.blockedNetworks : independent.networks;
   return `<li class="tile-independent">${escapeHtml(t(key, {
-    sources: listOf(independent.sources.map((source) => INDEPENDENT_SOURCE[source] ?? source)),
+    sources: listOf(independent.sources.map((source) => ltr(INDEPENDENT_SOURCE[source] ?? source))),
     probes: plural('board.independent.devices', independent.probes), networks: plural('board.independent.networks', independent.networks.length),
-    named: networks.slice(0, 3).join(', '),
+    named: ltr(networks.slice(0, 3).join(', ')),
   }))}</li>`;
 }
 
@@ -538,7 +557,7 @@ function renderServiceTiles(services, selection, connectivity = null) {
           <b class="service-tile-status">${escapeHtml(independent ? t(`board.independent.status.${independent.status}`) : country ? t(`board.country.status.${country.status}`)
             : item.status === 'restricted' && item.app?.status === 'anomaly' && item.web?.status !== 'anomaly' ? t('board.status.appFailed')
               : t(`board.status.${item.status}`))}</b>
-          <ul>${country ? countryLine(country, item) : ''}${!country && item.country && item.web?.status === 'untested' ? `<li class="tile-country">${escapeHtml(t(`board.country.web.${item.country.status}`, { confirmed: formatNumber(item.country.confirmed), count: formatNumber(item.country.anomalous), total: formatNumber(item.country.measurements) }))}</li>` : ''}${!country && ['unavailable', 'outage'].includes(services.countryCheck) && ['untested', 'unclear'].includes(item.status) ? `<li class="tile-country">${escapeHtml(t(`board.country.${services.countryCheck}`))}</li>` : ''}${item.country && item.web?.status === 'untested' ? '' : channelLine(item.web, 'web')}${channelLine(item.app, 'app')}${mechanismLine(item)}${coverageLine(item, selection)}${independentLine(item.independent)}</ul>
+          <ul>${country ? countryLine(country, item) : ''}${!country && item.country && item.web?.status === 'untested' ? `<li class="tile-country">${escapeHtml(t(`board.country.web.${item.country.status}`, { confirmed: formatNumber(item.country.confirmed), count: formatNumber(item.country.anomalous), total: formatNumber(item.country.measurements) }))}</li>` : ''}${!country && ['unavailable', 'outage'].includes(services.countryCheck) && ['untested', 'unclear'].includes(item.status) ? `<li class="tile-country">${escapeHtml(t(`board.country.${services.countryCheck}`))}</li>` : ''}${item.country && item.web?.status === 'untested' ? '' : channelLine(item.web, 'web')}${channelLine(item.app, 'app')}${appServersLine(item.appServers)}${mechanismLine(item)}${coverageLine(item, selection)}${independentLine(item.independent)}</ul>
         </article>`;
       }).join('')}
       </div>` : `<p class="service-board-empty">${escapeHtml(t('board.services.noneInSelection'))}</p>`}
