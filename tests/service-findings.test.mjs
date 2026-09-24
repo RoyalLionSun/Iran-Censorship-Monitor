@@ -259,3 +259,15 @@ test('a network with only a handful of tests per service is marked and sorted af
   const access = summarizeNetworkAccess([row('www.instagram.com', 'AS1', 2), row('www.instagram.com', 'AS2', 30)]);
   assert.deepEqual(access.map((entry) => [entry.asn, entry.level, entry.thin]), [['AS2', 'full', false], ['AS1', 'full', true]]);
 });
+
+test('what changed: status moves between periods, only with enough tests in both', async () => {
+  const { compareServicePeriods } = await import('../public/service-findings.js');
+  const row = (domain, confirmed, ok) => ({ domain, measurements: confirmed + ok, confirmed, anomalous: 0, ok, failures: 0 });
+  const before = { ok: true, domains: [row('www.viber.com', 0, 40), row('www.instagram.com', 30, 1), row('signal.org', 1, 1)] };
+  const now = { ok: true, domains: [row('www.viber.com', 30, 5), row('www.instagram.com', 2, 30), row('signal.org', 20, 0)] };
+  const result = compareServicePeriods(before, now);
+  assert.deepEqual(result.worse.map((entry) => [entry.id, entry.from, entry.to]), [['viber', 'reachable', 'blocked']]);
+  assert.deepEqual(result.better.map((entry) => [entry.id, entry.from, entry.to]), [['instagram', 'blocked', 'partial']]);
+  assert.equal(result.compared, 2, 'Signal had too few tests before');
+  assert.equal(compareServicePeriods(null, now), null);
+});

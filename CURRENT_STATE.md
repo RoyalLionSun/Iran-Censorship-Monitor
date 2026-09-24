@@ -28,7 +28,7 @@ Package version: **`1.8.0` intentionally unchanged**
 - a selection means a service and covers all of its hosts plus its app test, so the Overview cannot contradict itself for a selected service;
 - the Overview opens with a plain-language situation board: headline naming confirmed blocked services, six service tiles (website and app separate) and a status row for connection, test connections, global routing and complete shutdown;
 - Censored Planet, RIPE Atlas and APNIC deliver data again after fixes for an upstream country-code change, an upstream response-format change and a too-short connect attempt window;
-- the deterministic suite passes **426/426 tests**; build and release-notes gate pass;
+- the deterministic suite passes **427/427 tests**; build and release-notes gate pass;
 - `npm run verify:ui`, including the real-app Overview gate and the EN/FA/RTL fixture, passes with headless Chrome; live public sources were checked for `AS58224`, `2026-09-15..2026-09-22`;
 - the earlier screenshot was caused by an old long-lived server process returning `publicSummary` while the newly served Overview expected `assessment.interpretation`; static assets and server modules were out of sync;
 - a nationwide shutdown is established only when source-native nationwide impact, two independent technical roots and a confirmed or acknowledged national Pulse record overlap in time; confidence stops at medium because root lineage is unverified;
@@ -60,6 +60,7 @@ Package version: **`1.8.0` intentionally unchanged**
 - "Who has access" switches between the six main services and the four further groups; a network whose services each had fewer than five tests is marked "few, may be one person", dimmed and sorted after well-covered networks of its level;
 - APNIC's Iran figure also counts networks registered abroad: 8.6% of its samples, mostly Cloudflare (AS13335, the WARP VPN) at 87% IPv6, which lifts Iran's IPv6 share from 12.1% (Iranian networks only) to 17.8%. The IPv6 panel shows the foreign share and both values for all of Iran. Tor Metrics publishes country totals only and M-Lab's country aggregate has no network filter, so both stay context and are documented as unfilterable;
 - app tests: besides WhatsApp and Telegram, OONI's Signal, Facebook Messenger, Psiphon and Tor app tests are shown (Facebook tile: Messenger app; Signal, Psiphon and Tor chips: app status next to the website). Signal and Messenger are routine again, since OONI runs each more than 4,000 times a month in Iran. App results follow the majority rule too;
+- "What changed" below the headline compares every service's website status with the period of the same length right before, in the same network, using services with at least five tests in both periods; it is withheld with an explanation when a nationwide outage overlaps either period, because tests then came only from networks that kept access;
 - regional outages cannot be charted: Radar's regional annotations for Iran name no region;
 - a third-party dossier (Iran "digital apartheid" report v4.5, 23 Sep 2026) was checked against primary sources; only claims the project's own sources confirm were used, see below;
 - no commit, push, release, tag or deployment authorization has been made for this working state.

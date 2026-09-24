@@ -327,14 +327,30 @@ async function handleApi(req, res, url) {
         coverage: inventory ? { registered: inventory.size, measured: shown.length, unmeasuredKinds, publicUnmeasured, directory: Boolean(directory) } : null,
       };
     })();
-    const [countryOoniDomains, ooniSamples, ooniNetworks, [outageTraffic, networkOutageTraffic], serviceNetworks] = await Promise.all([
-      countryTask, samplesTask, networksTask, trafficTask, serviceNetworksTask,
+    // The period of the same length right before, for "what changed".
+    const DAY = 86_400_000;
+    const days = Math.round((Date.parse(`${input.until}T00:00:00Z`) - Date.parse(`${input.since}T00:00:00Z`)) / DAY) + 1;
+    const previous = {
+      since: new Date(Date.parse(`${input.since}T00:00:00Z`) - days * DAY).toISOString().slice(0, 10),
+      until: new Date(Date.parse(`${input.since}T00:00:00Z`) - DAY).toISOString().slice(0, 10),
+    };
+    const previousTask = input.testName === 'web_connectivity' && !input.target
+      ? safeSource('OONI domains (previous period)', () => getOoniDomains(ooniScope({ ...input, ...previous })), sourceKey('OONI domains', { ...input, ...previous }))
+      : Promise.resolve(null);
+    const historyTask = safeSource('Cloudflare Radar outage history', () => getRadarOutageHistory(), 'Radar outage history');
+    const [countryOoniDomains, ooniSamples, ooniNetworks, [outageTraffic, networkOutageTraffic], serviceNetworks, previousOoniDomains, outageHistory] = await Promise.all([
+      countryTask, samplesTask, networksTask, trafficTask, serviceNetworksTask, previousTask, historyTask,
     ]);
+    // A nationwide outage in either period means tests came only from networks that kept access;
+    // comparing such periods would show changes that are none.
+    const overlapsOutage = (from, to) => (outageHistory?.outages ?? []).some((item) =>
+      Date.parse(item.start) <= Date.parse(`${to}T23:59:59Z`) && (!item.end || Date.parse(item.end) >= Date.parse(`${from}T00:00:00Z`)));
+    const comparisonBlockedByOutage = overlapsOutage(previous.since, previous.until) || overlapsOutage(input.since, input.until);
     const scopeLabel = input.asn ? `${input.asn} / Iran` : 'Iran / all measured networks';
-    const assessment = buildAssessment({ ooni, ripe, radar, radarQuality, ioda, ripestat, censoredPlanet, tor, mlab, apnic, globalping, peeringdb, ihr, asrank, rpki, pulse, ooniDomains, countryOoniDomains, circumvention, ooniSamples, ooniNetworks, outageTraffic, networkOutageTraffic, serviceNetworks, selection: input, scopeLabel });
+    const assessment = buildAssessment({ ooni, ripe, radar, radarQuality, ioda, ripestat, censoredPlanet, tor, mlab, apnic, globalping, peeringdb, ihr, asrank, rpki, pulse, ooniDomains, countryOoniDomains, circumvention, ooniSamples, ooniNetworks, outageTraffic, networkOutageTraffic, serviceNetworks, previousOoniDomains: previousOoniDomains ? { ...previousOoniDomains, period: previous, outageOverlap: comparisonBlockedByOutage } : null, selection: input, scopeLabel });
     const asnProfile = input.asn ? asns.find((item) => item.asn === input.asn) || null : null;
     const payload = { ok: true, input, asnProfile, fetchedAt: new Date().toISOString(), assessment, ooni, ripe, radar, radarQuality, ioda, tor, mlab, apnic, ripestat, globalping, censoredPlanet, peeringdb, ihr, asrank, rpki, pulse };
-    if (cacheKey && isCleanOverview([ooni, ripe, radar, radarQuality, ioda, tor, mlab, apnic, ripestat, censoredPlanet, pulse, ooniDomains, countryOoniDomains, circumvention, outageTraffic, networkOutageTraffic, ooniNetworks, serviceNetworks, ...ooniSamples])) {
+    if (cacheKey && isCleanOverview([ooni, ripe, radar, radarQuality, ioda, tor, mlab, apnic, ripestat, censoredPlanet, pulse, ooniDomains, countryOoniDomains, circumvention, outageTraffic, networkOutageTraffic, ooniNetworks, serviceNetworks, previousOoniDomains, ...ooniSamples])) {
       rememberHistoricalOverview(cacheKey, payload);
     }
     jsonResponse(res, 200, payload);

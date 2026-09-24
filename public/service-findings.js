@@ -352,3 +352,36 @@ export function summarizeNetworkAccessByGroup(rows = []) {
     ...MORE_SERVICE_GROUPS.map((group) => [group.id, summarizeNetworkAccess(rows, group.services)]),
   ]);
 }
+
+// What changed against the period before: every service's website status in both periods of
+// the same network, by the majority rule. Only services with enough tests in both count, so a
+// single tester cannot make a change appear.
+const CHANGE_MIN_TESTS = 5;
+const STATUS_RANK = { reachable: 0, partial: 1, restricted: 2, blocked: 3 };
+
+function allServices() {
+  return [
+    ...SERVICE_BRANDS.map(({ id, name, domains }) => ({ id, name, domains })),
+    ...MORE_SERVICE_GROUPS.flatMap((group) => group.services.map(({ id, name, domains }) => ({ id, name, domains }))),
+  ];
+}
+
+export function compareServicePeriods(previousPayload, currentPayload) {
+  if (!previousPayload?.ok || !currentPayload?.ok) return null;
+  const worse = [];
+  const better = [];
+  let compared = 0;
+  for (const service of allServices()) {
+    const before = serviceTotals(previousPayload, service.domains);
+    const now = serviceTotals(currentPayload, service.domains);
+    if (!before || !now || before.measurements < CHANGE_MIN_TESTS || now.measurements < CHANGE_MIN_TESTS) continue;
+    const from = networkStatus(before);
+    const to = networkStatus(now);
+    if (!(from in STATUS_RANK) || !(to in STATUS_RANK)) continue;
+    compared += 1;
+    if (from === to) continue;
+    const entry = { id: service.id, name: service.name, from, to, before: before.measurements, now: now.measurements };
+    (STATUS_RANK[to] > STATUS_RANK[from] ? worse : better).push(entry);
+  }
+  return { compared, worse, better };
+}

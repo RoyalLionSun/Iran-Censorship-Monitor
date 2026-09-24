@@ -466,6 +466,30 @@ function renderMoreServices(services) {
     </section>`;
 }
 
+// What changed against the period of the same length before: first thing a returning reader
+// wants to know. Only services with enough tests in both periods take part.
+function renderChanges(services) {
+  const changes = services?.changes;
+  const period = changes?.previous ? `${formatDay(changes.previous.since)} – ${formatDay(changes.previous.until)}` : '';
+  if (changes?.outageOverlap) {
+    return `<section class="changes-board" aria-labelledby="changes-title"><header><h2 id="changes-title">${escapeHtml(t('board.changes.title'))}</h2></header>
+      <p class="changes-none">${escapeHtml(t('board.changes.outage', { period }))}</p></section>`;
+  }
+  if (!changes?.compared) return '';
+  const item = (entry) => `<li class="change-item" data-direction="${STATUS_RANK_UI[entry.to] > STATUS_RANK_UI[entry.from] ? 'worse' : 'better'}" title="${escapeHtml(t('board.changes.detail', { before: formatNumber(entry.before), now: formatNumber(entry.now) }))}">
+    <b>${escapeHtml(entry.name)}</b> <span>${escapeHtml(t(`board.more.status.${entry.from}`))} → ${escapeHtml(t(`board.more.status.${entry.to}`))}</span></li>`;
+  const none = !changes.worse.length && !changes.better.length;
+  return `
+    <section class="changes-board" aria-labelledby="changes-title">
+      <header><h2 id="changes-title">${escapeHtml(t('board.changes.title'))}</h2><p>${escapeHtml(t('board.changes.note', { period, count: formatNumber(changes.compared) }))}</p></header>
+      ${none ? `<p class="changes-none">${escapeHtml(t('board.changes.none'))}</p>` : ''}
+      ${changes.worse.length ? `<div class="changes-row"><h3>${escapeHtml(t('board.changes.worse'))}</h3><ul>${changes.worse.map(item).join('')}</ul></div>` : ''}
+      ${changes.better.length ? `<div class="changes-row"><h3>${escapeHtml(t('board.changes.better'))}</h3><ul>${changes.better.map(item).join('')}</ul></div>` : ''}
+    </section>`;
+}
+
+const STATUS_RANK_UI = { reachable: 0, partial: 1, restricted: 2, blocked: 3 };
+
 function renderServiceTiles(services, selection, connectivity = null) {
   if (!services) return '';
   const items = services.visible ?? services.items;
@@ -711,6 +735,7 @@ function renderHero(interpretation) {
       <h1 id="situation-headline">${escapeHtml(headlineText({ ...summary, headline: summary.headline && { ...summary.headline, period: nationwidePeriod(interpretation.dimensions.connectivity) } }, interpretation.services))}</h1>
       <p class="situation-lede">${escapeHtml(ledeText(interpretation))}</p>
     </header>
+    ${renderChanges(interpretation.services)}
     ${renderServiceTiles(interpretation.services, selection, interpretation.dimensions.connectivity)}
     ${statusRow(interpretation)}
     ${renderOutageTraffic(interpretation)}
