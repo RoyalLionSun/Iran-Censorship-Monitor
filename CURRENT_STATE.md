@@ -61,6 +61,13 @@ Package version: **`1.8.0` intentionally unchanged**
 - a third-party dossier (Iran "digital apartheid" report v4.5, 23 Sep 2026) was checked against primary sources; only claims the project's own sources confirm were used, see below;
 - no commit, push, release, tag or deployment authorization has been made for this working state.
 
+## Next steps (agreed, not started)
+
+- Test the "More services" chips live and correct what does not fit.
+- "Who has access": let the reader switch the columns by group (the four new groups) instead of only the six main services.
+- Find a way to check mobile apps, not only websites (only WhatsApp and Telegram have OONI app tests today).
+- Tor Metrics, M-Lab and APNIC also assign users by geolocation; check whether foreign VPN exits distort them as they did OONI.
+
 ## Decisions
 
 - **Maximum selectable period (currently 120 days) — decided: keep.** Internet Society Pulse lists one *unconfirmed* national record for 8 January to 26 May 2026 (138 days). Cloudflare Radar, a technical source, dates two separate nationwide outages inside it: 8 January 16:30 UTC to 1 February 2026 and 28 February 07:00 UTC to 26 May 12:00 UTC (about 23 and 87 days). Both fit the limit, each is now charted with its week before and after, and the Pulse record stays visible with the note that Radar dates it differently. Raising the limit is therefore not needed to show the 2026 blackout.
