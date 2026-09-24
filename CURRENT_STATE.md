@@ -88,6 +88,8 @@ Package version: **`1.8.0` intentionally unchanged**
 
 - Technical analysis opens with "Test results per website", before how the measurements are assessed: one card per service (six, in two rows of three) with its tested addresses as rows (tests, confirmed, anomalous, last day, "Inspect URLs"), the servers its app uses, and one line naming addresses nobody tested. Before, each address was its own card (Telegram three times) and a separate box listed "Instagram: not tested" for the alias instagram.com while www.instagram.com was blocked; that box is gone. The header counts the tests of all these websites instead of one address;
 
+- audit of 24 September 2026 (`AUDIT_2026-09.md`): Brotli/gzip and ETags (a page view from about 1.2 MB to about 200 KB; unchanged files cost nothing on return), an offline copy of exactly the viewed page with a dated notice (`public/sw.js`, online always fresh), link previews with a header-style image, installable app manifest, skip link, reduced motion, one main heading, Persian digits in the technical view, reports reachable on phones, Persian browsers open in Farsi, footer mirrors the header. Proposals needing a decision are listed there;
+
 ## Next steps (agreed, not started)
 
 - **The dashboard itself must be reachable from Iran** before it is published: the Farsi version is for people there. Plan hosting so it is not behind a provider Iran blocks (e.g. not solely behind Cloudflare), offer mirrors and an .onion address for Tor users, and once online, check our own address from inside Iran (OONI Run link with the dashboard URL, or a Citizen Lab list entry).
