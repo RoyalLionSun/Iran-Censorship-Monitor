@@ -470,8 +470,6 @@ html[dir="rtl"] input[type="date"] { text-align: right; }
 .domain-share .share-anomalous { background: var(--yellow); }
 #ooni-domains-table .num-confirmed.has-value { color: #ff8a8a; font-weight: 700; }
 #ooni-domains-table .num-anomalous.has-value { color: var(--yellow); }
-/* The short corroboration column ends with its content instead of stretching beside the table. */
-@media (min-width: 1051px) { #signals-panel { align-self: start; } }
 /* KPI subtitles wrap to two lines instead of ending in "…". */
 .kpi-card > small { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.35; }
 /* Charts: the drawing keeps its colours by series; the frame around them becomes readable. */
@@ -479,6 +477,4 @@ html[dir="rtl"] input[type="date"] { text-align: right; }
 .chart svg line[stroke="#263445"] { stroke: #2e4466; }
 .chart svg text[fill="#6f8094"] { fill: #9fb3cc; font-size: 10px; }
 .chart svg rect[fill="#59a8ff"] { opacity: .38; }
-.chart svg path[fill="none"] { stroke-width: 2.4; }
-.chart svg circle { r: 3.4; }
 .chart-legend { color: #b3c3d6; }

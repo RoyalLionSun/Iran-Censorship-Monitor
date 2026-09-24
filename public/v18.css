@@ -239,3 +239,5 @@ html[dir="rtl"] .topbar-actions { justify-content: flex-start; }
 /* Grid children default to their content's width; the wide access table would widen the
    whole board on a phone instead of scrolling inside its own box. */
 .situation-board > * { min-width: 0; }
+
+#overview-view > #sources-panel { grid-column: 1 / -1; margin-top: 14px; }

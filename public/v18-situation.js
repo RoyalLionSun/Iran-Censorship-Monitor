@@ -46,6 +46,10 @@ function insertViews() {
   const slot = document.querySelector('#overview-services-slot');
   if (serviceDetails && slot) slot.replaceWith(serviceDetails);
 
+  // Where the data comes from belongs on the first page, at its end.
+  const sources = document.querySelector('#sources-panel');
+  if (sources) document.querySelector('#overview-view').appendChild(sources);
+
   const technical = document.querySelector('#technical-view');
   for (const selector of ['#assessment-strip', '.kpi-grid', '.status-legend', '.dashboard-grid']) {
     const element = document.querySelector(selector);
