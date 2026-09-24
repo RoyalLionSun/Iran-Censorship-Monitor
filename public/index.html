@@ -107,7 +107,7 @@
 
       <section id="service-findings" class="service-findings" data-status="pending" aria-live="polite" aria-labelledby="service-findings-title">
         <div class="service-findings-heading">
-          <div><span class="section-label" id="service-findings-kicker">PRIORITY SERVICES / OONI WEB TESTS</span><h1 id="service-findings-title">Checking tested service domains…</h1></div>
+          <div><span class="section-label" id="service-findings-kicker">PRIORITY SERVICES / OONI WEB TESTS</span><h2 id="service-findings-title">Checking tested service domains…</h2></div>
           <a id="service-findings-source" class="hidden" href="https://api.ooni.io/" target="_blank" rel="noreferrer">OONI source ↗</a>
         </div>
         <p id="service-findings-context" class="service-findings-context">Results will be scoped to the selected network and UTC dates. A missing test is not evidence that a service works.</p>
@@ -206,14 +206,14 @@
             <button id="ooni-domains-more" class="button hidden" type="button">Show all tested domains</button>
             <a id="ooni-domains-source" href="https://api.ooni.io/" target="_blank" rel="noreferrer">OONI source ↗</a>
             <section id="ooni-domain-details" class="ooni-domain-details hidden" aria-labelledby="ooni-detail-title">
-              <div class="ooni-detail-heading"><h4 id="ooni-detail-title"></h4><button id="ooni-detail-close" type="button" class="button"></button></div>
+              <div class="ooni-detail-heading"><h4 id="ooni-detail-title"></h4><button id="ooni-detail-close" type="button" class="button">Close</button></div>
               <p id="ooni-detail-note" class="panel-note"></p>
               <p id="ooni-detail-state" role="status"></p>
               <div class="table-wrap compact-table-wrap"><table>
                 <thead><tr><th id="ooni-detail-url-header"></th><th id="ooni-detail-outcome-header"></th><th id="ooni-detail-date-header"></th><th id="ooni-detail-evidence-header"></th></tr></thead>
                 <tbody id="ooni-detail-table"></tbody>
               </table></div>
-              <button id="ooni-detail-more" class="button hidden" type="button"></button>
+              <button id="ooni-detail-more" class="button hidden" type="button">Load more</button>
               <a id="ooni-detail-source" class="hidden" href="https://api.ooni.io/" target="_blank" rel="noreferrer"></a>
             </section>
           </section>
