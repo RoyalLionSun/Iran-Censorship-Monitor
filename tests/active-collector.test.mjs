@@ -143,3 +143,19 @@ test('Globalping measurements are started per host and method and read when fini
   assert.deepEqual({ added: next.added, pending: next.pending }, { added: 2, pending: 0 });
   store.close();
 });
+
+test('an Atlas round the credit balance cannot pay is skipped with a clear reason', async () => {
+  const store = openStore();
+  let posted = false;
+  const http = async (url, options = {}) => {
+    if (url.includes('/probes/')) return { results: [{ id: 1, asn_v4: 58224 }, { id: 2, asn_v4: 197207 }] };
+    if (url.includes('/credits/')) return { current_balance: 50 };
+    if (options.method === 'POST') { posted = true; return { measurements: [1, 2] }; }
+    return [];
+  };
+  const result = await collectActivePath(store, 'ripe-atlas', atlasPath({ http, key: 'k', hosts: ['www.instagram.com'] }), { now: new Date('2026-09-24T10:00:00Z'), iranAsns: iran });
+  assert.equal(posted, false);
+  assert.match(result.error, /credits too low for a round: 50 available, about 80 needed/);
+  assert.equal(store.getMeta('ripe-atlas:lastCreated'), null, 'the round is tried again next time');
+  store.close();
+});

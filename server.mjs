@@ -4,7 +4,7 @@ import { createReadStream, existsSync } from 'node:fs';
 import { extname, join, normalize, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildAssessment } from './lib/assessment.mjs';
-import { createLastGoodStore, errorPayload, isCleanOverview, isSettledPeriod, jsonResponse, mapLimit, normalizeAsn, validateRange } from './lib/common.mjs';
+import { createLastGoodStore, errorPayload, isCleanOverview, isSettledPeriod, jsonResponse, loadEnvFile, mapLimit, normalizeAsn, validateRange } from './lib/common.mjs';
 import { getCircumventionSignals, getOoniDomainMeasurements, getOoniDomains, getOoniMeasurementDetail, getOoniNetworks, getOoniServiceNetworks, getOoniTimeline, iranRegisteredAsns, getOoniSample, listOoniMeasurements, OONI_TESTS } from './lib/ooni.mjs';
 import { getRipeSignals } from './lib/ripe.mjs';
 import { getRadarConnectionQuality, getRadarOutageHistory, getRadarOutageTraffic, getRadarSignals, isNationwideAnnotation } from './lib/radar.mjs';
@@ -37,24 +37,7 @@ import { getApnicCountryComposition, getApnicIpv6 } from './lib/apnic.mjs';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
 
-async function loadDotEnv() {
-  const envFile = join(root, '.env');
-  if (!existsSync(envFile)) return;
-  const content = await readFile(envFile, 'utf8');
-  for (const rawLine of content.split(/\r?\n/)) {
-    const line = rawLine.trim();
-    if (!line || line.startsWith('#')) continue;
-    const separator = line.indexOf('=');
-    if (separator <= 0) continue;
-    const key = line.slice(0, separator).trim();
-    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(key) || process.env[key] !== undefined) continue;
-    let value = line.slice(separator + 1).trim();
-    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) value = value.slice(1, -1);
-    process.env[key] = value;
-  }
-}
-
-await loadDotEnv();
+await loadEnvFile(join(root, '.env'));
 const publicRoot = resolve(root, 'public');
 const asnCoverageSnapshotPath = join(root, 'var/asn-coverage/latest.json');
 const asns = JSON.parse(await readFile(join(root, 'data/asns.json'), 'utf8'));
