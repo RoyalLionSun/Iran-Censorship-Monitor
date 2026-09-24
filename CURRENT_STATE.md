@@ -20,7 +20,7 @@ Package version: **`1.8.0` intentionally unchanged**
 - the former dashboard remains available under Technical analysis;
 - all new controlled presentation is paired EN/FA with RTL/LTR handling;
 - Censored Planet partial observations remain visible but cannot support automatic confidence;
-- OONI service findings are integrated: priority service domains, a per-domain table with bounded URL drilldown and separate WhatsApp/Telegram app tests; routine circumvention monitoring no longer requests Signal;
+- OONI service findings are integrated: priority service domains, a per-domain table with bounded URL drilldown and separate WhatsApp/Telegram app tests; Signal and Facebook Messenger app tests are part of routine monitoring;
 - country-level Censored Planet results no longer cover or support claims about a selected ASN, target or non-web test;
 - current-window RIPEstat routing uses the stable latest-snapshot lookup, and RIPEstat `query_time` is read as UTC; a cold historical routing lookup can still exceed the 12 s request timeout;
 - the Overview holds three blocks for non-technical readers (situation board, what this means for you, open questions); the per-claim assessment, per-website details, findings and coverage matrix live in Technical analysis;
@@ -59,6 +59,7 @@ Package version: **`1.8.0` intentionally unchanged**
 - during a nationwide outage, results from other Iranian networks no longer stand in for a network: only the few networks that kept access can send tests then, so their results do not stand for Iran. The all-Iran view says so;
 - "Who has access" switches between the six main services and the four further groups; a network whose services each had fewer than five tests is marked "few, may be one person", dimmed and sorted after well-covered networks of its level;
 - APNIC's Iran figure also counts networks registered abroad: 8.6% of its samples, mostly Cloudflare (AS13335, the WARP VPN) at 87% IPv6, which lifts Iran's IPv6 share from 12.1% (Iranian networks only) to 17.8%. The IPv6 panel shows the foreign share and both values for all of Iran. Tor Metrics publishes country totals only and M-Lab's country aggregate has no network filter, so both stay context and are documented as unfilterable;
+- app tests: besides WhatsApp and Telegram, OONI's Signal, Facebook Messenger, Psiphon and Tor app tests are shown (Facebook tile: Messenger app; Signal, Psiphon and Tor chips: app status next to the website). Signal and Messenger are routine again, since OONI runs each more than 4,000 times a month in Iran. App results follow the majority rule too;
 - regional outages cannot be charted: Radar's regional annotations for Iran name no region;
 - a third-party dossier (Iran "digital apartheid" report v4.5, 23 Sep 2026) was checked against primary sources; only claims the project's own sources confirm were used, see below;
 - no commit, push, release, tag or deployment authorization has been made for this working state.
@@ -66,7 +67,7 @@ Package version: **`1.8.0` intentionally unchanged**
 ## Next steps (agreed, not started)
 
 - Test the "More services" chips live and correct what does not fit.
-- Find a way to check mobile apps, not only websites (only WhatsApp and Telegram have OONI app tests today).
+- Find a way to check mobile apps that have no OONI app test (Instagram, TikTok, YouTube and others); public data covers only WhatsApp, Telegram, Signal, Facebook Messenger, Psiphon and Tor.
 
 ## Decisions
 

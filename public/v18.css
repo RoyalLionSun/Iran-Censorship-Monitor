@@ -266,3 +266,7 @@ html[dir="rtl"] .topbar-actions { justify-content: flex-start; }
 
 .access-board tr[data-thin="yes"] > * { opacity: .62; }
 .access-board tr[data-thin="yes"]:hover > * { opacity: 1; }
+
+.more-chip-app { padding-inline-start: 7px; border-inline-start: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 700; }
+.more-chip-app[data-app-status="anomaly"] { color: var(--status-restricted); }
+.more-chip-app[data-app-status="no_signal"] { color: var(--status-reachable); }

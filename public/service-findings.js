@@ -62,13 +62,17 @@ export function appTestInScope(appTest, selection = {}) {
   return testName === 'web_connectivity' || testName === appTest;
 }
 
+// OONI app tests: each connects to the app's own servers from inside the network.
+export const APP_TESTS = Object.freeze(['whatsapp', 'telegram', 'signal', 'facebook_messenger']);
+
 export function summarizeMessagingAppTests(payload, selection = {}) {
-  return ['whatsapp', 'telegram'].map((testName) => {
+  return APP_TESTS.map((testName) => {
     const row = payload?.ok && appTestInScope(testName, selection) ? payload.signals?.find((item) => item.testName === testName) : null;
     const status = !appTestInScope(testName, selection) ? 'out_of_scope'
       : !payload ? 'loading' : !payload.ok || !Array.isArray(payload.signals) || row?.status === 'error' ? 'unavailable'
       : !row || row.status === 'no_data' || !row.measurements ? 'untested'
-        : row.anomalies > 0 ? 'anomaly' : 'no_signal';
+        // By majority, as for websites: a few failed connections among many do not decide it.
+        : row.anomalies * 2 > row.measurements ? 'anomaly' : 'no_signal';
     return { testName, status, measurements: row?.measurements ?? 0, anomalies: row?.anomalies ?? 0,
       lastObservation: row?.lastObservation ?? null, sourceUrl: row?.sourceUrl ?? null };
   });
@@ -85,7 +89,7 @@ export const SERVICE_BRANDS = Object.freeze([
   { id: 'telegram', name: 'Telegram', domains: ['web.telegram.org', 'telegram.org', 't.me', 'telegram.me'], app: 'telegram' },
   { id: 'youtube', name: 'YouTube', domains: ['www.youtube.com', 'youtube.com'] },
   { id: 'x', name: 'X (Twitter)', domains: ['x.com', 'www.x.com', 'twitter.com'] },
-  { id: 'facebook', name: 'Facebook', domains: ['www.facebook.com', 'facebook.com', 'web.facebook.com'] },
+  { id: 'facebook', name: 'Facebook', domains: ['www.facebook.com', 'facebook.com', 'web.facebook.com'], app: 'facebook_messenger', appName: 'Messenger' },
 ]);
 
 // A selection names a service, not one hostname: picking "Facebook" must cover
@@ -151,7 +155,8 @@ function countryFallback(countryRows, brand, networkWeb) {
 export function summarizeServiceBrands(domainPayload, appPayload, selection = {}, countryPayload = null) {
   const webRows = summarizeServiceFindings(domainPayload, selection).rows;
   const countryRows = selection.asn && countryPayload?.ok ? summarizeServiceFindings(countryPayload, selection).rows : null;
-  const appRows = summarizeMessagingAppTests(appPayload, selection);
+  // No app payload means app tests were not asked for; the tiles then show websites only.
+  const appRows = appPayload === null || appPayload === undefined ? [] : summarizeMessagingAppTests(appPayload, selection);
   const targetHost = selectedTargetHost(selection);
   const targetItem = targetHost ? (() => {
     const web = webRow(domainPayload, { name: targetHost, domain: targetHost }, selection);
@@ -167,6 +172,7 @@ export function summarizeServiceBrands(domainPayload, appPayload, selection = {}
     const appRow = brand.app ? appRows.find((row) => row.testName === brand.app) : null;
     const app = appRow ? {
       status: appRow.status, measurements: appRow.measurements, anomalies: appRow.anomalies, lastObserved: appRow.lastObservation,
+      name: brand.appName ?? null,
     } : null;
     return { id: brand.id, name: brand.name, status: brandStatus(web, app), web, app, country: countryFallback(countryRows, brand, web) };
   });
@@ -256,7 +262,7 @@ export function summarizeNetworkAccess(rows = [], brands = SERVICE_BRANDS) {
 // result describes each website, not its app. Hosts as OONI tests them in Iran.
 export const MORE_SERVICE_GROUPS = Object.freeze([
   { id: 'social', services: [
-    { id: 'signal', name: 'Signal', domains: ['signal.org', 'www.signal.org'] },
+    { id: 'signal', name: 'Signal', domains: ['signal.org', 'www.signal.org'], app: 'signal' },
     { id: 'tiktok', name: 'TikTok', domains: ['www.tiktok.com', 'tiktok.com'] },
     { id: 'snapchat', name: 'Snapchat', domains: ['www.snapchat.com'] },
     { id: 'discord', name: 'Discord', domains: ['discord.com', 'www.discord.com', 'discordapp.com'] },
@@ -276,8 +282,8 @@ export const MORE_SERVICE_GROUPS = Object.freeze([
     { id: 'kayhanlondon', name: 'Kayhan London', domains: ['kayhan.london'] },
   ] },
   { id: 'circumvention', services: [
-    { id: 'psiphon', name: 'Psiphon', domains: ['psiphon.ca', 'www.psiphon.ca'] },
-    { id: 'torproject', name: 'Tor Project', domains: ['www.torproject.org', 'torproject.org'] },
+    { id: 'psiphon', name: 'Psiphon', domains: ['psiphon.ca', 'www.psiphon.ca'], app: 'psiphon' },
+    { id: 'torproject', name: 'Tor Project', domains: ['www.torproject.org', 'torproject.org'], app: 'tor' },
     { id: 'protonvpn', name: 'Proton VPN', domains: ['protonvpn.com'] },
     { id: 'expressvpn', name: 'ExpressVPN', domains: ['www.expressvpn.com'] },
     { id: 'lantern', name: 'Lantern', domains: ['getlantern.org', 'www.getlantern.org'] },
@@ -312,7 +318,14 @@ function serviceTotals(payload, domains) {
 // Each service answered from the selected network; where it has no usable test there, from
 // other Iranian networks, marked as such. Status as for a network: blocked, partly, problems,
 // reachable.
-export function summarizeMoreServices(networkPayload, countryPayload = null) {
+function appResult(appPayload, testName) {
+  if (!testName || !appPayload?.ok || !Array.isArray(appPayload.signals)) return null;
+  const row = appPayload.signals.find((item) => item.testName === testName);
+  if (!row || row.status === 'error' || !row.measurements) return null;
+  return { status: row.anomalies * 2 > row.measurements ? 'anomaly' : 'no_signal', measurements: row.measurements, anomalies: row.anomalies };
+}
+
+export function summarizeMoreServices(networkPayload, countryPayload = null, appPayload = null) {
   if (!networkPayload?.ok) return null;
   return MORE_SERVICE_GROUPS.map((group) => ({
     id: group.id,
@@ -323,6 +336,7 @@ export function summarizeMoreServices(networkPayload, countryPayload = null) {
       const totals = usable ? own : country?.measurements ? country : null;
       return {
         id: service.id, name: service.name,
+        app: appResult(appPayload, service.app),
         scope: usable ? 'network' : totals ? 'country' : null,
         status: totals ? networkStatus(totals) : 'untested',
         ...(totals ?? { measurements: 0, confirmed: 0, anomalous: 0, ok: 0, lastObserved: null }),

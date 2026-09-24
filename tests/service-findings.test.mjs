@@ -51,10 +51,11 @@ test('no payload, upstream error and empty results never imply healthy services'
   assert.ok(empty.rows.every((row) => row.status === 'untested'));
 });
 
-test('legacy Signal is still an accepted OONI test without being a priority service', () => {
-  assert.equal(OONI_TESTS.has('signal'), true);
-  assert.equal(OONI_ROUTINE_TESTS.includes('signal'), false);
-  assert.deepEqual(OONI_ROUTINE_TESTS, ['tor', 'psiphon', 'whatsapp', 'telegram']);
+test('Signal and Facebook Messenger app tests are part of routine monitoring', () => {
+  // OONI runs them thousands of times a month in Iran; they are the only app evidence besides
+  // WhatsApp and Telegram.
+  assert.equal(OONI_TESTS.has('facebook_messenger'), true);
+  assert.deepEqual(OONI_ROUTINE_TESTS, ['tor', 'psiphon', 'whatsapp', 'telegram', 'signal', 'facebook_messenger']);
 });
 
 test('routine circumvention monitoring requests only the routine OONI tests', async (t) => {
@@ -74,7 +75,8 @@ test('messaging app evidence is independent of website domain counts', () => {
     { testName: 'telegram', status: 'no_data', measurements: 0, anomalies: 0 },
     { testName: 'signal', status: 'observed', measurements: 20, anomalies: 9 },
   ] });
-  assert.deepEqual(app.map((row) => [row.testName, row.status]), [['whatsapp','anomaly'],['telegram','untested']]);
+  // By majority: 3 failed of 8 is not a failing app; 9 of 20 for Signal neither.
+  assert.deepEqual(app.map((row) => [row.testName, row.status]), [['whatsapp','no_signal'],['telegram','untested'],['signal','no_signal'],['facebook_messenger','untested']]);
   assert.equal(app[0].anomalies, 3);
   assert.equal(summarizeMessagingAppTests(null)[0].status, 'loading');
   assert.equal(summarizeMessagingAppTests({ ok: false })[0].status, 'unavailable');

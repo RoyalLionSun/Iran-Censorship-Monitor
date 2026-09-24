@@ -702,7 +702,7 @@ function renderServiceFindings() {
       ? `<a href="${escapeHtml(row.sourceUrl)}" target="_blank" rel="noreferrer">${escapeHtml(t('services.source'))}</a>` : '';
     // An app test has no block page; "not confirmed" would suggest missing evidence that cannot exist.
     const label = row.status === 'anomaly' ? t('services.status.appFailed') : t(`services.status.${row.status}`);
-    return `<div class="service-finding" data-status="${row.status}"><div><strong>${escapeHtml({ whatsapp: 'WhatsApp', telegram: 'Telegram' }[row.testName] ?? row.testName)}</strong><span>${escapeHtml(t('services.appTest'))}</span></div><b>${escapeHtml(label)}</b>${detail ? `<small>${detail}</small>` : ''}${sourceLink}</div>`;
+    return `<div class="service-finding" data-status="${row.status}"><div><strong>${escapeHtml({ whatsapp: 'WhatsApp', telegram: 'Telegram', signal: 'Signal', facebook_messenger: 'Facebook Messenger' }[row.testName] ?? row.testName)}</strong><span>${escapeHtml(t('services.appTest'))}</span></div><b>${escapeHtml(label)}</b>${detail ? `<small>${detail}</small>` : ''}${sourceLink}</div>`;
   }).join('');
 }
 

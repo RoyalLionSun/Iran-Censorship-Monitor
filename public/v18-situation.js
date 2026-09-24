@@ -284,8 +284,9 @@ function channelLine(channel, kind) {
     confirmed: formatNumber(channel.confirmed ?? 0),
     count: formatNumber(kind === 'app' ? channel.anomalies ?? 0 : channel.anomalous ?? 0),
   };
-  const key = `board.${kind}.${status}`;
-  return `<li data-channel-status="${escapeHtml(status)}">${escapeHtml(t(key, variables))}</li>`;
+  // A brand whose app has its own name (Facebook's Messenger) says which app was tested.
+  const key = kind === 'app' && channel.name ? `board.appNamed.${status}` : `board.${kind}.${status}`;
+  return `<li data-channel-status="${escapeHtml(status)}">${escapeHtml(t(key, { ...variables, app: channel.name ?? '' }))}</li>`;
 }
 
 function windowDays(selection) {
@@ -454,8 +455,9 @@ function renderMoreServices(services) {
       total: formatNumber(service.measurements), confirmed: formatNumber(service.confirmed),
       count: formatNumber(service.anomalous), ok: formatNumber(service.ok),
     }) + (service.scope === 'country' ? ` · ${t('board.more.country')}` : '') : t('board.more.untested');
-    return `<li class="more-chip" data-status="${escapeHtml(service.status)}"${service.scope === 'country' ? ' data-scope="country"' : ''} title="${escapeHtml(title)}">
-      <span class="more-chip-name">${escapeHtml(service.name)}</span><span class="more-chip-status">${escapeHtml(t(`board.more.status.${service.status}`))}</span></li>`;
+    const appTitle = service.app ? ` · ${t('board.more.appDetail', { total: formatNumber(service.app.measurements), count: formatNumber(service.app.anomalies) })}` : '';
+    return `<li class="more-chip" data-status="${escapeHtml(service.status)}"${service.scope === 'country' ? ' data-scope="country"' : ''} title="${escapeHtml(title + appTitle)}">
+      <span class="more-chip-name">${escapeHtml(service.name)}</span><span class="more-chip-status">${escapeHtml(t(`board.more.status.${service.status}`))}</span>${service.app ? `<span class="more-chip-app" data-app-status="${escapeHtml(service.app.status)}">${escapeHtml(t(`board.more.app.${service.app.status}`))}</span>` : ''}</li>`;
   };
   return `
     <section class="more-services" aria-labelledby="more-services-title">
