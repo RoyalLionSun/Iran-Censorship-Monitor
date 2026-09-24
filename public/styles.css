@@ -491,3 +491,5 @@ html[dir="rtl"] input[type="date"] { text-align: right; }
   .topbar-title { justify-self: start; font-size: 16px; white-space: normal; }
   .topbar-actions { grid-column: 1 / -1; justify-self: stretch; justify-content: flex-end; flex-wrap: wrap; }
 }
+/* The update time appears once data has arrived; before that the Refresh button says "Loading…". */
+.updated:empty { display: none; }
