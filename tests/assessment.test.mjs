@@ -539,3 +539,11 @@ test('during a nationwide outage, results from the few connected networks never 
   assert.equal(result.countryCheck, 'outage');
   assert.ok(result.more.flatMap((group) => group.services).every((service) => service.scope !== 'country'));
 });
+
+test('missing service results, not a minor connectivity signal, lead the headline', () => {
+  const result = buildAssessment({ radar: radar(), ioda: ioda([{ datasource: 'bgp', start: '2026-09-23T11:20:00Z', end: '2026-09-23T11:35:00Z' }]),
+    ooniDomains: { ok: false, error: 'OONI rate limit reached.' }, circumvention: { ok: false, error: 'OONI rate limit reached.' },
+    selection: { ...selection, asn: '' }, scopeLabel: 'Iran' }).interpretation;
+  assert.equal(result.summary.headline.state, 'services-unavailable');
+  assert.equal(result.services.rateLimited, true);
+});
