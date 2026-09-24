@@ -50,9 +50,9 @@ function insertViews() {
       <p class="overview-more"><button type="button" id="open-technical" class="button"></button></p>
     </section>
     <section id="technical-view" class="technical-view" hidden>
+      <div id="overview-services-slot"></div>
       <header id="overview-details-head" class="overview-section-head"></header>
       <section id="interpretation-dimensions" class="interpretation-grid" aria-label="${escapeHtml(t('interpretation.dimensions.label'))}"></section>
-      <div id="overview-services-slot"></div>
       <div class="overview-lower-grid">
         <section class="overview-panel" id="current-findings"></section>
         <section class="overview-panel evidence-overview" id="evidence-overview"></section>
