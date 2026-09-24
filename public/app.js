@@ -13,3 +13,8 @@ import './v20-report.js';
 // Production release marker.
 const footerVersion = document.querySelector('#footer-version');
 if (footerVersion) footerVersion.textContent = 'v1.8.0';
+
+// Offline copy of the last answers (sw.js): online the page always loads fresh.
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  navigator.serviceWorker.register('/sw.js').catch(() => {});
+}

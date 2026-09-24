@@ -41,6 +41,8 @@ export default Object.freeze({
   'ui.exportContextCsv': 'Export context CSV',
   'ui.exportPdf': 'PDF report',
   'ui.exportDocx': 'Word report (.docx)',
+  'ui.skipToContent': 'Skip to content',
+  'ui.offlineCopy': 'No connection: showing the copy saved on {date} UTC. It updates as soon as you are online again.',
   'ui.print': 'Print',
   'ui.networkScope': 'Network scope',
   'ui.ooniTest': 'OONI test',

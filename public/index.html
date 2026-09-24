@@ -4,7 +4,18 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="color-scheme" content="dark" />
-  <meta name="description" content="Iran-focused censorship intelligence combining OONI, Censored Planet, RIPE, IODA, Cloudflare Radar, Globalping, Tor and routing/topology context." />
+  <meta name="description" content="Which services are blocked in Iran, measured from inside Iranian networks: OONI tests, Cloudflare Radar, IODA and RIPE Atlas in plain English and Farsi." />
+  <meta name="theme-color" content="#13243e" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Iran Censorship Monitor" />
+  <meta property="og:title" content="Iran Censorship Monitor" />
+  <meta property="og:description" content="Which services are blocked in Iran, measured from inside Iranian networks. English and Farsi." />
+  <meta property="og:image" content="/brand/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Iran Censorship Monitor — which services are blocked in Iran" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="manifest" href="/manifest.webmanifest" />
   <title>Iran Censorship Monitor</title>
   <link rel="icon" type="image/png" sizes="32x32" href="/brand/favicon-32.png" />
   <link rel="icon" type="image/png" sizes="64x64" href="/brand/logo-64.png" />
@@ -12,6 +23,7 @@
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
+  <a class="skip-link" href="#main">Skip to content</a>
   <div class="app-shell">
     <header class="topbar">
       <div class="brand">
@@ -21,7 +33,7 @@
       <span class="topbar-handle gold-script" dir="ltr">@RoyalLionSun</span>
     </header>
 
-    <main>
+    <main id="main" tabindex="-1">
       <div class="toolbar">
         <div class="topbar-actions">
           <span id="header-updated" class="updated"></span>
@@ -37,6 +49,7 @@
           </details>
         </div>
       </div>
+      <p id="offline-banner" class="offline-banner" role="status" hidden></p>
       <section class="filterbar" aria-label="Monitoring filters">
         <label>
           <span>Network scope</span>

@@ -582,3 +582,14 @@ html[lang="fa"] .footer-claim { direction: rtl; }
 }
 @media (max-width: 480px) { .site-footer .footer-handle { display: none; } .site-footer-inner { grid-template-columns: 1fr auto; } }
 @media print { .site-footer { background: none; color: #555; } .site-footer::before { display: none; } .site-footer .footer-handle { color: #8a6a1e; background: none; filter: none; } .footer-title { color: #111; } }
+
+/* Keyboard and screen-reader users can jump past header and filters. */
+.skip-link { position: absolute; inset-inline-start: 12px; top: -60px; z-index: 100; padding: 8px 14px; border-radius: 8px; background: #2b7fd0; color: #fff; font-weight: 700; text-decoration: none; }
+.skip-link:focus { top: 10px; }
+main:focus { outline: none; }
+/* Respect the system setting for less motion. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}
+
+.offline-banner { margin: 0 0 12px; padding: 10px 14px; border: 1px solid rgba(226,189,89,.55); border-inline-start: 4px solid var(--yellow); border-radius: 9px; background: rgba(226,189,89,.1); color: var(--text); font-weight: 600; }

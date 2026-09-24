@@ -57,6 +57,7 @@ const mime = {
   '.ico': 'image/x-icon',
   '.woff2': 'font/woff2',
   '.txt': 'text/plain; charset=utf-8',
+  '.webmanifest': 'application/manifest+json; charset=utf-8',
 };
 
 function defaultRange() {
@@ -550,14 +551,19 @@ function safeStaticPath(pathname) {
 
 // Static files carry a content fingerprint (ETag): a returning browser gets "304 not modified"
 // and transfers nothing. Text files are sent compressed; each version is compressed once.
-const COMPRESSIBLE = new Set(['.html', '.js', '.css', '.json', '.svg', '.txt']);
+const COMPRESSIBLE = new Set(['.html', '.js', '.css', '.json', '.svg', '.txt', '.webmanifest']);
 const staticCache = new Map();
 
 async function staticEntry(file) {
   const info = await stat(file);
   const cached = staticCache.get(file);
   if (cached && cached.mtimeMs === info.mtimeMs && cached.size === info.size) return cached;
-  const body = await readFile(file);
+  let body = await readFile(file);
+  if (file.endsWith(`${sep}index.html`) && process.env.PUBLIC_URL) {
+    const base = process.env.PUBLIC_URL.replace(/\/+$/, '');
+    body = Buffer.from(body.toString('utf8').replace('content="/brand/og-image.png"', `content="${base}/brand/og-image.png"`)
+      .replace('<meta property="og:type"', `<meta property="og:url" content="${base}/" />\n  <meta property="og:type"`));
+  }
   const entry = { mtimeMs: info.mtimeMs, size: info.size, body, etag: `"${createHash('sha1').update(body).digest('base64url').slice(0, 22)}"`, encoded: new Map() };
   staticCache.set(file, entry);
   return entry;

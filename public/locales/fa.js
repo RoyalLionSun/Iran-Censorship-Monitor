@@ -41,6 +41,8 @@ export default Object.freeze({
   'ui.exportContextCsv': 'خروجی CSV زمینه',
   'ui.exportPdf': 'گزارش PDF',
   'ui.exportDocx': 'گزارش Word (.docx)',
+  'ui.skipToContent': 'رفتن به محتوا',
+  'ui.offlineCopy': 'اتصال برقرار نیست: نسخهٔ ذخیره‌شده در {date} به وقت UTC نمایش داده می‌شود. با برقراری دوبارهٔ اتصال به‌روز می‌شود.',
   'ui.print': 'چاپ',
   'ui.networkScope': 'محدوده شبکه',
   'ui.ooniTest': 'آزمون OONI',

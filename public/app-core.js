@@ -63,7 +63,21 @@ async function api(path, signal) {
   const response = await fetch(path, { signal, headers: { accept: 'application/json' } });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(payload.error || `${response.status} ${response.statusText}`);
+  // Without a connection the offline copy answers (sw.js); the page says from when it is.
+  if (path.startsWith('/api/overview')) showOfflineCopy(response.headers.get('x-offline-copy') ? payload.fetchedAt || response.headers.get('x-offline-copy') : null);
   return payload;
+}
+
+function showOfflineCopy(savedAt) {
+  const banner = $('#offline-banner');
+  if (!banner) return;
+  banner.hidden = !savedAt;
+  if (!savedAt) return;
+  const date = Date.parse(savedAt);
+  const when = Number.isFinite(date)
+    ? new Intl.DateTimeFormat(document.documentElement.lang === 'fa' ? 'fa-IR' : 'en-GB', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' }).format(date)
+    : savedAt;
+  banner.textContent = t('ui.offlineCopy', { date: when });
 }
 
 function queryString() {
