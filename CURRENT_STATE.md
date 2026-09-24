@@ -74,6 +74,8 @@ Package version: **`1.8.0` intentionally unchanged**
 - mobile apps without an OONI app test are answered through their **app servers**: the servers the Instagram, WhatsApp, Facebook, X and YouTube apps talk to (`i.instagram.com`, `edge-chat.instagram.com`, `*.cdninstagram.com`, `*.whatsapp.net`, `*.fbcdn.net`, `*.twimg.com`, `*.ytimg.com` …) are already on Citizen Lab's global test list, so OONI devices in Iran test them. Each service tile shows them as their own line ("App servers (i.instagram.com and 4 more): blocked; 1,093 of 1,440 tests failed", TCI, 17–23 September 2026), decided by majority; a blocked majority counts for the service's status. Labelled "app servers", not "app test": apps may also use other transports (QUIC, fixed addresses) or fallbacks. Missing from the lists: YouTube's API and video servers, X's API, `graph.facebook.com`, TikTok's app servers (a pull request to Citizen Lab's test lists is being prepared);
 - Latin names inside Farsi sentences (servers, networks, sources) are isolated left-to-right, and the Farsi lines avoid brackets around them, because the browser rendered those brackets unmirrored;
 
+- header: logo left, only the name "Iran Censorship Monitor" in the middle (the subtitle repeated it), actions right; on phones the actions move to a second row. The sources badge with its per-source tooltip moved out of the header into the source register (Technical analysis). The "updated … ago" note is fully localized in Farsi;
+
 ## Next steps (agreed, not started)
 
 - Test the "More services" chips live and correct what does not fit.

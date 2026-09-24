@@ -33,7 +33,6 @@ export default Object.freeze({
   'confidence.none': 'None',
 
   'ui.language': 'Language',
-  'ui.brand.subtitle': 'Internet censorship in Iran, measured',
   'ui.sources.pending': 'Sources pending',
   'ui.notLoaded': 'Not loaded',
   'ui.exportMenu': 'Export',

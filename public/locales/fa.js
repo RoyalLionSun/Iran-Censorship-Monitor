@@ -33,7 +33,6 @@ export default Object.freeze({
   'confidence.none': 'بدون ارزیابی',
 
   'ui.language': 'زبان',
-  'ui.brand.subtitle': 'سانسور اینترنت در ایران، اندازه‌گیری‌شده',
   'ui.sources.pending': 'در انتظار منابع',
   'ui.notLoaded': 'بارگذاری نشده',
   'ui.exportMenu': 'خروجی',

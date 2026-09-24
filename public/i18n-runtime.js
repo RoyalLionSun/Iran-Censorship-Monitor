@@ -4,8 +4,16 @@ function render(key, variables) {
   return t(key, variables);
 }
 
+// "<1 min", "5 min", "3 h", "2 d" in the reader's language, with localized digits.
+function localAge(age) {
+  const number = (value) => new Intl.NumberFormat(getLanguage() === 'fa' ? 'fa-IR' : 'en').format(Number(value));
+  if (age === '<1 min') return render('runtime.age.underMinute');
+  const match = String(age).match(/^(\d+) (min|h|d)$/);
+  return match ? render(`runtime.age.${match[2]}`, { count: number(match[1]) }) : age;
+}
+
 const patterns = [
-  [/^Updated (.+) ago$/, (m) => render('runtime.template.updatedAgo', { age: m[1] })],
+  [/^Updated (.+) ago$/, (m) => render('runtime.template.updatedAgo', { age: localAge(m[1]) })],
   [/^(\d+)\/(\d+) source families observed · assessment votes remain separate$/, (m) => render('runtime.template.sourceFamilies', { active: m[1], total: m[2] })],
   [/^(\d+)\/(\d+) source families observed$/, (m) => render('runtime.template.sourceFamiliesBasic', { active: m[1], total: m[2] })],
   [/^(\d+) allowlisted articles discovered · context only · no sensor vote$/, (m) => render('runtime.template.articles', { count: m[1] })],
