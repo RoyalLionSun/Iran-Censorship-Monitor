@@ -527,3 +527,12 @@ html[dir="rtl"] input[type="date"] { text-align: right; }
   .topbar { grid-template-columns: 1fr auto; }
   .topbar-title { justify-self: start; }
 }
+
+/* Open drop-down lists: the browser draws them with the select's background colour, not its
+   gradient, so without an explicit colour the outage list opened white with pale text. */
+select { color-scheme: dark; background-color: #102035; }
+select option { background-color: #102035; color: #e8eef7; }
+select optgroup { background-color: #0b1624; color: #c4b1ff; font-weight: 700; font-style: normal; }
+select option:disabled { color: #7d8ea6; }
+/* The outage picker runs from its label to the end of the row. */
+.filterbar .outage-picker { grid-template-columns: auto minmax(0, 1fr); }
