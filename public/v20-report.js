@@ -276,7 +276,38 @@ export function exportPdf() {
 
 // ---------------------------------------------------------------- wiring
 
+// ---------------------------------------------------------------- widget for other sites
+
+// The live status image (/widget.svg) with a one-line code to copy, in both languages. The
+// image refreshes itself every 30 minutes on the sites that embed it.
+function embedCode(lang) {
+  const site = location.origin;
+  const alt = lang === 'fa' ? 'وضعیت سرویس‌ها در ایران — پایش سانسور اینترنت ایران' : 'Service status in Iran — Iran Censorship Monitor';
+  return `<a href="${site}/${lang === 'fa' ? '?lang=fa' : ''}"><img src="${site}/widget.svg${lang === 'fa' ? '?lang=fa' : ''}" width="560" alt="${alt}"></a>`;
+}
+
+export function toggleEmbed() {
+  const panel = document.querySelector('#embed-panel');
+  if (!panel) return;
+  if (!panel.hidden) { panel.hidden = true; return; }
+  const block = (lang, label) => `<div class="embed-item"><h3>${label}</h3><img src="/widget.svg${lang === 'fa' ? '?lang=fa' : ''}" width="560" alt=""><textarea readonly rows="3" dir="ltr">${embedCode(lang).replace(/&/g, '&amp;').replace(/</g, '&lt;')}</textarea><button type="button" class="button" data-embed-copy="${lang}">${t('embed.copy')}</button></div>`;
+  panel.innerHTML = `<header><h2>${t('embed.title')}</h2><button type="button" class="button" data-embed-close>${t('embed.close')}</button></header><p>${t('embed.note')}</p><div class="embed-grid">${block('en', 'English')}${block('fa', 'فارسی')}</div>`;
+  panel.hidden = false;
+  panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 if (typeof document !== 'undefined') {
+  document.querySelector('#embed-button')?.addEventListener('click', () => { document.querySelector('.export-menu')?.removeAttribute('open'); toggleEmbed(); });
+  document.addEventListener('click', async (event) => {
+    if (event.target.closest?.('[data-embed-close]')) { document.querySelector('#embed-panel').hidden = true; return; }
+    const copy = event.target.closest?.('[data-embed-copy]');
+    if (!copy) return;
+    try {
+      await navigator.clipboard.writeText(embedCode(copy.dataset.embedCopy));
+      copy.textContent = t('embed.copied');
+      setTimeout(() => { copy.textContent = t('embed.copy'); }, 2000);
+    } catch { copy.closest('.embed-item')?.querySelector('textarea')?.select(); }
+  });
   document.querySelector('#pdf-button')?.addEventListener('click', () => exportPdf());
   document.querySelector('#docx-button')?.addEventListener('click', () => exportDocx());
 }

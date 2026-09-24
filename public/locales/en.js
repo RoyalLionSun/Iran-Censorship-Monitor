@@ -46,6 +46,7 @@ export default Object.freeze({
   'ui.installApp': 'Install app',
   'ui.installIos': 'On iPhone or iPad: tap the Share button in Safari, then "Add to Home Screen".',
   'ui.feedEnglish': 'Feed (English)',
+  'ui.embedWidget': 'Widget for your website',
   'ui.print': 'Print',
   'ui.networkScope': 'Network scope',
   'ui.ooniTest': 'OONI test',

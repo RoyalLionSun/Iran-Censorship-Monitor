@@ -96,6 +96,8 @@ Package version: **`1.8.0` intentionally unchanged**
 - **"What changed" feed** (`/feed.xml`, `/feed.xml?lang=fa`, Atom): one entry per day for all of Iran with the headline, the changes against the period before, "blocked since" per service and the WARP share, in the page's own wording (the server uses the page's locale files). Built from the cached Overview at most every 6 hours; linked in the page head and footer. Optional: each new day's entry is posted to a Telegram channel per language (`TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHANNEL_EN/FA`);
 - the overview browser gate occasionally reports "no requests" right after other headless runs; it passes on rerun (three in a row on 25 September 2026);
 
+- **embeddable widget** (`/widget.svg`, `?lang=fa`): an image of the six main services with status and "blocked since", in the header's style, for news sites and NGOs; an image works everywhere while the page itself refuses framing. Export menu → "Widget for your website" shows both previews and a one-line code to copy. Built from the same 30-minute snapshot as the feed;
+
 ## Next steps (agreed, not started)
 
 - **The dashboard itself must be reachable from Iran** before it is published: the Farsi version is for people there. Plan hosting so it is not behind a provider Iran blocks (e.g. not solely behind Cloudflare), offer mirrors and an .onion address for Tor users, and once online, check our own address from inside Iran (OONI Run link with the dashboard URL, or a Citizen Lab list entry).

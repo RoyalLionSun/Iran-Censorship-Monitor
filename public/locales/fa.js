@@ -46,6 +46,7 @@ export default Object.freeze({
   'ui.installApp': 'نصب برنامه',
   'ui.installIos': 'در آیفون یا آیپد: در سافاری دکمهٔ اشتراک‌گذاری را بزنید و سپس «افزودن به صفحهٔ اصلی» را انتخاب کنید.',
   'ui.feedEnglish': 'خوراک انگلیسی',
+  'ui.embedWidget': 'ابزارک برای وب‌سایت شما',
   'ui.print': 'چاپ',
   'ui.networkScope': 'محدوده شبکه',
   'ui.ooniTest': 'آزمون OONI',

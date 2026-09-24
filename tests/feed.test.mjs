@@ -60,3 +60,17 @@ test('a Telegram post is sent only when a bot and channel are set', async () => 
   assert.equal(sent.url, 'https://api.telegram.org/bott/sendMessage');
   assert.equal(sent.body.chat_id, '@c');
 });
+
+test('the widget shows the six services with status and "since", in both languages', async () => {
+  const { renderWidget } = await import('../lib/widget.mjs');
+  const snapshot = { since: '2026-09-18', until: '2026-09-24', interpretation: { services: { items: [{ id: 'instagram', status: 'blocked' }, { id: 'whatsapp', status: 'reachable' }] } }, history: { services: [{ id: 'instagram', since: { month: '2023-02', fromStart: false } }] } };
+  const en = renderWidget({ ...snapshot, lang: 'en' });
+  assert.match(en, /<svg[^>]+width="560"/);
+  assert.match(en, />Instagram<\/text>/);
+  assert.match(en, /fill="#ef6d6d">Blocked<\/text>/);
+  assert.match(en, /Blocked without interruption since Feb 2023/);
+  assert.match(en, /fill="#55c78a">Reachable in tests<\/text>/);
+  const fa = renderWidget({ ...snapshot, lang: 'fa' });
+  assert.match(fa, /direction="rtl"[^>]*>اینستاگرام</);
+  assert.doesNotMatch(fa, /<script/i);
+});

@@ -37,6 +37,7 @@ import { getAccessNowStopIncidents } from './lib/accessnow.mjs';
 import { getApnicCountryComposition, getApnicIpv6, getApnicVpnShare } from './lib/apnic.mjs';
 import { getServiceHistory } from './lib/history.mjs';
 import { buildFeedEntry, postToTelegram, readEntries, renderAtom, upsertEntry } from './lib/feed.mjs';
+import { renderWidget } from './lib/widget.mjs';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
 
@@ -628,6 +629,24 @@ async function serveStatic(req, res, pathname) {
 // all of Iran. Built from the same cached Overview answer as the page, at most every 6 hours.
 const FEED_REFRESH_MS = 6 * 60 * 60 * 1000;
 const feedInFlight = new Map();
+
+// The current all-Iran picture for the feed and the widget: the cached Overview answer and the
+// service history, kept for 30 minutes.
+let snapshotCache = null;
+let snapshotInFlight = null;
+async function currentSnapshot() {
+  if (snapshotCache && Date.now() - snapshotCache.at < 30 * 60 * 1000) return snapshotCache.value;
+  snapshotInFlight ??= (async () => {
+    const { since, until } = defaultRange();
+    const response = await fetch(`http://${HOST}:${PORT}/api/overview?asn=ALL&testName=web_connectivity&since=${since}&until=${until}`);
+    const overview = await response.json();
+    const history = await serviceHistory().catch(() => null);
+    const value = { since, until, interpretation: overview?.assessment?.interpretation ?? null, history };
+    if (value.interpretation) snapshotCache = { at: Date.now(), value };
+    return value;
+  })().finally(() => { snapshotInFlight = null; });
+  return snapshotInFlight;
+}
 async function feedEntries(lang, base) {
   const path = join(root, `var/feed/${lang}.json`);
   const entries = await readEntries(path);
@@ -635,12 +654,9 @@ async function feedEntries(lang, base) {
   if (entries[0]?.id === today && Date.now() - Date.parse(entries[0].updated) < FEED_REFRESH_MS) return entries;
   if (!feedInFlight.has(lang)) {
     feedInFlight.set(lang, (async () => {
-      const { since, until } = defaultRange();
+      const { since, until, interpretation, history } = await currentSnapshot();
       const link = `${base}/?asn=ALL&testName=web_connectivity&since=${since}&until=${until}&lang=${lang}`;
-      const response = await fetch(`http://${HOST}:${PORT}/api/overview?asn=ALL&testName=web_connectivity&since=${since}&until=${until}`);
-      const overview = await response.json();
-      const history = await serviceHistory().catch(() => null);
-      const entry = buildFeedEntry({ interpretation: overview?.assessment?.interpretation, lang, date: today, link, history });
+      const entry = buildFeedEntry({ interpretation, lang, date: today, link, history });
       if (!entry) return entries;
       // The first entry of a new day goes to the language's Telegram channel, if one is set.
       if (entries[0]?.id !== today) {
@@ -668,12 +684,29 @@ async function serveFeed(req, res, url) {
   res.end(body);
 }
 
+// The embeddable status image (/widget.svg, ?lang=fa for Farsi).
+async function serveWidget(req, res, url) {
+  const lang = url.searchParams.get('lang') === 'fa' ? 'fa' : 'en';
+  const snapshot = await currentSnapshot();
+  let body = Buffer.from(renderWidget({ ...snapshot, lang }));
+  const encoding = pickEncoding(req.headers['accept-encoding']);
+  if (encoding) body = compressBody(body, encoding);
+  res.writeHead(200, {
+    'content-type': 'image/svg+xml; charset=utf-8', 'cache-control': 'public, max-age=1800', vary: 'accept-encoding',
+    'x-content-type-options': 'nosniff', 'content-security-policy': "default-src 'none'; style-src 'unsafe-inline'",
+    ...(encoding ? { 'content-encoding': encoding } : {}), 'content-length': body.length,
+  });
+  res.end(body);
+}
+
 const server = http.createServer(async (req, res) => {
   const started = Date.now();
   try {
     const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
     if (url.pathname === '/feed.xml') {
       await serveFeed(req, res, url);
+    } else if (url.pathname === '/widget.svg') {
+      await serveWidget(req, res, url);
     } else if (url.pathname.startsWith('/api/')) {
       const handled = await handleApi(req, res, url);
       if (!handled) jsonResponse(res, 404, { ok: false, error: 'API route not found.' });

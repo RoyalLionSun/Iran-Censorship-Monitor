@@ -619,3 +619,15 @@ main:focus { outline: none; }
 .footer-feeds { font-size: 12px; }
 .footer-feeds a { color: #f6c860; text-decoration: none; }
 .footer-feeds a:hover { text-decoration: underline; }
+
+.embed-panel { margin: 0 0 12px; padding: 14px 16px; border: 1px solid var(--border-strong); border-radius: 10px; background: var(--panel); }
+.embed-panel header { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.embed-panel h2 { margin: 0; font-size: 17px; }
+.embed-panel > p { margin: 6px 0 12px; color: var(--text-soft); }
+.embed-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+.embed-item { display: grid; gap: 8px; align-content: start; }
+.embed-item h3 { margin: 0; font-size: 13px; color: var(--text-soft); }
+.embed-item img { width: 100%; max-width: 560px; height: auto; border-radius: 12px; }
+.embed-item textarea { width: 100%; box-sizing: border-box; font: 12px var(--mono, monospace); color: var(--text); background: #0e151e; border: 1px solid var(--border); border-radius: 6px; padding: 8px; resize: vertical; }
+.embed-item .button { justify-self: start; }
+.embed-panel { scroll-margin-top: 100px; }
