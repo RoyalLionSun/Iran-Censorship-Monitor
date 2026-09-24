@@ -43,6 +43,8 @@ export default Object.freeze({
   'ui.exportDocx': 'گزارش Word (.docx)',
   'ui.skipToContent': 'رفتن به محتوا',
   'ui.offlineCopy': 'اتصال برقرار نیست: نسخهٔ ذخیره‌شده در {date} به وقت UTC نمایش داده می‌شود. با برقراری دوبارهٔ اتصال به‌روز می‌شود.',
+  'ui.installApp': 'نصب برنامه',
+  'ui.installIos': 'در آیفون یا آیپد: در سافاری دکمهٔ اشتراک‌گذاری را بزنید و سپس «افزودن به صفحهٔ اصلی» را انتخاب کنید.',
   'ui.print': 'چاپ',
   'ui.networkScope': 'محدوده شبکه',
   'ui.ooniTest': 'آزمون OONI',

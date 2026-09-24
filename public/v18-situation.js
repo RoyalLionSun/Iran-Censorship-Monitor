@@ -798,6 +798,42 @@ function statusRow(interpretation) {
 }
 
 // A short table of contents for the long first page; only sections present are listed.
+// Sharing the current finding. On phones the system share sheet opens the installed apps
+// directly, which also works where t.me or x.com links are blocked; elsewhere direct links.
+function shareBar() {
+  const native = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
+  const buttons = native ? ['native', 'copy'] : ['telegram', 'whatsapp', 'x', 'copy'];
+  return `<div class="share-bar" role="group" aria-label="${escapeHtml(t('share.label'))}"><span>${escapeHtml(t('share.label'))}</span>${buttons
+    .map((kind) => `<button type="button" class="share-button" data-share="${kind}">${escapeHtml(t(`share.${kind}`))}</button>`).join('')}</div>`;
+}
+
+function shareText() {
+  const headline = document.querySelector('#situation-headline')?.textContent?.trim() ?? '';
+  const scope = document.querySelector('.situation-scope')?.textContent?.replace(/[\u2066-\u2069]/g, '').replace(/\s+/g, ' ').trim() ?? '';
+  return `${headline}${scope ? ` (${scope})` : ''} · Iran Censorship Monitor`;
+}
+
+document.addEventListener('click', async (event) => {
+  const button = event.target.closest?.('[data-share]');
+  if (!button) return;
+  const url = location.href;
+  const text = shareText();
+  const open = (address) => window.open(address, '_blank', 'noopener,noreferrer');
+  const kind = button.dataset.share;
+  if (kind === 'native') {
+    try { await navigator.share({ title: 'Iran Censorship Monitor', text, url }); } catch { /* closed by the reader */ }
+  } else if (kind === 'telegram') open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`);
+  else if (kind === 'whatsapp') open(`https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}`);
+  else if (kind === 'x') open(`https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`);
+  else if (kind === 'copy') {
+    try {
+      await navigator.clipboard.writeText(`${text} ${url}`);
+      button.textContent = t('share.copied');
+      setTimeout(() => { button.textContent = t('share.copy'); }, 2000);
+    } catch { /* clipboard not allowed here */ }
+  }
+});
+
 function jumpBar(interpretation) {
   const services = interpretation.services;
   const links = [
@@ -829,6 +865,7 @@ function renderHero(interpretation) {
       <h1 id="situation-headline">${escapeHtml(headlineText({ ...summary, headline: summary.headline && { ...summary.headline, period: nationwidePeriod(interpretation.dimensions.connectivity) } }, interpretation.services))}</h1>
       <p class="situation-lede">${escapeHtml(ledeText(interpretation))}</p>
       ${jumpBar(interpretation)}
+      ${shareBar()}
     </header>
     ${renderChanges(interpretation.services)}
     ${renderServiceTiles(interpretation.services, selection, interpretation.dimensions.connectivity)}
