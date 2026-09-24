@@ -34,7 +34,7 @@ test('overview does not reuse source-health colors as severity colors', () => {
 
 test('real overview loader delivers success and errors directly; incompatible responses cannot remain loading', () => {
   assert.match(loader, /publishOverview\('loading'\)/);
-  assert.match(loader, /publishOverview\('ready', overview\.assessment\)/);
+  assert.match(loader, /publishOverview\('ready', overview\.assessment[,)]/);
   assert.match(loader, /publishOverview\('error'\)/);
   assert.match(situation, /interpretation\.overview\.\$\{kind\}\.headline/);
   assert.match(situation, /document\.querySelector\(selector\)\.hidden = !valid/);

@@ -22,6 +22,7 @@ import { readAsnDirectory } from './lib/asn-directory.mjs';
 import { openStore } from './lib/store.mjs';
 import { storeCircumvention, storeCovers, storeDomains, storeNetworks, storeSample, storeServiceNetworks, storeTimeline } from './lib/store-payloads.mjs';
 import { collectOoniApi, runCollectors } from './lib/collector.mjs';
+import { activeHttp, atlasPath, collectActivePath, collectorPlan, globalpingPath } from './lib/active-collector.mjs';
 import { getAsnNames } from './lib/asn-names.mjs';
 import { getCitizenLabIranTargets } from './lib/citizenlab.mjs';
 import { getPeeringDbTopology } from './lib/peeringdb.mjs';
@@ -380,7 +381,12 @@ async function handleApi(req, res, url) {
     const scopeLabel = input.asn ? `${input.asn} / Iran` : 'Iran / all measured networks';
     const assessment = buildAssessment({ ooni, ripe, radar, radarQuality, ioda, ripestat, censoredPlanet, tor, mlab, apnic, globalping, peeringdb, ihr, asrank, rpki, pulse, ooniDomains, countryOoniDomains, circumvention, ooniSamples, ooniNetworks, outageTraffic, networkOutageTraffic, serviceNetworks, previousOoniDomains: previousOoniDomains ? { ...previousOoniDomains, period: previous, outageOverlap: comparisonBlockedByOutage } : null, selection: input, scopeLabel });
     const asnProfile = input.asn ? asns.find((item) => item.asn === input.asn) || null : null;
-    const payload = { ok: true, input, asnProfile, fetchedAt: new Date().toISOString(), assessment, ooni, ripe, radar, radarQuality, ioda, tor, mlab, apnic, ripestat, globalping, censoredPlanet, peeringdb, ihr, asrank, rpki, pulse };
+    // Which route answered the access evidence, and how current each collector path is.
+    const health = store.health();
+    const dataPaths = { via: ooniDomains?.via === 'store' || ooni?.via === 'store' ? 'store' : 'live',
+      paths: Object.fromEntries(Object.entries(collectorPlan()).map(([name, planned]) => [name, { ...planned, ...(health[name] ?? {}) }])),
+      coverage: Object.fromEntries(['ooni-api', 'ooni-s3'].map((path) => [path, { since: store.getMeta(`${path}:coveredSince`), until: store.getMeta(`${path}:coveredUntil`) }])) };
+    const payload = { ok: true, input, asnProfile, fetchedAt: new Date().toISOString(), dataPaths, assessment, ooni, ripe, radar, radarQuality, ioda, tor, mlab, apnic, ripestat, globalping, censoredPlanet, peeringdb, ihr, asrank, rpki, pulse };
     if (isCleanOverview([ooni, ripe, radar, radarQuality, ioda, tor, mlab, apnic, ripestat, censoredPlanet, pulse, ooniDomains, countryOoniDomains, circumvention, outageTraffic, networkOutageTraffic, ooniNetworks, serviceNetworks, previousOoniDomains, ...ooniSamples])) {
       rememberHistoricalOverview(cacheKey, payload, settled ? HISTORICAL_OVERVIEW_TTL_MS : CURRENT_OVERVIEW_TTL_MS);
     } else if (!settled) {
@@ -590,9 +596,15 @@ server.listen(PORT, HOST, () => {
   // for a dozen upstream sources. MONITOR_PREWARM=0 turns it off.
   // The collector fills the store from all paths in parallel, hourly. Off until switched on
   // (MONITOR_COLLECTOR=1), so no upstream request is made before the owner decides.
-  if (process.env.MONITOR_COLLECTOR === '1') {
+  const plan = collectorPlan();
+  if (plan['ooni-api'].enabled) {
+    // Every enabled path runs in parallel; the active ones start a new round every 6 hours.
+    const activeRun = (name, build) => async (target) => collectActivePath(target, name, build(), { iranAsns: await iranRegisteredAsns() });
+    const paths = { 'ooni-api': (target) => collectOoniApi(target) };
+    if (plan['ripe-atlas'].enabled) paths['ripe-atlas'] = activeRun('ripe-atlas', () => atlasPath({ http: activeHttp, key: process.env.RIPE_ATLAS_API_KEY.trim() }));
+    if (plan.globalping.enabled) paths.globalping = activeRun('globalping', () => globalpingPath({ http: activeHttp, token: process.env.GLOBALPING_API_TOKEN?.trim() ?? '' }));
     const collect = async () => {
-      const result = await runCollectors(store, { 'ooni-api': (target) => collectOoniApi(target) });
+      const result = await runCollectors(store, paths);
       store.prune(new Date(Date.now() - 400 * 86_400_000).toISOString().slice(0, 10));
       console.log('collector', JSON.stringify(result));
     };

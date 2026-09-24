@@ -859,8 +859,8 @@ async function loadCircumvention(serial, signal) {
 }
 
 let activeController = null;
-function publishOverview(stateName, assessment = null) {
-  window.dispatchEvent(new CustomEvent('iran-monitor-overview', { detail: { state: stateName, assessment } }));
+function publishOverview(stateName, assessment = null, dataPaths = null) {
+  window.dispatchEvent(new CustomEvent('iran-monitor-overview', { detail: { state: stateName, assessment, dataPaths } }));
 }
 
 async function loadAll() {
@@ -897,7 +897,7 @@ async function loadAll() {
   try {
     const overview = await api(`/api/overview?${queryString()}`, activeController.signal);
     if (serial !== state.requestSerial) return;
-    publishOverview('ready', overview.assessment);
+    publishOverview('ready', overview.assessment, overview.dataPaths ?? null);
     renderOverview(overview);
     loadCircumvention(serial, activeController.signal);
   } catch (error) {

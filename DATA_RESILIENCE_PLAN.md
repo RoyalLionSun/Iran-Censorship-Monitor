@@ -1,6 +1,6 @@
 # Data resilience plan — no single point of failure for access evidence
 
-Status: **plan, not implemented**. Accounts and credits (RIPE Atlas, Globalping) are settled
+Status: **steps 1–3, 5 and 6 built and tested offline; all paths off until switched on.** Accounts and credits (RIPE Atlas, Globalping) are settled
 at the end; everything is built so that it runs without them and switches on when they exist.
 
 ## Problem
@@ -90,8 +90,17 @@ A path that fails leaves the others untouched; the next run retries it.
    parity with the live aggregation is tested. A live side-by-side comparison follows the first run.
 4. OONI S3 path: verify bucket layout and daily volume for Iran once the owner agrees to the
    first download; stream-parse, reduce, dedup.
-5. Source health per path in the header badge and technical analysis.
-6. RIPE Atlas and Globalping paths behind the ethics gate and keys.
+5. Source health per path in the header badge. **Done** — the overview carries `dataPaths`
+   (which route answered, and per path: switched on or what is missing, last run, last error,
+   newest measurement); the header badge's tooltip lists it in EN and FA.
+6. RIPE Atlas and Globalping paths behind the ethics gate and keys. **Done** —
+   `lib/active-collector.mjs`: `collectorPlan()` names what each path still needs; Atlas picks
+   connected probes on Iranian-registered networks only (spread over networks) and runs one-off
+   DNS (probe resolver) and TLS (with SNI) measurements; Globalping runs DNS and HTTPS HEAD from
+   Iran and drops probes on foreign networks. Results: `blocked` only for the block address
+   (10.10.34.x) or another private answer, `failure` for errors and resets, `ok` otherwise.
+   Pending measurement ids are kept in the store, so a restart loses nothing; a new round every
+   6 hours. The page does not use these rows yet (step 6b: show them as a separate family).
 7. History backfill from S3 for the last 120 days.
 
 ## Open for the owner

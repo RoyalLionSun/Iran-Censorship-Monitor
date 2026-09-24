@@ -31,6 +31,8 @@ function healthDetail(health) {
   }).join('\n');
 }
 
+let lastPaths = null;
+
 function renderSourceHealth(health = lastHealth) {
   lastHealth = health || null;
   const element = document.querySelector('#header-source-state');
@@ -53,7 +55,7 @@ function renderSourceHealth(health = lastHealth) {
   sentence.className = 'visually-hidden';
   sentence.textContent = full;
   element.replaceChildren(badge, sentence);
-  element.title = [full, healthDetail(health)].filter(Boolean).join('\n\n');
+  element.title = [full, healthDetail(health), pathsDetail(lastPaths)].filter(Boolean).join('\n\n');
   // One missing side source is not an alarm; red stays for a broadly unavailable source set.
   const broadlyDown = health.summary.errors > 0 && health.summary.reachable < health.summary.queried * 0.7;
   element.dataset.health = broadlyDown ? 'error'
@@ -61,7 +63,25 @@ function renderSourceHealth(health = lastHealth) {
 }
 
 ensureV19Styles();
-window.addEventListener('iran-monitor-overview', (event) => renderSourceHealth(event.detail?.assessment?.sourceHealth ?? null));
+
+// Which route delivered the access evidence and how current each collector path is, in the
+// badge's tooltip, so a reader can see the dashboard is not tied to one upstream.
+function pathsDetail(paths) {
+  if (!paths) return '';
+  const time = (value) => (value ? `${value.replace('T', ' ').slice(0, 16)} UTC` : '—');
+  const lines = [t(paths.via === 'store' ? 'sourceHealth.path.store' : 'sourceHealth.path.live')];
+  for (const [name, health] of Object.entries(paths.paths ?? {})) {
+    const key = health.enabled === false ? 'sourceHealth.path.off' : health.lastError ? 'sourceHealth.path.failing'
+      : health.lastRun ? 'sourceHealth.path.ok' : 'sourceHealth.path.waiting';
+    lines.push(t(key, { path: t(`sourceHealth.pathName.${name}`), newest: time(health.newest), error: String(health.lastError ?? '').slice(0, 80) }));
+  }
+  return lines.join('\n');
+}
+
+window.addEventListener('iran-monitor-overview', (event) => {
+  if (event.detail?.dataPaths) lastPaths = event.detail.dataPaths;
+  renderSourceHealth(event.detail?.assessment?.sourceHealth ?? null);
+});
 window.addEventListener('iran-monitor-languagechange', () => renderSourceHealth());
 
 export { renderSourceHealth };
