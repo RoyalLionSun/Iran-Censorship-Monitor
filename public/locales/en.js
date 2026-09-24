@@ -45,7 +45,7 @@ export default Object.freeze({
   'ui.target': 'Target',
   'ui.from': 'From',
   'ui.to': 'To',
-  'ui.allIranNetworks': 'All Iran networks (may hit OONI row limit)',
+  'ui.allIranNetworks': 'All networks in Iran',
   'ui.allTestedInputs': 'All tested inputs',
   'ui.allCategories': 'All categories',
   'ui.measurementAssessment': 'MEASUREMENT ASSESSMENT',

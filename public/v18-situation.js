@@ -1,5 +1,17 @@
-import { localeFor, t } from './i18n.js';
+import { localeFor, t as translate } from './i18n.js';
 import { MORE_SERVICE_GROUPS } from './service-findings.js';
+
+// With "all networks in Iran" selected, sentences that speak of "this network" have their own
+// wording (key + ".iran"); every other text is unchanged.
+let allIran = false;
+function t(key, variables) {
+  if (allIran) {
+    const scoped = `${key}.iran`;
+    const text = translate(scoped, variables);
+    if (text !== scoped) return text;
+  }
+  return translate(key, variables);
+}
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>'"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[char]));
@@ -996,6 +1008,7 @@ function renderSituation(assessment, state = assessment ? 'ready' : 'loading') {
   insertViews();
   translateStaticView();
   const interpretation = assessment?.interpretation;
+  allIran = Boolean(interpretation) && !interpretation.selection?.asn;
   const valid = interpretation?.schemaVersion === 1 && interpretation.summary &&
     ['connectivity', 'interference', 'routing', 'quality', 'shutdown'].every((id) => interpretation.dimensions?.[id]);
   for (const selector of ['#overview-details-head', '#interpretation-dimensions', '.overview-lower-grid', '#current-findings', '#evidence-overview', '.overview-more']) {

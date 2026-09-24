@@ -76,6 +76,8 @@ Package version: **`1.8.0` intentionally unchanged**
 
 - header, the same in both languages: logo right, the name "Iran Censorship Monitor" in white in the middle (the subtitle repeated the name and was removed), and @RoyalLionSun left in the logo's gold, in Edwardian Script ITC where the reader has it installed (it ships with Microsoft Office and may not be redistributed, so it is only referenced with `local()`), otherwise in the similar Pinyon Script, self-hosted under the SIL Open Font License in `public/fonts/` because the page loads no external fonts. Below the header a toolbar holds the Overview / Technical analysis switch and, opposite, language, update time, Refresh and Export; the filters follow. The sources badge with its per-source tooltip sits with the source register. The update time appears only once data has arrived and is fully localized in Farsi;
 
+- with "All networks in Iran" selected, sentences no longer speak of "this network": each such text has an all-Iran wording (locale key + `.iran`, chosen centrally in `v18-situation.js`), e.g. "Confirmed by tests that people ran inside Iran". The network selection reads "All networks in Iran" instead of the technical "may hit OONI row limit";
+
 ## Next steps (agreed, not started)
 
 - Test the "More services" chips live and correct what does not fit.

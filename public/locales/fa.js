@@ -45,7 +45,7 @@ export default Object.freeze({
   'ui.target': 'هدف',
   'ui.from': 'از',
   'ui.to': 'تا',
-  'ui.allIranNetworks': 'همه شبکه‌های ایران (ممکن است به سقف ردیف‌های OONI برسد)',
+  'ui.allIranNetworks': 'همه شبکه‌های ایران',
   'ui.allTestedInputs': 'همه ورودی‌های آزموده‌شده',
   'ui.allCategories': 'همه دسته‌ها',
   'ui.measurementAssessment': 'ارزیابی اندازه‌گیری‌ها',

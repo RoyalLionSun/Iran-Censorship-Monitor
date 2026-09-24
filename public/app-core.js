@@ -200,7 +200,7 @@ function stateDot(element, status) {
 
 function renderConfig(config) {
   const select = $('#asn-select');
-  select.innerHTML = '<option value="ALL">All Iran networks (may hit OONI row limit)</option>' + config.asns.map((item) => `<option value="${escapeHtml(item.asn)}">${escapeHtml(item.asn)} · ${escapeHtml(item.name)}</option>`).join('');
+  select.innerHTML = '<option value="ALL">All networks in Iran</option>' + config.asns.map((item) => `<option value="${escapeHtml(item.asn)}">${escapeHtml(item.asn)} · ${escapeHtml(item.name)}</option>`).join('');
   select.value = 'AS58224';
   $('#since-input').value = config.defaultRange.since;
   $('#until-input').value = config.defaultRange.until;
