@@ -185,3 +185,10 @@ Both are separate bounded operator processes and remain control-plane context on
 - [PROVINCE_SIM_FEASIBILITY.md](PROVINCE_SIM_FEASIBILITY.md)
 
 The original prototype export under `legacy/prototype-export/` is audit/reference material only and is not the development basis.
+
+
+## Licence
+
+Code: MIT (`LICENSE`). Published results (dashboard findings, feed, widget, reports, exports):
+CC BY-NC-SA 4.0, following OONI's data licence (`DATA_LICENSE.md`). Logo and preview image are not
+licensed for reuse.

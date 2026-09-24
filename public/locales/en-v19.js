@@ -619,7 +619,7 @@ export default Object.freeze({
   'report.value': 'Value',
   'report.group': 'Group',
   'report.results': 'Results',
-  'report.footer': 'Iran Censorship Monitor · @RoyalLionSun · created {date} UTC from public measurements (OONI, Cloudflare Radar, IODA, RIPE Atlas, RIPEstat, APNIC and others)',
+  'report.footer': 'Iran Censorship Monitor · @RoyalLionSun · created {date} UTC from public measurements (OONI, Cloudflare Radar, IODA, RIPE Atlas, RIPEstat, APNIC and others) · CC BY-NC-SA 4.0',
   'share.label': 'Share this finding',
   'share.native': 'Share…',
   'share.telegram': 'Telegram ↗',

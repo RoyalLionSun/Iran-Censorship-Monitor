@@ -607,6 +607,10 @@ async function serveStatic(req, res, pathname) {
     'x-content-type-options': 'nosniff',
     'referrer-policy': 'strict-origin-when-cross-origin',
     'content-security-policy': "default-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+    // The page needs no camera, microphone, location or payment access.
+    'permissions-policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()',
+    // Once served over HTTPS (PUBLIC_URL), browsers keep to HTTPS for a year.
+    ...(/^https:/i.test(process.env.PUBLIC_URL ?? '') ? { 'strict-transport-security': 'max-age=31536000' } : {}),
   };
   if (req.headers['if-none-match'] === entry.etag) {
     res.writeHead(304, headers);

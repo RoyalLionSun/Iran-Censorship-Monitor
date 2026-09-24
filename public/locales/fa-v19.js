@@ -619,7 +619,7 @@ export default Object.freeze({
   'report.value': 'مقدار',
   'report.group': 'گروه',
   'report.results': 'نتایج',
-  'report.footer': 'گزارش پایش سانسور ایران · ‎@RoyalLionSun · تهیه‌شده در {date} به وقت UTC از اندازه‌گیری‌های عمومی (OONI، Cloudflare Radar، IODA، RIPE Atlas، RIPEstat، APNIC و دیگران)',
+  'report.footer': 'گزارش پایش سانسور ایران · ‎@RoyalLionSun · تهیه‌شده در {date} به وقت UTC از اندازه‌گیری‌های عمومی (OONI، Cloudflare Radar، IODA، RIPE Atlas، RIPEstat، APNIC و دیگران) · CC BY-NC-SA 4.0',
   'share.label': 'این یافته را هم‌رسانی کنید',
   'share.native': 'هم‌رسانی…',
   'share.telegram': 'تلگرام ↗',
