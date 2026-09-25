@@ -461,3 +461,19 @@ html[lang="fa"] .usage-heading { letter-spacing: normal; }
 /* The kicker above the finding ("Current situation") reads as a label, not as fine print. */
 .situation-top > .section-label { font-family: inherit; font-size: 17px; font-weight: 800; letter-spacing: .07em; }
 html[lang="fa"] .situation-top > .section-label { font-size: 17px; letter-spacing: normal; }
+/* Section headings of the overview: one size, readable at a glance (owner's note on the kicker). */
+.service-board h2, .access-board h2, .privileged-board h2, .more-services h2, .workarounds-board h2, .anatomy-board h2, .changes-board h2 { font-size: 17px; letter-spacing: .05em; }
+.service-board h2, .access-board h2, .privileged-board h2, .more-services h2, .workarounds-board h2, .anatomy-board h2 { color: #d6e2f0; }
+html[lang="fa"] :is(.service-board, .access-board, .privileged-board, .more-services, .workarounds-board, .anatomy-board, .changes-board) h2 { font-size: 18px; letter-spacing: normal; }
+.usage-heading { font-size: 15.5px; }
+.overview-panel > header .section-label { font-family: inherit; font-size: 15px; font-weight: 800; letter-spacing: .06em; }
+html[lang="fa"] .overview-panel > header .section-label { letter-spacing: normal; }
+/* Many service columns: the network column keeps a readable width and stays in view while the
+   table scrolls sideways (phones, the 13-column social tab). */
+.access-board thead th:first-child, .access-board tbody th { min-width: 190px; position: sticky; inset-inline-start: 0; z-index: 2; }
+.access-board tbody th { background: #16283f; }
+.access-board tbody tr:nth-child(odd) th { background: #182c45; }
+.access-board thead th:first-child { z-index: 3; }
+@media (max-width: 700px) { .access-board thead th:first-child, .access-board tbody th { min-width: 150px; } }
+.access-board thead th.access-service-col { white-space: normal; padding-inline: 5px; line-height: 1.25; min-width: 58px; }
+.access-board tbody td.access-cell { padding-inline: 5px; }
