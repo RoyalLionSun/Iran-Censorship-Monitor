@@ -440,19 +440,24 @@ function accessCell(entry) {
 
 // Who has access to the internet services, by named Iranian network, full or partial, on the
 // first screen: a reader should not have to switch networks one by one to find out.
-// Which service group the access table shows; the six main services by default.
-let accessGroup = 'main';
-const ACCESS_GROUPS = ['main', ...MORE_SERVICE_GROUPS.map((group) => group.id)];
+// Which category the access table shows; "social & messaging" by default, with the six most used
+// services first. There is no separate "main" tab: for many readers the main service is in
+// another category (news, tools, everyday services).
+const MAIN_IDS = ['instagram', 'whatsapp', 'telegram', 'youtube', 'x', 'facebook'];
+let accessGroup = 'social';
+const ACCESS_GROUPS = MORE_SERVICE_GROUPS.map((group) => group.id);
 
 function accessColumns(groupId, services) {
-  if (groupId === 'main') return ['instagram', 'whatsapp', 'telegram', 'youtube', 'x', 'facebook'].map((id) => ({ id, name: brandName(id, services) }));
-  return MORE_SERVICE_GROUPS.find((group) => group.id === groupId)?.services.map(({ id, name }) => ({ id, name })) ?? [];
+  if (groupId === 'main') return MAIN_IDS.map((id) => ({ id, name: brandName(id, services) }));
+  const group = MORE_SERVICE_GROUPS.find((entry) => entry.id === groupId)?.services.map((service) => ({ id: service.id, name: moreServiceName(service) })) ?? [];
+  return groupId === 'social' ? [...MAIN_IDS.map((id) => ({ id, name: brandName(id, services) })), ...group] : group;
 }
 
 function renderAccess(services, selection) {
   const breakdown = services?.networkBreakdown;
   const byGroup = breakdown?.accessByGroup;
-  const groupId = byGroup?.[accessGroup]?.length ? accessGroup : 'main';
+  // An older saved answer has no categories yet: it shows the six on their own.
+  const groupId = byGroup?.[accessGroup]?.length ? accessGroup : byGroup?.social?.length ? 'social' : 'main';
   const access = (groupId === 'main' ? breakdown?.access : byGroup?.[groupId]) ?? [];
   if (!access.length) return '';
   const { names, types = {}, coverage } = breakdown;
@@ -460,7 +465,7 @@ function renderAccess(services, selection) {
   const brands = columns.map((column) => column.id);
   const tabs = byGroup ? `<div class="access-tabs" role="tablist" aria-label="${escapeHtml(t('board.access.groups'))}">${ACCESS_GROUPS
     .filter((id) => byGroup[id]?.length)
-    .map((id) => `<button type="button" role="tab" data-access-group="${id}" aria-selected="${id === groupId}">${escapeHtml(t(id === 'main' ? 'board.access.group.main' : `board.more.group.${id}`))}</button>`).join('')}</div>` : '';
+    .map((id) => `<button type="button" role="tab" data-access-group="${id}" aria-selected="${id === groupId}">${escapeHtml(t(`board.more.group.${id}`))}</button>`).join('')}</div>` : '';
   const count = (level) => access.filter((entry) => entry.level === level).length;
   const VISIBLE_ROWS = 10;
   const rows = access.map((entry, index) => {

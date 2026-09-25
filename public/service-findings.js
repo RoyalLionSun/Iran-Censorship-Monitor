@@ -392,10 +392,13 @@ export function summarizeMoreServices(networkPayload, countryPayload = null, app
 }
 
 // The same per-network view for each group of further services, keyed by group id.
+// Per category of the access table. The six most used services belong to "social & messaging"
+// there, ahead of the others: a category is complete, not a remainder after the main six.
+// "main" stays for figures about the six alone (headline, shared text).
 export function summarizeNetworkAccessByGroup(rows = []) {
   return Object.fromEntries([
     ['main', summarizeNetworkAccess(rows)],
-    ...MORE_SERVICE_GROUPS.map((group) => [group.id, summarizeNetworkAccess(rows, group.services)]),
+    ...MORE_SERVICE_GROUPS.map((group) => [group.id, summarizeNetworkAccess(rows, group.id === 'social' ? [...SERVICE_BRANDS, ...group.services] : group.services)]),
   ]);
 }
 

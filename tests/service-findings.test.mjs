@@ -347,3 +347,13 @@ test('ways around the filter: majority verdicts, errors left out, Iran-wide valu
   assert.equal(by.riseupvpn.status, 'thin');
   assert.equal(summarizeWorkarounds({ ok: false }), null);
 });
+
+test('the access table has no separate main tab: the six most used services lead social & messaging', async () => {
+  const { summarizeNetworkAccessByGroup } = await import('../public/service-findings.js');
+  const row = (domain, asn) => ({ domain, asn, measurements: 10, confirmed: 10, anomalous: 0, ok: 0, failures: 0 });
+  const groups = summarizeNetworkAccessByGroup([row('www.instagram.com', 'AS58224'), row('signal.org', 'AS58224')]);
+  const social = groups.social.find((entry) => entry.asn === 'AS58224');
+  assert.ok(social.services.instagram, 'Instagram counts in social & messaging');
+  assert.ok(social.services.signal, 'Signal too');
+  assert.ok(groups.main, 'the six alone remain available for the headline and shared text');
+});
