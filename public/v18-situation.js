@@ -274,8 +274,21 @@ const NAMED_HEADLINES = ['services-blocked', 'services-restricted', 'services-re
 
 // The tiles right below name every service, so when all of them are blocked the heading says so
 // in a few words (compact); the full sentence with the names stays for sharing.
+// Nobody tested in this network, but across Iran the answer is clear: the heading says that
+// instead of "not enough measurements" (the tiles below show the same, labelled).
+function countryOnly(summary, services) {
+  const outage = summary.headline && ['major-outage', 'outage-ended'].includes(summary.headline.state);
+  return Boolean(services?.countryBlocked?.length && !services.blocked?.length && !services.restricted?.length && !outage);
+}
+
 function headlineText(summary, services, { compact = false } = {}) {
   const headline = summary.headline;
+  if (countryOnly(summary, services)) {
+    const ids = services.countryBlocked;
+    const all = services.items?.length ?? 0;
+    if (compact && all > 2 && ids.length === all) return t('board.headline.country-all-blocked', { count: formatNumber(all) });
+    return plural('board.headline.country-blocked', ids.length, { services: listOf(ids.map((id) => brandName(id, services))) });
+  }
   if (!headline) return t(`interpretation.summary.${summary.state}.headline`);
   const names = headline.services.map((id) => brandName(id, services));
   const all = services?.items?.length ?? 0;
@@ -306,6 +319,7 @@ function connectionState(connectivity) {
 
 function ledeText(interpretation) {
   const { summary, services, dimensions } = interpretation;
+  if (countryOnly(summary, services)) return t('board.lede.country');
   if (!summary.headline) return t(`interpretation.summary.${summary.state}.meaning`);
   const sentences = [];
   if (summary.headline.state === 'services-blocked') sentences.push(t('board.lede.blocked'));
