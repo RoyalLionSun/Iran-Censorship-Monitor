@@ -271,8 +271,9 @@ html[dir="rtl"] .topbar-actions { justify-content: flex-start; }
 .access-board tr[data-thin="yes"]:hover > * { opacity: 1; }
 
 .more-chip-app { padding-inline-start: 7px; border-inline-start: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 700; }
-.more-chip-app[data-app-status="anomaly"] { color: var(--status-restricted); }
+.more-chip-app[data-app-status="anomaly"] { color: var(--status-blocked); }
 .more-chip-app[data-app-status="no_signal"] { color: var(--status-reachable); }
+.more-chip-app[data-app-status="partly"] { color: var(--status-restricted); }
 
 /* What changed: worse in the blocked colour, better in the reachable colour, both labelled. */
 .changes-board { padding: 12px 14px; border: 1px solid var(--border-strong); border-radius: 9px; background: linear-gradient(90deg, rgba(167,139,250,.10), rgba(16,32,53,.4) 55%); }

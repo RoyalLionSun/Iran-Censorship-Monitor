@@ -594,6 +594,7 @@ export default Object.freeze({
   'board.appNamed.unavailable': '{app} app: test data unavailable',
   'board.appNamed.loading': '{app} app: loading…',
   'board.more.app.anomaly': 'app fails',
+  'board.more.app.partly': 'app partly',
   'board.more.app.no_signal': 'app works',
   'board.more.appDetail': 'app test: {count} of {total} connections failed',
   'board.changes.title': 'What changed',

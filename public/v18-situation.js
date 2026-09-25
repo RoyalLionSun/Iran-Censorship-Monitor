@@ -638,7 +638,7 @@ function renderMoreServices(services) {
       total: formatNumber(service.measurements), confirmed: formatNumber(service.confirmed),
       count: formatNumber(service.anomalous), ok: formatNumber(service.ok),
     }) + (service.scope === 'country' ? ` · ${t('board.more.country')}` : '') : t('board.more.untested');
-    const appTitle = service.app ? ` · ${t('board.more.appDetail', { total: formatNumber(service.app.measurements), count: formatNumber(service.app.anomalies) })}` : '';
+    const appTitle = service.app ? `${separator()}${t('board.more.appDetail', { total: formatNumber(service.app.measurements), count: formatNumber(service.app.anomalies) })}` : '';
     return `<li class="more-chip" data-status="${escapeHtml(service.status)}"${service.scope === 'country' ? ' data-scope="country"' : ''} title="${escapeHtml(title + appTitle)}">
       <span class="more-chip-name">${escapeHtml(moreServiceName(service))}</span><span class="more-chip-status">${escapeHtml(t(`board.more.status.${service.status}`))}</span>${service.app ? `<span class="more-chip-app" data-app-status="${escapeHtml(service.app.status)}">${escapeHtml(t(`board.more.app.${service.app.status}`))}</span>` : ''}</li>`;
   };

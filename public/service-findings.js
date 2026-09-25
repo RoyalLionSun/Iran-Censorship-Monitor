@@ -375,7 +375,14 @@ function appResult(appPayload, testName) {
   if (!testName || !appPayload?.ok || !Array.isArray(appPayload.signals)) return null;
   const row = appPayload.signals.find((item) => item.testName === testName);
   if (!row || row.status === 'error' || !row.measurements) return null;
-  return { status: row.anomalies * 2 > row.measurements ? 'anomaly' : 'no_signal', measurements: row.measurements, anomalies: row.anomalies };
+  // The same rule as the ways-around-the-filter tiles, so a chip and a tile never disagree about
+  // one app: one failure in ten or more is "partly". With few tests the majority decides.
+  const failed = (Number(row.anomalies) || 0) + (Number(row.confirmed) || 0);
+  const ok = Math.max(0, row.measurements - failed - (Number(row.failures) || 0));
+  const status = failed + ok >= WORKAROUND_MIN_TESTS
+    ? { fails: 'anomaly', partly: 'partly', works: 'no_signal' }[workaroundStatus({ failed, ok, usable: failed + ok })]
+    : failed * 2 > row.measurements ? 'anomaly' : 'no_signal';
+  return { status, measurements: row.measurements, anomalies: row.anomalies };
 }
 
 export function summarizeMoreServices(networkPayload, countryPayload = null, appPayload = null) {

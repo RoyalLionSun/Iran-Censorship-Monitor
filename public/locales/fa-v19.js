@@ -594,6 +594,7 @@ export default Object.freeze({
   'board.appNamed.unavailable': 'اپلیکیشن {app}: دادهٔ آزمون در دسترس نیست',
   'board.appNamed.loading': 'اپلیکیشن {app}: در حال بارگیری…',
   'board.more.app.anomaly': 'اپ کار نمی‌کند',
+  'board.more.app.partly': 'اپ تا حدی کار می‌کند',
   'board.more.app.no_signal': 'اپ کار می‌کند',
   'board.more.appDetail': 'آزمون اپلیکیشن: {count} از {total} اتصال ناموفق',
   'board.changes.title': 'چه چیزی تغییر کرد',
