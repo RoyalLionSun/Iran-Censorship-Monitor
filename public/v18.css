@@ -422,3 +422,14 @@ html[dir="rtl"] .history-strip { transform: scaleX(-1); }
 .access-track-fill { fill: #52c9c4; }
 [dir="rtl"] .access-track { transform: scaleX(-1); }
 .access-meter em { font-style: normal; font-size: 11.5px; color: var(--text-soft); }
+/* Phones: the filters fold into one line with the current choice; share buttons swipe sideways. */
+.filter-toggle { display: none; }
+@media (max-width: 700px) {
+  .filter-toggle { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 10px; margin: 0 0 8px; padding: 11px 14px; border: 1px solid var(--border); border-radius: var(--radius, 10px); background: var(--bg-elevated); color: var(--text); font: inherit; font-size: 14px; text-align: start; cursor: pointer; }
+  .filter-toggle-now { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 650; }
+  .filter-toggle b { flex: none; color: #9ad9d5; font-size: 13px; }
+  body:not(.filters-open) .filterbar { display: none; }
+  .share-bar { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+  .share-bar::-webkit-scrollbar { display: none; }
+  .share-bar > * { flex: none; }
+}

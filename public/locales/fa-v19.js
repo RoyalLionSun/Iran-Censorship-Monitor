@@ -712,6 +712,8 @@ export default Object.freeze({
   'share.msg.tool.works': '{tool}: کار می‌کند',
   'share.msg.tool.partly': '{tool}: تا حدی',
   'share.msg.tool.fails': '{tool}: کار نمی‌کند',
+  'ui.filters.change': 'تغییر ▾',
+  'ui.filters.close': 'بستن ▴',
   'share.copy': 'کپی پیوند',
   'share.copyFailed': 'کپی نشد',
   'share.copied': 'کپی شد',

@@ -27,11 +27,35 @@ function ensureStyles() {
   document.head.appendChild(link);
 }
 
+function updateFilterSummary() {
+  const toggle = document.querySelector('#filter-toggle');
+  if (!toggle) return;
+  const network = document.querySelector('#asn-select')?.selectedOptions?.[0]?.textContent?.trim() ?? '';
+  const since = document.querySelector('#since-input')?.value;
+  const until = document.querySelector('#until-input')?.value;
+  const period = since && until ? `${formatDay(since)} – ${formatDay(until)}` : '';
+  toggle.querySelector('.filter-toggle-now').textContent = [network, period].filter(Boolean).join(separator());
+  toggle.querySelector('b').textContent = t(document.body.classList.contains('filters-open') ? 'ui.filters.close' : 'ui.filters.change');
+}
+
 function insertViews() {
   ensureStyles();
   const assessment = document.querySelector('#assessment-strip');
   const filterbar = document.querySelector('.filterbar');
   if (!assessment || !filterbar || document.querySelector('#dashboard-view-switch')) return;
+
+  // On phones the filters fold into one line with the current choice, so the finding is on the
+  // first screen; a tap opens them.
+  filterbar.insertAdjacentHTML('beforebegin', '<button type="button" id="filter-toggle" class="filter-toggle" aria-expanded="false" aria-controls="filters"><span class="filter-toggle-now"></span><b></b></button>');
+  filterbar.id = filterbar.id || 'filters';
+  const toggle = document.querySelector('#filter-toggle');
+  toggle.addEventListener('click', () => {
+    const open = document.body.classList.toggle('filters-open');
+    toggle.setAttribute('aria-expanded', String(open));
+    updateFilterSummary();
+  });
+  filterbar.addEventListener('change', () => updateFilterSummary());
+  updateFilterSummary();
 
   // The view switch opens the page, in the toolbar above the filters, next to the actions.
   const viewSwitch = `
@@ -1178,6 +1202,7 @@ function renderHero(interpretation) {
   const latest = summary.latestObservation ? t('board.latest', { date: formatDay(summary.latestObservation) }) : '';
   const stale = interpretation.services?.stale?.since ?? null;
   shareSource = interpretation;
+  updateFilterSummary();
   hero.dataset.headline = summary.headline?.state ?? summary.state;
   const headlineSummary = { ...summary, headline: summary.headline && { ...summary.headline, period: nationwidePeriod(interpretation.dimensions.connectivity) } };
   hero.dataset.stale = stale ? 'yes' : 'no';

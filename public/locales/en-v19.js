@@ -712,6 +712,8 @@ export default Object.freeze({
   'share.msg.tool.works': '{tool}: works',
   'share.msg.tool.partly': '{tool}: partly',
   'share.msg.tool.fails': '{tool}: fails',
+  'ui.filters.change': 'Change ▾',
+  'ui.filters.close': 'Close ▴',
   'share.copy': 'Copy link',
   'share.copyFailed': 'Copy failed',
   'share.copied': 'Copied',
