@@ -496,11 +496,19 @@ function renderAccess(services, selection) {
 
 // Privileged access is reported by journalists and researchers, not measurable here. It stays
 // in its own block, with every statement tied to its source and date.
+// Only dated, named primary reporting (no encyclopedias), newest first; checked 25 Sep 2026.
 const PRIVILEGED_SOURCES = {
-  filterwatchApr: 'https://filter.watch/english/2026/04/20/nvestigative-report-april-2026-from-the-open-internet-to-internet-sovereignty/',
+  rferlBill: 'https://www.rferl.org/a/iran-internet-bill-restriction-access/33845516.html',
+  bloomberg: 'https://www.bloomberg.com/features/2026-iran-internet/',
+  isnaEnd: 'https://avash.ir/%D8%A8%D8%AE%D8%B4-%D8%A7%D8%AC%D8%AA%D9%85%D8%A7%D8%B9%DB%8C-5/90932-%D8%A7%DB%8C%D9%86%D8%AA%D8%B1%D9%86%D8%AA-%D9%BE%D8%B1%D9%88-%D8%AD%D8%B0%D9%81-%D8%B4%D8%AF',
+  iranintlApr: 'https://www.iranintl.com/en/202604203889',
+  aljazeeraMay: 'https://www.aljazeera.com/editorial/2026/5/14/iran-expands-tiered-internet-access-amid-continued-online-blackout',
   cnn: 'https://www.cnn.com/2026/05/10/middleeast/iran-internet-pro-blackout-access-vpn-intl',
-  filterwatchNov: 'https://filter.watch/english/2025/11/24/investigative-report-november-2025-revealing-the-depth-of-digital-discrimination/',
-  wikipedia: 'https://en.wikipedia.org/wiki/White_SIM_Card',
+  filterwatchApr: 'https://filter.watch/english/2026/04/20/nvestigative-report-april-2026-from-the-open-internet-to-internet-sovereignty/',
+  parsineMar: 'https://www.parsine.com/%D8%A8%D8%AE%D8%B4-%D8%AF%D8%A7%D9%86%D8%B4-%D9%81%D9%86%D8%A7%D9%88%D8%B1%DB%8C-140/975688-%D8%B3%DB%8C%D9%85-%DA%A9%D8%A7%D8%B1%D8%AA-%D9%87%D8%A7%DB%8C-%D8%B3%D9%81%DB%8C%D8%AF-%D9%87%D9%85-%D9%82%D8%B7%D8%B9-%D8%B4%D8%AF%D9%86%D8%AF',
+  restofworld: 'https://restofworld.org/2026/iran-blackout-tiered-internet/',
+  iranintlNov: 'https://www.iranintl.com/en/202511248487',
+  khabarfoori: 'https://www.khabarfoori.com/%D8%A8%D8%AE%D8%B4-%D8%A7%D9%82%D8%AA%D8%B5%D8%A7%D8%AF%DB%8C-145/3179541-%D8%B3%DB%8C%D9%85%DA%A9%D8%A7%D8%B1%D8%AA-%D8%B3%D9%81%DB%8C%D8%AF-%D9%85%D8%B5%D9%88%D8%A8%D9%87-%DA%86%D9%87-%D9%85%D8%B1%D8%AC%D8%B9%DB%8C-%D8%A8%D9%88%D8%AF-%DA%86%D8%B1%D8%A7-%D8%AA%D8%B9%D8%AF%D8%A7%D8%AF-%D8%A2%D9%86%D9%87%D8%A7-%D8%AF%D8%B1-%D8%AF%D9%88%D9%84%D8%AA-%DA%86%D9%87%D8%A7%D8%B1%D8%AF%D9%87%D9%85-%DA%A9%D8%A7%D9%87%D8%B4-%DB%8C%D8%A7%D9%81%D8%AA',
   ban: 'https://thenewregion.com/posts/3922',
   citizenlab: 'https://citizenlab.ca/research/uncovering-irans-mobile-legal-intercept-system/',
 };
@@ -511,10 +519,15 @@ function sourceLinks(keys) {
 
 function renderPrivileged() {
   const items = [
-    ['internetPro', ['filterwatchApr']],
+    ['bill', ['rferlBill']],
+    ['bloomberg', ['bloomberg']],
+    ['internetProEnd', ['isnaEnd']],
+    ['internetPro', ['iranintlApr', 'aljazeeraMay']],
     ['price', ['cnn']],
-    ['services', ['filterwatchApr']],
-    ['whiteSim', ['filterwatchNov', 'wikipedia']],
+    ['services', ['filterwatchApr', 'aljazeeraMay']],
+    ['gatewayCut', ['parsineMar']],
+    ['whiteSim', ['restofworld', 'iranintlNov']],
+    ['whiteSimRules', ['khabarfoori']],
     ['ban', ['ban']],
     ['perSubscriber', ['citizenlab']],
   ];

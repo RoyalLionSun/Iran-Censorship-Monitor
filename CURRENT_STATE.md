@@ -105,6 +105,8 @@ Package version: **`1.8.0` intentionally unchanged**
 
 - footer: two links in the reader's language, "Monthly reports" and "Daily updates" (`/updates`, a readable page of the feed's entries with how to follow them by RSS or Telegram). Before, four links showed "Monthly reports" twice in Farsi and the raw XML feeds, which look broken to ordinary readers; the licence line is now fully translated and right to left in Farsi;
 
+- "Privileged access" panel rewritten and checked against primary sources on 25 September 2026 (no Wikipedia, no hedging, newest first, every line dated): the Cyberspace Regulation Plan bill of 26 August 2026 (RFE/RL), Bloomberg's investigation of 15 September 2026, the end of Internet Pro on 25 May 2026 (ISNA via Avash), Internet Pro's approval, groups, price and services (Iran International, Al Jazeera, CNN, Filterwatch), the AS12880 gateway collapse of 15 March 2026 (NetBlocks via Parsine), white SIM cards (Rest of World: about 16,000 since 2013; Iran International; Khabar Foori on the rules and the reduction; the withdrawal announcement of 11 December 2025) and Citizen Lab's per-subscriber control documents;
+
 ## Next steps (agreed, not started)
 
 - **The dashboard itself must be reachable from Iran** before it is published: the Farsi version is for people there. Plan hosting so it is not behind a provider Iran blocks (e.g. not solely behind Cloudflare), offer mirrors and an .onion address for Tor users, and once online, check our own address from inside Iran (OONI Run link with the dashboard URL, or a Citizen Lab list entry).
