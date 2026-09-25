@@ -119,3 +119,8 @@ html[lang="fa"] { --mono: var(--fa-sans); }
 html[lang="fa"] .kpi-card strong, html[lang="fa"] .technical-ltr { font-variant-numeric: tabular-nums; }
 /* Mixed English and Persian fragments take the direction of their own first letter. */
 html[dir="rtl"] .kpi-card > small, html[dir="rtl"] .signal-item p, html[dir="rtl"] .signal-item small { unicode-bidi: plaintext; }
+/* Source register: what each source did for the current view, and how the total splits up. */
+.source-register-summary { margin: 0 0 10px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+.source-status { display: inline-block; margin: 4px 0 2px; padding: 1px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 650; color: #9fb2c8; background: rgba(131, 150, 174, .14); }
+.source-status[data-state="observed"], .source-status[data-state="healthy"], .source-status[data-state="no_data"] { color: #7fdcaa; background: rgba(85, 199, 138, .13); }
+.source-status[data-state="error"] { color: #f59a9a; background: rgba(239, 109, 109, .14); }

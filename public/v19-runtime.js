@@ -50,7 +50,10 @@ function renderSourceHealth(health = lastHealth) {
   badge.className = 'source-state-short';
   badge.setAttribute('aria-hidden', 'true');
   const format = (value) => new Intl.NumberFormat(localeFor()).format(value);
-  badge.textContent = t('sourceHealth.short', { reachable: format(health.summary.reachable), queried: format(health.summary.queried) });
+  // The badge counts register entries, like the cards below it (RIPEstat and its RPKI check are one).
+  const counts = health.register ?? health.summary;
+  badge.textContent = t('sourceHealth.short', { reachable: format(counts.reachable), queried: format(counts.queried) });
+  renderRegisterStates(health, format);
   const sentence = document.createElement('span');
   sentence.className = 'visually-hidden';
   sentence.textContent = full;
@@ -60,6 +63,43 @@ function renderSourceHealth(health = lastHealth) {
   const broadlyDown = health.summary.errors > 0 && health.summary.reachable < health.summary.queried * 0.7;
   element.dataset.health = broadlyDown ? 'error'
     : health.summary.errors > 0 || health.summary.partial > 0 || health.summary.noData > 0 || health.summary.scopeRequired > 0 ? 'mixed' : 'ok';
+}
+
+// Each card in the source register says what that source did for the current view, and one
+// sentence explains how the register's total splits up, so the badge and the cards add up.
+function renderRegisterStates(health, format) {
+  const cards = [...document.querySelectorAll('#source-grid .source-card[data-source]')];
+  if (!cards.length || !health.register) return;
+  const entries = new Map(health.register.entries.map((entry) => [entry.id, entry]));
+  let separate = 0;
+  for (const card of cards) {
+    const entry = entries.get(card.dataset.source);
+    const state = entry?.state ?? 'separate';
+    if (!entry) separate += 1;
+    const chip = card.querySelector('.source-status');
+    if (!chip) continue;
+    chip.hidden = false;
+    chip.dataset.state = state;
+    chip.textContent = t(`sourceHealth.card.${state}`);
+    chip.title = entry?.error ?? '';
+  }
+  const register = health.register;
+  const parts = [
+    t('sourceHealth.register.total', { total: format(cards.length) }),
+    t('sourceHealth.register.queried', { queried: format(register.queried), reachable: format(register.reachable) }),
+    register.scopeRequired ? t('sourceHealth.register.scope', { count: format(register.scopeRequired) }) : '',
+    register.notConfigured ? t('sourceHealth.register.config', { count: format(register.notConfigured) }) : '',
+    separate ? t('sourceHealth.register.separate', { count: format(separate) }) : '',
+  ].filter(Boolean);
+  let summary = document.querySelector('#source-register-summary');
+  if (!summary) {
+    summary = document.createElement('p');
+    summary.id = 'source-register-summary';
+    summary.className = 'source-register-summary';
+    document.querySelector('#source-grid')?.before(summary);
+  }
+  // The middle dot looks like a Persian zero next to Persian digits; Farsi uses its semicolon.
+  summary.textContent = parts.join(localeFor().startsWith('fa') ? '؛ ' : ' · ');
 }
 
 ensureV19Styles();

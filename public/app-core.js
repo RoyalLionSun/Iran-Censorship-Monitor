@@ -250,7 +250,7 @@ function renderConfig(config) {
 function renderSources(sources, radarConfigured) {
   $('#source-grid').innerHTML = sources.map((source) => {
     const access = source.id === 'radar' && !radarConfigured ? 'token not configured' : source.access;
-    return `<div class="source-card"><div class="source-card-head"><strong>${escapeHtml(source.name)}</strong><span class="access">${escapeHtml(access)}</span></div><p>${escapeHtml(source.role)}</p><a href="${escapeHtml(source.url)}" target="_blank" rel="noreferrer">Open source ↗</a>${source.docs ? ` · <a href="${escapeHtml(source.docs)}" target="_blank" rel="noreferrer">Docs ↗</a>` : ''}</div>`;
+    return `<div class="source-card" data-source="${escapeHtml(source.id)}"><div class="source-card-head"><strong>${escapeHtml(source.name)}</strong><span class="access">${escapeHtml(access)}</span></div><span class="source-status" hidden></span><p>${escapeHtml(source.role)}</p><a href="${escapeHtml(source.url)}" target="_blank" rel="noreferrer">Open source ↗</a>${source.docs ? ` · <a href="${escapeHtml(source.docs)}" target="_blank" rel="noreferrer">Docs ↗</a>` : ''}</div>`;
   }).join('');
 }
 
