@@ -784,6 +784,8 @@ export default Object.freeze({
   'board.workarounds.downloadsOpen': 'در دسترس: {sites}',
   'board.workarounds.torUse': 'کاربران تور از ایران (برآورد Tor Metrics، {date}): روزانه حدود {direct} نفر به‌طور مستقیم و {bridges} نفر از راه پل‌ها',
   'board.workarounds.unmeasured': 'این‌جا اندازه‌گیری نمی‌شوند: V2Ray/Xray (VLESS، VMess، Reality)، Shadowsocks، Trojan، Hysteria، WireGuard، OpenVPN، اپلیکیشن‌هایی مانند Hiddify، NekoBox یا Outline، وی‌پی‌ان‌های تجاری و استارلینک. بسیاری از مردم از آن‌ها استفاده می‌کنند، اما هیچ منبع عمومی آن‌ها را از داخل ایران آزمایش نمی‌کند؛ پس این صفحه دربارهٔ آن‌ها ادعایی نمی‌کند.',
+  'board.workarounds.status.unavailable': 'بارگذاری نشد',
+  'board.workarounds.unavailableNote': 'در حال حاضر بارگذاری نشد (OONI درخواست‌ها را محدود می‌کند)؛ خودبه‌خود دوباره نمایش داده می‌شود',
   'board.workarounds.title': 'راه‌های دور زدن فیلتر امروز',
   'board.workarounds.note': 'آزمون‌های OONI از هر روش، از داخل ایران در این بازه. آزمون‌هایی که با خطا پایان یافته‌اند شمرده نمی‌شوند.',
   'board.workarounds.worked': 'در {count} از {total} آزمون کار کرد',

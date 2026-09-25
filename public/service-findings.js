@@ -488,6 +488,10 @@ function workaroundCounts(payload, test) {
   return { measurements: Number(row.measurements) || 0, failed, ok, failures, usable: failed + ok, lastObservation: row.lastObservation ?? null };
 }
 
+function workaroundErrored(payload, test) {
+  return Boolean(payload?.ok && Array.isArray(payload.signals) && payload.signals.find((item) => item.testName === test)?.status === 'error');
+}
+
 export function workaroundStatus({ failed, ok, usable }) {
   if (usable < WORKAROUND_MIN_TESTS) return 'thin';
   if (failed > ok) return 'fails';
@@ -503,7 +507,10 @@ export function summarizeWorkarounds(networkPayload, countryPayload = null) {
     const country = countryPayload ? workaroundCounts(countryPayload, tool.test) : null;
     if (country && country.usable >= WORKAROUND_MIN_TESTS) return { id: tool.id, test: tool.test, scope: 'country', ...country, status: workaroundStatus(country) };
     const best = [own, country].filter(Boolean).sort((a, b) => b.usable - a.usable)[0] ?? { measurements: 0, failed: 0, ok: 0, failures: 0, usable: 0 };
-    return { id: tool.id, test: tool.test, scope: best === country && country ? 'country' : 'network', ...best, status: 'thin' };
+    // A query that failed (e.g. OONI limiting requests) is not "too few tests": say it could not be loaded.
+    const errored = [networkPayload, countryPayload].some((payload) => workaroundErrored(payload, tool.test));
+    const status = !best.measurements && errored ? 'unavailable' : 'thin';
+    return { id: tool.id, test: tool.test, scope: best === country && country ? 'country' : 'network', ...best, status };
   });
   return rows.some((row) => row.measurements > 0) ? rows : null;
 }

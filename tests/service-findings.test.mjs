@@ -357,3 +357,15 @@ test('the access table has no separate main tab: the six most used services lead
   assert.ok(social.services.signal, 'Signal too');
   assert.ok(groups.main, 'the six alone remain available for the headline and shared text');
 });
+
+test('a way around the filter whose query failed says "not loaded", not "too few tests"', async () => {
+  const { summarizeWorkarounds } = await import('../public/service-findings.js');
+  const payload = { ok: true, signals: [
+    { testName: 'tor', status: 'observed', measurements: 100, anomalies: 10, confirmed: 0, failures: 0 },
+    { testName: 'torsf', status: 'error', measurements: 0, anomalies: 0, confirmed: 0, error: 'OONI rate limit reached.' },
+  ] };
+  const rows = summarizeWorkarounds(payload);
+  assert.equal(rows.find((row) => row.id === 'tor').status, 'partly');
+  assert.equal(rows.find((row) => row.id === 'torsf').status, 'unavailable');
+  assert.equal(rows.find((row) => row.id === 'psiphon').status, 'thin', 'no row at all is still "too few tests"');
+});

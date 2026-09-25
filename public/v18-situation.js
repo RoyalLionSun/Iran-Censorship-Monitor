@@ -594,12 +594,13 @@ function renderMoreServices(services) {
 
 // Ways around the filter today: one row per method OONI tests from inside Iran, with a plain
 // explanation, a verdict by majority and its numbers, and Cloudflare WARP use at the end.
-const WORKAROUND_STATUS_CLASS = { works: 'reachable', partly: 'restricted', fails: 'blocked', thin: 'thin' };
+const WORKAROUND_STATUS_CLASS = { works: 'reachable', partly: 'restricted', fails: 'blocked', thin: 'thin', unavailable: 'thin' };
 function renderWorkarounds(services) {
   const rows = services?.workarounds;
   if (!rows?.length) return '';
   const row = (item) => {
-    const numbers = item.usable
+    const numbers = item.status === 'unavailable' ? t('board.workarounds.unavailableNote')
+      : item.usable
       ? t(item.status === 'fails' ? 'board.workarounds.failed' : 'board.workarounds.worked', {
         count: formatNumber(item.status === 'fails' ? item.failed : item.ok), total: formatNumber(item.usable),
       })
@@ -1085,7 +1086,7 @@ function shareLong(interpretation) {
     const all = [...(changes.worse ?? []), ...(changes.better ?? [])];
     lines.push(`🔄 ${all.length ? t('share.msg.changes', { changes: listOf(all.slice(0, 4).map(moved)) }) : t('share.msg.noChanges')}`);
   }
-  const workarounds = (services?.workarounds ?? []).filter((item) => item.status !== 'thin');
+  const workarounds = (services?.workarounds ?? []).filter((item) => !['thin', 'unavailable'].includes(item.status));
   if (workarounds.length) {
     lines.push(`🛡️ ${t('share.msg.workarounds', { list: listOf(workarounds.map((item) => t(`share.msg.tool.${item.status}`, { tool: t(`board.workarounds.tool.${item.id}`) }))) })}`);
   }
@@ -1169,9 +1170,9 @@ function renderHero(interpretation) {
       <p class="situation-scope"><strong class="situation-network"><bdi>${escapeHtml(networkTitle(interpretation))}</bdi></strong><span class="scope-sep"> · </span>${period ? `<bdi>${escapeHtml(period)}</bdi>` : ''}${latest ? ` · <bdi>${escapeHtml(latest)}</bdi>` : ''}${stale ? ` · <bdi class="scope-stale">${escapeHtml(t('board.stale.since', { date: formatDateTime(stale) }))}</bdi>` : ''}</p>
       <h1 id="situation-headline" data-full="${escapeHtml(headlineText(headlineSummary, interpretation.services))}">${escapeHtml(headlineText(headlineSummary, interpretation.services, { compact: true }))}</h1>
       <p class="situation-lede">${escapeHtml(ledeText(interpretation))}</p>
-      ${jumpBar(interpretation)}
       ${shareBar()}
     </header>
+    ${jumpBar(interpretation)}
     ${renderChanges(interpretation.services)}
     ${renderServiceTiles(interpretation.services, selection, interpretation.dimensions.connectivity)}
     ${statusRow(interpretation)}
@@ -1183,7 +1184,42 @@ function renderHero(interpretation) {
     ${renderControl()}
     ${renderPrivileged()}`;
   bindOutageChart(hero, interpretation);
+  bindJumpBar(hero);
   bindAccess(hero, interpretation);
+}
+
+// The jump bar stays under the page header while scrolling, and the link of the section being
+// read lights up. The offset follows the header's real height (it differs on phones).
+let jumpScroll = null;
+function bindJumpBar(hero) {
+  const bar = hero.querySelector('.jump-bar');
+  if (!bar) return;
+  const header = document.querySelector('.topbar');
+  const setOffset = () => document.documentElement.style.setProperty('--topbar-h', `${header?.offsetHeight ?? 0}px`);
+  setOffset();
+  const links = [...bar.querySelectorAll('a')];
+  const targets = links.map((link) => [link, document.getElementById(link.getAttribute('href').slice(1))]).filter(([, target]) => target);
+  const update = () => {
+    const line = (header?.offsetHeight ?? 0) + bar.offsetHeight + 24;
+    let current = null;
+    let best = -Infinity;
+    for (const [link, target] of targets) {
+      const top = target.getBoundingClientRect().top;
+      if (top <= line && top > best) { best = top; current = link; }
+    }
+    for (const link of links) link.toggleAttribute('aria-current', link === current);
+    // On narrow screens the bar scrolls sideways; keep the lit link in view without moving the page.
+    if (current && bar.scrollWidth > bar.clientWidth) {
+      const left = current.offsetLeft - bar.offsetLeft;
+      if (left < bar.scrollLeft || left + current.offsetWidth > bar.scrollLeft + bar.clientWidth) bar.scrollLeft = left - 12;
+    }
+  };
+  if (jumpScroll) { window.removeEventListener('scroll', jumpScroll); window.removeEventListener('resize', jumpScroll); }
+  let queued = false;
+  jumpScroll = () => { if (queued) return; queued = true; requestAnimationFrame(() => { queued = false; setOffset(); update(); }); };
+  window.addEventListener('scroll', jumpScroll, { passive: true });
+  window.addEventListener('resize', jumpScroll, { passive: true });
+  update();
 }
 
 function bindAccess(hero, interpretation) {
