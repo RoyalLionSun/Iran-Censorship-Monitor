@@ -913,6 +913,21 @@ function publishOverview(stateName, assessment = null, dataPaths = null) {
   window.dispatchEvent(new CustomEvent('iran-monitor-overview', { detail: { state: stateName, assessment, dataPaths } }));
 }
 
+let technicalLoadedFor = 0;
+function technicalVisible() {
+  const technical = document.querySelector('#technical-view');
+  return Boolean(technical && !technical.hidden);
+}
+function loadTechnicalExtras(serial, signal) {
+  if (technicalLoadedFor === serial) return;
+  technicalLoadedFor = serial;
+  loadOoniDomains(serial, signal);
+  loadCircumvention(serial, signal);
+}
+window.addEventListener('iran-monitor-viewchange', (event) => {
+  if (event.detail?.view === 'technical' && state.requestSerial) loadTechnicalExtras(state.requestSerial, activeController?.signal);
+});
+
 async function loadAll() {
   const since = $('#since-input').value, until = $('#until-input').value;
   if (!since || !until || since > until) {
@@ -943,7 +958,10 @@ async function loadAll() {
   $('#bgp-updates-state').textContent = 'BGP update drilldown not requested.';
   $('#bgp-updates-table').innerHTML = '<tr><td colspan="5" class="table-empty">Load updates for a selected ASN.</td></tr>';
   $('#providers-table').innerHTML = '<tr><td colspan="7" class="table-empty">Provider comparison has not been requested for this filter state.</td></tr>';
-  loadOoniDomains(serial, activeController.signal);
+  // The domain list and the circumvention table belong to the technical view: they load when it
+  // is open (or opened later), so the Overview asks the server for its answer alone.
+  technicalLoadedFor = 0;
+  if (technicalVisible()) loadTechnicalExtras(serial, activeController.signal);
   showSavedCopy(serial, `/api/overview?${queryString()}`);
   try {
     const overview = await api(`/api/overview?${queryString()}`, activeController.signal);
@@ -951,7 +969,6 @@ async function loadAll() {
     state.freshSerial = serial;
     publishOverview('ready', overview.assessment, overview.dataPaths ?? null);
     renderOverview(overview);
-    loadCircumvention(serial, activeController.signal);
   } catch (error) {
     if (serial === state.requestSerial && error.name !== 'AbortError') {
       publishOverview('error');

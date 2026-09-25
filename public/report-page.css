@@ -7,7 +7,7 @@ html[dir="rtl"] body { font-family: Tahoma, "Segoe UI", Vazirmatn, Arial, sans-s
 .band-handle { justify-self: start; font: 400 30px/1 "Handle Script", cursive; color: #deac41; text-decoration: none; }
 .band-title { justify-self: center; color: #fff; font-weight: 700; font-size: 19px; text-decoration: none; }
 .band img { justify-self: end; }
-@font-face { font-family: "Handle Script"; src: local("Edwardian Script ITC"), url("/fonts/pinyon-script-latin.woff2") format("woff2"); font-display: swap; }
+@font-face { font-family: "Handle Script"; src: local("Edwardian Script ITC"), url("/fonts/pinyon-script-handle.woff2") format("woff2"); font-display: swap; }
 main { max-width: 980px; margin: 22px auto 40px; padding: 26px 30px; background: #fff; border-radius: 12px; box-shadow: 0 6px 24px rgba(19,36,62,.12); }
 .kicker { margin: 0; color: #1f63a8; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; font-size: 12.5px; }
 h1 { margin: 6px 0; color: #c62828; font-size: 26px; line-height: 1.25; }

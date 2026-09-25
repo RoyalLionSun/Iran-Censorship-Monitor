@@ -126,6 +126,8 @@ function setView(view) {
   if (technical) params.set('view', 'technical'); else params.delete('view');
   const query = params.toString();
   window.history.replaceState(null, '', `${window.location.pathname}${query ? `?${query}` : ''}`);
+  // The technical tables load only once the technical view is opened.
+  window.dispatchEvent(new CustomEvent('iran-monitor-viewchange', { detail: { view } }));
 }
 
 function translateStaticView() {
