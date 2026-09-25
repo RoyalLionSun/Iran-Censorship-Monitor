@@ -17,6 +17,10 @@ chats or issues. `.env.example` explains every value.
 - [ ] **`CLOUDFLARE_RADAR_API_TOKEN`** — traffic, outage dates, the outage chart and the
       hour-by-hour shutdown timeline. Without it these parts stay empty ("needs an operator token").
 - [ ] **`INTERNET_SOCIETY_PULSE_API_TOKEN`** — optional, shutdown records as context.
+- [ ] **`MONITOR_COLLECTOR=1`** — collects Iran's OONI measurements hourly into the local store,
+      so the page keeps answering while OONI limits requests (without it, a new view during a
+      limit shows "not available"). About 18 MB of disk per day, kept 60 days (`STORE_RETENTION_DAYS`,
+      about 1 GB). Leave `OONI_S3_ENABLED` off (400 MB of raw files a day).
 - [ ] **`RIPE_ATLAS_API_KEY`** and `ACTIVE_MEASUREMENTS_ENABLED=true` — the independent check of the
       six main services from RIPE Atlas probes in Iran. Needs enough RIPE Atlas credits (see 4).
 - [ ] `GLOBALPING_API_TOKEN` — optional second independent check.

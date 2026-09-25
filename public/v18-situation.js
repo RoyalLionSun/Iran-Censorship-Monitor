@@ -1245,6 +1245,10 @@ function renderHero(interpretation) {
   const period = selection.since && selection.until ? `${formatDay(selection.since)} – ${formatDay(selection.until)}` : '';
   const latest = summary.latestObservation ? t('board.latest', { date: formatDay(summary.latestObservation) }) : '';
   const stale = interpretation.services?.stale?.since ?? null;
+  const stalePeriod = interpretation.services?.stale?.period ?? null;
+  const staleText = stale ? (stalePeriod
+    ? t('board.stale.period', { from: formatDay(stalePeriod.since), to: formatDay(stalePeriod.until), date: formatDateTime(stale) })
+    : t('board.stale.since', { date: formatDateTime(stale) })) : '';
   shareSource = interpretation;
   updateFilterSummary();
   hero.dataset.headline = summary.headline?.state ?? summary.state;
@@ -1254,7 +1258,7 @@ function renderHero(interpretation) {
     <header class="situation-top">
       <span class="section-label">${escapeHtml(stale ? t('board.kicker.stale') : t('board.kicker'))}</span>
       <h1 id="situation-headline" data-full="${escapeHtml(headlineText(headlineSummary, interpretation.services))}">${escapeHtml(headlineText(headlineSummary, interpretation.services, { compact: true }))}</h1>
-      <p class="situation-scope"><span class="visually-hidden">${escapeHtml(networkTitle(interpretation))}${separator()}</span>${period ? `<bdi>${escapeHtml(period)}</bdi>` : ''}${latest ? `${separator()}<bdi>${escapeHtml(latest)}</bdi>` : ''}${stale ? `${separator()}<bdi class="scope-stale">${escapeHtml(t('board.stale.since', { date: formatDateTime(stale) }))}</bdi>` : ''}</p>
+      <p class="situation-scope"><span class="visually-hidden">${escapeHtml(networkTitle(interpretation))}${separator()}</span>${period ? `<bdi>${escapeHtml(period)}</bdi>` : ''}${latest ? `${separator()}<bdi>${escapeHtml(latest)}</bdi>` : ''}${stale ? `${separator()}<bdi class="scope-stale">${escapeHtml(staleText)}</bdi>` : ''}</p>
       <p class="situation-lede">${escapeHtml(ledeText(interpretation))}</p>
       ${shareBar()}
     </header>

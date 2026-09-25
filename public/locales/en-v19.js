@@ -450,6 +450,7 @@ export default Object.freeze({
   'meaning.networks.reachable': 'In {reachable} of them it still worked in the tests: the picture differs between networks.',
   'board.shutdown.missingAccess': 'Cannot be confirmed here: the Internet Society Pulse access is not configured',
   'board.kicker.stale': 'LAST KNOWN SITUATION',
+  'board.stale.period': 'OONI does not answer right now; shown are the latest data for this network, {from} – {to} (loaded {date} UTC)',
   'board.stale.since': 'source unavailable, last successful data {date} UTC',
   'board.services.staleNote': 'Last known state: the OONI source is currently unavailable, so these results are not current.',
   'board.shutdown.context': 'Internet Society Pulse lists a national shutdown for {from} to {to} ({verification})',

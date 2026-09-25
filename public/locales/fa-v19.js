@@ -450,6 +450,7 @@ export default Object.freeze({
   'meaning.networks.reachable': 'در {reachable} شبکه از آن‌ها هنوز در آزمون‌ها کار می‌کرد؛ وضعیت در همهٔ شبکه‌ها یکسان نیست.',
   'board.shutdown.missingAccess': 'در اینجا قابل تأیید نیست: دسترسی Internet Society Pulse پیکربندی نشده است',
   'board.kicker.stale': 'آخرین وضعیت شناخته‌شده',
+  'board.stale.period': 'OONI در حال حاضر پاسخ نمی‌دهد؛ آخرین داده‌های این شبکه نمایش داده می‌شود، {from} تا {to} (بارگذاری {date} به وقت UTC)',
   'board.stale.since': 'منبع در دسترس نیست، آخرین داده موفق {date} به وقت UTC',
   'board.services.staleNote': 'آخرین وضعیت شناخته‌شده: منبع OONI اکنون در دسترس نیست، بنابراین این نتایج به‌روز نیستند.',
   'board.shutdown.context': 'سازمان Internet Society Pulse یک قطعی ملی {verification} را برای {from} تا {to} ثبت کرده است',

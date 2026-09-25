@@ -190,8 +190,12 @@ async function safeSource(name, work, key = null) {
   try {
     return lastGoodSources.remember(key, await work());
   } catch (error) {
-    // A failing source falls back to its last successful answer, marked as history.
-    return lastGoodSources.stale(key, error) ?? errorPayload(error, name);
+    // A failing source falls back to its last successful answer, marked as history. For OONI,
+    // whose answers the statement rests on, the nearest period of the same network stands in when
+    // this exact one was never loaded; the page names that period.
+    return lastGoodSources.stale(key, error)
+      ?? (/^OONI/.test(name) ? lastGoodSources.staleNearest(key, error) : null)
+      ?? errorPayload(error, name);
   } finally {
     const timings = sourceTimings.getStore();
     if (timings) timings.set(name, Math.max(timings.get(name) ?? 0, performance.now() - started));
@@ -893,7 +897,10 @@ server.listen(PORT, HOST, () => {
     if (plan.globalping.enabled) paths.globalping = activeRun('globalping', () => globalpingPath({ http: activeHttp, token: process.env.GLOBALPING_API_TOKEN?.trim() ?? '' }));
     const collect = async () => {
       const result = await runCollectors(store, paths);
-      store.prune(new Date(Date.now() - 400 * 86_400_000).toISOString().slice(0, 10));
+      // About 18 MB of store per day of Iranian OONI measurements: 60 days keep it near 1 GB.
+      // Older periods are answered by OONI directly, as without a store.
+      const keepDays = Math.max(7, Number(process.env.STORE_RETENTION_DAYS) || 60);
+      store.prune(new Date(Date.now() - keepDays * 86_400_000).toISOString().slice(0, 10));
       console.log('collector', JSON.stringify(result));
     };
     setTimeout(collect, 5_000).unref();

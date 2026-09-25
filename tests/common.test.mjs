@@ -130,3 +130,20 @@ test('the cache of upstream answers stays bounded on a long-running server', asy
   server.close();
   assert.ok(fetchCacheSize() <= FETCH_CACHE_LIMIT, `cache holds ${fetchCacheSize()} entries, limit ${FETCH_CACHE_LIMIT}`);
 });
+
+test('stored answers: quotas per source, and the nearest period for the same network', async () => {
+  const { createLastGoodStore } = await import('../lib/common.mjs');
+  const store = createLastGoodStore({ limit: 800 });
+  const answer = { ok: true, status: 'observed', fetchedAt: '2026-09-25T10:00:00Z' };
+  // IODA keeps only ten periods; OONI answers are not pushed out by it.
+  store.remember('OONI domains|AS58224|2026-09-17|2026-09-23|web_connectivity|', answer);
+  for (let day = 1; day <= 15; day += 1) store.remember(`IODA|ALL|2026-08-${String(day).padStart(2, '0')}|2026-08-${String(day + 6).padStart(2, '0')}|web_connectivity|`, answer);
+  assert.equal(store.size(), 11);
+  assert.ok(store.stale('OONI domains|AS58224|2026-09-17|2026-09-23|web_connectivity|', 'x'));
+  // The exact period is missing: the nearest one of the same network stands in, marked.
+  const nearest = store.staleNearest('OONI domains|AS58224|2026-09-18|2026-09-24|web_connectivity|', 'rate limit');
+  assert.deepEqual(nearest.stalePeriod, { since: '2026-09-17', until: '2026-09-23' });
+  assert.equal(nearest.status, 'stale');
+  assert.equal(store.staleNearest('OONI domains|AS44244|2026-09-18|2026-09-24|web_connectivity|', 'x'), null, 'never another network');
+  assert.equal(store.staleNearest('OONI domains|AS58224|2026-12-18|2026-12-24|web_connectivity|', 'x'), null, 'never months away');
+});
