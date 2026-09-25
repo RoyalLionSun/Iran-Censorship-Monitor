@@ -20,4 +20,5 @@ Censored Planet, M-Lab, Tor Metrics, PeeringDB, IHR, CAIDA AS Rank.
 
 **Not covered**: the Lion and Sun logo, the preview image (`public/brand/`) and the name
 "@RoyalLionSun" are not licensed for reuse beyond linking to this project. The font Pinyon Script
-is under the SIL Open Font License (`public/fonts/OFL-PinyonScript.txt`).
+is under the SIL Open Font License (`public/fonts/OFL-PinyonScript.txt`), and so is Vazirmatn, used for
+Persian text (`public/fonts/OFL-Vazirmatn.txt`); both are shipped as subsets of the original fonts.

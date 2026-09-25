@@ -1,57 +1,63 @@
+/* Vazirmatn (OFL, fonts/OFL-Vazirmatn.txt) for Persian letters only: fuller and larger than the
+   Persian glyphs of Segoe UI at small sizes. The unicode-range means English pages never load it. */
+@font-face { font-family: "Vazirmatn"; font-weight: 100 500; font-display: swap; src: url("/fonts/vazirmatn-arabic-regular.woff2") format("woff2");
+  unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C-200F, U+2066-2069; }
+@font-face { font-family: "Vazirmatn"; font-weight: 600 900; font-display: swap; src: url("/fonts/vazirmatn-arabic-bold.woff2") format("woff2");
+  unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C-200F, U+2066-2069; }
 :root {
-  --fa-sans: "Segoe UI Variable Text", "Segoe UI", "Noto Sans Arabic", Tahoma, "Noto Naskh Arabic", Arial, sans-serif;
+  --fa-sans: "Vazirmatn", "Segoe UI Variable Text", "Segoe UI", "Noto Sans Arabic", Tahoma, "Noto Naskh Arabic", Arial, sans-serif;
 }
 
 body { font-size: 16px; line-height: 1.62; }
 .brand strong { font-size: 16px; }
-.brand small, .topbar-meta { font-size: 13px; }
-.scope-chip { font-size: 13px; }
-.button { font-size: 14px; }
-.filterbar label > span, .vpn-form label > span { font-size: 13px; }
-select, input[type="date"], input[type="text"], input[type="number"] { font-size: 15px; }
-.presets button { font-size: 13px; }
+.brand small, .topbar-meta { font-size: 14.5px; }
+.scope-chip { font-size: 14.5px; }
+.button { font-size: 15px; }
+.filterbar label > span, .vpn-form label > span { font-size: 14.5px; }
+select, input[type="date"], input[type="text"], input[type="number"] { font-size: 16px; }
+.presets button { font-size: 14.5px; }
 .assessment-main strong { font-size: 16px; }
-.assessment-main small, .assessment-meta { font-size: 14px; }
-.section-label { font-size: 12.5px; }
-.assessment-meta b { font-size: 14px; }
-.kpi-head { font-size: 12.5px; }
-.kpi-card > small { font-size: 13.5px; }
+.assessment-main small, .assessment-meta { font-size: 15px; }
+.section-label { font-size: 14px; }
+.assessment-meta b { font-size: 15px; }
+.kpi-head { font-size: 14px; }
+.kpi-card > small { font-size: 15px; }
 .panel-header h2 { font-size: 18px; }
-.panel-header > a, .panel-status a { font-size: 13px; }
-.panel-status { font-size: 13px; }
-.panel-note { font-size: 14px; line-height: 1.62; }
-.micro-state { font-size: 12px; }
-.empty-chart, .empty-state { font-size: 13.5px; }
-.chart-legend { font-size: 12px; }
-.method-chip { font-size: 12.5px; }
-.method-chip b { font-size: 12px; }
-.signal-item strong { font-size: 14px; }
-.signal-item-head span { font-size: 12px; }
-.signal-item p { font-size: 13.5px; line-height: 1.58; }
-.signal-metric small { font-size: 12px; }
-.mini-stat span { font-size: 12px; }
-.mini-stat b { font-size: 15px; }
-table { font-size: 14px; }
-th { font-size: 12px; }
+.panel-header > a, .panel-status a { font-size: 14.5px; }
+.panel-status { font-size: 14.5px; }
+.panel-note { font-size: 15px; line-height: 1.62; }
+.micro-state { font-size: 13.5px; }
+.empty-chart, .empty-state { font-size: 15px; }
+.chart-legend { font-size: 13.5px; }
+.method-chip { font-size: 14px; }
+.method-chip b { font-size: 13.5px; }
+.signal-item strong { font-size: 15px; }
+.signal-item-head span { font-size: 13.5px; }
+.signal-item p { font-size: 15px; line-height: 1.58; }
+.signal-metric small { font-size: 13.5px; }
+.mini-stat span { font-size: 13.5px; }
+.mini-stat b { font-size: 16px; }
+table { font-size: 15px; }
+th { font-size: 13.5px; }
 
 .situation-primary h1 { font-size: clamp(24px, 2.1vw, 34px); line-height: 1.15; }
 .situation-primary p { font-size: 16px; line-height: 1.65; }
-.situation-facts span { font-size: 12.5px; }
-.situation-facts b { font-size: 15px; }
-.situation-explanation > div > strong { font-size: 13px; }
-.situation-explanation li { font-size: 13.5px; }
-.situation-explanation p { font-size: 14.5px; line-height: 1.62; }
-.language-switch button { font-family: inherit; font-size: 14px; line-height: 1.2; }
+.situation-facts span { font-size: 14px; }
+.situation-facts b { font-size: 16px; }
+.situation-explanation > div > strong { font-size: 14.5px; }
+.situation-explanation li { font-size: 15px; }
+.situation-explanation p { font-size: 15.5px; line-height: 1.62; }
+.language-switch button { font-family: inherit; font-size: 15px; line-height: 1.2; }
 /* Label and explanation are separate lines; inline they ran together ("What this meansA …"). */
 .plain-meaning { display: grid; gap: 3px; }
-.plain-meaning strong { font-size: 13px; }
+.plain-meaning strong { font-size: 14.5px; }
 /* Secondary cell notes sit under their value instead of running into it. */
 #asn-coverage-table td small { display: block; margin-top: 2px; color: var(--muted); }
-.plain-meaning span { font-size: 14.5px; line-height: 1.58; }
+.plain-meaning span { font-size: 15.5px; line-height: 1.58; }
 .situation-channels { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 11px; }
 .situation-channel { min-width: 220px; border: 1px solid var(--border); background: rgba(11,16,23,.32); border-radius: 7px; padding: 9px 11px; }
-.situation-channel span { display: block; color: var(--muted); font-size: 12.5px; font-weight: 700; }
-.situation-channel b { display: block; color: var(--text-soft); font-size: 14.5px; margin-top: 3px; }
+.situation-channel span { display: block; color: var(--muted); font-size: 14px; font-weight: 700; }
+.situation-channel b { display: block; color: var(--text-soft); font-size: 15.5px; margin-top: 3px; }
 .source-state[data-health="ok"] { color: var(--green); }
 .source-state[data-health="mixed"] { color: var(--text-soft); }
 .source-state[data-health="error"] { color: var(--red); }
@@ -90,7 +96,7 @@ html[lang="fa"] .situation-facts span,
 html[lang="fa"] .situation-explanation > div > strong,
 html[lang="fa"] .plain-meaning strong,
 html[lang="fa"] th {
-  font-size: 13.5px;
+  font-size: 15px;
   font-family: var(--fa-sans);
   letter-spacing: 0;
   text-transform: none;
@@ -102,12 +108,12 @@ html[lang="fa"] .situation-explanation p,
 html[lang="fa"] .plain-meaning span { line-height: 1.9; }
 html[lang="fa"] .panel-note,
 html[lang="fa"] .signal-item p,
-html[lang="fa"] .plain-meaning span { font-size: 15px; }
+html[lang="fa"] .plain-meaning span { font-size: 16px; }
 html[lang="fa"] .situation-primary p { font-size: 17px; }
-html[lang="fa"] .situation-explanation p { font-size: 15.5px; }
-html[lang="fa"] .situation-explanation li { font-size: 14.5px; }
-html[lang="fa"] .situation-channel span { font-size: 13.5px; }
-html[lang="fa"] .situation-channel b { font-size: 15.5px; }
+html[lang="fa"] .situation-explanation p { font-size: 16.5px; }
+html[lang="fa"] .situation-explanation li { font-size: 15.5px; }
+html[lang="fa"] .situation-channel span { font-size: 15px; }
+html[lang="fa"] .situation-channel b { font-size: 16.5px; }
 html[lang="fa"] .technical-direction,
 html[lang="fa"] .technical-ltr,
 html[lang="fa"] code,
@@ -120,7 +126,10 @@ html[lang="fa"] .kpi-card strong, html[lang="fa"] .technical-ltr { font-variant-
 /* Mixed English and Persian fragments take the direction of their own first letter. */
 html[dir="rtl"] .kpi-card > small, html[dir="rtl"] .signal-item p, html[dir="rtl"] .signal-item small { unicode-bidi: plaintext; }
 /* Source register: what each source did for the current view, and how the total splits up. */
-.source-register-summary { margin: 0 0 10px; color: var(--muted); font-size: 13px; line-height: 1.5; }
-.source-status { display: inline-block; margin: 4px 0 2px; padding: 1px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 650; color: #9fb2c8; background: rgba(131, 150, 174, .14); }
+.source-register-summary { margin: 0 0 10px; color: var(--muted); font-size: 14.5px; line-height: 1.5; }
+.source-status { display: inline-block; margin: 4px 0 2px; padding: 1px 8px; border-radius: 999px; font-size: 13px; font-weight: 650; color: #9fb2c8; background: rgba(131, 150, 174, .14); }
 .source-status[data-state="observed"], .source-status[data-state="healthy"], .source-status[data-state="no_data"] { color: #7fdcaa; background: rgba(85, 199, 138, .13); }
 .source-status[data-state="error"] { color: #f59a9a; background: rgba(239, 109, 109, .14); }
+/* Persian script looks smaller than Latin at the same pixel size: the content is set 6% larger
+   in Farsi (header and filters keep their size). */
+html[lang="fa"] #overview-view, html[lang="fa"] #technical-view { zoom: 1.06; }
