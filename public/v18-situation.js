@@ -486,7 +486,7 @@ function renderAccess(services, selection) {
       ${tabs}
       <p class="access-legend">${escapeHtml(t('board.access.legend'))}</p>
       <div class="access-scroll"><table id="access-table">
-        <thead><tr><th scope="col">${escapeHtml(t('board.access.network'))}</th><th scope="col">${escapeHtml(t('board.access.access'))}</th>${columns.map((column) => `<th scope="col">${escapeHtml(column.name)}</th>`).join('')}</tr></thead>
+        <thead><tr><th scope="col">${escapeHtml(t('board.access.network'))}</th><th scope="col">${escapeHtml(t('board.access.access'))}</th>${columns.map((column) => `<th scope="col" class="access-service-col">${escapeHtml(column.name)}</th>`).join('')}</tr></thead>
         <tbody>${rows}</tbody>
       </table></div>
       ${access.length > VISIBLE_ROWS ? `<button type="button" class="button access-more" data-access-more>${escapeHtml(t('board.access.showAll', { count: formatNumber(access.length) }))}</button>` : ''}
