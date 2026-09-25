@@ -687,9 +687,11 @@ function renderWorkarounds(services) {
   };
   return `
     <section class="workarounds-board" aria-labelledby="workarounds-title">
-      <header><h2 id="workarounds-title">${escapeHtml(t('board.workarounds.title'))}</h2><p>${escapeHtml(t('board.workarounds.note'))}</p></header>
-      <ul>${rows.map(row).join('')}${dnsTile('byName')}${dnsTile('byAddress')}</ul>
+      <header><h2 id="workarounds-title">${escapeHtml(t('board.workarounds.title'))}</h2></header>
       ${renderUsageCards(services)}
+      <h3 class="usage-heading">${escapeHtml(t('board.workarounds.tested'))}</h3>
+      <p class="usage-note">${escapeHtml(t('board.workarounds.note'))}</p>
+      <ul>${rows.map(row).join('')}${dnsTile('byName')}${dnsTile('byAddress')}</ul>
       <p class="workarounds-unmeasured">${escapeHtml(t('board.workarounds.unmeasured'))}</p>
     </section>`;
 }
