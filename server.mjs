@@ -353,7 +353,9 @@ async function handleApi(req, res, url) {
     const serviceNetworksTask = input.testName !== 'web_connectivity' ? Promise.resolve(null) : (async () => {
       const domains = [...SERVICE_BRANDS, ...MORE_SERVICE_GROUPS.flatMap((group) => group.services)].flatMap((brand) => brand.domains);
       const raw = await safeSource('OONI service networks', () => viaStore({ ...input, asn: '', target: '' }, (iran) => storeServiceNetworks(store, { ...input, asn: '', target: '' }, domains, iran), () => getOoniServiceNetworks({ ...input, asn: '', target: '' }, domains)), sourceKey('OONI service networks', { ...input, asn: '', target: '' }));
-      if (!raw?.ok || raw.status === 'stale') return { ok: false };
+      // Without an answer now, the last answer for the same period stands in, dated, so the
+      // table does not vanish; with none at all, the reader is told why it is missing.
+      if (!raw?.ok || !Array.isArray(raw.rows)) return { ok: false, error: raw?.error ?? null };
       const breakdown = summarizeServiceNetworks(raw.rows);
       const access = summarizeNetworkAccess(raw.rows);
       const accessByGroup = summarizeNetworkAccessByGroup(raw.rows);
@@ -375,7 +377,8 @@ async function handleApi(req, res, url) {
       const publicUnmeasured = unmeasured.filter((asn) => ['government_admin', 'institutional'].includes(directory?.entries?.[asn]?.kind))
         .map((asn) => ({ asn, name: directory.entries[asn].name }));
       return {
-        ok: true, breakdown, access, accessByGroup, names, types: kinds, excludedMeasurements: raw.excludedMeasurements, sourceUrl: raw.sourceUrl,
+        ok: true, ...(raw.status === 'stale' ? { status: 'stale', staleSince: raw.staleSince } : {}),
+        breakdown, access, accessByGroup, names, types: kinds, excludedMeasurements: raw.excludedMeasurements, sourceUrl: raw.sourceUrl,
         coverage: inventory ? { registered: inventory.size, measured: shown.length, unmeasuredKinds, publicUnmeasured, directory: Boolean(directory) } : null,
       };
     })();

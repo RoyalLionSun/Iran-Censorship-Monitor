@@ -459,7 +459,15 @@ function renderAccess(services, selection) {
   // An older saved answer has no categories yet: it shows the six on their own.
   const groupId = byGroup?.[accessGroup]?.length ? accessGroup : byGroup?.social?.length ? 'social' : 'main';
   const access = (groupId === 'main' ? breakdown?.access : byGroup?.[groupId]) ?? [];
-  if (!access.length) return '';
+  if (!access.length) {
+    // The section says why it is empty instead of vanishing.
+    if (!services?.networkBreakdownMissing) return '';
+    return `
+    <section class="access-board" aria-labelledby="access-title">
+      <header><h2 id="access-title">${escapeHtml(t('board.access.title'))}</h2></header>
+      <p class="access-missing">${escapeHtml(t(`board.access.missing.${services.networkBreakdownMissing}`))}</p>
+    </section>`;
+  }
   const { names, types = {}, coverage } = breakdown;
   const columns = accessColumns(groupId, services);
   const brands = columns.map((column) => column.id);
@@ -488,6 +496,7 @@ function renderAccess(services, selection) {
         <h2 id="access-title">${escapeHtml(t('board.access.title'))}</h2>
         <p>${escapeHtml(t('board.access.summary', { measured: formatNumber(access.length), full: formatNumber(count('full')), partial: formatNumber(count('partial')), blocked: formatNumber(count('blocked')) }))}</p>
       </header>
+      ${breakdown.staleSince ? `<p class="access-missing">${escapeHtml(t('board.access.stale', { date: formatDateTime(breakdown.staleSince) }))}</p>` : ''}
       ${tabs}
       <p class="access-legend">${escapeHtml(t('board.access.legend'))}</p>
       <div class="access-scroll"><table id="access-table">
@@ -1122,7 +1131,7 @@ function jumpBar(interpretation) {
   // In order of what readers look for first, not in page order.
   const links = [
     services?.changes ? ['changes-title', 'board.jump.changes'] : null,
-    services?.networkBreakdown?.access?.length ? ['access-title', 'board.jump.access'] : null,
+    services?.networkBreakdown?.access?.length || services?.networkBreakdownMissing ? ['access-title', 'board.jump.access'] : null,
     ['privileged-title', 'board.jump.privileged'],
     ['control-title', 'board.jump.control'],
     services?.workarounds ? ['workarounds-title', 'board.jump.workarounds'] : null,

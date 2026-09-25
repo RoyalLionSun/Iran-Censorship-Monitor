@@ -405,3 +405,4 @@ html[dir="rtl"] .history-strip { transform: scaleX(-1); }
 /* Lines under the ways-around tiles: download sites, Tor use, and what no public source measures. */
 .workarounds-line { margin: 6px 0 0; color: var(--text-soft); font-size: 13px; line-height: 1.5; }
 .workarounds-unmeasured { margin: 10px 0 0; padding: 8px 12px; border-inline-start: 3px solid var(--border-strong); background: rgba(255,255,255,.02); color: var(--muted); font-size: 12.5px; line-height: 1.55; }
+.access-missing { margin: 6px 0 8px; padding: 8px 12px; border-inline-start: 3px solid #e2bd59; background: rgba(226, 189, 89, .08); color: var(--text-soft); font-size: 13px; line-height: 1.5; }
