@@ -117,3 +117,16 @@ test('JSON answers are compressed when the browser offers it and stay readable',
   assert.equal(plain.headers['content-encoding'], undefined);
   assert.deepEqual(JSON.parse(plain.body), payload);
 });
+
+test('the cache of upstream answers stays bounded on a long-running server', async () => {
+  const { createServer } = await import('node:http');
+  const server = createServer((req, res) => { res.writeHead(200, { 'content-type': 'application/json' }); res.end('{"ok":true}'); });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const { port } = server.address();
+  const { fetchJson, fetchCacheSize, FETCH_CACHE_LIMIT } = await import('../lib/common.mjs');
+  const before = fetchCacheSize();
+  const extra = FETCH_CACHE_LIMIT - before + 25;
+  for (let index = 0; index < extra; index += 1) await fetchJson(`http://127.0.0.1:${port}/item?${index}`, { cacheTtlMs: 60_000 });
+  server.close();
+  assert.ok(fetchCacheSize() <= FETCH_CACHE_LIMIT, `cache holds ${fetchCacheSize()} entries, limit ${FETCH_CACHE_LIMIT}`);
+});
