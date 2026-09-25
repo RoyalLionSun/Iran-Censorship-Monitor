@@ -1,4 +1,5 @@
 import http from 'node:http';
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { mkdir, readFile, rename, stat, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
@@ -168,12 +169,31 @@ async function circumventionFor(scope) {
   return result;
 }
 
+// How long each source took for the request being answered, for the Server-Timing header: the
+// browser's developer tools then show which upstream source makes a new view slow.
+const sourceTimings = new AsyncLocalStorage();
+function serverTimingHeader(timings) {
+  if (!timings?.size) return {};
+  const entries = [...timings].sort((a, b) => b[1] - a[1]).slice(0, 14)
+    .map(([name, ms]) => `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')};dur=${Math.round(ms)};desc="${name.replace(/"/g, '')}"`);
+  return { 'server-timing': entries.join(', ') };
+}
+
+function withDeadline(promise, ms, fallback) {
+  let timer;
+  return Promise.race([promise, new Promise((resolve) => { timer = setTimeout(() => resolve(fallback()), ms); })]).finally(() => clearTimeout(timer));
+}
+
 async function safeSource(name, work, key = null) {
+  const started = performance.now();
   try {
     return lastGoodSources.remember(key, await work());
   } catch (error) {
     // A failing source falls back to its last successful answer, marked as history.
     return lastGoodSources.stale(key, error) ?? errorPayload(error, name);
+  } finally {
+    const timings = sourceTimings.getStore();
+    if (timings) timings.set(name, Math.max(timings.get(name) ?? 0, performance.now() - started));
   }
 }
 
@@ -295,6 +315,9 @@ async function handleApi(req, res, url) {
     }
     let settleShared;
     inflightOverviews.set(cacheKey, new Promise((resolve) => { settleShared = resolve; }));
+    const timings = new Map();
+    sourceTimings.enterWith(timings);
+    const overviewStarted = performance.now();
     try {
     // Use of Cloudflare's WARP VPN among users in Iran (APNIC), for every scope: country context.
     const vpnUsePromise = getApnicVpnShare({ until: input.until }).catch((error) => ({ ok: false, source: 'APNIC Labs', error: error?.message ?? String(error) }));
@@ -411,7 +434,10 @@ async function handleApi(req, res, url) {
       ? circumventionFor({ ...input, asn: '' })
       : Promise.resolve(circumvention);
     // Encrypted name lookup from inside Iran (a small sample of OONI dnscheck runs, all of Iran).
-    const encryptedDnsTask = safeSource('OONI encrypted DNS', () => getEncryptedDns({ since: input.since, until: input.until }), `OONI encrypted DNS|${input.since}|${input.until}`);
+    // It never holds up the answer: after three seconds the last sample for the period stands in
+    // (or none), and the fresh one finishes in the background for the next visit.
+    const encryptedDnsKey = `OONI encrypted DNS|${input.since}|${input.until}`;
+    const encryptedDnsTask = withDeadline(safeSource('OONI encrypted DNS', () => getEncryptedDns({ since: input.since, until: input.until }), encryptedDnsKey), 3_000, () => lastGoodSources.stale(encryptedDnsKey, 'still loading') ?? { ok: true, source: 'OONI dnscheck', status: 'stale', pending: true });
     const [countryOoniDomains, ooniSamples, ooniNetworks, [outageTraffic, networkOutageTraffic], serviceNetworks, previousOoniDomains, outageHistory, countryCircumvention, outageAnatomy, encryptedDns] = await Promise.all([
       countryTask, samplesTask, networksTask, trafficTask, serviceNetworksTask, previousTask, historyTask, countryCircumventionTask, anatomyTask, encryptedDnsTask,
     ]);
@@ -433,14 +459,16 @@ async function handleApi(req, res, url) {
       paths: Object.fromEntries(Object.entries(collectorPlan()).map(([name, planned]) => [name, { ...planned, ...(health[name] ?? {}) }])),
       coverage: Object.fromEntries(['ooni-api', 'ooni-s3'].map((path) => [path, { since: store.getMeta(`${path}:coveredSince`), until: store.getMeta(`${path}:coveredUntil`) }])) };
     const payload = { ok: true, input, asnProfile, fetchedAt: new Date().toISOString(), dataPaths, assessment, ooni, ripe, radar, radarQuality, ioda, tor, mlab, apnic, vpnUse, ripestat, globalping, censoredPlanet, peeringdb, ihr, asrank, rpki, pulse };
-    if (isCleanOverview([ooni, ripe, radar, radarQuality, ioda, tor, mlab, apnic, ripestat, censoredPlanet, pulse, ooniDomains, countryOoniDomains, circumvention, outageTraffic, networkOutageTraffic, outageAnatomy, ooniNetworks, serviceNetworks, previousOoniDomains, ...ooniSamples])) {
+    // An answer given before the encrypted-DNS sample was ready is not kept as complete.
+    if (isCleanOverview([ooni, ripe, radar, radarQuality, ioda, tor, mlab, apnic, ripestat, censoredPlanet, pulse, ooniDomains, countryOoniDomains, circumvention, outageTraffic, networkOutageTraffic, outageAnatomy, encryptedDns, ooniNetworks, serviceNetworks, previousOoniDomains, ...ooniSamples])) {
       rememberHistoricalOverview(cacheKey, payload, settled ? HISTORICAL_OVERVIEW_TTL_MS : CURRENT_OVERVIEW_TTL_MS);
     } else if (!settled) {
       // A current answer with a missing part is kept for a minute only, so the part is retried soon.
       rememberHistoricalOverview(cacheKey, payload, 60 * 1000);
     }
     settleShared(payload);
-    jsonResponse(res, 200, payload);
+    timings.set('total', performance.now() - overviewStarted);
+    jsonResponse(res, 200, payload, serverTimingHeader(timings));
     return true;
     } finally {
       settleShared(null);
