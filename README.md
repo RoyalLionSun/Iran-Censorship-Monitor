@@ -6,6 +6,8 @@ Iran-focused censorship-intelligence dashboard for technical measurements, routi
 
 **Production branch:** `main`
 
+> **Before going online:** work through [GO_LIVE.md](GO_LIVE.md) — public address (`PUBLIC_URL`), tokens, data backup, reachability from Iran and the open items with Citizen Lab and RIPE.
+
 The application does **not** fabricate monitoring values or convert missing access into positive/negative observations. `no_data`, `partial`, `token_required`, rate-limited and hard-error states remain explicit. Contextual reports never become independent technical sensor votes merely because they cite or repeat underlying measurements.
 
 ## Evidence architecture
@@ -158,9 +160,10 @@ v1.8.0 contains **301 deterministic tests** and retains the production build, re
 
 ## Going online
 
-On the real server, set `PUBLIC_URL` in `.env` to the dashboard's public address (for example
-`PUBLIC_URL=https://example.org`). Shared links, link previews, the feed and the monthly reports
-then use it; on a test machine they use the local address instead.
+See the checklist [GO_LIVE.md](GO_LIVE.md). Most important: on the real server, set `PUBLIC_URL` in
+`.env` to the dashboard's public address (for example `PUBLIC_URL=https://example.org`). Shared
+links, link previews, the feed and the monthly reports then use it; on a test machine they use the
+local address instead.
 
 ## Optional passive routing collectors
 

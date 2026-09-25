@@ -120,6 +120,8 @@ Package version: **`1.8.0` intentionally unchanged**
 
 ## Next steps (agreed, not started)
 
+- **Going online:** everything to do on the real server is collected in [GO_LIVE.md](GO_LIVE.md) (`PUBLIC_URL`, tokens, backup of `var/`, reachability from Iran, Citizen Lab PR #2277 typo, RIPE credits, real-phone check).
+
 - **The dashboard itself must be reachable from Iran** before it is published: the Farsi version is for people there. Plan hosting so it is not behind a provider Iran blocks (e.g. not solely behind Cloudflare), offer mirrors and an .onion address for Tor users, and once online, check our own address from inside Iran (OONI Run link with the dashboard URL, or a Citizen Lab list entry).
 
 - Test the "More services" chips live and correct what does not fit.
