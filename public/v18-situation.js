@@ -590,19 +590,66 @@ function renderWorkarounds(services) {
         count: formatNumber(item.status === 'fails' ? item.failed : item.ok), total: formatNumber(item.usable),
       })
       : t('board.workarounds.none');
-    const scope = item.scope === 'country' ? ` · ${t('board.workarounds.country')}` : '';
+    const scope = item.scope === 'country' ? `${partSep()}${t('board.workarounds.country')}` : '';
     return `<li class="workaround" data-status="${escapeHtml(WORKAROUND_STATUS_CLASS[item.status])}">
       <b class="workaround-name">${escapeHtml(t(`board.workarounds.tool.${item.id}`))}</b>
       <span class="workaround-verdict">${escapeHtml(t(`board.workarounds.status.${item.status}`))}</span>
       <small class="workaround-about">${escapeHtml(t(`board.workarounds.about.${item.id}`))}</small>
       <small class="workaround-numbers">${escapeHtml(numbers + scope)}</small></li>`;
   };
+  // Encrypted DNS: two tiles like the tools, from a sample of single OONI measurements.
+  const dns = services.encryptedDns;
+  const dnsTile = (group) => {
+    const item = dns?.[group];
+    if (!item?.tested) return '';
+    const numbers = t(item.status === 'fails' ? 'board.workarounds.failed' : 'board.workarounds.worked', {
+      count: formatNumber(item.status === 'fails' ? item.failed : item.ok), total: formatNumber(item.tested),
+    });
+    const reason = item.status !== 'works' && item.reason ? t(`board.workarounds.dnsReason.${DNS_REASONS.has(item.reason) ? item.reason : 'other'}`) : '';
+    return `<li class="workaround" data-status="${escapeHtml(WORKAROUND_STATUS_CLASS[item.status])}">
+      <b class="workaround-name">${escapeHtml(t(`board.workarounds.tool.dns-${group}`))}</b>
+      <span class="workaround-verdict">${escapeHtml(t(`board.workarounds.status.${item.status}`))}</span>
+      <small class="workaround-about">${escapeHtml(t(`board.workarounds.about.dns-${group}`))}</small>
+      <small class="workaround-numbers">${escapeHtml([numbers, t('board.workarounds.sample'), reason].filter(Boolean).join(partSep()))}</small></li>`;
+  };
   return `
     <section class="workarounds-board" aria-labelledby="workarounds-title">
       <header><h2 id="workarounds-title">${escapeHtml(t('board.workarounds.title'))}</h2><p>${escapeHtml(t('board.workarounds.note'))}</p></header>
-      <ul>${rows.map(row).join('')}</ul>
+      <ul>${rows.map(row).join('')}${dnsTile('byName')}${dnsTile('byAddress')}</ul>
+      ${downloadSitesLine(services)}
+      ${torUseLine(services.torUse)}
       ${vpnUseLine(services.vpnUse)}
+      <p class="workarounds-unmeasured">${escapeHtml(t('board.workarounds.unmeasured'))}</p>
     </section>`;
+}
+
+// The middle dot looks like a Persian zero next to Persian digits; Farsi separates with "؛".
+function partSep() {
+  return getLanguage() === 'fa' ? '؛ ' : ' · ';
+}
+
+const DNS_REASONS = new Set(['dns_bogon_error', 'generic_timeout_error', 'connection_reset', 'host_unreachable', 'network_unreachable']);
+
+// Can people get the tools at all? The download sites are measured as websites by OONI.
+function downloadSitesLine(services) {
+  const group = services?.more?.find((entry) => entry.id === 'circumvention');
+  const tested = (group?.services ?? []).filter((service) => service.scope);
+  if (!tested.length) return '';
+  const blocked = tested.filter((service) => service.status === 'blocked');
+  const working = tested.filter((service) => service.status === 'reachable');
+  const parts = [t('board.workarounds.downloads', { blocked: formatNumber(blocked.length), tested: formatNumber(tested.length) })];
+  if (blocked.length) parts.push(t('board.workarounds.downloadsBlocked', { sites: listOf(blocked.map(moreServiceName)) }));
+  if (working.length) parts.push(t('board.workarounds.downloadsOpen', { sites: listOf(working.map(moreServiceName)) }));
+  return `<p class="workarounds-line">${escapeHtml(parts.join(partSep()))}</p>`;
+}
+
+// How many people in Iran use Tor, per day (Tor Metrics estimate): shows when a way breaks away.
+function torUseLine(use) {
+  if (!use || (!use.direct && !use.bridges)) return '';
+  return `<p class="workarounds-line">${escapeHtml(t('board.workarounds.torUse', {
+    direct: formatNumber(Math.round((use.direct ?? 0) / 1000) * 1000), bridges: formatNumber(Math.round((use.bridges ?? 0) / 1000) * 1000),
+    date: use.date ? formatDay(use.date) : '—',
+  }))}</p>`;
 }
 
 function formatMonth(month) {

@@ -402,3 +402,6 @@ html[dir="rtl"] .history-strip { transform: scaleX(-1); }
 .access-board thead th { font-family: inherit; font-size: 12.5px; font-weight: 700; letter-spacing: normal; text-transform: none; color: #c4d3e6; background: #172a44; vertical-align: bottom; }
 .access-board thead th.access-service-col { color: #e8f6f5; background: #1b3b52; border-top: 3px solid #52c9c4; text-align: center; white-space: nowrap; }
 .access-board tbody td:nth-child(n+3) { text-align: center; }
+/* Lines under the ways-around tiles: download sites, Tor use, and what no public source measures. */
+.workarounds-line { margin: 6px 0 0; color: var(--text-soft); font-size: 13px; line-height: 1.5; }
+.workarounds-unmeasured { margin: 10px 0 0; padding: 8px 12px; border-inline-start: 3px solid var(--border-strong); background: rgba(255,255,255,.02); color: var(--muted); font-size: 12.5px; line-height: 1.55; }

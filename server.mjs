@@ -35,6 +35,7 @@ import { getGdeltIranIntelligence } from './lib/osint.mjs';
 import { getMlabPerformance } from './lib/mlab.mjs';
 import { getAccessNowStopIncidents } from './lib/accessnow.mjs';
 import { getShutdownAnatomy } from './lib/anatomy.mjs';
+import { getEncryptedDns } from './lib/encrypted-dns.mjs';
 import { getApnicCountryComposition, getApnicIpv6, getApnicVpnShare } from './lib/apnic.mjs';
 import { getServiceHistory } from './lib/history.mjs';
 import { buildFeedEntry, postToTelegram, readEntries, renderAtom, upsertEntry } from './lib/feed.mjs';
@@ -393,8 +394,10 @@ async function handleApi(req, res, url) {
     const countryCircumventionTask = input.asn
       ? safeSource('OONI circumvention', () => viaStore({ ...input, asn: '' }, (iran) => storeCircumvention(store, { ...input, asn: '' }, iran), () => getCircumventionSignals({ ...input, asn: '' })), sourceKey('OONI circumvention', { ...input, asn: '' }))
       : Promise.resolve(circumvention);
-    const [countryOoniDomains, ooniSamples, ooniNetworks, [outageTraffic, networkOutageTraffic], serviceNetworks, previousOoniDomains, outageHistory, countryCircumvention, outageAnatomy] = await Promise.all([
-      countryTask, samplesTask, networksTask, trafficTask, serviceNetworksTask, previousTask, historyTask, countryCircumventionTask, anatomyTask,
+    // Encrypted name lookup from inside Iran (a small sample of OONI dnscheck runs, all of Iran).
+    const encryptedDnsTask = safeSource('OONI encrypted DNS', () => getEncryptedDns({ since: input.since, until: input.until }), `OONI encrypted DNS|${input.since}|${input.until}`);
+    const [countryOoniDomains, ooniSamples, ooniNetworks, [outageTraffic, networkOutageTraffic], serviceNetworks, previousOoniDomains, outageHistory, countryCircumvention, outageAnatomy, encryptedDns] = await Promise.all([
+      countryTask, samplesTask, networksTask, trafficTask, serviceNetworksTask, previousTask, historyTask, countryCircumventionTask, anatomyTask, encryptedDnsTask,
     ]);
     // A nationwide outage in either period means tests came only from networks that kept access;
     // comparing such periods would show changes that are none.
@@ -406,7 +409,7 @@ async function handleApi(req, res, url) {
     // those paths were switched on. Probes were limited to Iranian networks when measuring.
     const activeChecks = store.activeChecks({ hosts: ACTIVE_HOSTS, since: input.since, until: input.until, asn: input.asn });
     const vpnUse = await vpnUsePromise;
-    const assessment = buildAssessment({ activeChecks, vpnUse, countryCircumvention, ooni, ripe, radar, radarQuality, ioda, ripestat, censoredPlanet, tor, mlab, apnic, globalping, peeringdb, ihr, asrank, rpki, pulse, ooniDomains, countryOoniDomains, circumvention, ooniSamples, ooniNetworks, outageTraffic, networkOutageTraffic, outageAnatomy, serviceNetworks, previousOoniDomains: previousOoniDomains ? { ...previousOoniDomains, period: previous, outageOverlap: comparisonBlockedByOutage } : null, selection: input, scopeLabel });
+    const assessment = buildAssessment({ activeChecks, vpnUse, countryCircumvention, ooni, ripe, radar, radarQuality, ioda, ripestat, censoredPlanet, tor, mlab, apnic, globalping, peeringdb, ihr, asrank, rpki, pulse, ooniDomains, countryOoniDomains, circumvention, ooniSamples, ooniNetworks, outageTraffic, networkOutageTraffic, outageAnatomy, encryptedDns, serviceNetworks, previousOoniDomains: previousOoniDomains ? { ...previousOoniDomains, period: previous, outageOverlap: comparisonBlockedByOutage } : null, selection: input, scopeLabel });
     const asnProfile = input.asn ? asns.find((item) => item.asn === input.asn) || null : null;
     // Which route answered the access evidence, and how current each collector path is.
     const health = store.health();
