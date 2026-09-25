@@ -504,14 +504,14 @@ html[dir="rtl"] input[type="date"] { text-align: right; }
 @font-face { font-family: "Handle Script"; src: local("Edwardian Script ITC"), local("EdwardianScriptITC"), url("/fonts/pinyon-script-latin.woff2") format("woff2"); font-display: swap; }
 .topbar-title { color: #ffffff; }
 .topbar-handle {
-  justify-self: end; font-family: "Handle Script", cursive; font-size: 42px; line-height: 1; white-space: nowrap; padding: 2px 6px 6px;
+  justify-self: end; font-family: "Handle Script", cursive; font-size: 36px; line-height: 1; white-space: nowrap; padding: 2px 6px 6px;
   background: linear-gradient(180deg, #f9e098 0%, #f6c860 30%, #deac41 58%, #c58f3b 80%, #97722e 100%);
   -webkit-background-clip: text; background-clip: text; color: transparent;
   filter: drop-shadow(0 2px 5px rgba(0, 0, 0, .45));
 }
 @media (max-width: 760px) {
   .topbar { grid-template-columns: auto 1fr auto; }
-  .topbar-handle { font-size: 30px; }
+  .topbar-handle { font-size: 26px; }
 }
 @media (max-width: 480px) { .topbar-handle { display: none; } }
 /* The header looks the same in both languages: handle left, name in the middle, logo right. */

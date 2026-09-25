@@ -26,7 +26,7 @@
 .service-board header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin-bottom: 10px; }
 .service-board h2 { margin: 0; font-size: 13px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--text-soft); }
 .service-board header p { margin: 0; color: var(--muted); font-size: 12.5px; }
-.service-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+.service-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
 .service-tile { --tile: var(--status-unknown); min-width: 0; padding: 13px 14px 12px; border: 1px solid var(--border); border-top: 4px solid var(--tile); border-radius: 9px; background: rgba(11,16,23,.55); display: grid; gap: 4px; align-content: start; }
 .service-tile[data-status="blocked"] { --tile: var(--status-blocked); background: linear-gradient(180deg, rgba(255,92,122,.10), rgba(11,16,23,.55) 70%); }
 .service-tile[data-status="restricted"] { --tile: var(--status-restricted); background: linear-gradient(180deg, rgba(245,165,36,.09), rgba(11,16,23,.55) 70%); }
@@ -209,7 +209,7 @@ html[dir="rtl"] .topbar-actions { justify-content: flex-start; }
 
 @media (max-width: 1050px) {
   .status-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .service-tiles { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+  .service-tiles { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
   .interpretation-card dl { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .evidence-matrix { grid-template-columns: repeat(2,minmax(0,1fr)); }
 }
@@ -391,3 +391,7 @@ html[dir="rtl"] .history-strip { transform: scaleX(-1); }
 #current-unknowns .unknown-list li b { color: var(--text); font-size: 14.5px; }
 #current-unknowns .unknown-list li span { color: var(--text-soft); }
 #control-title, #anatomy-title, #workarounds-title { scroll-margin-top: 96px; }
+/* Every tile keeps its "blocked since" strip at the bottom, so the strips line up across a row. */
+.service-tile { display: flex; flex-direction: column; }
+.service-tile > ul { flex: 1; display: flex; flex-direction: column; }
+.service-tile .tile-history { margin-top: auto; }

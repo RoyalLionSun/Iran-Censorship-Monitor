@@ -930,10 +930,34 @@ function statusRow(interpretation) {
 // Sharing the current finding. On phones the system share sheet opens the installed apps
 // directly, which also works where t.me or x.com links are blocked; elsewhere direct links.
 function shareBar() {
-  const native = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
-  const buttons = native ? ['native', 'copy'] : ['telegram', 'whatsapp', 'x', 'copy'];
+  // The system share sheet only works dependably on phones; on computers it often opens nothing.
+  // Telegram, WhatsApp and X always have their own button; phones get the system sheet as well.
+  const native = typeof navigator !== 'undefined' && typeof navigator.share === 'function'
+    && typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+  const buttons = ['telegram', 'whatsapp', 'x', 'copy', ...(native ? ['native'] : [])];
   return `<div class="share-bar" role="group" aria-label="${escapeHtml(t('share.label'))}"><span>${escapeHtml(t('share.label'))}</span>${buttons
     .map((kind) => `<button type="button" class="share-button" data-share="${kind}">${escapeHtml(t(`share.${kind}`))}</button>`).join('')}</div>`;
+}
+
+// Copies the sentence and link; where the clipboard API is not allowed (plain http, older
+// browsers) a hidden text field does it. The button confirms either way, or says it failed.
+async function copyShare(button, value, labelKey) {
+  let copied = false;
+  try {
+    await navigator.clipboard.writeText(value);
+    copied = true;
+  } catch {
+    const field = document.createElement('textarea');
+    field.value = value;
+    field.setAttribute('readonly', '');
+    field.style.cssText = 'position:fixed;opacity:0;pointer-events:none';
+    document.body.appendChild(field);
+    field.select();
+    try { copied = document.execCommand('copy'); } catch { copied = false; }
+    field.remove();
+  }
+  button.textContent = t(copied ? 'share.copied' : 'share.copyFailed');
+  setTimeout(() => { button.textContent = t(labelKey); }, 2000);
 }
 
 function shareText() {
@@ -950,16 +974,15 @@ document.addEventListener('click', async (event) => {
   const open = (address) => window.open(address, '_blank', 'noopener,noreferrer');
   const kind = button.dataset.share;
   if (kind === 'native') {
-    try { await navigator.share({ title: 'Iran Censorship Monitor', text, url }); } catch { /* closed by the reader */ }
+    try { await navigator.share({ title: 'Iran Censorship Monitor', text, url }); } catch (error) {
+      // Closed by the reader is fine; any other failure falls back to copying the link.
+      if (error?.name !== 'AbortError') await copyShare(button, `${text} ${url}`, 'share.native');
+    }
   } else if (kind === 'telegram') open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`);
   else if (kind === 'whatsapp') open(`https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}`);
   else if (kind === 'x') open(`https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`);
   else if (kind === 'copy') {
-    try {
-      await navigator.clipboard.writeText(`${text} ${url}`);
-      button.textContent = t('share.copied');
-      setTimeout(() => { button.textContent = t('share.copy'); }, 2000);
-    } catch { /* clipboard not allowed here */ }
+    await copyShare(button, `${text} ${url}`, 'share.copy');
   }
 });
 
