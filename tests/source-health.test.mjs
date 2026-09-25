@@ -6,10 +6,10 @@ function completePayloads() {
   return Object.fromEntries(PUBLIC_SOURCE_CONTRACT.map(({ id }) => [id, { ok: true, status: 'observed' }]));
 }
 
-test('public source-health contract contains the 15 live adapters the Overview asks', () => {
-  assert.equal(PUBLIC_SOURCE_CONTRACT.length, 15);
+test('public source-health contract contains the 16 live adapters the Overview asks', () => {
+  assert.equal(PUBLIC_SOURCE_CONTRACT.length, 16);
   assert.deepEqual(PUBLIC_SOURCE_CONTRACT.map((row) => row.id), [
-    'ooni', 'ripe', 'radar', 'ioda', 'tor', 'mlab', 'apnic', 'ripestat', 'globalping', 'censoredPlanet', 'peeringdb', 'ihr', 'asrank', 'rpki', 'pulse',
+    'ooni', 'ripe', 'radar', 'ioda', 'tor', 'mlab', 'apnic', 'ripestat', 'globalping', 'censoredPlanet', 'peeringdb', 'ihr', 'asrank', 'rpki', 'pulse', 'psiphon',
   ]);
 });
 
@@ -19,9 +19,9 @@ test('no_data and partial are reachable adapter states, not source failures', ()
   payloads.ripe = { ok: true, status: 'no_data' };
   payloads.censoredPlanet = { ok: true, status: 'partial' };
   const health = buildSourceHealth(payloads);
-  assert.equal(health.summary.totalContract, 15);
-  assert.equal(health.summary.queried, 15);
-  assert.equal(health.summary.reachable, 15);
+  assert.equal(health.summary.totalContract, 16);
+  assert.equal(health.summary.queried, 16);
+  assert.equal(health.summary.reachable, 16);
   assert.equal(health.summary.errors, 0);
   assert.equal(health.summary.noData, 2);
   assert.equal(health.summary.partial, 1);
@@ -31,10 +31,10 @@ test('scope_required is not queried and does not reduce adapter reachability', (
   const payloads = completePayloads();
   for (const id of ['ripestat', 'peeringdb', 'ihr', 'asrank', 'rpki']) payloads[id] = { ok: true, status: 'scope_required' };
   const health = buildSourceHealth(payloads);
-  assert.equal(health.summary.totalContract, 15);
+  assert.equal(health.summary.totalContract, 16);
   assert.equal(health.summary.scopeRequired, 5);
-  assert.equal(health.summary.queried, 10);
-  assert.equal(health.summary.reachable, 10);
+  assert.equal(health.summary.queried, 11);
+  assert.equal(health.summary.reachable, 11);
   assert.equal(health.summary.errors, 0);
 });
 
@@ -42,8 +42,8 @@ test('real adapter errors are counted separately and preserve detail', () => {
   const payloads = completePayloads();
   payloads.ioda = { ok: false, status: 'error', error: 'upstream timeout' };
   const health = buildSourceHealth(payloads);
-  assert.equal(health.summary.queried, 15);
-  assert.equal(health.summary.reachable, 14);
+  assert.equal(health.summary.queried, 16);
+  assert.equal(health.summary.reachable, 15);
   assert.equal(health.summary.errors, 1);
   const ioda = health.families.find((row) => row.id === 'ioda');
   assert.equal(ioda.state, 'error');
@@ -57,10 +57,10 @@ test('the register counts entries the way the source register shows them', async
   payloads.ioda = { ok: true, status: 'stale', staleSince: '2026-09-25T08:00:00Z' };
   const health = buildSourceHealth(payloads);
   // RIPEstat and its RPKI check are one entry in the register.
-  assert.equal(health.register.entries.length, 14);
+  assert.equal(health.register.entries.length, 15);
   assert.equal(health.register.scopeRequired, 4);
-  assert.equal(health.register.queried, 10);
-  assert.equal(health.register.reachable, 9);
+  assert.equal(health.register.queried, 11);
+  assert.equal(health.register.reachable, 10);
   assert.equal(health.register.errors, 1);
   assert.match(health.register.entries.find((row) => row.id === 'ioda').error, /2026-09-25/);
   // A missing Radar token is not a failure and not a query.

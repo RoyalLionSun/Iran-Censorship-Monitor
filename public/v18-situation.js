@@ -690,6 +690,7 @@ function renderWorkarounds(services) {
       <header><h2 id="workarounds-title">${escapeHtml(t('board.workarounds.title'))}</h2><p>${escapeHtml(t('board.workarounds.note'))}</p></header>
       <ul>${rows.map(row).join('')}${dnsTile('byName')}${dnsTile('byAddress')}</ul>
       ${downloadSitesLine(services)}
+      ${conduitLine(services.conduit)}
       ${torUseLine(services.torUse)}
       ${vpnUseLine(services.vpnUse)}
       <p class="workarounds-unmeasured">${escapeHtml(t('board.workarounds.unmeasured'))}</p>
@@ -716,13 +717,38 @@ function downloadSitesLine(services) {
   return `<p class="workarounds-line">${escapeHtml(parts.join(partSep()))}</p>`;
 }
 
-// How many people in Iran use Tor, per day (Tor Metrics estimate): shows when a way breaks away.
+// How many people in Iran use Tor, per day (Tor Metrics estimate), and which bridge types: people
+// use what works, so a type that suddenly drops is probably being blocked.
+const TRANSPORT_NAMES = { obfs4: 'obfs4', webtunnel: 'WebTunnel', snowflake: 'Snowflake', meek: 'meek', conjure: 'Conjure' };
+function roundUsers(value) {
+  return value >= 1000 ? Math.round(value / 1000) * 1000 : Math.round(value / 10) * 10;
+}
 function torUseLine(use) {
   if (!use || (!use.direct && !use.bridges)) return '';
-  return `<p class="workarounds-line">${escapeHtml(t('board.workarounds.torUse', {
-    direct: formatNumber(Math.round((use.direct ?? 0) / 1000) * 1000), bridges: formatNumber(Math.round((use.bridges ?? 0) / 1000) * 1000),
+  const main = t('board.workarounds.torUse', {
+    direct: formatNumber(roundUsers(use.direct ?? 0)), bridges: formatNumber(roundUsers(use.bridges ?? 0)),
     date: use.date ? formatDay(use.date) : '—',
-  }))}</p>`;
+  });
+  const types = (use.transports ?? []).map((item) => t('board.workarounds.torType', { type: TRANSPORT_NAMES[item.transport] ?? item.transport, users: formatNumber(roundUsers(item.users)) }));
+  return `<p class="workarounds-line">${escapeHtml(main)}</p>${types.length ? `<p class="workarounds-line workarounds-sub">${escapeHtml(t('board.workarounds.torTypes', { types: types.join(separator()) }))}</p>` : ''}`;
+}
+
+// Psiphon through volunteer Conduit stations: connections from Iran per day (Psiphon statistics),
+// with 30 bars. OONI's Psiphon test tries Psiphon's own servers; most users now come in this way.
+function conduitLine(conduit) {
+  if (!conduit?.latest) return '';
+  const series = conduit.series ?? [];
+  const max = Math.max(...series.map((row) => row.connections), 1);
+  const bars = series.map((row, index) => {
+    const height = Math.max(2, Math.round((row.connections / max) * 22));
+    return `<rect class="vpn-bar" x="${index * 4}" y="${24 - height}" width="3" height="${height}" rx="1"><title>${escapeHtml(`${formatDay(row.date)}: ${formatNumber(row.connections)}`)}</title></rect>`;
+  }).join('');
+  const text = [
+    t('board.workarounds.conduit', { connections: formatNumber(roundUsers(conduit.latest.connections)), date: formatDay(conduit.latest.date) }),
+    conduit.stationsInIran ? t('board.workarounds.conduitStations', { stations: formatNumber(conduit.stationsInIran) }) : '',
+    conduit.staleSince ? t('board.workarounds.lastLoaded', { date: formatDateTime(conduit.staleSince) }) : '',
+  ].filter(Boolean).join(separator());
+  return `<p class="vpn-use" title="${escapeHtml(t('board.workarounds.conduitHint'))}">${series.length ? `<svg class="vpn-use-chart" viewBox="0 0 ${series.length * 4} 24" width="${series.length * 4}" height="24" role="img" aria-label="${escapeHtml(t('board.workarounds.conduitChart'))}">${bars}</svg>` : ''}<span>${escapeHtml(text)}</span></p>`;
 }
 
 function formatMonth(month) {
@@ -1148,6 +1174,7 @@ function shareLong(interpretation) {
   if (workarounds.length) {
     lines.push(`🛡️ ${t('share.msg.workarounds', { list: listOf(workarounds.map((item) => t(`share.msg.tool.${item.status}`, { tool: t(`board.workarounds.tool.${item.id}`) }))) })}`);
   }
+  if (services?.conduit?.latest) lines.push(`🧭 ${t('share.msg.conduit', { connections: formatNumber(roundUsers(services.conduit.latest.connections)) })}`);
   const period = nationwidePeriod(dimensions.connectivity);
   lines.push(`📶 ${period
     ? (period.end ? t('share.msg.outage', { from: formatDay(period.start), to: formatDay(period.end) }) : t('share.msg.outageOngoing', { from: formatDay(period.start) }))
@@ -1345,6 +1372,7 @@ function meaningAnswers(interpretation) {
   const tools = (status) => (services?.workarounds ?? []).filter((item) => item.status === status).map((item) => t(`board.workarounds.tool.${item.id}`));
   const around = ['works', 'partly', 'fails'].filter((status) => tools(status).length)
     .map((status) => t(`meaning.a.around.${status}`, { tools: listOf(tools(status)) }));
+  if (services?.conduit?.latest) around.push(t('meaning.a.around.conduit', { connections: formatNumber(roundUsers(services.conduit.latest.connections)) }));
   if (around.length) answers.push({ question: t('meaning.q.around'), lines: around, link: ['workarounds-title', t('meaning.a.around.more')] });
 
   // Does the internet itself work?

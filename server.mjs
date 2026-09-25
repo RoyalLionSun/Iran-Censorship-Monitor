@@ -37,6 +37,7 @@ import { getMlabPerformance } from './lib/mlab.mjs';
 import { getAccessNowStopIncidents } from './lib/accessnow.mjs';
 import { getShutdownAnatomy } from './lib/anatomy.mjs';
 import { getEncryptedDns } from './lib/encrypted-dns.mjs';
+import { getPsiphonConduit } from './lib/psiphon.mjs';
 import { getApnicCountryComposition, getApnicIpv6, getApnicVpnShare } from './lib/apnic.mjs';
 import { getServiceHistory } from './lib/history.mjs';
 import { buildFeedEntry, postToTelegram, readEntries, renderAtom, upsertEntry } from './lib/feed.mjs';
@@ -438,8 +439,10 @@ async function handleApi(req, res, url) {
     // (or none), and the fresh one finishes in the background for the next visit.
     const encryptedDnsKey = `OONI encrypted DNS|${input.since}|${input.until}`;
     const encryptedDnsTask = withDeadline(safeSource('OONI encrypted DNS', () => getEncryptedDns({ since: input.since, until: input.until }), encryptedDnsKey), 3_000, () => lastGoodSources.stale(encryptedDnsKey, 'still loading') ?? { ok: true, source: 'OONI dnscheck', status: 'stale', pending: true });
-    const [countryOoniDomains, ooniSamples, ooniNetworks, [outageTraffic, networkOutageTraffic], serviceNetworks, previousOoniDomains, outageHistory, countryCircumvention, outageAnatomy, encryptedDns] = await Promise.all([
-      countryTask, samplesTask, networksTask, trafficTask, serviceNetworksTask, previousTask, historyTask, countryCircumventionTask, anatomyTask, encryptedDnsTask,
+    // Psiphon's own count of Conduit connections from Iran (all of Iran, the last 30 days).
+    const conduitTask = withDeadline(safeSource('Psiphon Conduit statistics', () => getPsiphonConduit(), 'Psiphon Conduit statistics'), 5_000, () => lastGoodSources.stale('Psiphon Conduit statistics', 'still loading'));
+    const [countryOoniDomains, ooniSamples, ooniNetworks, [outageTraffic, networkOutageTraffic], serviceNetworks, previousOoniDomains, outageHistory, countryCircumvention, outageAnatomy, encryptedDns, conduit] = await Promise.all([
+      countryTask, samplesTask, networksTask, trafficTask, serviceNetworksTask, previousTask, historyTask, countryCircumventionTask, anatomyTask, encryptedDnsTask, conduitTask,
     ]);
     // A nationwide outage in either period means tests came only from networks that kept access;
     // comparing such periods would show changes that are none.
@@ -451,7 +454,7 @@ async function handleApi(req, res, url) {
     // those paths were switched on. Probes were limited to Iranian networks when measuring.
     const activeChecks = store.activeChecks({ hosts: ACTIVE_HOSTS, since: input.since, until: input.until, asn: input.asn });
     const vpnUse = await vpnUsePromise;
-    const assessment = buildAssessment({ activeChecks, vpnUse, countryCircumvention, ooni, ripe, radar, radarQuality, ioda, ripestat, censoredPlanet, tor, mlab, apnic, globalping, peeringdb, ihr, asrank, rpki, pulse, ooniDomains, countryOoniDomains, circumvention, ooniSamples, ooniNetworks, outageTraffic, networkOutageTraffic, outageAnatomy, encryptedDns, serviceNetworks, previousOoniDomains: previousOoniDomains ? { ...previousOoniDomains, period: previous, outageOverlap: comparisonBlockedByOutage } : null, selection: input, scopeLabel });
+    const assessment = buildAssessment({ activeChecks, vpnUse, countryCircumvention, ooni, ripe, radar, radarQuality, ioda, ripestat, censoredPlanet, tor, mlab, apnic, globalping, peeringdb, ihr, asrank, rpki, pulse, ooniDomains, countryOoniDomains, circumvention, ooniSamples, ooniNetworks, outageTraffic, networkOutageTraffic, outageAnatomy, encryptedDns, conduit, serviceNetworks, previousOoniDomains: previousOoniDomains ? { ...previousOoniDomains, period: previous, outageOverlap: comparisonBlockedByOutage } : null, selection: input, scopeLabel });
     const asnProfile = input.asn ? asns.find((item) => item.asn === input.asn) || null : null;
     // Which route answered the access evidence, and how current each collector path is.
     const health = store.health();
