@@ -246,10 +246,14 @@ function evidenceValue(dimension, metric) {
 
 const NAMED_HEADLINES = ['services-blocked', 'services-restricted', 'services-reachable', 'services-untested', 'services-blocked-independent'];
 
-function headlineText(summary, services) {
+// The tiles right below name every service, so when all of them are blocked the heading says so
+// in a few words (compact); the full sentence with the names stays for sharing.
+function headlineText(summary, services, { compact = false } = {}) {
   const headline = summary.headline;
   if (!headline) return t(`interpretation.summary.${summary.state}.headline`);
   const names = headline.services.map((id) => brandName(id, services));
+  const all = services?.items?.length ?? 0;
+  if (compact && headline.state === 'services-blocked' && all > 2 && names.length === all) return t('board.headline.all-blocked', { count: formatNumber(all) });
   if (NAMED_HEADLINES.includes(headline.state) && names.length) {
     return plural(`board.headline.${headline.state}`, names.length, { services: listOf(names) });
   }
@@ -935,19 +939,23 @@ function statusRow(interpretation) {
 // A short table of contents for the long first page; only sections present are listed.
 // Sharing the current finding. On phones the system share sheet opens the installed apps
 // directly, which also works where t.me or x.com links are blocked; elsewhere direct links.
+const COPY_TO_APP = new Set(['tiktok', 'signal']);
+
 function shareBar() {
   // The system share sheet only works dependably on phones; on computers it often opens nothing.
   // Telegram, WhatsApp and X always have their own button; phones get the system sheet as well.
   const native = typeof navigator !== 'undefined' && typeof navigator.share === 'function'
     && typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
-  const buttons = ['telegram', 'whatsapp', 'x', 'copy', ...(native ? ['native'] : [])];
+  // By use among readers in Iran and abroad. Signal and TikTok have no web share link: their
+  // buttons copy the text and link, to paste in the app.
+  const buttons = ['telegram', 'whatsapp', 'x', 'facebook', 'tiktok', 'signal', 'threads', 'truthsocial', 'copy', ...(native ? ['native'] : [])];
   return `<div class="share-bar" role="group" aria-label="${escapeHtml(t('share.label'))}"><span>${escapeHtml(t('share.label'))}</span>${buttons
-    .map((kind) => `<button type="button" class="share-button" data-share="${kind}">${escapeHtml(t(`share.${kind}`))}</button>`).join('')}</div>`;
+    .map((kind) => `<button type="button" class="share-button" data-share="${kind}"${COPY_TO_APP.has(kind) ? ` title="${escapeHtml(t(`share.pasteHint.${kind}`))}"` : ''}>${escapeHtml(t(`share.${kind}`))}</button>`).join('')}</div>`;
 }
 
 // Copies the sentence and link; where the clipboard API is not allowed (plain http, older
 // browsers) a hidden text field does it. The button confirms either way, or says it failed.
-async function copyShare(button, value, labelKey) {
+async function copyShare(button, value, labelKey, copiedText = null) {
   let copied = false;
   try {
     await navigator.clipboard.writeText(value);
@@ -962,12 +970,13 @@ async function copyShare(button, value, labelKey) {
     try { copied = document.execCommand('copy'); } catch { copied = false; }
     field.remove();
   }
-  button.textContent = t(copied ? 'share.copied' : 'share.copyFailed');
+  button.textContent = copied ? (copiedText ?? t('share.copied')) : t('share.copyFailed');
   setTimeout(() => { button.textContent = t(labelKey); }, 2000);
 }
 
 function shareText() {
-  const headline = document.querySelector('#situation-headline')?.textContent?.trim() ?? '';
+  const heading = document.querySelector('#situation-headline');
+  const headline = (heading?.dataset.full || heading?.textContent || '').trim();
   const scope = document.querySelector('.situation-scope')?.textContent?.replace(/[\u2066-\u2069]/g, '').replace(/\s+/g, ' ').trim() ?? '';
   return `${headline}${scope ? ` (${scope})` : ''} · Iran Censorship Monitor`;
 }
@@ -987,6 +996,11 @@ document.addEventListener('click', async (event) => {
   } else if (kind === 'telegram') open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`);
   else if (kind === 'whatsapp') open(`https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}`);
   else if (kind === 'x') open(`https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`);
+  else if (kind === 'facebook') open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`);
+  else if (kind === 'threads') open(`https://www.threads.net/intent/post?text=${encodeURIComponent(`${text} ${url}`)}`);
+  // Truth Social's documented share link: https://help.truthsocial.com/publishers/share-button/
+  else if (kind === 'truthsocial') open(`https://truthsocial.com/share?title=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`);
+  else if (COPY_TO_APP.has(kind)) await copyShare(button, `${text} ${url}`, `share.${kind}`, t(`share.pasteIn.${kind}`));
   else if (kind === 'copy') {
     await copyShare(button, `${text} ${url}`, 'share.copy');
   }
@@ -994,18 +1008,28 @@ document.addEventListener('click', async (event) => {
 
 function jumpBar(interpretation) {
   const services = interpretation.services;
+  // In order of what readers look for first, not in page order.
   const links = [
     services?.changes ? ['changes-title', 'board.jump.changes'] : null,
-    services ? ['service-board-title', 'board.jump.services'] : null,
-    ['status-row', 'board.jump.connection'],
-    services?.workarounds ? ['workarounds-title', 'board.jump.workarounds'] : null,
-    services?.more?.some((group) => group.services.some((service) => service.scope)) ? ['more-services-title', 'board.jump.more'] : null,
     services?.networkBreakdown?.access?.length ? ['access-title', 'board.jump.access'] : null,
     ['privileged-title', 'board.jump.privileged'],
+    ['control-title', 'board.jump.control'],
+    services?.workarounds ? ['workarounds-title', 'board.jump.workarounds'] : null,
+    services ? ['service-board-title', 'board.jump.services'] : null,
+    services?.more?.some((group) => group.services.some((service) => service.scope)) ? ['more-services-title', 'board.jump.more'] : null,
     ['user-meaning', 'board.jump.meaning'],
+    ['status-row', 'board.jump.connection'],
+    interpretation.dimensions?.connectivity?.outageAnatomy ? ['anatomy-title', 'board.jump.anatomy'] : null,
     ['sources-panel', 'board.jump.sources'],
   ].filter(Boolean);
   return `<nav class="jump-bar" aria-label="${escapeHtml(t('board.jump.label'))}">${links.map(([id, key]) => `<a href="#${id}">${escapeHtml(t(key))}</a>`).join('')}</nav>`;
+}
+
+// The title leads with the provider's name readers know: "Shatel (AS31549)", not "AS31549 · Shatel".
+function networkTitle(interpretation) {
+  const label = networkLabel(interpretation);
+  const match = /^(AS\d+)\s*·\s*(.+)$/.exec(label);
+  return match ? `${match[2]} (${match[1]})` : label;
 }
 
 function renderHero(interpretation) {
@@ -1016,12 +1040,13 @@ function renderHero(interpretation) {
   const latest = summary.latestObservation ? t('board.latest', { date: formatDay(summary.latestObservation) }) : '';
   const stale = interpretation.services?.stale?.since ?? null;
   hero.dataset.headline = summary.headline?.state ?? summary.state;
+  const headlineSummary = { ...summary, headline: summary.headline && { ...summary.headline, period: nationwidePeriod(interpretation.dimensions.connectivity) } };
   hero.dataset.stale = stale ? 'yes' : 'no';
   hero.innerHTML = `
     <header class="situation-top">
       <span class="section-label">${escapeHtml(stale ? t('board.kicker.stale') : t('board.kicker'))}</span>
-      <p class="situation-scope"><strong><bdi>${escapeHtml(networkLabel(interpretation))}</bdi></strong>${period ? ` · <bdi>${escapeHtml(period)}</bdi>` : ''}${latest ? ` · <bdi>${escapeHtml(latest)}</bdi>` : ''}${stale ? ` · <bdi class="scope-stale">${escapeHtml(t('board.stale.since', { date: formatDateTime(stale) }))}</bdi>` : ''}</p>
-      <h1 id="situation-headline">${escapeHtml(headlineText({ ...summary, headline: summary.headline && { ...summary.headline, period: nationwidePeriod(interpretation.dimensions.connectivity) } }, interpretation.services))}</h1>
+      <p class="situation-scope"><strong class="situation-network"><bdi>${escapeHtml(networkTitle(interpretation))}</bdi></strong><span class="scope-sep"> · </span>${period ? `<bdi>${escapeHtml(period)}</bdi>` : ''}${latest ? ` · <bdi>${escapeHtml(latest)}</bdi>` : ''}${stale ? ` · <bdi class="scope-stale">${escapeHtml(t('board.stale.since', { date: formatDateTime(stale) }))}</bdi>` : ''}</p>
+      <h1 id="situation-headline" data-full="${escapeHtml(headlineText(headlineSummary, interpretation.services))}">${escapeHtml(headlineText(headlineSummary, interpretation.services, { compact: true }))}</h1>
       <p class="situation-lede">${escapeHtml(ledeText(interpretation))}</p>
       ${jumpBar(interpretation)}
       ${shareBar()}

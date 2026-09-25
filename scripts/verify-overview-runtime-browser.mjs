@@ -106,7 +106,7 @@ async function runScenario(browser, scenario) {
     if (!requests.includes('/api/config') || !requests.includes('/api/overview')) {
       throw new Error(`${scenario}: real app did not request config AND overview (${requests.join(', ')})`);
     }
-    const headline = stdout.match(/<h1 id="situation-headline">([^<]*)<\/h1>/)?.[1] || '';
+    const headline = stdout.match(/<h1 id="situation-headline"[^>]*>([^<]*)<\/h1>/)?.[1] || '';
     if (!headline || /Analyzing current measurements/i.test(headline)) throw new Error(`${scenario}: Overview remained loading: ${headline}`);
     const cards = (stdout.match(/class="interpretation-card"/g) || []).length;
     if (scenario === 'ready') {
