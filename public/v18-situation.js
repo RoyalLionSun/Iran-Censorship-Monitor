@@ -1299,7 +1299,8 @@ function renderHero(interpretation) {
         <h1 id="situation-headline" data-full="${escapeHtml(headlineText(headlineSummary, interpretation.services))}">${escapeHtml(headlineText(headlineSummary, interpretation.services, { compact: true }))}</h1>
         <p class="situation-lede">${escapeHtml(ledeText(interpretation))}</p>
       </div>
-      <p class="situation-scope"><span class="visually-hidden">${escapeHtml(networkTitle(interpretation))}${separator()}</span>${period ? `<bdi>${escapeHtml(period)}</bdi>` : ''}${latest ? `${separator()}<bdi>${escapeHtml(latest)}</bdi>` : ''}${stale ? `${separator()}<bdi class="scope-stale">${escapeHtml(staleText)}</bdi>` : ''}</p>
+      <p class="situation-scope visually-hidden">${escapeHtml(networkTitle(interpretation))}${period ? `${separator()}${escapeHtml(period)}` : ''}${latest ? `${separator()}${escapeHtml(latest)}` : ''}</p>
+      ${stale ? `<p class="situation-stale" role="status">${escapeHtml(staleText)}</p>` : ''}
     </header>
     ${jumpBar(interpretation)}
     ${renderChanges(interpretation.services)}
