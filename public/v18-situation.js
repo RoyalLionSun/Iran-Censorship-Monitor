@@ -648,7 +648,8 @@ function renderWorkarounds(services) {
         count: formatNumber(item.status === 'fails' ? item.failed : item.ok), total: formatNumber(item.usable),
       })
       : t('board.workarounds.none');
-    const scope = item.scope === 'country' ? `${partSep()}${t('board.workarounds.country')}` : '';
+    const scope = (item.scope === 'country' ? `${partSep()}${t('board.workarounds.country')}` : '')
+      + (item.staleSince ? `${partSep()}${t('board.workarounds.lastLoaded', { date: formatDateTime(item.staleSince) })}` : '');
     return `<li class="workaround" data-status="${escapeHtml(WORKAROUND_STATUS_CLASS[item.status])}">
       <b class="workaround-name">${escapeHtml(t(`board.workarounds.tool.${item.id}`))}</b>
       <span class="workaround-verdict">${escapeHtml(t(`board.workarounds.status.${item.status}`))}</span>
@@ -668,7 +669,7 @@ function renderWorkarounds(services) {
       <b class="workaround-name">${escapeHtml(t(`board.workarounds.tool.dns-${group}`))}</b>
       <span class="workaround-verdict">${escapeHtml(t(`board.workarounds.status.${item.status}`))}</span>
       <small class="workaround-about">${escapeHtml(t(`board.workarounds.about.dns-${group}`))}</small>
-      <small class="workaround-numbers">${escapeHtml([numbers, t('board.workarounds.sample'), reason].filter(Boolean).join(partSep()))}</small></li>`;
+      <small class="workaround-numbers">${escapeHtml([numbers, t('board.workarounds.sample'), reason, dns.staleSince ? t('board.workarounds.lastLoaded', { date: formatDateTime(dns.staleSince) }) : ''].filter(Boolean).join(partSep()))}</small></li>`;
   };
   return `
     <section class="workarounds-board" aria-labelledby="workarounds-title">

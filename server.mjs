@@ -6,7 +6,7 @@ import { dirname, extname, join, normalize, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildAssessment } from './lib/assessment.mjs';
 import { compressBody, createLastGoodStore, errorPayload, isCleanOverview, isSettledPeriod, jsonResponse, loadEnvFile, pickEncoding, mapLimit, normalizeAsn, validateRange } from './lib/common.mjs';
-import { getCircumventionSignals, getOoniDomainMeasurements, getOoniDomains, getOoniMeasurementDetail, getOoniNetworks, getOoniServiceNetworks, getOoniTimeline, iranRegisteredAsns, getOoniSample, listOoniMeasurements, OONI_TESTS } from './lib/ooni.mjs';
+import { mergeFailedSignals, getCircumventionSignals, getOoniDomainMeasurements, getOoniDomains, getOoniMeasurementDetail, getOoniNetworks, getOoniServiceNetworks, getOoniTimeline, iranRegisteredAsns, getOoniSample, listOoniMeasurements, OONI_TESTS } from './lib/ooni.mjs';
 import { getRipeSignals } from './lib/ripe.mjs';
 import { getRadarConnectionQuality, getRadarOutageHistory, getRadarOutageTraffic, getRadarSignals, isNationwideAnnotation } from './lib/radar.mjs';
 import { getIodaSignals } from './lib/ioda.mjs';
@@ -154,6 +154,18 @@ const lastGoodSources = createLastGoodStore({ path: join(root, 'var/last-good/so
 
 function sourceKey(name, input) {
   return [name, input.asn || 'ALL', input.since, input.until, input.testName || '', input.target || ''].join('|');
+}
+
+// OONI answers each circumvention test separately. When some of them fail (for example while
+// OONI limits requests), their last good values for the same period stand in, dated, instead of
+// the tile saying "not loaded"; the tests that did answer stay fresh.
+async function circumventionFor(scope) {
+  const key = sourceKey('OONI circumvention', scope);
+  const previous = lastGoodSources.stale(key, '');
+  const now = await safeSource('OONI circumvention', () => viaStore(scope, (iran) => storeCircumvention(store, scope, iran), () => getCircumventionSignals(scope)), key);
+  const result = mergeFailedSignals(previous, now);
+  if (result !== now) lastGoodSources.remember(key, result);
+  return result;
 }
 
 async function safeSource(name, work, key = null) {
@@ -311,7 +323,7 @@ async function handleApi(req, res, url) {
       safeSource('Internet Society Pulse', () => getPulseShutdowns(input), sourceKey('Pulse', input)),
       // Priority-service summary for the Overview. The full domain list stays on /api/ooni/domains.
       input.testName === 'web_connectivity' ? safeSource('OONI domains', () => viaStore(ooniScope(input), (iran) => storeDomains(store, ooniScope(input), iran), () => getOoniDomains(ooniScope(input))), sourceKey('OONI domains', input)) : Promise.resolve(null),
-      safeSource('OONI circumvention', () => viaStore(input, (iran) => storeCircumvention(store, input, iran), () => getCircumventionSignals(input)), sourceKey('OONI circumvention', input)),
+      circumventionFor(input),
     ]);
     // The follow-up questions below do not depend on each other; asked one after another they
     // made a first load take close to half a minute, so they run side by side.
@@ -396,7 +408,7 @@ async function handleApi(req, res, url) {
     const historyTask = safeSource('Cloudflare Radar outage history', () => getRadarOutageHistory(), 'Radar outage history');
     // Ways around the filter across Iran, for methods the selected network tested too rarely.
     const countryCircumventionTask = input.asn
-      ? safeSource('OONI circumvention', () => viaStore({ ...input, asn: '' }, (iran) => storeCircumvention(store, { ...input, asn: '' }, iran), () => getCircumventionSignals({ ...input, asn: '' })), sourceKey('OONI circumvention', { ...input, asn: '' }))
+      ? circumventionFor({ ...input, asn: '' })
       : Promise.resolve(circumvention);
     // Encrypted name lookup from inside Iran (a small sample of OONI dnscheck runs, all of Iran).
     const encryptedDnsTask = safeSource('OONI encrypted DNS', () => getEncryptedDns({ since: input.since, until: input.until }), `OONI encrypted DNS|${input.since}|${input.until}`);

@@ -793,6 +793,7 @@ export default Object.freeze({
   'board.workarounds.unmeasured': 'Not measured here: V2Ray/Xray (VLESS, VMess, Reality), Shadowsocks, Trojan, Hysteria, WireGuard, OpenVPN, apps such as Hiddify, NekoBox or Outline, commercial VPNs and Starlink. Many people use them, but no public source tests them from inside Iran, so this page makes no claim about them.',
   'board.workarounds.status.unavailable': 'Not loaded',
   'board.workarounds.unavailableNote': 'could not be loaded right now (OONI is limiting requests); it appears again by itself',
+  'board.workarounds.lastLoaded': 'last loaded {date} UTC, OONI is limiting requests',
   'board.workarounds.title': 'Ways around the filter today',
   'board.workarounds.note': 'OONI tests of each method from inside Iran in this period. Tests that ended in an error are not counted.',
   'board.workarounds.worked': 'worked in {count} of {total} tests',

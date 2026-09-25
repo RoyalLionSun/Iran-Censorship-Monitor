@@ -384,3 +384,24 @@ test('networks are ordered by how much access they give, networks with few tests
   const order = summarizeNetworkAccess(rows).map((entry) => `${entry.asn}:${entry.access}`);
   assert.deepEqual(order, ['AS1:50', 'AS2:0', 'AS3:100']);
 });
+
+test('circumvention tests that failed take their last good values, dated; answered ones stay fresh', async () => {
+  const { mergeFailedSignals } = await import('../lib/ooni.mjs');
+  const previous = { ok: true, status: 'stale', staleSince: '2026-09-25T09:00:00Z', signals: [
+    { testName: 'tor', status: 'observed', measurements: 900 },
+    { testName: 'torsf', status: 'observed', measurements: 70 },
+  ] };
+  const now = { ok: true, signals: [
+    { testName: 'tor', status: 'observed', measurements: 963 },
+    { testName: 'torsf', status: 'error', measurements: 0, error: 'OONI rate limit reached.' },
+    { testName: 'riseupvpn', status: 'error', measurements: 0 },
+  ] };
+  const merged = mergeFailedSignals(previous, now);
+  assert.equal(merged.partialStale, true);
+  assert.equal(merged.signals[0].measurements, 963, 'fresh answer kept');
+  assert.deepEqual([merged.signals[1].measurements, merged.signals[1].staleSince], [70, '2026-09-25T09:00:00Z']);
+  assert.equal(merged.signals[2].status, 'error', 'nothing earlier to fill in');
+  assert.equal(mergeFailedSignals(null, now), now);
+  const { isCleanOverview } = await import('../lib/common.mjs');
+  assert.equal(isCleanOverview([merged]), false, 'a partly old answer is not saved as a clean snapshot');
+});

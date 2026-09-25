@@ -793,6 +793,7 @@ export default Object.freeze({
   'board.workarounds.unmeasured': 'این‌جا اندازه‌گیری نمی‌شوند: V2Ray/Xray (VLESS، VMess، Reality)، Shadowsocks، Trojan، Hysteria، WireGuard، OpenVPN، اپلیکیشن‌هایی مانند Hiddify، NekoBox یا Outline، وی‌پی‌ان‌های تجاری و استارلینک. بسیاری از مردم از آن‌ها استفاده می‌کنند، اما هیچ منبع عمومی آن‌ها را از داخل ایران آزمایش نمی‌کند؛ پس این صفحه دربارهٔ آن‌ها ادعایی نمی‌کند.',
   'board.workarounds.status.unavailable': 'بارگذاری نشد',
   'board.workarounds.unavailableNote': 'در حال حاضر بارگذاری نشد (OONI درخواست‌ها را محدود می‌کند)؛ خودبه‌خود دوباره نمایش داده می‌شود',
+  'board.workarounds.lastLoaded': 'آخرین بارگذاری {date} به وقت UTC؛ OONI درخواست‌ها را محدود می‌کند',
   'board.workarounds.title': 'راه‌های دور زدن فیلتر امروز',
   'board.workarounds.note': 'آزمون‌های OONI از هر روش، از داخل ایران در این بازه. آزمون‌هایی که با خطا پایان یافته‌اند شمرده نمی‌شوند.',
   'board.workarounds.worked': 'در {count} از {total} آزمون کار کرد',

@@ -492,7 +492,7 @@ function workaroundCounts(payload, test) {
   const failed = (Number(row.anomalies) || 0) + (Number(row.confirmed) || 0);
   const failures = Number(row.failures) || 0;
   const ok = Math.max(0, (Number(row.measurements) || 0) - failed - failures);
-  return { measurements: Number(row.measurements) || 0, failed, ok, failures, usable: failed + ok, lastObservation: row.lastObservation ?? null };
+  return { measurements: Number(row.measurements) || 0, failed, ok, failures, usable: failed + ok, lastObservation: row.lastObservation ?? null, staleSince: row.staleSince ?? null };
 }
 
 function workaroundErrored(payload, test) {
