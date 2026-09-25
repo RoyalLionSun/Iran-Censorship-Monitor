@@ -60,6 +60,8 @@ The Farsi version is for people in Iran; a dashboard they cannot open misses its
       (https://github.com/citizenlab/test-lists/pull/2277): fix the typo
       `https://api.x.com/robots.txt.txt` → `https://api.x.com/robots.txt`. Once merged, OONI Probe
       tests the app servers and iranopasmigirim.com; the dashboard picks the results up by itself.
+- [ ] **Test-list entries and data requests for VPN tools**: see [OUTREACH_VPN_DATA.md](OUTREACH_VPN_DATA.md)
+      (eight URLs to submit on test-lists.ooni.org; a ready letter to Psiphon, Lantern, Hiddify, ASL19, Windscribe).
 - [ ] **RIPE Atlas credits** for regular independent checks (request drafted during development).
 - [ ] **Telegram channels** (English and Farsi) and the bot as administrator, if daily posts are wanted.
 
