@@ -147,8 +147,12 @@ npm run verify:ui
 npm run verify:radar   # optional token
 ```
 
-The browser gates can use an installed Chrome:
-`CHROME_BIN=<path to chrome> npm run verify:ui`. The gates start it with `--headless=new`, which runs as its own process instead of joining an open browser session.
+Without a Chromium on the machine, Google's headless test browser needs
+no administrator rights and opens no windows:
+`npx @puppeteer/browsers install chrome-headless-shell@stable --path ~/.cache/chrome-headless`, then
+`CHROME_BIN=<path it prints> npm run verify:ui`. It is preferable to a desktop browser, which
+briefly opens empty windows on the desktop. For readable Farsi screenshots a Persian-capable font
+must be installed (e.g. Vazirmatn or Noto Sans Arabic in `~/.local/share/fonts`).
 
 v1.8.0 contains **301 deterministic tests** and retains the production build, real Headless Chrome presentation, committed-secret/private-key leakage and runtime/404/traversal gates.
 
