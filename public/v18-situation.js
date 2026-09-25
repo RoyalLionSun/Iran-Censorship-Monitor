@@ -689,10 +689,7 @@ function renderWorkarounds(services) {
     <section class="workarounds-board" aria-labelledby="workarounds-title">
       <header><h2 id="workarounds-title">${escapeHtml(t('board.workarounds.title'))}</h2><p>${escapeHtml(t('board.workarounds.note'))}</p></header>
       <ul>${rows.map(row).join('')}${dnsTile('byName')}${dnsTile('byAddress')}</ul>
-      ${downloadSitesLine(services)}
-      ${conduitLine(services.conduit)}
-      ${torUseLine(services.torUse)}
-      ${vpnUseLine(services.vpnUse)}
+      ${renderUsageCards(services)}
       <p class="workarounds-unmeasured">${escapeHtml(t('board.workarounds.unmeasured'))}</p>
     </section>`;
 }
@@ -704,72 +701,94 @@ function partSep() {
 
 const DNS_REASONS = new Set(['dns_bogon_error', 'generic_timeout_error', 'connection_reset', 'host_unreachable', 'network_unreachable']);
 
-// Can people get the tools at all? The download sites are measured as websites by OONI.
-function downloadSitesLine(services) {
-  const group = services?.more?.find((entry) => entry.id === 'circumvention');
-  const tested = (group?.services ?? []).filter((service) => service.scope);
-  if (!tested.length) return '';
-  const blocked = tested.filter((service) => service.status === 'blocked');
-  const working = tested.filter((service) => service.status === 'reachable');
-  const parts = [t('board.workarounds.downloads', { blocked: formatNumber(blocked.length), tested: formatNumber(tested.length) })];
-  if (blocked.length) parts.push(t('board.workarounds.downloadsBlocked', { sites: listOf(blocked.map(moreServiceName)) }));
-  if (working.length) parts.push(t('board.workarounds.downloadsOpen', { sites: listOf(working.map(moreServiceName)) }));
-  return `<p class="workarounds-line">${escapeHtml(parts.join(partSep()))}</p>`;
-}
-
-// How many people in Iran use Tor, per day (Tor Metrics estimate), and which bridge types: people
-// use what works, so a type that suddenly drops is probably being blocked.
+// People use what works: a type that suddenly drops is probably being blocked.
 const TRANSPORT_NAMES = { obfs4: 'obfs4', webtunnel: 'WebTunnel', snowflake: 'Snowflake', meek: 'meek', conjure: 'Conjure' };
 function roundUsers(value) {
   return value >= 1000 ? Math.round(value / 1000) * 1000 : Math.round(value / 10) * 10;
-}
-function torUseLine(use) {
-  if (!use || (!use.direct && !use.bridges)) return '';
-  const main = t('board.workarounds.torUse', {
-    direct: formatNumber(roundUsers(use.direct ?? 0)), bridges: formatNumber(roundUsers(use.bridges ?? 0)),
-    date: use.date ? formatDay(use.date) : '—',
-  });
-  const types = (use.transports ?? []).map((item) => t('board.workarounds.torType', { type: TRANSPORT_NAMES[item.transport] ?? item.transport, users: formatNumber(roundUsers(item.users)) }));
-  return `<p class="workarounds-line">${escapeHtml(main)}</p>${types.length ? `<p class="workarounds-line workarounds-sub">${escapeHtml(t('board.workarounds.torTypes', { types: types.join(separator()) }))}</p>` : ''}`;
-}
-
-// Psiphon through volunteer Conduit stations: connections from Iran per day (Psiphon statistics),
-// with 30 bars. OONI's Psiphon test tries Psiphon's own servers; most users now come in this way.
-function conduitLine(conduit) {
-  if (!conduit?.latest) return '';
-  const series = conduit.series ?? [];
-  const max = Math.max(...series.map((row) => row.connections), 1);
-  const bars = series.map((row, index) => {
-    const height = Math.max(2, Math.round((row.connections / max) * 22));
-    return `<rect class="vpn-bar" x="${index * 4}" y="${24 - height}" width="3" height="${height}" rx="1"><title>${escapeHtml(`${formatDay(row.date)}: ${formatNumber(row.connections)}`)}</title></rect>`;
-  }).join('');
-  const text = [
-    t('board.workarounds.conduit', { connections: formatNumber(roundUsers(conduit.latest.connections)), date: formatDay(conduit.latest.date) }),
-    conduit.stationsInIran ? t('board.workarounds.conduitStations', { stations: formatNumber(conduit.stationsInIran) }) : '',
-    conduit.staleSince ? t('board.workarounds.lastLoaded', { date: formatDateTime(conduit.staleSince) }) : '',
-  ].filter(Boolean).join(separator());
-  return `<p class="vpn-use" title="${escapeHtml(t('board.workarounds.conduitHint'))}">${series.length ? `<svg class="vpn-use-chart" viewBox="0 0 ${series.length * 4} 24" width="${series.length * 4}" height="24" role="img" aria-label="${escapeHtml(t('board.workarounds.conduitChart'))}">${bars}</svg>` : ''}<span>${escapeHtml(text)}</span></p>`;
 }
 
 function formatMonth(month) {
   return new Intl.DateTimeFormat(localeFor(), { month: 'short', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${month}-01T00:00:00Z`));
 }
 
-// Use of Cloudflare's WARP VPN among users in Iran (APNIC estimate): today, a year ago, the
-// lowest month, and twelve monthly bars, so a collapse like February to August 2026 is visible.
-function vpnUseLine(use) {
-  if (!use?.current) return '';
-  const parts = [t('board.vpnUse.line', { share: formatPercent(use.current.share) })];
-  if (use.yearAgo) parts.push(t('board.vpnUse.yearAgo', { share: formatPercent(use.yearAgo.share) }));
-  if (use.lowest && use.lowest.share < use.current.share / 2) parts.push(t('board.vpnUse.lowest', { share: formatPercent(use.lowest.share), month: formatMonth(use.lowest.month) }));
-  const max = Math.max(...use.months.map((month) => month.share ?? 0), 0.1);
-  const bars = use.months.map((month, index) => {
-    const label = `${formatMonth(month.month)}: ${month.share === null ? t('board.vpnUse.noData') : formatPercent(month.share)}`;
-    const height = month.share === null ? 2 : Math.max(2, Math.round((month.share / max) * 22));
-    return `<rect class="${month.share === null ? 'vpn-bar-empty' : 'vpn-bar'}" x="${index * 10}" y="${24 - height}" width="7" height="${height}" rx="1"><title>${escapeHtml(label)}</title></rect>`;
+// Small bar chart for a usage card; bars scale to the largest value.
+function usageBars(values, label, { width = 4, gap = 1 } = {}) {
+  if (!values.length) return '';
+  const max = Math.max(...values.map((item) => item.value ?? 0), 0.0001);
+  const step = width + gap;
+  const bars = values.map((item, index) => {
+    const height = item.value === null ? 2 : Math.max(2, Math.round(((item.value ?? 0) / max) * 30));
+    return `<rect class="${item.value === null ? 'vpn-bar-empty' : 'vpn-bar'}" x="${index * step}" y="${32 - height}" width="${width}" height="${height}" rx="1"><title>${escapeHtml(item.title)}</title></rect>`;
   }).join('');
-  const hint = t('board.vpnUse.hint', { date: formatDay(use.current.date) });
-  return `<p class="vpn-use" title="${escapeHtml(hint)}"><svg class="vpn-use-chart" viewBox="0 0 118 24" width="118" height="24" role="img" aria-label="${escapeHtml(t('board.vpnUse.chart'))}">${bars}</svg><span>${escapeHtml(parts.join(separator()))}</span></p>`;
+  return `<svg class="usage-chart" viewBox="0 0 ${values.length * step} 32" preserveAspectRatio="none" role="img" aria-label="${escapeHtml(label)}">${bars}</svg>`;
+}
+
+function usageCard({ id, title, value, unit, lines = [], chart = '', source, hint = '' }) {
+  return `<article class="usage-card" data-usage="${id}"${hint ? ` title="${escapeHtml(hint)}"` : ''}>
+      <h3>${escapeHtml(title)}</h3>
+      <p class="usage-value"><b>${escapeHtml(value)}</b> <span>${escapeHtml(unit)}</span></p>
+      ${chart}
+      ${lines.map((line) => `<p class="usage-line">${escapeHtml(line)}</p>`).join('')}
+      <p class="usage-source">${escapeHtml(source)}</p>
+    </article>`;
+}
+
+// What people in Iran use to get around the filter, as cards with the key number large: usage
+// seen from inside Iran (Psiphon, Tor Metrics, APNIC) and whether the tools can be downloaded
+// (OONI). Usage shows that connections get through, not which services can then be reached.
+function renderUsageCards(services) {
+  const cards = [];
+  const conduit = services?.conduit;
+  if (conduit?.latest) {
+    cards.push(usageCard({
+      id: 'conduit', title: t('board.usage.conduit.title'),
+      value: `≈ ${formatNumber(roundUsers(conduit.latest.connections))}`, unit: t('board.usage.conduit.unit', { date: formatDay(conduit.latest.date) }),
+      chart: usageBars((conduit.series ?? []).map((row) => ({ value: row.connections, title: `${formatDay(row.date)}: ${formatNumber(row.connections)}` })), t('board.workarounds.conduitChart')),
+      lines: [conduit.stationsInIran ? t('board.workarounds.conduitStations', { stations: formatNumber(conduit.stationsInIran) }) : '',
+        conduit.staleSince ? t('board.workarounds.lastLoaded', { date: formatDateTime(conduit.staleSince) }) : ''].filter(Boolean),
+      source: t('board.usage.conduit.source'), hint: t('board.workarounds.conduitHint'),
+    }));
+  }
+  const tor = services?.torUse;
+  if (tor && (tor.direct || tor.bridges)) {
+    const types = (tor.transports ?? []).map((item) => t('board.workarounds.torType', { type: TRANSPORT_NAMES[item.transport] ?? item.transport, users: formatNumber(roundUsers(item.users)) }));
+    cards.push(usageCard({
+      id: 'tor', title: t('board.usage.tor.title'),
+      value: `≈ ${formatNumber(roundUsers(tor.direct ?? 0))}`, unit: t('board.usage.tor.unit'),
+      lines: [t('board.usage.tor.bridges', { bridges: formatNumber(roundUsers(tor.bridges ?? 0)) }), types.length ? t('board.workarounds.torTypes', { types: types.join(separator()) }) : ''].filter(Boolean),
+      source: t('board.usage.tor.source', { date: tor.date ? formatDay(tor.date) : '—' }),
+    }));
+  }
+  const vpn = services?.vpnUse;
+  if (vpn?.current) {
+    cards.push(usageCard({
+      id: 'warp', title: t('board.usage.warp.title'),
+      value: formatPercent(vpn.current.share), unit: t('board.usage.warp.unit'),
+      chart: usageBars(vpn.months.map((month) => ({ value: month.share, title: `${formatMonth(month.month)}: ${month.share === null ? t('board.vpnUse.noData') : formatPercent(month.share)}` })), t('board.vpnUse.chart'), { width: 8, gap: 3 }),
+      lines: [[vpn.yearAgo ? t('board.vpnUse.yearAgo', { share: formatPercent(vpn.yearAgo.share) }) : '',
+        vpn.lowest && vpn.lowest.share < vpn.current.share / 2 ? t('board.vpnUse.lowest', { share: formatPercent(vpn.lowest.share), month: formatMonth(vpn.lowest.month) }) : ''].filter(Boolean).join(separator())].filter(Boolean),
+      source: t('board.usage.warp.source'), hint: t('board.vpnUse.hint', { date: formatDay(vpn.current.date) }),
+    }));
+  }
+  const group = services?.more?.find((entry) => entry.id === 'circumvention');
+  const tested = (group?.services ?? []).filter((service) => service.scope);
+  if (tested.length) {
+    const blocked = tested.filter((service) => service.status === 'blocked');
+    const open = tested.filter((service) => service.status === 'reachable');
+    cards.push(usageCard({
+      id: 'downloads', title: t('board.usage.downloads.title'),
+      value: t('board.usage.downloads.value', { blocked: formatNumber(blocked.length), tested: formatNumber(tested.length) }), unit: t('board.usage.downloads.unit'),
+      lines: [blocked.length ? t('board.workarounds.downloadsBlocked', { sites: listOf(blocked.map(moreServiceName)) }) : '',
+        open.length ? t('board.workarounds.downloadsOpen', { sites: listOf(open.map(moreServiceName)) }) : ''].filter(Boolean),
+      source: t('board.usage.downloads.source'),
+    }));
+  }
+  if (!cards.length) return '';
+  return `<div class="usage-block">
+      <h3 class="usage-heading">${escapeHtml(t('board.usage.title'))}</h3>
+      <p class="usage-note">${escapeHtml(t('board.usage.note'))}</p>
+      <div class="usage-grid">${cards.join('')}</div>
+    </div>`;
 }
 
 // What changed against the period of the same length before: first thing a returning reader

@@ -435,3 +435,22 @@ html[dir="rtl"] .history-strip { transform: scaleX(-1); }
 a:focus-visible { outline: 2px solid var(--accent-2, #52c9c4); outline-offset: 2px; border-radius: 4px; }
 .jump-bar a:focus-visible, .access-sort button:focus-visible, .share-button:focus-visible, .filter-toggle:focus-visible { outline: 2px solid var(--accent-2, #52c9c4); outline-offset: 2px; }
 .workarounds-sub { margin-top: 2px; color: var(--muted); }
+/* "Used from Iran": the key figures for readers, as cards with the number large. */
+.usage-block { margin-top: 16px; }
+.usage-heading { margin: 0; font-size: 15px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--text-soft); }
+html[lang="fa"] .usage-heading { letter-spacing: normal; }
+.usage-note { margin: 4px 0 10px; color: var(--muted); font-size: 14px; }
+.usage-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px; }
+.usage-card { display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; border: 1px solid rgba(82, 201, 196, .35); border-top: 3px solid #52c9c4; border-radius: 10px; background: linear-gradient(180deg, rgba(82, 201, 196, .08), rgba(11, 16, 23, .4) 70%); }
+.usage-card[data-usage="downloads"] { border-color: rgba(239, 109, 109, .35); border-top-color: var(--status-blocked, #ef6d6d); background: linear-gradient(180deg, rgba(239, 109, 109, .08), rgba(11, 16, 23, .4) 70%); }
+.usage-card h3 { margin: 0; color: var(--text); font-size: 16px; font-weight: 750; }
+.usage-value { margin: 0; line-height: 1.15; }
+.usage-value b { color: #e8f6f5; font-size: 30px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.usage-card[data-usage="downloads"] .usage-value b { color: #ffb3b3; }
+.usage-value span { color: var(--text-soft); font-size: 15px; }
+.usage-chart { display: block; width: 100%; height: 32px; }
+.usage-line { margin: 0; color: var(--text-soft); font-size: 15px; line-height: 1.5; }
+.usage-source { margin: auto 0 0; padding-top: 4px; color: var(--muted); font-size: 13px; }
+.workarounds-unmeasured { font-size: 14.5px; }
+.usage-chart .vpn-bar { fill: #52c9c4; }
+.usage-chart .vpn-bar-empty { fill: rgba(131, 150, 174, .35); }
