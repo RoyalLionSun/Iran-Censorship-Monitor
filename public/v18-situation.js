@@ -1,4 +1,4 @@
-import { getLanguage, localeFor, t as translate } from './i18n.js';
+import { getLanguage, localeFor, separator, t as translate } from './i18n.js';
 import { CONTEXT_CHECKED, CONTEXT_SOURCES, contextItems } from './context-items.js';
 import { MORE_SERVICE_GROUPS } from './service-findings.js';
 
@@ -504,7 +504,7 @@ function renderAccess(services, selection) {
     </tr>`;
   }).join('');
   const kinds = coverage?.unmeasuredKinds ?? {};
-  const kindText = Object.entries(kinds).map(([kind, n]) => `${formatNumber(n)} ${kindLabel(kind) || t('board.access.kind.other')}`).join(' · ');
+  const kindText = Object.entries(kinds).map(([kind, n]) => `${formatNumber(n)} ${kindLabel(kind) || t('board.access.kind.other')}`).join(separator());
   const publicBodies = coverage?.publicUnmeasured ?? [];
   return `
     <section class="access-board" aria-labelledby="access-title">
@@ -524,7 +524,7 @@ function renderAccess(services, selection) {
       ${coverage ? `<details class="access-unmeasured">
         <summary>${escapeHtml(t('board.access.unmeasured', { count: formatNumber(coverage.registered - coverage.measured), registered: formatNumber(coverage.registered) }))}</summary>
         ${kindText ? `<p>${escapeHtml(kindText)}</p>` : ''}
-        ${publicBodies.length ? `<p><b>${escapeHtml(t('board.access.publicUnmeasured'))}</b> ${publicBodies.map((item) => `<a href="${escapeHtml(networkHref(item.asn))}">${escapeHtml(item.name ? `${item.name} (${item.asn})` : item.asn)}</a>`).join(' · ')}</p>` : ''}
+        ${publicBodies.length ? `<p><b>${escapeHtml(t('board.access.publicUnmeasured'))}</b> ${publicBodies.map((item) => `<a href="${escapeHtml(networkHref(item.asn))}">${escapeHtml(item.name ? `${item.name} (${item.asn})` : item.asn)}</a>`).join(separator())}</p>` : ''}
         <p>${escapeHtml(t('board.access.blindSpot'))}</p>
       </details>` : ''}
     </section>`;
@@ -551,7 +551,7 @@ function contextSources(keys) {
     const source = CONTEXT_SOURCES[key];
     const label = `${source.name[lang]}, ${formatDay(source.date)}`;
     return `<a href="${escapeHtml(source.url)}"${source.internal ? '' : ' target="_blank" rel="noreferrer"'}>${escapeHtml(label)}</a>`;
-  }).join(' · ');
+  }).join(separator());
 }
 
 function contextList(panel) {
@@ -702,7 +702,7 @@ function vpnUseLine(use) {
     return `<rect class="${month.share === null ? 'vpn-bar-empty' : 'vpn-bar'}" x="${index * 10}" y="${24 - height}" width="7" height="${height}" rx="1"><title>${escapeHtml(label)}</title></rect>`;
   }).join('');
   const hint = t('board.vpnUse.hint', { date: formatDay(use.current.date) });
-  return `<p class="vpn-use" title="${escapeHtml(hint)}"><svg class="vpn-use-chart" viewBox="0 0 118 24" width="118" height="24" role="img" aria-label="${escapeHtml(t('board.vpnUse.chart'))}">${bars}</svg><span>${escapeHtml(parts.join(' · '))}</span></p>`;
+  return `<p class="vpn-use" title="${escapeHtml(hint)}"><svg class="vpn-use-chart" viewBox="0 0 118 24" width="118" height="24" role="img" aria-label="${escapeHtml(t('board.vpnUse.chart'))}">${bars}</svg><span>${escapeHtml(parts.join(separator()))}</span></p>`;
 }
 
 // What changed against the period of the same length before: first thing a returning reader
@@ -949,7 +949,7 @@ function bindOutageChart(root, interpretation) {
     });
     const parts = lines.map((line, index) => (row.values[index] === null ? null
       : lines.length > 1 ? `${line.label}: ${formatPercent(row.values[index])}` : formatPercent(row.values[index]))).filter(Boolean);
-    tooltip.textContent = `${formatDay(row.date)} · ${parts.join(' · ')}`;
+    tooltip.textContent = `${formatDay(row.date)}${separator()}${parts.join(separator())}`;
     tooltip.style.left = `${Math.min(75, Math.max(18, (px / width) * 100))}%`;
     tooltip.hidden = false;
   });
@@ -987,7 +987,7 @@ function statusRow(interpretation) {
       // Real user traffic in this network says more to a reader than a probe ping.
       ? { id: 'quality', status: 'info',
         hint: [duringOutage ? t('board.quality.duringOutage') : range ? t('board.quality.userRange', { low: formatNumber(range.latency.low, 0), high: formatNumber(range.latency.high, 0) }) : t('board.quality.userHint'),
-          qualityDaysNote(quality, interpretation.selection)].filter(Boolean).join(' · '),
+          qualityDaysNote(quality, interpretation.selection)].filter(Boolean).join(separator()),
         value: t('board.quality.user', { download: radarDownload === null ? '—' : formatNumber(radarDownload, 1), latency: formatNumber(radarLatency, 0) }) }
       : quality.state === 'path-observations-available' && loss !== null
         ? { id: 'quality', status: 'info', value: t('board.quality.value', { delivered: formatNumber(100 - loss, 1), rtt: rtt === null ? '—' : formatNumber(rtt, 0) }), hint: t('board.quality.hint') }
@@ -1184,7 +1184,7 @@ function renderHero(interpretation) {
   hero.innerHTML = `
     <header class="situation-top">
       <span class="section-label">${escapeHtml(stale ? t('board.kicker.stale') : t('board.kicker'))}</span>
-      <p class="situation-scope"><strong class="situation-network"><bdi>${escapeHtml(networkTitle(interpretation))}</bdi></strong><span class="scope-sep"> · </span>${period ? `<bdi>${escapeHtml(period)}</bdi>` : ''}${latest ? ` · <bdi>${escapeHtml(latest)}</bdi>` : ''}${stale ? ` · <bdi class="scope-stale">${escapeHtml(t('board.stale.since', { date: formatDateTime(stale) }))}</bdi>` : ''}</p>
+      <p class="situation-scope"><strong class="situation-network"><bdi>${escapeHtml(networkTitle(interpretation))}</bdi></strong><span class="scope-sep"> · </span>${period ? `<bdi>${escapeHtml(period)}</bdi>` : ''}${latest ? `${separator()}<bdi>${escapeHtml(latest)}</bdi>` : ''}${stale ? `${separator()}<bdi class="scope-stale">${escapeHtml(t('board.stale.since', { date: formatDateTime(stale) }))}</bdi>` : ''}</p>
       <h1 id="situation-headline" data-full="${escapeHtml(headlineText(headlineSummary, interpretation.services))}">${escapeHtml(headlineText(headlineSummary, interpretation.services, { compact: true }))}</h1>
       <p class="situation-lede">${escapeHtml(ledeText(interpretation))}</p>
       ${shareBar()}
@@ -1485,7 +1485,7 @@ function renderEvidenceOverview(assessment) {
   element.innerHTML = `<header><span class="section-label">${escapeHtml(t('interpretation.evidence.kicker'))}</span><h2>${escapeHtml(t('interpretation.evidence.title'))}</h2></header>
     <p>${escapeHtml(t('interpretation.evidence.intro'))}</p>
     <div class="evidence-matrix">${dimensions.map((dimension) => `
-      <div data-coverage="${escapeHtml(dimension.coverage)}"><strong>${escapeHtml(t(`interpretation.${dimension.id}.title`))}</strong><span>${escapeHtml(t(`interpretation.coverage.${dimension.coverage}`))}</span><small>${escapeHtml(dimension.availableSources.join(' · ') || t('interpretation.noUsableSources'))}</small></div>`).join('')}</div>
+      <div data-coverage="${escapeHtml(dimension.coverage)}"><strong>${escapeHtml(t(`interpretation.${dimension.id}.title`))}</strong><span>${escapeHtml(t(`interpretation.coverage.${dimension.coverage}`))}</span><small>${escapeHtml(dimension.availableSources.join(separator()) || t('interpretation.noUsableSources'))}</small></div>`).join('')}</div>
     <p class="method-boundary">${escapeHtml(assessment.methodologicalBoundary)}</p>`;
 }
 

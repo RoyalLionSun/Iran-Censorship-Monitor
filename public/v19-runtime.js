@@ -1,4 +1,4 @@
-import { localeFor, t } from './i18n.js';
+import { localeFor, separator, t } from './i18n.js';
 
 function ensureV19Styles() {
   if (document.querySelector('link[data-v19-style]')) return;
@@ -20,7 +20,7 @@ function healthText(health) {
   ];
   if (summary.scopeRequired) parts.push(t('sourceHealth.scopeRequired', { count: summary.scopeRequired }));
   if (summary.errors) parts.push(t('sourceHealth.errors', { count: summary.errors }));
-  return parts.join(' · ');
+  return parts.join(separator());
 }
 
 function healthDetail(health) {
@@ -99,7 +99,7 @@ function renderRegisterStates(health, format) {
     document.querySelector('#source-grid')?.before(summary);
   }
   // The middle dot looks like a Persian zero next to Persian digits; Farsi uses its semicolon.
-  summary.textContent = parts.join(localeFor().startsWith('fa') ? '؛ ' : ' · ');
+  summary.textContent = parts.join(separator());
 }
 
 ensureV19Styles();

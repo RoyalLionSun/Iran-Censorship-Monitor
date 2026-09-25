@@ -31,6 +31,9 @@ for (const [key, value] of Object.entries(en)) reverse.set(String(value), key);
 for (const [key, value] of Object.entries(fa)) if (!reverse.has(String(value))) reverse.set(String(value), key);
 
 export function getLanguage() { return language; }
+// Separator between parts of a line. The middle dot looks like the Persian zero (۰) next to
+// Persian digits, so Farsi uses its comma.
+export function separator(nextLanguage = language) { return nextLanguage === 'fa' ? '، ' : ' · '; }
 
 export function t(key, variables = {}) {
   const dictionary = dictionaries[language] || dictionaries.en;
