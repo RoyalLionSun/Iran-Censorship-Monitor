@@ -365,3 +365,4 @@ html[dir="rtl"] .history-strip { transform: scaleX(-1); }
 .anatomy-networks td { color: var(--text-soft); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .anatomy-networks td:nth-child(2) { color: var(--text); font-weight: 700; }
 .anatomy-networks .anatomy-foot { margin-top: 6px; }
+.control-board + .privileged-board { margin-top: 12px; }

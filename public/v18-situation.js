@@ -512,15 +512,44 @@ const PRIVILEGED_SOURCES = {
   khabarfoori: 'https://www.khabarfoori.com/%D8%A8%D8%AE%D8%B4-%D8%A7%D9%82%D8%AA%D8%B5%D8%A7%D8%AF%DB%8C-145/3179541-%D8%B3%DB%8C%D9%85%DA%A9%D8%A7%D8%B1%D8%AA-%D8%B3%D9%81%DB%8C%D8%AF-%D9%85%D8%B5%D9%88%D8%A8%D9%87-%DA%86%D9%87-%D9%85%D8%B1%D8%AC%D8%B9%DB%8C-%D8%A8%D9%88%D8%AF-%DA%86%D8%B1%D8%A7-%D8%AA%D8%B9%D8%AF%D8%A7%D8%AF-%D8%A2%D9%86%D9%87%D8%A7-%D8%AF%D8%B1-%D8%AF%D9%88%D9%84%D8%AA-%DA%86%D9%87%D8%A7%D8%B1%D8%AF%D9%87%D9%85-%DA%A9%D8%A7%D9%87%D8%B4-%DB%8C%D8%A7%D9%81%D8%AA',
   ban: 'https://thenewregion.com/posts/3922',
   citizenlab: 'https://citizenlab.ca/research/uncovering-irans-mobile-legal-intercept-system/',
+  factnameh: 'https://factnameh.substack.com/p/who-controls-irans-internet-the-clash',
+  entekhab: 'https://www.entekhab.ir/fa/news/905154/',
+  euRegulation: 'https://eur-lex.europa.eu/eli/reg_impl/2026/267/oj',
+  euCouncil: 'https://www.consilium.europa.eu/en/press/press-releases/2026/01/29/iran-council-adopts-new-sanctions-over-serious-human-rights-violations-and-iran-s-continued-support-to-russia-s-war-of-aggression-against-ukraine/',
+  // Our own measurement of the January 2026 shutdown (the timeline and networks table).
+  measuredJanuary: '/?asn=ALL&since=2026-01-05&until=2026-01-20#anatomy-title',
 };
 
 function sourceLinks(keys) {
-  return keys.map((key) => `<a href="${escapeHtml(PRIVILEGED_SOURCES[key])}" target="_blank" rel="noreferrer">${escapeHtml(t(`board.privileged.source.${key}`))}</a>`).join(' · ');
+  return keys.map((key) => {
+    const href = PRIVILEGED_SOURCES[key];
+    const external = !href.startsWith('/');
+    return `<a href="${escapeHtml(href)}"${external ? ' target="_blank" rel="noreferrer"' : ''}>${escapeHtml(t(`board.privileged.source.${key}`))}</a>`;
+  }).join(' · ');
+}
+
+// Who decides what is blocked and switched off, from official documents and named sources.
+// Where the deciding body is not published, the panel says so instead of guessing.
+function renderControl() {
+  const items = [
+    ['bill', ['rferlBill']],
+    ['taskForce', ['factnameh']],
+    ['shutdownOrder', ['entekhab', 'factnameh']],
+    ['filtering', ['euRegulation', 'euCouncil']],
+    ['contractors', ['euRegulation']],
+    ['satra', ['euRegulation']],
+    ['gateway', ['measuredJanuary']],
+  ];
+  return `
+    <section class="privileged-board control-board" aria-labelledby="control-title">
+      <header><h2 id="control-title">${escapeHtml(t('board.control.title'))}</h2><p>${escapeHtml(t('board.control.note'))}</p></header>
+      <ul>${items.map(([key, sources]) => `<li>${escapeHtml(t(`board.control.${key}`))} <small>${sourceLinks(sources)}</small></li>`).join('')}</ul>
+      <p class="privileged-limit">${escapeHtml(t('board.control.limit'))}</p>
+    </section>`;
 }
 
 function renderPrivileged() {
   const items = [
-    ['bill', ['rferlBill']],
     ['bloomberg', ['bloomberg']],
     ['internetProEnd', ['isnaEnd']],
     ['internetPro', ['iranintlApr', 'aljazeeraMay']],
@@ -999,6 +1028,7 @@ function renderHero(interpretation) {
     ${renderAnatomy(interpretation)}
     ${renderMoreServices(interpretation.services)}
     ${renderAccess(interpretation.services, selection)}
+    ${renderControl()}
     ${renderPrivileged()}`;
   bindOutageChart(hero, interpretation);
   bindAccess(hero, interpretation);
