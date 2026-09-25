@@ -722,6 +722,7 @@ export default Object.freeze({
   'board.lede.country': 'Nobody tested these services in this network in this period, so the result comes from tests in other Iranian networks.',
   'meaning.a.around.conduit': 'Psiphon gets through mostly via volunteer Conduit stations: about {connections} connections from Iran a day.',
   'share.msg.conduit': 'Psiphon via Conduit: about {connections} connections from Iran a day (Psiphon statistics)',
+  'share.menu': 'Share',
   'share.copy': 'Copy link',
   'share.copyFailed': 'Copy failed',
   'share.copied': 'Copied',

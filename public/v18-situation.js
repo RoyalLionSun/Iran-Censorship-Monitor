@@ -1116,8 +1116,24 @@ function shareBar() {
   // By use among readers in Iran and abroad. Signal and TikTok have no web share link: their
   // buttons copy the text and link, to paste in the app.
   const buttons = ['telegram', 'whatsapp', 'x', 'facebook', 'tiktok', 'signal', 'threads', 'truthsocial', 'copy', ...(native ? ['native'] : [])];
-  return `<div class="share-bar" role="group" aria-label="${escapeHtml(t('share.label'))}"><span>${escapeHtml(t('share.label'))}</span>${buttons
-    .map((kind) => `<button type="button" class="share-button" data-share="${kind}"${COPY_TO_APP.has(kind) ? ` title="${escapeHtml(t(`share.pasteHint.${kind}`))}"` : ''}>${escapeHtml(t(`share.${kind}`))}</button>`).join('')}</div>`;
+  return buttons.map((kind) => `<button type="button" class="button share-button" data-share="${kind}"${COPY_TO_APP.has(kind) ? ` title="${escapeHtml(t(`share.pasteHint.${kind}`))}"` : ''}>${escapeHtml(t(`share.${kind}`))}</button>`).join('');
+}
+
+// Sharing sits in the toolbar next to Export, as a menu of the same kind; it is drawn again with
+// every answer so its labels follow the page's language.
+function renderShareMenu() {
+  const exportMenu = document.querySelector('.toolbar .export-menu:not(.share-menu)');
+  if (!exportMenu) return;
+  let menu = document.querySelector('#share-menu');
+  if (!menu) {
+    menu = document.createElement('details');
+    menu.id = 'share-menu';
+    menu.className = 'export-menu share-menu';
+    exportMenu.after(menu);
+  }
+  const open = menu.open;
+  menu.innerHTML = `<summary class="button">${escapeHtml(t('share.menu'))}</summary><div class="export-menu-list" role="group" aria-label="${escapeHtml(t('share.label'))}">${shareBar()}</div>`;
+  menu.open = open;
 }
 
 // Copies the sentence and link; where the clipboard API is not allowed (plain http, older
@@ -1271,6 +1287,7 @@ function renderHero(interpretation) {
     ? t('board.stale.period', { from: formatDay(stalePeriod.since), to: formatDay(stalePeriod.until), date: formatDateTime(stale) })
     : t('board.stale.since', { date: formatDateTime(stale) })) : '';
   shareSource = interpretation;
+  renderShareMenu();
   updateFilterSummary();
   hero.dataset.headline = summary.headline?.state ?? summary.state;
   const headlineSummary = { ...summary, headline: summary.headline && { ...summary.headline, period: nationwidePeriod(interpretation.dimensions.connectivity) } };
@@ -1278,10 +1295,11 @@ function renderHero(interpretation) {
   hero.innerHTML = `
     <header class="situation-top">
       <span class="section-label">${escapeHtml(stale ? t('board.kicker.stale') : t('board.kicker'))}</span>
-      <h1 id="situation-headline" data-full="${escapeHtml(headlineText(headlineSummary, interpretation.services))}">${escapeHtml(headlineText(headlineSummary, interpretation.services, { compact: true }))}</h1>
+      <div class="situation-lead">
+        <h1 id="situation-headline" data-full="${escapeHtml(headlineText(headlineSummary, interpretation.services))}">${escapeHtml(headlineText(headlineSummary, interpretation.services, { compact: true }))}</h1>
+        <p class="situation-lede">${escapeHtml(ledeText(interpretation))}</p>
+      </div>
       <p class="situation-scope"><span class="visually-hidden">${escapeHtml(networkTitle(interpretation))}${separator()}</span>${period ? `<bdi>${escapeHtml(period)}</bdi>` : ''}${latest ? `${separator()}<bdi>${escapeHtml(latest)}</bdi>` : ''}${stale ? `${separator()}<bdi class="scope-stale">${escapeHtml(staleText)}</bdi>` : ''}</p>
-      <p class="situation-lede">${escapeHtml(ledeText(interpretation))}</p>
-      ${shareBar()}
     </header>
     ${jumpBar(interpretation)}
     ${renderChanges(interpretation.services)}

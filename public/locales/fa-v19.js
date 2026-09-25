@@ -722,6 +722,7 @@ export default Object.freeze({
   'board.lede.country': 'در این بازه کسی این سرویس‌ها را در این شبکه آزمایش نکرد؛ نتیجه از آزمون‌ها در دیگر شبکه‌های ایران است.',
   'meaning.a.around.conduit': 'سایفون بیشتر از راه ایستگاه‌های داوطلبانهٔ کاندوئیت عبور می‌کند: روزانه حدود {connections} اتصال از ایران.',
   'share.msg.conduit': 'سایفون از راه کاندوئیت: روزانه حدود {connections} اتصال از ایران (آمار سایفون)',
+  'share.menu': 'هم‌رسانی',
   'share.copy': 'کپی پیوند',
   'share.copyFailed': 'کپی نشد',
   'share.copied': 'کپی شد',

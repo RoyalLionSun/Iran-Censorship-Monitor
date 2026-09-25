@@ -1174,11 +1174,13 @@ async function init() {
 }
 
 $('#refresh-button').addEventListener('click', loadAll);
-// The export menu closes after a choice and when the reader clicks elsewhere.
+// The export and share menus close after a choice and when the reader clicks elsewhere; opening
+// one closes the other.
 document.addEventListener('click', (event) => {
-  const menu = document.querySelector('.export-menu');
-  if (!menu?.open) return;
-  if (!menu.contains(event.target) || event.target.closest('.export-menu-list button')) menu.open = false;
+  for (const menu of document.querySelectorAll('.export-menu')) {
+    if (!menu.open) continue;
+    if (!menu.contains(event.target) || event.target.closest('.export-menu-list button')) menu.open = false;
+  }
 });
 $('#export-button').addEventListener('click', exportCsv);
 $('#print-button').addEventListener('click', () => window.print());
