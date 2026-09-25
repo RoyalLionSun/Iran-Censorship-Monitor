@@ -496,10 +496,21 @@ let accessGroup = 'social';
 let accessSort = 'access';
 const ACCESS_GROUPS = MORE_SERVICE_GROUPS.map((group) => group.id);
 
+// Service columns in alphabetical order of the names the reader sees (Persian names in Farsi).
 function accessColumns(groupId, services) {
-  if (groupId === 'main') return MAIN_IDS.map((id) => ({ id, name: brandName(id, services) }));
+  const collator = new Intl.Collator(localeFor(), { sensitivity: 'base' });
+  const byName = (list) => list.sort((a, b) => collator.compare(a.name, b.name));
+  if (groupId === 'main') return byName(MAIN_IDS.map((id) => ({ id, name: brandName(id, services) })));
   const group = MORE_SERVICE_GROUPS.find((entry) => entry.id === groupId)?.services.map((service) => ({ id: service.id, name: moreServiceName(service) })) ?? [];
-  return groupId === 'social' ? [...MAIN_IDS.map((id) => ({ id, name: brandName(id, services) })), ...group] : group;
+  return byName(groupId === 'social' ? [...MAIN_IDS.map((id) => ({ id, name: brandName(id, services) })), ...group] : group);
+}
+
+// Further services, reachable first: what works is what readers look for.
+const REACH_RANK = { reachable: 0, partial: 1, restricted: 2, blocked: 3 };
+function byReachability(list) {
+  return list.map((service, index) => ({ service, index }))
+    .sort((a, b) => (REACH_RANK[a.service.status] ?? 4) - (REACH_RANK[b.service.status] ?? 4) || a.index - b.index)
+    .map(({ service }) => service);
 }
 
 function renderAccess(services, selection) {
@@ -645,7 +656,7 @@ function renderMoreServices(services) {
   return `
     <section class="more-services" aria-labelledby="more-services-title">
       <header><h2 id="more-services-title">${escapeHtml(t('board.more.title'))}</h2><p>${escapeHtml(t('board.more.note'))}${services.countryCheck === 'outage' ? ` ${escapeHtml(t('board.country.outage'))}` : ''}${services.survivorsOnly ? ` ${escapeHtml(t('board.services.survivorsOnly'))}` : ''}</p></header>
-      ${groups.map((group) => `<div class="more-group"><h3>${escapeHtml(t(`board.more.group.${group.id}`))}</h3><div class="more-group-body"><ul>${group.services.map(chip).join('')}</ul></div></div>`).join('')}
+      ${groups.map((group) => `<div class="more-group"><h3>${escapeHtml(t(`board.more.group.${group.id}`))}</h3><div class="more-group-body"><ul>${byReachability(group.services).map(chip).join('')}</ul></div></div>`).join('')}
     </section>`;
 }
 
