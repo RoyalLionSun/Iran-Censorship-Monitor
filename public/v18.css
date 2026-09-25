@@ -411,3 +411,14 @@ html[dir="rtl"] .history-strip { transform: scaleX(-1); }
 .workarounds-line { margin: 6px 0 0; color: var(--text-soft); font-size: 13px; line-height: 1.5; }
 .workarounds-unmeasured { margin: 10px 0 0; padding: 8px 12px; border-inline-start: 3px solid var(--border-strong); background: rgba(255,255,255,.02); color: var(--muted); font-size: 12.5px; line-height: 1.55; }
 .access-missing { margin: 6px 0 8px; padding: 8px 12px; border-inline-start: 3px solid #e2bd59; background: rgba(226, 189, 89, .08); color: var(--text-soft); font-size: 13px; line-height: 1.5; }
+/* Order of the access table: most access first, or A–Z. */
+.access-sort { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 2px 0 8px; color: var(--muted); font-size: 12.5px; }
+.access-sort button { padding: 3px 10px; border: 1px solid var(--border-strong); border-radius: 999px; background: rgba(16,32,53,.6); color: #bcd6f5; font: inherit; font-weight: 650; cursor: pointer; }
+.access-sort button[aria-pressed="true"] { color: #06121f; border-color: transparent; background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
+/* How much access a network gives, as a small bar under its level. */
+.access-meter { display: flex; align-items: center; gap: 6px; margin: 3px 0 1px; }
+.access-track { display: block; width: 64px; height: 6px; }
+.access-track-bg { fill: rgba(131, 150, 174, .22); }
+.access-track-fill { fill: #52c9c4; }
+[dir="rtl"] .access-track { transform: scaleX(-1); }
+.access-meter em { font-style: normal; font-size: 11.5px; color: var(--text-soft); }

@@ -430,6 +430,14 @@ function kindLabel(kind) {
   return group ? t(`board.access.kind.${group}`) : '';
 }
 
+// Share of the tab's services a network lets through (reachable 1, partly ½, problems ¼, blocked 0).
+const ACCESS_SCORE = { reachable: 1, partial: 0.5, restricted: 0.25, blocked: 0 };
+function accessShare(entry) {
+  if (Number.isFinite(entry.access)) return entry.access;
+  const scores = Object.values(entry.services ?? {}).map((item) => ACCESS_SCORE[item.status]).filter((score) => score !== undefined);
+  return scores.length ? Math.round((scores.reduce((sum, score) => sum + score, 0) / scores.length) * 100) : 0;
+}
+
 const ACCESS_MARK = { reachable: '✓', partial: '◐', blocked: '✕', restricted: '!', inconclusive: '?' };
 
 function accessCell(entry) {
@@ -445,6 +453,7 @@ function accessCell(entry) {
 // another category (news, tools, everyday services).
 const MAIN_IDS = ['instagram', 'whatsapp', 'telegram', 'youtube', 'x', 'facebook'];
 let accessGroup = 'social';
+let accessSort = 'access';
 const ACCESS_GROUPS = MORE_SERVICE_GROUPS.map((group) => group.id);
 
 function accessColumns(groupId, services) {
@@ -476,14 +485,21 @@ function renderAccess(services, selection) {
     .map((id) => `<button type="button" role="tab" data-access-group="${id}" aria-selected="${id === groupId}">${escapeHtml(t(`board.more.group.${id}`))}</button>`).join('')}</div>` : '';
   const count = (level) => access.filter((entry) => entry.level === level).length;
   const VISIBLE_ROWS = 10;
-  const rows = access.map((entry, index) => {
+  // Most access first (the order the server gives), or A–Z by the name the reader sees.
+  const collator = new Intl.Collator(localeFor(), { sensitivity: 'base' });
+  const ordered = [...access].sort(accessSort === 'name'
+    ? (a, b) => collator.compare(networkName(a.asn, names, null), networkName(b.asn, names, null))
+    : (a, b) => Number(a.thin) - Number(b.thin) || accessShare(b) - accessShare(a) || b.measurements - a.measurements);
+  const sortSwitch = `<div class="access-sort" role="group" aria-label="${escapeHtml(t('board.access.sort.label'))}"><span>${escapeHtml(t('board.access.sort.label'))}</span>${['access', 'name']
+    .map((id) => `<button type="button" data-access-sort="${id}" aria-pressed="${accessSort === id}">${escapeHtml(t(`board.access.sort.${id}`))}</button>`).join('')}</div>`;
+  const rows = ordered.map((entry, index) => {
     const kind = kindLabel(types[entry.asn]);
     const note = types[entry.asn] === 'institutional' ? `<small class="network-note">${escapeHtml(t('board.networks.institutional'))}</small>` : '';
     // The selected network always stays visible, even beyond the first rows.
     const extra = index >= VISIBLE_ROWS && entry.asn !== selection?.asn;
     return `<tr data-level="${escapeHtml(entry.level)}"${entry.thin ? ' data-thin="yes"' : ''}${entry.asn === selection?.asn ? ' data-selected="yes"' : ''}${extra ? ' data-extra="yes" hidden' : ''}>
       <th scope="row"><a href="${escapeHtml(networkHref(entry.asn))}">${escapeHtml(networkName(entry.asn, names, selection))}</a>${kind ? `<small>${escapeHtml(kind)}</small>` : ''}${note}</th>
-      <td class="access-level"><b>${escapeHtml(t(`board.access.level.${entry.level}`))}</b><small>${escapeHtml(t(entry.thin ? 'board.access.testsThin' : 'board.access.tests', { count: formatNumber(entry.measurements) }))}</small></td>
+      <td class="access-level"><b>${escapeHtml(t(`board.access.level.${entry.level}`))}</b><span class="access-meter" title="${escapeHtml(t('board.access.share', { share: formatNumber(accessShare(entry)) }))}"><svg class="access-track" viewBox="0 0 100 6" preserveAspectRatio="none" aria-hidden="true"><rect class="access-track-bg" width="100" height="6" rx="3"></rect><rect class="access-track-fill" width="${accessShare(entry)}" height="6" rx="3"></rect></svg><em>${escapeHtml(t('board.access.shareShort', { share: formatNumber(accessShare(entry)) }))}</em></span><small>${escapeHtml(t(entry.thin ? 'board.access.testsThin' : 'board.access.tests', { count: formatNumber(entry.measurements) }))}</small></td>
       ${brands.map((id) => accessCell(entry.services[id])).join('')}
     </tr>`;
   }).join('');
@@ -499,6 +515,7 @@ function renderAccess(services, selection) {
       ${breakdown.staleSince ? `<p class="access-missing">${escapeHtml(t('board.access.stale', { date: formatDateTime(breakdown.staleSince) }))}</p>` : ''}
       ${tabs}
       <p class="access-legend">${escapeHtml(t('board.access.legend'))}</p>
+      ${sortSwitch}
       <div class="access-scroll"><table id="access-table">
         <thead><tr><th scope="col">${escapeHtml(t('board.access.network'))}</th><th scope="col">${escapeHtml(t('board.access.access'))}</th>${columns.map((column) => `<th scope="col" class="access-service-col">${escapeHtml(column.name)}</th>`).join('')}</tr></thead>
         <tbody>${rows}</tbody>
@@ -1227,17 +1244,24 @@ function bindAccess(hero, interpretation) {
     hero.querySelectorAll('#access-table tr[data-extra]').forEach((row) => { row.hidden = false; });
     event.currentTarget.remove();
   });
-  // Switching the group redraws only the access section.
-  hero.querySelectorAll('[data-access-group]').forEach((button) => button.addEventListener('click', () => {
-    accessGroup = button.dataset.accessGroup;
+  // Switching the group or the order redraws only the access section.
+  const redraw = (focus) => {
     const section = hero.querySelector('.access-board');
     const wrapper = document.createElement('div');
     wrapper.innerHTML = renderAccess(interpretation.services, interpretation.selection ?? {});
     if (section && wrapper.firstElementChild) {
       section.replaceWith(wrapper.firstElementChild);
       bindAccess(hero, interpretation);
-      hero.querySelector(`[data-access-group="${accessGroup}"]`)?.focus();
+      hero.querySelector(focus)?.focus();
     }
+  };
+  hero.querySelectorAll('[data-access-group]').forEach((button) => button.addEventListener('click', () => {
+    accessGroup = button.dataset.accessGroup;
+    redraw(`[data-access-group="${accessGroup}"]`);
+  }));
+  hero.querySelectorAll('[data-access-sort]').forEach((button) => button.addEventListener('click', () => {
+    accessSort = button.dataset.accessSort;
+    redraw(`[data-access-sort="${accessSort}"]`);
   }));
 }
 

@@ -369,3 +369,18 @@ test('a way around the filter whose query failed says "not loaded", not "too few
   assert.equal(rows.find((row) => row.id === 'torsf').status, 'unavailable');
   assert.equal(rows.find((row) => row.id === 'psiphon').status, 'thin', 'no row at all is still "too few tests"');
 });
+
+test('networks are ordered by how much access they give, networks with few tests last', async () => {
+  const { summarizeNetworkAccess } = await import('../public/service-findings.js');
+  const row = (domain, asn, confirmed, ok) => ({ domain, asn, measurements: confirmed + ok, confirmed, anomalous: 0, ok, failures: 0 });
+  const rows = [
+    // AS1: Instagram blocked, WhatsApp reachable -> half access; many tests.
+    row('www.instagram.com', 'AS1', 40, 0), row('www.whatsapp.com', 'AS1', 0, 40),
+    // AS2: both blocked; even more tests.
+    row('www.instagram.com', 'AS2', 90, 0), row('www.whatsapp.com', 'AS2', 90, 0),
+    // AS3: both reachable, but only one test each.
+    row('www.instagram.com', 'AS3', 0, 1), row('www.whatsapp.com', 'AS3', 0, 1),
+  ];
+  const order = summarizeNetworkAccess(rows).map((entry) => `${entry.asn}:${entry.access}`);
+  assert.deepEqual(order, ['AS1:50', 'AS2:0', 'AS3:100']);
+});

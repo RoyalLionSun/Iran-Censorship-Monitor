@@ -296,9 +296,16 @@ export function summarizeNetworkAccess(rows = [], brands = SERVICE_BRANDS) {
     // One tester can make a network look open or closed; below a handful of tests per service
     // the row is marked and sorted after the well-covered networks of its level.
     const thin = Math.max(...Object.values(network.services).map((item) => item.measurements)) < THIN_TESTS;
-    return { ...network, level, thin };
-  }).sort((a, b) => rank[a.level] - rank[b.level] || Number(a.thin) - Number(b.thin) || b.measurements - a.measurements);
+    // How much of the tested services a network lets through: reachable counts fully, partly
+    // half, a problem without a confirmed block a quarter, blocked nothing. Sorting by it puts
+    // the networks with the most access first; networks with few tests follow the others.
+    const scores = Object.values(network.services).map((item) => ACCESS_SCORE[item.status]).filter((score) => score !== undefined);
+    const access = scores.length ? Math.round((scores.reduce((sum, score) => sum + score, 0) / scores.length) * 100) : 0;
+    return { ...network, level, thin, access };
+  }).sort((a, b) => Number(a.thin) - Number(b.thin) || b.access - a.access || rank[a.level] - rank[b.level] || b.measurements - a.measurements);
 }
+
+const ACCESS_SCORE = { reachable: 1, partial: 0.5, restricted: 0.25, blocked: 0 };
 
 // Further services an information site should cover, in four groups. Website tests only: the
 // result describes each website, not its app. Hosts as OONI tests them in Iran.
