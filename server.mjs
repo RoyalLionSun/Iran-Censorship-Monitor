@@ -485,7 +485,7 @@ async function handleApi(req, res, url) {
 
   if (url.pathname === '/api/circumvention') {
     const input = queryInput(url);
-    const result = await safeSource('OONI', () => getCircumventionSignals(input));
+    const result = await circumventionFor(input);
     jsonResponse(res, 200, result);
     return true;
   }
@@ -500,8 +500,10 @@ async function handleApi(req, res, url) {
   if (url.pathname === '/api/ooni/domains') {
     const input = queryInput(url);
     if (input.testName !== 'web_connectivity') throw new Error('Domain findings require Web Connectivity.');
-    const result = await getOoniDomains(ooniScope(input));
-    jsonResponse(res, 200, result);
+    // The same path as the Overview (local store first, then OONI, then the last good answer or the
+    // nearest period), so the technical table answers whenever the Overview can.
+    const result = await safeSource('OONI domains', () => viaStore(ooniScope(input), (iran) => storeDomains(store, ooniScope(input), iran), () => getOoniDomains(ooniScope(input))), sourceKey('OONI domains', input));
+    jsonResponse(res, result?.ok === false ? 400 : 200, result);
     return true;
   }
 
