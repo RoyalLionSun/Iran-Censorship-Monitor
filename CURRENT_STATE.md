@@ -103,6 +103,8 @@ Package version: **`1.8.0` intentionally unchanged**
 
 - a returning reader sees the saved state of the same view at once, marked "updating…", while the fresh answer loads; the fresh answer replaces it (and a copy is never shown over a fresher answer);
 
+- footer: two links in the reader's language, "Monthly reports" and "Daily updates" (`/updates`, a readable page of the feed's entries with how to follow them by RSS or Telegram). Before, four links showed "Monthly reports" twice in Farsi and the raw XML feeds, which look broken to ordinary readers; the licence line is now fully translated and right to left in Farsi;
+
 ## Next steps (agreed, not started)
 
 - **The dashboard itself must be reachable from Iran** before it is published: the Farsi version is for people there. Plan hosting so it is not behind a provider Iran blocks (e.g. not solely behind Cloudflare), offer mirrors and an .onion address for Tor users, and once online, check our own address from inside Iran (OONI Run link with the dashboard URL, or a Citizen Lab list entry).

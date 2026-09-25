@@ -1,4 +1,4 @@
-import { t } from './i18n.js';
+import { getLanguage, t } from './i18n.js';
 import './v11-context.js';
 import './v13-context.js';
 import './v14-context.js';
@@ -46,3 +46,14 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     }
   });
 }
+
+// Footer links lead to the reports and daily updates in the language being read.
+function localizeFooterLinks() {
+  const suffix = getLanguage() === 'fa' ? '?lang=fa' : '';
+  const reports = document.querySelector('#footer-reports');
+  const updates = document.querySelector('#footer-updates');
+  if (reports) reports.href = `/reports${suffix}`;
+  if (updates) updates.href = `/updates${suffix}`;
+}
+localizeFooterLinks();
+window.addEventListener('iran-monitor-languagechange', localizeFooterLinks);

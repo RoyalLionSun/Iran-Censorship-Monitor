@@ -38,7 +38,7 @@ import { getApnicCountryComposition, getApnicIpv6, getApnicVpnShare } from './li
 import { getServiceHistory } from './lib/history.mjs';
 import { buildFeedEntry, postToTelegram, readEntries, renderAtom, upsertEntry } from './lib/feed.mjs';
 import { renderWidget } from './lib/widget.mjs';
-import { monthRange, recentMonths, renderMonthlyReport, renderReportIndex } from './lib/report.mjs';
+import { monthRange, recentMonths, renderMonthlyReport, renderReportIndex, renderUpdatesPage } from './lib/report.mjs';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
 
@@ -738,6 +738,29 @@ async function monthlyReportHtml(range, lang, base) {
   return reportInFlight.get(key);
 }
 
+// Daily updates as a readable page: the feed's entries, plus how to follow them.
+async function serveUpdates(req, res, url) {
+  const lang = url.searchParams.get('lang') === 'fa' ? 'fa' : 'en';
+  const base = process.env.PUBLIC_URL?.replace(/\/+$/, '') || `http://${req.headers.host || `${HOST}:${PORT}`}`;
+  const entries = await feedEntries(lang, base);
+  const channel = process.env[`TELEGRAM_CHANNEL_${lang.toUpperCase()}`]?.trim() ?? '';
+  const telegramUrl = /^@\w{4,}$/.test(channel) ? `https://t.me/${channel.slice(1)}` : '';
+  sendHtml(req, res, renderUpdatesPage({ lang, entries, feedUrl: `${base}/feed.xml${lang === 'fa' ? '?lang=fa' : ''}`, telegramUrl }));
+}
+
+function sendHtml(req, res, html) {
+  let body = Buffer.from(html);
+  const encoding = pickEncoding(req.headers['accept-encoding']);
+  if (encoding) body = compressBody(body, encoding);
+  res.writeHead(200, {
+    'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache', vary: 'accept-encoding',
+    'x-content-type-options': 'nosniff', 'referrer-policy': 'strict-origin-when-cross-origin',
+    'content-security-policy': "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+    ...(encoding ? { 'content-encoding': encoding } : {}), 'content-length': body.length,
+  });
+  res.end(body);
+}
+
 async function serveReport(req, res, url) {
   const lang = url.searchParams.get('lang') === 'fa' ? 'fa' : 'en';
   const base = process.env.PUBLIC_URL?.replace(/\/+$/, '') || `http://${req.headers.host || `${HOST}:${PORT}`}`;
@@ -775,6 +798,8 @@ const server = http.createServer(async (req, res) => {
       await serveFeed(req, res, url);
     } else if (url.pathname === '/widget.svg') {
       await serveWidget(req, res, url);
+    } else if (url.pathname === '/updates') {
+      await serveUpdates(req, res, url);
     } else if (url.pathname === '/report' || url.pathname === '/reports') {
       await serveReport(req, res, url);
     } else if (url.pathname.startsWith('/api/')) {

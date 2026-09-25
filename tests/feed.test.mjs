@@ -95,3 +95,17 @@ test('the monthly report covers the month, credits the sources and follows Farsi
   assert.match(fa, /<html lang="fa" dir="rtl">/);
   assert.match(fa, /Zoom \([^)]*\)، GitHub/, 'Persian list separator');
 });
+
+test('the daily updates page lists the entries readably and explains how to follow them', async () => {
+  const { renderUpdatesPage } = await import('../lib/report.mjs');
+  const entries = [{ id: '2026-09-25', title: 'Instagram is blocked', lines: ['What changed: none'], link: 'https://m.example/?lang=en' }];
+  const en = renderUpdatesPage({ lang: 'en', entries, feedUrl: 'https://m.example/feed.xml', telegramUrl: 'https://t.me/example' });
+  assert.match(en, /<h1>Daily updates<\/h1>/);
+  assert.match(en, /Instagram is blocked/);
+  assert.match(en, /https:\/\/m\.example\/feed\.xml/);
+  assert.match(en, /https:\/\/t\.me\/example/);
+  const fa = renderUpdatesPage({ lang: 'fa', entries: [], feedUrl: 'https://m.example/feed.xml?lang=fa' });
+  assert.match(fa, /dir="rtl"/);
+  assert.match(fa, /به‌روزرسانی روزانه/);
+  assert.doesNotMatch(fa, /t\.me/, 'no Telegram line without a channel');
+});

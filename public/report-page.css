@@ -32,3 +32,7 @@ li { margin: 4px 0; }
 footer { margin-top: 28px; padding-top: 12px; border-top: 1px solid #dfe6ef; color: #5b6b80; font-size: 13px; }
 @media (max-width: 640px) { main { margin: 0; border-radius: 0; padding: 18px 16px; } .band-handle { display: none; } .band { grid-template-columns: 1fr auto; } .band-title { justify-self: start; } }
 @media print { body { background: #fff; } .band { background: none; } .band::after, .actions { display: none; } .band-title { color: #13243e; } main { box-shadow: none; margin: 0; padding: 0; } }
+
+.update { padding: 14px 0; border-top: 1px solid #dfe6ef; }
+.update h2 { margin: 2px 0 6px; color: #c62828; font-size: 18px; }
+.update p { margin: 4px 0; }
