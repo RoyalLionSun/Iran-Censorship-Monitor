@@ -547,6 +547,12 @@ function renderPrivileged() {
   return contextPanel('privileged', 'privileged-title');
 }
 
+// A service with a Persian name of its own is shown by it in Farsi.
+const MORE_NAMES_FA = new Map(MORE_SERVICE_GROUPS.flatMap((group) => group.services).filter((service) => service.nameFa).map((service) => [service.id, service.nameFa]));
+function moreServiceName(service) {
+  return (getLanguage() === 'fa' && MORE_NAMES_FA.get(service.id)) || service.name;
+}
+
 // Further services as compact chips per group: blocked, partly, problems or reachable, with the
 // numbers on hover. A dashed chip was answered from other Iranian networks.
 function renderMoreServices(services) {
@@ -559,7 +565,7 @@ function renderMoreServices(services) {
     }) + (service.scope === 'country' ? ` · ${t('board.more.country')}` : '') : t('board.more.untested');
     const appTitle = service.app ? ` · ${t('board.more.appDetail', { total: formatNumber(service.app.measurements), count: formatNumber(service.app.anomalies) })}` : '';
     return `<li class="more-chip" data-status="${escapeHtml(service.status)}"${service.scope === 'country' ? ' data-scope="country"' : ''} title="${escapeHtml(title + appTitle)}">
-      <span class="more-chip-name">${escapeHtml(service.name)}</span><span class="more-chip-status">${escapeHtml(t(`board.more.status.${service.status}`))}</span>${service.app ? `<span class="more-chip-app" data-app-status="${escapeHtml(service.app.status)}">${escapeHtml(t(`board.more.app.${service.app.status}`))}</span>` : ''}</li>`;
+      <span class="more-chip-name">${escapeHtml(moreServiceName(service))}</span><span class="more-chip-status">${escapeHtml(t(`board.more.status.${service.status}`))}</span>${service.app ? `<span class="more-chip-app" data-app-status="${escapeHtml(service.app.status)}">${escapeHtml(t(`board.more.app.${service.app.status}`))}</span>` : ''}</li>`;
   };
   return `
     <section class="more-services" aria-labelledby="more-services-title">
@@ -1231,7 +1237,7 @@ function unknownItems(interpretation) {
   }
   const untested = [
     ...(services?.visible ?? []).filter((item) => item.status === 'untested').map((item) => brandName(item.id, services)),
-    ...(services?.more ?? []).flatMap((group) => group.services.filter((service) => !service.scope).map((service) => service.name)),
+    ...(services?.more ?? []).flatMap((group) => group.services.filter((service) => !service.scope).map(moreServiceName)),
   ];
   if (untested.length) {
     const shown = untested.slice(0, 5);
