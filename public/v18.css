@@ -458,3 +458,6 @@ html[lang="fa"] .usage-heading { letter-spacing: normal; }
 .usage-chart .vpn-bar-empty { fill: rgba(131, 150, 174, .35); }
 /* When the shown data are not fresh, the reader must see it: the only line kept under the finding. */
 .situation-stale { margin: 2px 0 8px; padding: 6px 10px; border-inline-start: 3px solid #e2bd59; background: rgba(226, 189, 89, .08); color: var(--text-soft); font-size: 14px; }
+/* The kicker above the finding ("Current situation") reads as a label, not as fine print. */
+.situation-top > .section-label { font-family: inherit; font-size: 17px; font-weight: 800; letter-spacing: .07em; }
+html[lang="fa"] .situation-top > .section-label { font-size: 17px; letter-spacing: normal; }
