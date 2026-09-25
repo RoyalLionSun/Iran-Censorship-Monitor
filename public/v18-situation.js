@@ -727,6 +727,59 @@ function chartLines(connectivity, interpretation) {
   return lines.filter((line) => line.series.length >= 3);
 }
 
+// How the outage unfolded, hour by hour in Tehran time: routes (RIPE RIS), traffic (Cloudflare
+// Radar) and reachability from abroad (IODA), then which networks still carried traffic.
+const ANATOMY_LAYER = { routes: 'routes', traffic: 'traffic', reach: 'reach' };
+const anatomyLayer = (kind) => ANATOMY_LAYER[kind.split('-')[0]] ?? 'routes';
+// Spans that are not an hour: the first day of the outage, or the day after its end.
+const ANATOMY_DAY_KINDS = new Set(['reach-day-after', 'routes-v6-missing', 'routes-v4-missing']);
+
+function tehranTime(value) {
+  return new Intl.DateTimeFormat(localeFor(), { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: 'Asia/Tehran' }).format(Date.parse(value));
+}
+
+function tehranDay(value) {
+  return new Intl.DateTimeFormat(localeFor(), { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Tehran' }).format(Date.parse(value));
+}
+
+function anatomyWhen(event) {
+  if (event.kind === 'routes-v4-kept') return t('board.anatomy.firstDay');
+  if (ANATOMY_DAY_KINDS.has(event.kind)) return tehranDay(event.to);
+  return t('board.anatomy.when', { day: tehranDay(event.to), time: ltr(`${tehranTime(event.from)}–${tehranTime(event.to)}`) });
+}
+
+function anatomyText(event) {
+  return t(`board.anatomy.${event.kind}`, {
+    before: formatNumber(event.before ?? 0), after: formatNumber(event.after ?? 0), percent: formatPercent(event.percent ?? 0),
+  });
+}
+
+function renderAnatomy(interpretation) {
+  const anatomy = interpretation.dimensions.connectivity?.outageAnatomy;
+  if (!anatomy || (!anatomy.onset.length && !anatomy.restoration.length && !anatomy.networks?.networks?.length)) return '';
+  const item = (event) => `<li data-layer="${anatomyLayer(event.kind)}"><time>${escapeHtml(anatomyWhen(event))}</time><span>${escapeHtml(anatomyText(event))}</span><small>${escapeHtml(t(`board.anatomy.source.${anatomyLayer(event.kind)}`))}</small></li>`;
+  const phase = (label, events) => (events.length ? `<li class="anatomy-phase">${escapeHtml(label)}</li>${events.map(item).join('')}` : '');
+  const networks = anatomy.networks?.networks ?? [];
+  const share = (value) => formatPercent(value);
+  const networkName = (row) => (row.name ? `${row.name} (${ltr(row.asn)})` : t('board.anatomy.networks.private', { asn: ltr(row.asn) }));
+  const table = networks.length ? `
+      <div class="anatomy-networks">
+        <h3>${escapeHtml(t('board.anatomy.networks.title'))}</h3>
+        <p>${escapeHtml(t('board.anatomy.networks.note', { from: formatDay(anatomy.networks.from), to: formatDay(new Date(Date.parse(anatomy.networks.to) - 1).toISOString()) }))}</p>
+        <table><thead><tr><th>${escapeHtml(t('board.anatomy.networks.network'))}</th><th>${escapeHtml(t('board.anatomy.networks.during'))}</th><th>${escapeHtml(t('board.anatomy.networks.before'))}</th></tr></thead>
+          <tbody>${networks.map((row) => `<tr><th scope="row">${escapeHtml(networkName(row))}</th><td>${escapeHtml(share(row.share))}</td><td>${escapeHtml(row.before !== null ? share(row.before) : row.beforeBelow !== null ? (row.beforeBelow < 0.1 ? share(row.beforeBelow) : t('board.anatomy.networks.below', { value: share(row.beforeBelow) })) : '—')}</td></tr>`).join('')}</tbody></table>
+        ${anatomy.networks.foreignLeftOut ? `<p class="anatomy-foot">${escapeHtml(plural('board.anatomy.networks.foreign', anatomy.networks.foreignLeftOut))}</p>` : ''}
+      </div>` : '';
+  return `
+    <section class="anatomy-board" aria-labelledby="anatomy-title">
+      <header><h2 id="anatomy-title">${escapeHtml(t('board.anatomy.title'))}</h2><p>${escapeHtml(t('board.anatomy.note'))}</p></header>
+      <div class="anatomy-grid">
+        <ol class="anatomy-timeline">${phase(t('board.anatomy.start'), anatomy.onset)}${phase(t('board.anatomy.end'), anatomy.restoration)}</ol>
+        ${table}
+      </div>
+    </section>`;
+}
+
 // Traffic against the week before; the outage is a shaded band dated by Radar. With a selected
 // network, its own line sits next to the country, because networks recover differently.
 function renderOutageTraffic(interpretation) {
@@ -943,6 +996,7 @@ function renderHero(interpretation) {
     ${statusRow(interpretation)}
     ${renderWorkarounds(interpretation.services)}
     ${renderOutageTraffic(interpretation)}
+    ${renderAnatomy(interpretation)}
     ${renderMoreServices(interpretation.services)}
     ${renderAccess(interpretation.services, selection)}
     ${renderPrivileged()}`;

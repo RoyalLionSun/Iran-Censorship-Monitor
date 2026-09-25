@@ -34,6 +34,7 @@ import { correlateShutdownContext } from './lib/shutdown-context.mjs';
 import { getGdeltIranIntelligence } from './lib/osint.mjs';
 import { getMlabPerformance } from './lib/mlab.mjs';
 import { getAccessNowStopIncidents } from './lib/accessnow.mjs';
+import { getShutdownAnatomy } from './lib/anatomy.mjs';
 import { getApnicCountryComposition, getApnicIpv6, getApnicVpnShare } from './lib/apnic.mjs';
 import { getServiceHistory } from './lib/history.mjs';
 import { buildFeedEntry, postToTelegram, readEntries, renderAtom, upsertEntry } from './lib/feed.mjs';
@@ -343,6 +344,10 @@ async function handleApi(req, res, url) {
     // For a selected network its own traffic sits next to the country: networks recover differently.
     const trafficFor = (asn) => safeSource('Cloudflare Radar outage traffic', () => getRadarOutageTraffic({ start: outage.startDate, end: outage.endDate, asn }), `Radar outage traffic|${outage.startDate}|${outage.endDate ?? ''}|${asn}`);
     const trafficTask = outage ? Promise.all([trafficFor(''), input.asn ? trafficFor(input.asn) : null]) : Promise.resolve([null, null]);
+    // How the same outage unfolded hour by hour (routes, traffic, reachability) for all of Iran.
+    const anatomyTask = outage
+      ? safeSource('Shutdown timeline', async () => getShutdownAnatomy({ start: outage.startDate, end: outage.endDate ?? null, storeDir: join(root, 'var/anatomy'), iranAsns: await iranRegisteredAsns(), catalog: asns }), `Shutdown timeline|${outage.startDate}|${outage.endDate ?? ''}`)
+      : Promise.resolve(null);
     // Where each service was and was not blocked, by named Iranian network.
     const serviceNetworksTask = input.testName !== 'web_connectivity' ? Promise.resolve(null) : (async () => {
       const domains = [...SERVICE_BRANDS, ...MORE_SERVICE_GROUPS.flatMap((group) => group.services)].flatMap((brand) => brand.domains);
@@ -388,8 +393,8 @@ async function handleApi(req, res, url) {
     const countryCircumventionTask = input.asn
       ? safeSource('OONI circumvention', () => viaStore({ ...input, asn: '' }, (iran) => storeCircumvention(store, { ...input, asn: '' }, iran), () => getCircumventionSignals({ ...input, asn: '' })), sourceKey('OONI circumvention', { ...input, asn: '' }))
       : Promise.resolve(circumvention);
-    const [countryOoniDomains, ooniSamples, ooniNetworks, [outageTraffic, networkOutageTraffic], serviceNetworks, previousOoniDomains, outageHistory, countryCircumvention] = await Promise.all([
-      countryTask, samplesTask, networksTask, trafficTask, serviceNetworksTask, previousTask, historyTask, countryCircumventionTask,
+    const [countryOoniDomains, ooniSamples, ooniNetworks, [outageTraffic, networkOutageTraffic], serviceNetworks, previousOoniDomains, outageHistory, countryCircumvention, outageAnatomy] = await Promise.all([
+      countryTask, samplesTask, networksTask, trafficTask, serviceNetworksTask, previousTask, historyTask, countryCircumventionTask, anatomyTask,
     ]);
     // A nationwide outage in either period means tests came only from networks that kept access;
     // comparing such periods would show changes that are none.
@@ -401,7 +406,7 @@ async function handleApi(req, res, url) {
     // those paths were switched on. Probes were limited to Iranian networks when measuring.
     const activeChecks = store.activeChecks({ hosts: ACTIVE_HOSTS, since: input.since, until: input.until, asn: input.asn });
     const vpnUse = await vpnUsePromise;
-    const assessment = buildAssessment({ activeChecks, vpnUse, countryCircumvention, ooni, ripe, radar, radarQuality, ioda, ripestat, censoredPlanet, tor, mlab, apnic, globalping, peeringdb, ihr, asrank, rpki, pulse, ooniDomains, countryOoniDomains, circumvention, ooniSamples, ooniNetworks, outageTraffic, networkOutageTraffic, serviceNetworks, previousOoniDomains: previousOoniDomains ? { ...previousOoniDomains, period: previous, outageOverlap: comparisonBlockedByOutage } : null, selection: input, scopeLabel });
+    const assessment = buildAssessment({ activeChecks, vpnUse, countryCircumvention, ooni, ripe, radar, radarQuality, ioda, ripestat, censoredPlanet, tor, mlab, apnic, globalping, peeringdb, ihr, asrank, rpki, pulse, ooniDomains, countryOoniDomains, circumvention, ooniSamples, ooniNetworks, outageTraffic, networkOutageTraffic, outageAnatomy, serviceNetworks, previousOoniDomains: previousOoniDomains ? { ...previousOoniDomains, period: previous, outageOverlap: comparisonBlockedByOutage } : null, selection: input, scopeLabel });
     const asnProfile = input.asn ? asns.find((item) => item.asn === input.asn) || null : null;
     // Which route answered the access evidence, and how current each collector path is.
     const health = store.health();
@@ -409,7 +414,7 @@ async function handleApi(req, res, url) {
       paths: Object.fromEntries(Object.entries(collectorPlan()).map(([name, planned]) => [name, { ...planned, ...(health[name] ?? {}) }])),
       coverage: Object.fromEntries(['ooni-api', 'ooni-s3'].map((path) => [path, { since: store.getMeta(`${path}:coveredSince`), until: store.getMeta(`${path}:coveredUntil`) }])) };
     const payload = { ok: true, input, asnProfile, fetchedAt: new Date().toISOString(), dataPaths, assessment, ooni, ripe, radar, radarQuality, ioda, tor, mlab, apnic, vpnUse, ripestat, globalping, censoredPlanet, peeringdb, ihr, asrank, rpki, pulse };
-    if (isCleanOverview([ooni, ripe, radar, radarQuality, ioda, tor, mlab, apnic, ripestat, censoredPlanet, pulse, ooniDomains, countryOoniDomains, circumvention, outageTraffic, networkOutageTraffic, ooniNetworks, serviceNetworks, previousOoniDomains, ...ooniSamples])) {
+    if (isCleanOverview([ooni, ripe, radar, radarQuality, ioda, tor, mlab, apnic, ripestat, censoredPlanet, pulse, ooniDomains, countryOoniDomains, circumvention, outageTraffic, networkOutageTraffic, outageAnatomy, ooniNetworks, serviceNetworks, previousOoniDomains, ...ooniSamples])) {
       rememberHistoricalOverview(cacheKey, payload, settled ? HISTORICAL_OVERVIEW_TTL_MS : CURRENT_OVERVIEW_TTL_MS);
     } else if (!settled) {
       // A current answer with a missing part is kept for a minute only, so the part is retried soon.

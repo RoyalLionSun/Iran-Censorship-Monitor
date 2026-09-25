@@ -96,6 +96,32 @@ test('the monthly report covers the month, credits the sources and follows Farsi
   assert.match(fa, /Zoom \([^)]*\)، GitHub/, 'Persian list separator');
 });
 
+test('the monthly report shows how a shutdown unfolded, in Tehran time, without naming private persons', async () => {
+  const { monthRange, renderMonthlyReport } = await import('../lib/report.mjs');
+  const outageAnatomy = {
+    start: '2026-01-08T16:30:00Z',
+    onset: [{ kind: 'routes-v6', from: '2026-01-08T11:00:00Z', to: '2026-01-08T12:00:00Z', before: 433, after: 33, percent: 7.6 }],
+    restoration: [{ kind: 'reach-day-after', from: '2026-02-01T18:00:00Z', to: '2026-02-02T06:00:00Z', percent: 97.9 }],
+    networks: { from: '2026-01-09T00:00:00Z', to: '2026-01-16T00:00:00Z', foreignLeftOut: 5, networks: [
+      { asn: 'AS49666', name: 'TIC / Zirsakht Gateway', share: 35.4, before: null, beforeBelow: 0.03 },
+      { asn: 'AS210705', name: null, share: 4.5, before: 0.1, beforeBelow: null },
+    ] },
+  };
+  const interpretation = { summary: { headline: { state: 'major-outage' } }, services: { items: [] }, dimensions: { connectivity: { outageAnatomy } } };
+  const range = monthRange('2026-01', '2026-09-25');
+  const en = renderMonthlyReport({ interpretation, history: null, range, lang: 'en', dashboardUrl: 'https://m.example/' });
+  assert.match(en, /How the shutdown unfolded/);
+  // 11:00–12:00 UTC is 14:30–15:30 in Tehran.
+  assert.match(en, /Jan 2026 · \u206614:30–15:30\u2069/);
+  assert.match(en, /33 of 433 Iranian IPv6 address ranges/);
+  assert.match(en, /TIC \/ Zirsakht Gateway \(\u2066AS49666\u2069\)<\/th><td>35%<\/td><td>under 0.1%/);
+  assert.match(en, /\u2066AS210705\u2069 · registered to a private person/);
+  assert.match(en, /5 networks registered abroad/);
+  const fa = renderMonthlyReport({ interpretation, history: null, range, lang: 'fa', dashboardUrl: 'https://m.example/' });
+  assert.match(fa, /قطعی چگونه پیش رفت/);
+  assert.match(fa, /۱۴۰۴، ساعت \u2066۱۴:۳۰–۱۵:۳۰\u2069/);
+});
+
 test('the daily updates page lists the entries readably and explains how to follow them', async () => {
   const { renderUpdatesPage } = await import('../lib/report.mjs');
   const entries = [{ id: '2026-09-25', title: 'Instagram is blocked', lines: ['What changed: none'], link: 'https://m.example/?lang=en' }];
