@@ -974,35 +974,94 @@ async function copyShare(button, value, labelKey, copiedText = null) {
   setTimeout(() => { button.textContent = t(labelKey); }, 2000);
 }
 
-function shareText() {
+// What is shared comes from the finding on screen. Messengers (Telegram, WhatsApp, Signal,
+// TikTok, copy) get the full picture line by line; X, Threads and Truth Social, with their
+// length limits, a compact sentence. The link is the public address when one is configured.
+let shareSource = null;
+
+function shareUrl() {
+  const base = document.querySelector('meta[property="og:url"]')?.content?.replace(/\/+$/, '') || location.origin;
+  return `${base}${location.pathname}${location.search}`;
+}
+
+function shareWhere(interpretation) {
+  return interpretation.selection?.asn ? networkTitle(interpretation) : t('share.where.iran');
+}
+
+function sharePeriod(interpretation) {
+  const { since, until } = interpretation.selection ?? {};
+  return since && until ? `${formatDay(since)} – ${formatDay(until)}` : '';
+}
+
+function shareShort(interpretation) {
   const heading = document.querySelector('#situation-headline');
   const headline = (heading?.dataset.full || heading?.textContent || '').trim();
-  const scope = document.querySelector('.situation-scope')?.textContent?.replace(/[\u2066-\u2069]/g, '').replace(/\s+/g, ' ').trim() ?? '';
-  return `${headline}${scope ? ` (${scope})` : ''} · Iran Censorship Monitor`;
+  return t('share.short', { headline, where: shareWhere(interpretation), period: sharePeriod(interpretation) });
+}
+
+function shareLong(interpretation) {
+  const { services, dimensions } = interpretation;
+  const names = (ids) => listOf(ids.map((id) => brandName(id, services)));
+  const lines = [t('share.msg.title', { where: shareWhere(interpretation), period: sharePeriod(interpretation) }), ''];
+  if (services?.blocked?.length) lines.push(`⛔ ${t('share.msg.blocked', { services: names(services.blocked) })}`);
+  if (services?.restricted?.length) lines.push(`⚠️ ${t('share.msg.restricted', { services: names(services.restricted) })}`);
+  if (services?.reachable?.length) lines.push(`✅ ${t('share.msg.reachable', { services: names(services.reachable) })}`);
+  const access = services?.networkBreakdown?.access ?? [];
+  if (access.length) {
+    const level = (name) => formatNumber(access.filter((entry) => entry.level === name).length);
+    lines.push(`🌐 ${t('share.msg.access', { measured: formatNumber(access.length), full: level('full'), partial: level('partial'), blocked: level('blocked') })}`);
+  }
+  const tested = (services?.more ?? []).flatMap((group) => group.services.filter((service) => service.scope));
+  const blockedMore = tested.filter((service) => service.status === 'blocked');
+  if (tested.length) {
+    lines.push(`📵 ${t('share.msg.more', { blocked: formatNumber(blockedMore.length), tested: formatNumber(tested.length), examples: listOf(blockedMore.slice(0, 5).map(moreServiceName)) })}`);
+  }
+  const changes = services?.changes;
+  if (changes?.compared && !changes.outageOverlap) {
+    // Main services by their name in the reader's language, further services by theirs.
+    const label = (entry) => { const key = `board.brand.${entry.id}`; const text = t(key); return text !== key ? text : moreServiceName(entry); };
+    const moved = (entry) => `${label(entry)} (${t(`board.more.status.${entry.from}`)} → ${t(`board.more.status.${entry.to}`)})`;
+    const all = [...(changes.worse ?? []), ...(changes.better ?? [])];
+    lines.push(`🔄 ${all.length ? t('share.msg.changes', { changes: listOf(all.slice(0, 4).map(moved)) }) : t('share.msg.noChanges')}`);
+  }
+  const workarounds = (services?.workarounds ?? []).filter((item) => item.status !== 'thin');
+  if (workarounds.length) {
+    lines.push(`🛡️ ${t('share.msg.workarounds', { list: listOf(workarounds.map((item) => t(`share.msg.tool.${item.status}`, { tool: t(`board.workarounds.tool.${item.id}`) }))) })}`);
+  }
+  const period = nationwidePeriod(dimensions.connectivity);
+  lines.push(`📶 ${period
+    ? (period.end ? t('share.msg.outage', { from: formatDay(period.start), to: formatDay(period.end) }) : t('share.msg.outageOngoing', { from: formatDay(period.start) }))
+    : t('share.msg.noOutage')}`);
+  const runs = services?.vantage?.runs;
+  lines.push('', runs ? t('share.msg.basisRuns', { runs: formatNumber(runs) }) : t('share.msg.basis'));
+  return lines.join('\n');
 }
 
 document.addEventListener('click', async (event) => {
   const button = event.target.closest?.('[data-share]');
   if (!button) return;
-  const url = location.href;
-  const text = shareText();
-  const open = (address) => window.open(address, '_blank', 'noopener,noreferrer');
+  const url = shareUrl();
+  const interpretation = shareSource;
+  if (!interpretation) return;
   const kind = button.dataset.share;
+  const short = ['x', 'threads', 'truthsocial'].includes(kind);
+  const text = short ? shareShort(interpretation) : shareLong(interpretation);
+  const open = (address) => window.open(address, '_blank', 'noopener,noreferrer');
   if (kind === 'native') {
     try { await navigator.share({ title: 'Iran Censorship Monitor', text, url }); } catch (error) {
       // Closed by the reader is fine; any other failure falls back to copying the link.
-      if (error?.name !== 'AbortError') await copyShare(button, `${text} ${url}`, 'share.native');
+      if (error?.name !== 'AbortError') await copyShare(button, `${text}\n${url}`, 'share.native');
     }
   } else if (kind === 'telegram') open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`);
-  else if (kind === 'whatsapp') open(`https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}`);
+  else if (kind === 'whatsapp') open(`https://wa.me/?text=${encodeURIComponent(`${text}\n${url}`)}`);
   else if (kind === 'x') open(`https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`);
   else if (kind === 'facebook') open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`);
   else if (kind === 'threads') open(`https://www.threads.net/intent/post?text=${encodeURIComponent(`${text} ${url}`)}`);
   // Truth Social's documented share link: https://help.truthsocial.com/publishers/share-button/
   else if (kind === 'truthsocial') open(`https://truthsocial.com/share?title=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`);
-  else if (COPY_TO_APP.has(kind)) await copyShare(button, `${text} ${url}`, `share.${kind}`, t(`share.pasteIn.${kind}`));
+  else if (COPY_TO_APP.has(kind)) await copyShare(button, `${text}\n${url}`, `share.${kind}`, t(`share.pasteIn.${kind}`));
   else if (kind === 'copy') {
-    await copyShare(button, `${text} ${url}`, 'share.copy');
+    await copyShare(button, `${text}\n${url}`, 'share.copy');
   }
 });
 
@@ -1039,6 +1098,7 @@ function renderHero(interpretation) {
   const period = selection.since && selection.until ? `${formatDay(selection.since)} – ${formatDay(selection.until)}` : '';
   const latest = summary.latestObservation ? t('board.latest', { date: formatDay(summary.latestObservation) }) : '';
   const stale = interpretation.services?.stale?.since ?? null;
+  shareSource = interpretation;
   hero.dataset.headline = summary.headline?.state ?? summary.state;
   const headlineSummary = { ...summary, headline: summary.headline && { ...summary.headline, period: nationwidePeriod(interpretation.dimensions.connectivity) } };
   hero.dataset.stale = stale ? 'yes' : 'no';

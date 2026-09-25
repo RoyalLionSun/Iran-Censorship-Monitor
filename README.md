@@ -156,6 +156,12 @@ must be installed (e.g. Vazirmatn or Noto Sans Arabic in `~/.local/share/fonts`)
 
 v1.8.0 contains **301 deterministic tests** and retains the production build, real Headless Chrome presentation, committed-secret/private-key leakage and runtime/404/traversal gates.
 
+## Going online
+
+On the real server, set `PUBLIC_URL` in `.env` to the dashboard's public address (for example
+`PUBLIC_URL=https://example.org`). Shared links, link previews, the feed and the monthly reports
+then use it; on a test machine they use the local address instead.
+
 ## Optional passive routing collectors
 
 ```bash
