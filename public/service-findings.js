@@ -462,3 +462,41 @@ export function summarizeIndependentChecks(rows = [], brands = [...SERVICE_BRAND
     }];
   }));
 }
+
+// Ways around the filter, as OONI tests them from inside Iran. Tests that ended in an error
+// carry no verdict and are not counted; a method needs 20 usable tests for a verdict of its own,
+// otherwise the result across Iran stands in, labelled, and only then "too few tests".
+export const WORKAROUND_TOOLS = Object.freeze([
+  { id: 'tor', test: 'tor' }, { id: 'torsf', test: 'torsf' }, { id: 'vanilla_tor', test: 'vanilla_tor' },
+  { id: 'psiphon', test: 'psiphon' }, { id: 'riseupvpn', test: 'riseupvpn' }, { id: 'stun', test: 'stunreachability' },
+]);
+const WORKAROUND_MIN_TESTS = 20;
+
+function workaroundCounts(payload, test) {
+  const row = payload?.ok && Array.isArray(payload.signals) ? payload.signals.find((item) => item.testName === test) : null;
+  if (!row || row.status === 'error') return null;
+  const failed = (Number(row.anomalies) || 0) + (Number(row.confirmed) || 0);
+  const failures = Number(row.failures) || 0;
+  const ok = Math.max(0, (Number(row.measurements) || 0) - failed - failures);
+  return { measurements: Number(row.measurements) || 0, failed, ok, failures, usable: failed + ok, lastObservation: row.lastObservation ?? null };
+}
+
+export function workaroundStatus({ failed, ok, usable }) {
+  if (usable < WORKAROUND_MIN_TESTS) return 'thin';
+  if (failed > ok) return 'fails';
+  // One failure in ten or more is not "works": the reader would meet it often.
+  return failed * 10 >= usable ? 'partly' : 'works';
+}
+
+export function summarizeWorkarounds(networkPayload, countryPayload = null) {
+  if (!networkPayload?.ok) return null;
+  const rows = WORKAROUND_TOOLS.map((tool) => {
+    const own = workaroundCounts(networkPayload, tool.test);
+    if (own && own.usable >= WORKAROUND_MIN_TESTS) return { id: tool.id, test: tool.test, scope: 'network', ...own, status: workaroundStatus(own) };
+    const country = countryPayload ? workaroundCounts(countryPayload, tool.test) : null;
+    if (country && country.usable >= WORKAROUND_MIN_TESTS) return { id: tool.id, test: tool.test, scope: 'country', ...country, status: workaroundStatus(country) };
+    const best = [own, country].filter(Boolean).sort((a, b) => b.usable - a.usable)[0] ?? { measurements: 0, failed: 0, ok: 0, failures: 0, usable: 0 };
+    return { id: tool.id, test: tool.test, scope: best === country && country ? 'country' : 'network', ...best, status: 'thin' };
+  });
+  return rows.some((row) => row.measurements > 0) ? rows : null;
+}

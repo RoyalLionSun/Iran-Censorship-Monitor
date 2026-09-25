@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { SERVICE_BRANDS, SERVICE_DOMAINS, summarizeMessagingAppTests, summarizeServiceBrands, summarizeServiceFindings } from '../public/service-findings.js';
-import { OONI_ROUTINE_TESTS, OONI_TESTS, getCircumventionSignals } from '../lib/ooni.mjs';
+import { OONI_ROUTINE_TESTS, OONI_SIGNAL_TESTS, OONI_TESTS, getCircumventionSignals } from '../lib/ooni.mjs';
 
 const payload = {
   ok: true, sourceUrl: 'https://api.ooni.io/api/v1/aggregation?probe_cc=IR',
@@ -58,15 +58,16 @@ test('Signal and Facebook Messenger app tests are part of routine monitoring', (
   assert.deepEqual(OONI_ROUTINE_TESTS, ['tor', 'psiphon', 'whatsapp', 'telegram', 'signal', 'facebook_messenger']);
 });
 
-test('routine circumvention monitoring requests only the routine OONI tests', async (t) => {
+test('circumvention monitoring requests only the defined OONI tests (routine apps plus ways around the filter)', async (t) => {
   const requested = [];
   t.mock.method(globalThis, 'fetch', async (url) => {
     requested.push(new URL(url).searchParams.get('test_name'));
     return { ok: true, status: 200, statusText: 'OK', json: async () => ({ result: [] }) };
   });
   const payload = await getCircumventionSignals({ since: '2026-08-01', until: '2026-08-02', asn: 'AS64512' });
-  assert.deepEqual([...requested].sort(), [...OONI_ROUTINE_TESTS].sort());
-  assert.deepEqual(payload.signals.map((row) => row.testName), [...OONI_ROUTINE_TESTS]);
+  assert.deepEqual([...requested].sort(), [...OONI_SIGNAL_TESTS].sort());
+  assert.deepEqual(payload.signals.map((row) => row.testName), [...OONI_SIGNAL_TESTS]);
+  assert.deepEqual([...OONI_SIGNAL_TESTS].slice(6), ['torsf', 'vanilla_tor', 'stunreachability', 'riseupvpn'], 'ECH and DNS checks carry no verdict and stay out');
 });
 
 test('messaging app evidence is independent of website domain counts', () => {
@@ -327,4 +328,22 @@ test('app servers fall back to all of Iran when the selected network has none, l
   assert.equal(instagram.appServers.country, true);
   assert.equal(instagram.appServers.status, 'blocked');
   assert.equal(instagram.status, 'reachable', 'the network\'s own result stays its claim');
+});
+
+test('ways around the filter: majority verdicts, errors left out, Iran-wide value when the network has too few tests', async () => {
+  const { summarizeWorkarounds, workaroundStatus } = await import('../public/service-findings.js');
+  assert.equal(workaroundStatus({ failed: 56, ok: 10, usable: 66 }), 'fails');
+  assert.equal(workaroundStatus({ failed: 835, ok: 3992, usable: 4827 }), 'partly', '17% failed is not "works"');
+  assert.equal(workaroundStatus({ failed: 5, ok: 200, usable: 205 }), 'works');
+  assert.equal(workaroundStatus({ failed: 0, ok: 11, usable: 11 }), 'thin');
+  const signal = (testName, measurements, anomalies, failures = 0) => ({ testName, status: 'observed', measurements, anomalies, confirmed: 0, failures });
+  const network = { ok: true, signals: [signal('torsf', 3, 3), signal('psiphon', 100, 80), signal('vanilla_tor', 46, 4, 33)] };
+  const country = { ok: true, signals: [signal('torsf', 66, 56), signal('vanilla_tor', 46, 4, 33)] };
+  const rows = summarizeWorkarounds(network, country);
+  const by = Object.fromEntries(rows.map((row) => [row.id, row]));
+  assert.deepEqual([by.psiphon.status, by.psiphon.scope], ['fails', 'network']);
+  assert.deepEqual([by.torsf.status, by.torsf.scope, by.torsf.usable], ['fails', 'country', 66], 'three tests in the network: the Iran-wide result answers');
+  assert.deepEqual([by.vanilla_tor.status, by.vanilla_tor.usable, by.vanilla_tor.failures], ['thin', 13, 33], 'errors are not verdicts');
+  assert.equal(by.riseupvpn.status, 'thin');
+  assert.equal(summarizeWorkarounds({ ok: false }), null);
 });

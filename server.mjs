@@ -384,8 +384,12 @@ async function handleApi(req, res, url) {
       ? safeSource('OONI domains (previous period)', () => viaStore(ooniScope({ ...input, ...previous }), (iran) => storeDomains(store, ooniScope({ ...input, ...previous }), iran), () => getOoniDomains(ooniScope({ ...input, ...previous }))), sourceKey('OONI domains', { ...input, ...previous }))
       : Promise.resolve(null);
     const historyTask = safeSource('Cloudflare Radar outage history', () => getRadarOutageHistory(), 'Radar outage history');
-    const [countryOoniDomains, ooniSamples, ooniNetworks, [outageTraffic, networkOutageTraffic], serviceNetworks, previousOoniDomains, outageHistory] = await Promise.all([
-      countryTask, samplesTask, networksTask, trafficTask, serviceNetworksTask, previousTask, historyTask,
+    // Ways around the filter across Iran, for methods the selected network tested too rarely.
+    const countryCircumventionTask = input.asn
+      ? safeSource('OONI circumvention', () => viaStore({ ...input, asn: '' }, (iran) => storeCircumvention(store, { ...input, asn: '' }, iran), () => getCircumventionSignals({ ...input, asn: '' })), sourceKey('OONI circumvention', { ...input, asn: '' }))
+      : Promise.resolve(circumvention);
+    const [countryOoniDomains, ooniSamples, ooniNetworks, [outageTraffic, networkOutageTraffic], serviceNetworks, previousOoniDomains, outageHistory, countryCircumvention] = await Promise.all([
+      countryTask, samplesTask, networksTask, trafficTask, serviceNetworksTask, previousTask, historyTask, countryCircumventionTask,
     ]);
     // A nationwide outage in either period means tests came only from networks that kept access;
     // comparing such periods would show changes that are none.
@@ -397,7 +401,7 @@ async function handleApi(req, res, url) {
     // those paths were switched on. Probes were limited to Iranian networks when measuring.
     const activeChecks = store.activeChecks({ hosts: ACTIVE_HOSTS, since: input.since, until: input.until, asn: input.asn });
     const vpnUse = await vpnUsePromise;
-    const assessment = buildAssessment({ activeChecks, vpnUse, ooni, ripe, radar, radarQuality, ioda, ripestat, censoredPlanet, tor, mlab, apnic, globalping, peeringdb, ihr, asrank, rpki, pulse, ooniDomains, countryOoniDomains, circumvention, ooniSamples, ooniNetworks, outageTraffic, networkOutageTraffic, serviceNetworks, previousOoniDomains: previousOoniDomains ? { ...previousOoniDomains, period: previous, outageOverlap: comparisonBlockedByOutage } : null, selection: input, scopeLabel });
+    const assessment = buildAssessment({ activeChecks, vpnUse, countryCircumvention, ooni, ripe, radar, radarQuality, ioda, ripestat, censoredPlanet, tor, mlab, apnic, globalping, peeringdb, ihr, asrank, rpki, pulse, ooniDomains, countryOoniDomains, circumvention, ooniSamples, ooniNetworks, outageTraffic, networkOutageTraffic, serviceNetworks, previousOoniDomains: previousOoniDomains ? { ...previousOoniDomains, period: previous, outageOverlap: comparisonBlockedByOutage } : null, selection: input, scopeLabel });
     const asnProfile = input.asn ? asns.find((item) => item.asn === input.asn) || null : null;
     // Which route answered the access evidence, and how current each collector path is.
     const health = store.health();

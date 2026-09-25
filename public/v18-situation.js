@@ -558,7 +558,34 @@ function renderMoreServices(services) {
   return `
     <section class="more-services" aria-labelledby="more-services-title">
       <header><h2 id="more-services-title">${escapeHtml(t('board.more.title'))}</h2><p>${escapeHtml(t('board.more.note'))}${services.countryCheck === 'outage' ? ` ${escapeHtml(t('board.country.outage'))}` : ''}${services.survivorsOnly ? ` ${escapeHtml(t('board.services.survivorsOnly'))}` : ''}</p></header>
-      ${groups.map((group) => `<div class="more-group"><h3>${escapeHtml(t(`board.more.group.${group.id}`))}</h3><div class="more-group-body"><ul>${group.services.map(chip).join('')}</ul>${group.id === 'circumvention' ? vpnUseLine(services.vpnUse) : ''}</div></div>`).join('')}
+      ${groups.map((group) => `<div class="more-group"><h3>${escapeHtml(t(`board.more.group.${group.id}`))}</h3><div class="more-group-body"><ul>${group.services.map(chip).join('')}</ul></div></div>`).join('')}
+    </section>`;
+}
+
+// Ways around the filter today: one row per method OONI tests from inside Iran, with a plain
+// explanation, a verdict by majority and its numbers, and Cloudflare WARP use at the end.
+const WORKAROUND_STATUS_CLASS = { works: 'reachable', partly: 'restricted', fails: 'blocked', thin: 'thin' };
+function renderWorkarounds(services) {
+  const rows = services?.workarounds;
+  if (!rows?.length) return '';
+  const row = (item) => {
+    const numbers = item.usable
+      ? t(item.status === 'fails' ? 'board.workarounds.failed' : 'board.workarounds.worked', {
+        count: formatNumber(item.status === 'fails' ? item.failed : item.ok), total: formatNumber(item.usable),
+      })
+      : t('board.workarounds.none');
+    const scope = item.scope === 'country' ? ` · ${t('board.workarounds.country')}` : '';
+    return `<li class="workaround" data-status="${escapeHtml(WORKAROUND_STATUS_CLASS[item.status])}">
+      <b class="workaround-name">${escapeHtml(t(`board.workarounds.tool.${item.id}`))}</b>
+      <span class="workaround-verdict">${escapeHtml(t(`board.workarounds.status.${item.status}`))}</span>
+      <small class="workaround-about">${escapeHtml(t(`board.workarounds.about.${item.id}`))}</small>
+      <small class="workaround-numbers">${escapeHtml(numbers + scope)}</small></li>`;
+  };
+  return `
+    <section class="workarounds-board" aria-labelledby="workarounds-title">
+      <header><h2 id="workarounds-title">${escapeHtml(t('board.workarounds.title'))}</h2><p>${escapeHtml(t('board.workarounds.note'))}</p></header>
+      <ul>${rows.map(row).join('')}</ul>
+      ${vpnUseLine(services.vpnUse)}
     </section>`;
 }
 
@@ -883,6 +910,7 @@ function jumpBar(interpretation) {
     services?.changes ? ['changes-title', 'board.jump.changes'] : null,
     services ? ['service-board-title', 'board.jump.services'] : null,
     ['status-row', 'board.jump.connection'],
+    services?.workarounds ? ['workarounds-title', 'board.jump.workarounds'] : null,
     services?.more?.some((group) => group.services.some((service) => service.scope)) ? ['more-services-title', 'board.jump.more'] : null,
     services?.networkBreakdown?.access?.length ? ['access-title', 'board.jump.access'] : null,
     ['privileged-title', 'board.jump.privileged'],
@@ -913,6 +941,7 @@ function renderHero(interpretation) {
     ${renderChanges(interpretation.services)}
     ${renderServiceTiles(interpretation.services, selection, interpretation.dimensions.connectivity)}
     ${statusRow(interpretation)}
+    ${renderWorkarounds(interpretation.services)}
     ${renderOutageTraffic(interpretation)}
     ${renderMoreServices(interpretation.services)}
     ${renderAccess(interpretation.services, selection)}
