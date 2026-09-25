@@ -478,10 +478,20 @@ function accessShare(entry) {
   return scores.length ? Math.round((scores.reduce((sum, score) => sum + score, 0) / scores.length) * 100) : 0;
 }
 
+// The key to the table: each mark exactly as it appears in the cells, with a short name and what
+// it means; then one line on the bar and on networks abroad.
+const ACCESS_KEY = [['reachable', '✓'], ['partial', '◐'], ['blocked', '✕'], ['restricted', '!'], ['none', '–']];
+function accessKey() {
+  return `<div class="access-legend">
+      <ul class="access-key">${ACCESS_KEY.map(([status, mark]) => `<li><span class="access-key-mark access-cell" data-status="${status}" aria-hidden="true">${mark}</span><span><b>${escapeHtml(t(`board.access.key.${status}`))}</b> <small>${escapeHtml(t(`board.access.key.${status}.note`))}</small></span></li>`).join('')}</ul>
+      <p class="access-key-foot">${escapeHtml(t('board.access.key.foot'))}</p>
+    </div>`;
+}
+
 const ACCESS_MARK = { reachable: '✓', partial: '◐', blocked: '✕', restricted: '!', inconclusive: '?' };
 
 function accessCell(entry) {
-  if (!entry) return `<td class="access-cell" data-status="none" title="${escapeHtml(t('board.access.cell.none'))}">·</td>`;
+  if (!entry) return `<td class="access-cell" data-status="none" title="${escapeHtml(t('board.access.cell.none'))}">–</td>`;
   const title = t(`board.access.cell.${entry.status}`, { ok: formatNumber(entry.ok), confirmed: formatNumber(entry.confirmed), total: formatNumber(entry.measurements) });
   return `<td class="access-cell" data-status="${escapeHtml(entry.status)}" title="${escapeHtml(title)}"><span aria-hidden="true">${ACCESS_MARK[entry.status]}</span><span class="visually-hidden">${escapeHtml(title)}</span></td>`;
 }
@@ -565,7 +575,7 @@ function renderAccess(services, selection) {
       </header>
       ${breakdown.staleSince ? `<p class="access-missing">${escapeHtml(t('board.access.stale', { date: formatDateTime(breakdown.staleSince) }))}</p>` : ''}
       ${tabs}
-      <p class="access-legend">${escapeHtml(t('board.access.legend'))}</p>
+      ${accessKey()}
       ${sortSwitch}
       <div class="access-scroll"><table id="access-table">
         <thead><tr><th scope="col">${escapeHtml(t('board.access.network'))}</th><th scope="col">${escapeHtml(t('board.access.access'))}</th>${columns.map((column) => `<th scope="col" class="access-service-col">${escapeHtml(column.name)}</th>`).join('')}</tr></thead>

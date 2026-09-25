@@ -482,3 +482,14 @@ html[lang="fa"] .overview-panel > header .section-label { letter-spacing: normal
 :where(#overview-view, #technical-view) small { font-size: max(13px, .85em); }
 .access-board tbody th, .access-board tbody th a { font-size: 14px; }
 .access-board tbody th small { font-size: 13px; }
+/* Key to the access table: each mark as in the cells, its name and what it means. */
+.access-legend { margin: 4px 0 10px; }
+.access-key { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.access-key li { display: flex; align-items: baseline; gap: 8px; font-size: 14.5px; color: var(--text-soft); }
+.access-key b { color: var(--text); font-weight: 700; }
+.access-key small { color: var(--muted); font-size: 13.5px; }
+.access-key-mark { display: inline-grid; place-items: center; flex: none; width: 24px; height: 24px; border: 1px solid var(--border); border-radius: 6px; background: rgba(255,255,255,.03); font-size: 15px; }
+.access-key-foot { margin: 6px 0 0; color: var(--muted); font-size: 13.5px; }
+.access-cell[data-status="none"] { font-weight: 600; }
+.history-legend { font-size: 14px; color: var(--text-soft); gap: 6px 10px; }
+.history-key { width: 12px; height: 12px; }
