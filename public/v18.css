@@ -434,3 +434,6 @@ html[dir="rtl"] .history-strip { transform: scaleX(-1); }
   .share-bar::-webkit-scrollbar { display: none; }
   .share-bar > * { flex: none; }
 }
+/* Keyboard focus is visible on links too (jump bar, source links, network names), not only on buttons. */
+a:focus-visible { outline: 2px solid var(--accent-2, #52c9c4); outline-offset: 2px; border-radius: 4px; }
+.jump-bar a:focus-visible, .access-sort button:focus-visible, .share-button:focus-visible, .filter-toggle:focus-visible { outline: 2px solid var(--accent-2, #52c9c4); outline-offset: 2px; }
