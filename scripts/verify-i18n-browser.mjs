@@ -22,6 +22,7 @@ for (const path of [
   'public/locales/fa-v19.js',
   'public/v18-situation.js',
   'public/service-findings.js',
+  'public/context-items.js',
   'public/v18-i18n-ui.js',
   'public/v18.css',
   'public/v19-runtime.js',

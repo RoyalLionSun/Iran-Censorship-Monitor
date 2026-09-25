@@ -1,4 +1,5 @@
-import { localeFor, t as translate } from './i18n.js';
+import { getLanguage, localeFor, t as translate } from './i18n.js';
+import { CONTEXT_CHECKED, CONTEXT_SOURCES, contextItems } from './context-items.js';
 import { MORE_SERVICE_GROUPS } from './service-findings.js';
 
 // With "all networks in Iran" selected, sentences that speak of "this network" have their own
@@ -497,77 +498,53 @@ function renderAccess(services, selection) {
 // Privileged access is reported by journalists and researchers, not measurable here. It stays
 // in its own block, with every statement tied to its source and date.
 // Only dated, named primary reporting (no encyclopedias), newest first; checked 25 Sep 2026.
-const PRIVILEGED_SOURCES = {
-  rferlBill: 'https://www.rferl.org/a/iran-internet-bill-restriction-access/33845516.html',
-  bloomberg: 'https://www.bloomberg.com/features/2026-iran-internet/',
-  isnaEnd: 'https://avash.ir/%D8%A8%D8%AE%D8%B4-%D8%A7%D8%AC%D8%AA%D9%85%D8%A7%D8%B9%DB%8C-5/90932-%D8%A7%DB%8C%D9%86%D8%AA%D8%B1%D9%86%D8%AA-%D9%BE%D8%B1%D9%88-%D8%AD%D8%B0%D9%81-%D8%B4%D8%AF',
-  iranintlApr: 'https://www.iranintl.com/en/202604203889',
-  aljazeeraMay: 'https://www.aljazeera.com/editorial/2026/5/14/iran-expands-tiered-internet-access-amid-continued-online-blackout',
-  cnn: 'https://www.cnn.com/2026/05/10/middleeast/iran-internet-pro-blackout-access-vpn-intl',
-  filterwatchApr: 'https://filter.watch/english/2026/04/20/nvestigative-report-april-2026-from-the-open-internet-to-internet-sovereignty/',
-  parsineMar: 'https://www.parsine.com/%D8%A8%D8%AE%D8%B4-%D8%AF%D8%A7%D9%86%D8%B4-%D9%81%D9%86%D8%A7%D9%88%D8%B1%DB%8C-140/975688-%D8%B3%DB%8C%D9%85-%DA%A9%D8%A7%D8%B1%D8%AA-%D9%87%D8%A7%DB%8C-%D8%B3%D9%81%DB%8C%D8%AF-%D9%87%D9%85-%D9%82%D8%B7%D8%B9-%D8%B4%D8%AF%D9%86%D8%AF',
-  zoomit: 'https://www.zoomit.ir/tech-iran/452713-iran-classified-internet-white-sim-cards/',
-  iranintlMar: 'https://www.iranintl.com/en/202603106004',
-  iranintlNov: 'https://www.iranintl.com/en/202511248487',
-  khabarfoori: 'https://www.khabarfoori.com/%D8%A8%D8%AE%D8%B4-%D8%A7%D9%82%D8%AA%D8%B5%D8%A7%D8%AF%DB%8C-145/3179541-%D8%B3%DB%8C%D9%85%DA%A9%D8%A7%D8%B1%D8%AA-%D8%B3%D9%81%DB%8C%D8%AF-%D9%85%D8%B5%D9%88%D8%A8%D9%87-%DA%86%D9%87-%D9%85%D8%B1%D8%AC%D8%B9%DB%8C-%D8%A8%D9%88%D8%AF-%DA%86%D8%B1%D8%A7-%D8%AA%D8%B9%D8%AF%D8%A7%D8%AF-%D8%A2%D9%86%D9%87%D8%A7-%D8%AF%D8%B1-%D8%AF%D9%88%D9%84%D8%AA-%DA%86%D9%87%D8%A7%D8%B1%D8%AF%D9%87%D9%85-%DA%A9%D8%A7%D9%87%D8%B4-%DB%8C%D8%A7%D9%81%D8%AA',
-  ban: 'https://thenewregion.com/posts/3922',
-  citizenlab: 'https://citizenlab.ca/research/uncovering-irans-mobile-legal-intercept-system/',
-  factnameh: 'https://factnameh.substack.com/p/who-controls-irans-internet-the-clash',
-  entekhab: 'https://www.entekhab.ir/fa/news/905154/',
-  euRegulation: 'https://eur-lex.europa.eu/eli/reg_impl/2026/267/oj',
-  euCouncil: 'https://www.consilium.europa.eu/en/press/press-releases/2026/01/29/iran-council-adopts-new-sanctions-over-serious-human-rights-violations-and-iran-s-continued-support-to-russia-s-war-of-aggression-against-ukraine/',
-  // Our own measurement of the January 2026 shutdown (the timeline and networks table).
-  measuredJanuary: '/?asn=ALL&since=2026-01-05&until=2026-01-20#anatomy-title',
-};
+// Dated context (who decides, privileged access) comes from one list, sorted newest first; the
+// dates are written here in the reader's calendar. See public/context-items.js to add news.
+const CONTEXT_NEW_DAYS = 30;
 
-function sourceLinks(keys) {
+function contextDate(value) {
+  return value.length === 7 ? formatMonth(value) : formatDay(value);
+}
+
+function contextWhen(item) {
+  return item.until ? `${contextDate(item.date)} – ${contextDate(item.until)}` : contextDate(item.date);
+}
+
+function contextSources(keys) {
+  const lang = getLanguage() === 'fa' ? 'fa' : 'en';
   return keys.map((key) => {
-    const href = PRIVILEGED_SOURCES[key];
-    const external = !href.startsWith('/');
-    return `<a href="${escapeHtml(href)}"${external ? ' target="_blank" rel="noreferrer"' : ''}>${escapeHtml(t(`board.privileged.source.${key}`))}</a>`;
+    const source = CONTEXT_SOURCES[key];
+    const label = `${source.name[lang]}, ${formatDay(source.date)}`;
+    return `<a href="${escapeHtml(source.url)}"${source.internal ? '' : ' target="_blank" rel="noreferrer"'}>${escapeHtml(label)}</a>`;
   }).join(' · ');
+}
+
+function contextList(panel) {
+  const lang = getLanguage() === 'fa' ? 'fa' : 'en';
+  const now = Date.now();
+  return contextItems(panel).map((item) => {
+    const fresh = item.added && now - Date.parse(`${item.added}T00:00:00Z`) < CONTEXT_NEW_DAYS * 86_400_000;
+    return `<li><time>${escapeHtml(contextWhen(item))}</time>${fresh ? `<b class="context-new">${escapeHtml(t('board.context.new'))}</b>` : ''}<span>${escapeHtml(item.text[lang])} <small>${contextSources(item.sources)}</small></span></li>`;
+  }).join('');
+}
+
+function contextPanel(panel, id) {
+  return `
+    <section class="privileged-board ${panel}-board" aria-labelledby="${id}">
+      <header><h2 id="${id}">${escapeHtml(t(`board.${panel}.title`))}</h2><p>${escapeHtml(t(`board.${panel}.note`, { date: formatDay(CONTEXT_CHECKED) }))}</p></header>
+      <ul class="context-list">${contextList(panel)}</ul>
+      <p class="privileged-limit">${escapeHtml(t(`board.${panel}.limit`))}</p>
+    </section>`;
 }
 
 // Who decides what is blocked and switched off, from official documents and named sources.
 // Where the deciding body is not published, the panel says so instead of guessing.
 function renderControl() {
-  const items = [
-    ['bill', ['rferlBill']],
-    ['taskForce', ['factnameh']],
-    ['shutdownOrder', ['entekhab', 'factnameh']],
-    ['filtering', ['euRegulation', 'euCouncil']],
-    ['contractors', ['euRegulation']],
-    ['satra', ['euRegulation']],
-    ['gateway', ['measuredJanuary']],
-  ];
-  return `
-    <section class="privileged-board control-board" aria-labelledby="control-title">
-      <header><h2 id="control-title">${escapeHtml(t('board.control.title'))}</h2><p>${escapeHtml(t('board.control.note'))}</p></header>
-      <ul>${items.map(([key, sources]) => `<li>${escapeHtml(t(`board.control.${key}`))} <small>${sourceLinks(sources)}</small></li>`).join('')}</ul>
-      <p class="privileged-limit">${escapeHtml(t('board.control.limit'))}</p>
-    </section>`;
+  return contextPanel('control', 'control-title');
 }
 
 function renderPrivileged() {
-  const items = [
-    ['bloomberg', ['bloomberg']],
-    ['internetProEnd', ['isnaEnd']],
-    ['internetPro', ['iranintlApr', 'aljazeeraMay']],
-    ['price', ['cnn']],
-    ['services', ['filterwatchApr', 'aljazeeraMay']],
-    ['whiteSimWar', ['iranintlMar']],
-    ['gatewayCut', ['parsineMar']],
-    ['whiteSim', ['zoomit', 'iranintlNov']],
-    ['whiteSimRules', ['khabarfoori']],
-    ['ban', ['ban']],
-    ['perSubscriber', ['citizenlab']],
-  ];
-  return `
-    <section class="privileged-board" aria-labelledby="privileged-title">
-      <header><h2 id="privileged-title">${escapeHtml(t('board.privileged.title'))}</h2><p>${escapeHtml(t('board.privileged.note'))}</p></header>
-      <ul>${items.map(([key, sources]) => `<li>${escapeHtml(t(`board.privileged.${key}`))} <small>${sourceLinks(sources)}</small></li>`).join('')}</ul>
-      <p class="privileged-limit">${escapeHtml(t('board.privileged.limit'))}</p>
-    </section>`;
+  return contextPanel('privileged', 'privileged-title');
 }
 
 // Further services as compact chips per group: blocked, partly, problems or reachable, with the
@@ -1053,125 +1030,151 @@ function bindAccess(hero, interpretation) {
   }));
 }
 
-function meaningSentences(interpretation) {
+// "What this means for you": a few plain questions with short answers. Figures that need a
+// technical reading (speed, counts per mechanism, excluded foreign tests) sit folded below.
+function meaningAnswers(interpretation) {
   const { services, dimensions } = interpretation;
   const names = (ids) => listOf(ids.map((id) => brandName(id, services)));
-  const sentences = [];
-  if (services?.blocked?.length) sentences.push(t('meaning.blocked', { services: names(services.blocked) }));
+  const answers = [];
+
+  // Do the big apps work?
+  const apps = [];
+  if (services?.blocked?.length) apps.push(plural('meaning.a.blocked', services.blocked.length, { services: names(services.blocked) }));
   if (services?.restricted?.length) {
     // An app test only knows that the connection to the app's servers failed; OONI has no block
     // page for apps and never confirms them. Website anomalies are a different finding.
     const byId = new Map((services.items ?? []).map((item) => [item.id, item]));
     const appOnly = services.restricted.filter((id) => byId.get(id)?.app?.status === 'anomaly' && byId.get(id)?.web?.status !== 'anomaly');
     const web = services.restricted.filter((id) => !appOnly.includes(id));
-    if (web.length) sentences.push(t('meaning.restricted', { services: names(web) }));
-    if (appOnly.length) sentences.push(t('meaning.restrictedApp', { services: names(appOnly) }));
+    if (web.length) apps.push(t('meaning.a.restricted', { services: names(web) }));
+    if (appOnly.length) apps.push(t('meaning.a.restrictedApp', { services: names(appOnly) }));
     // In an outage a failed connection may be the outage itself, not a block of this service.
     const outageNow = nationwidePeriod(dimensions.connectivity);
-    if (outageNow && !outageNow.endedInWindow) sentences.push(t('meaning.outageCause'));
+    if (outageNow && !outageNow.endedInWindow) apps.push(t('meaning.outageCause'));
   }
-  if (!services?.blocked?.length && !services?.restricted?.length && services?.reachable?.length) {
-    sentences.push(t('meaning.reachable', { services: names(services.reachable) }));
+  if (services?.reachable?.length) apps.push(t('meaning.a.reachable', { services: names(services.reachable) }));
+  if (services?.countryBlocked?.length) apps.push(t('meaning.a.countryBlocked', { services: names(services.countryBlocked) }));
+  if (services?.state === 'untested' && services.visible?.length) apps.push(t('meaning.a.untested', { services: names(services.visible.map((item) => item.id)) }));
+  const scope = services?.networkBreakdown ? null : services?.networkScope;
+  if (scope?.measured) {
+    const service = scope.serviceId ? brandName(scope.serviceId, services) : scope.domain;
+    if (scope.blocked > 0) apps.push(t('meaning.networks.blocked', { service, blocked: formatNumber(scope.blocked), measured: formatNumber(scope.measured) }));
+    else if (scope.restricted > 0) apps.push(t('meaning.networks.restricted', { service, restricted: formatNumber(scope.restricted), measured: formatNumber(scope.measured) }));
+    if (scope.reachable > 0 && (scope.blocked > 0 || scope.restricted > 0)) apps.push(t('meaning.networks.reachable', { service, reachable: formatNumber(scope.reachable) }));
   }
-  if (services?.countryBlocked?.length) {
-    sentences.push(t('meaning.countryBlocked', { services: names(services.countryBlocked) }));
-  }
-  if (services?.state === 'untested' && services.visible?.length) {
-    sentences.push(t('meaning.untested', { services: names(services.visible.map((item) => item.id)) }));
-  }
+  if (apps.length) answers.push({ question: t('meaning.q.apps'), lines: apps });
+
+  // Does a way around the filter help?
+  const tools = (status) => (services?.workarounds ?? []).filter((item) => item.status === status).map((item) => t(`board.workarounds.tool.${item.id}`));
+  const around = ['works', 'partly', 'fails'].filter((status) => tools(status).length)
+    .map((status) => t(`meaning.a.around.${status}`, { tools: listOf(tools(status)) }));
+  if (around.length) answers.push({ question: t('meaning.q.around'), lines: around, link: ['workarounds-title', t('meaning.a.around.more')] });
+
+  // Does the internet itself work?
+  const internet = [];
+  const period = nationwidePeriod(dimensions.connectivity);
   const connection = connectionState(dimensions.connectivity);
-  const loss = evidenceValue(dimensions.quality, 'packet-loss-percent');
-  // A dated nationwide outage says more than the generic sentence, and stays true once it ended.
-  if (!nationwidePeriod(dimensions.connectivity)) sentences.push(connection === 'none' && loss !== null ? t('meaning.connection.fine', { delivered: formatNumber(100 - loss, 1) })
-    : connection === 'none' ? t('meaning.connection.noOutage')
+  if (!period) {
+    internet.push(connection === 'none' ? t('meaning.a.internet.fine')
       : connection === 'signals' ? plural('meaning.connection.signals', dimensions.connectivity.eventCount ?? 0)
         : t(`meaning.connection.${connection}`));
-  const period = nationwidePeriod(dimensions.connectivity);
-  if (period) {
-    sentences.push(period.end
+  } else {
+    internet.push(period.end
       ? t('meaning.outage.period', { from: formatDay(period.start), to: formatDay(period.end) })
       : t('meaning.outage.periodOngoing', { from: formatDay(period.start) }));
     const traffic = dimensions.connectivity.outageTraffic;
     if (traffic) {
-      sentences.push(t('meaning.outage.depth', { lowest: formatPercent(traffic.lowestPercent), typical: formatPercent(traffic.typicalPercent) }));
-      // A remainder of traffic says nothing about who could still connect; say so plainly.
-      if (traffic.lowestPercent > 0) sentences.push(t('meaning.outage.residual'));
-      if (traffic.afterPercent !== null) sentences.push(t('meaning.outage.after', { after: formatPercent(traffic.afterPercent) }));
+      internet.push(t('meaning.outage.depth', { lowest: formatPercent(traffic.lowestPercent), typical: formatPercent(traffic.typicalPercent) }));
+      if (traffic.afterPercent !== null) internet.push(t('meaning.outage.after', { after: formatPercent(traffic.afterPercent) }));
       const own = traffic.network;
       if (own) {
-        sentences.push(t(own.afterPercent !== null ? 'meaning.outage.network' : 'meaning.outage.networkOngoing', {
+        internet.push(t(own.afterPercent !== null ? 'meaning.outage.network' : 'meaning.outage.networkOngoing', {
           network: networkLabel(interpretation), typical: formatPercent(own.typicalPercent), after: formatPercent(own.afterPercent),
         }));
       }
     }
     // A restored connection is not open access.
-    if (period.endedInWindow && (services?.blocked?.length || services?.restricted?.length)) sentences.push(t('meaning.outage.notOpen'));
+    if (period.endedInWindow && (services?.blocked?.length || services?.restricted?.length)) internet.push(t('meaning.outage.notOpen'));
   }
-  const radarLatency = evidenceValue(dimensions.quality, 'latency-ms');
-  const radarDownload = evidenceValue(dimensions.quality, 'download-mbps');
-  const inOutage = Boolean(nationwidePeriod(dimensions.connectivity) && !nationwidePeriod(dimensions.connectivity).endedInWindow);
-  if (radarLatency !== null && !inOutage) {
+  const inOutage = Boolean(period && !period.endedInWindow);
+  const latency = evidenceValue(dimensions.quality, 'latency-ms');
+  const range = dimensions.quality?.typicalRange?.latency;
+  if (latency !== null && !inOutage && range?.high != null) internet.push(t(latency > range.high ? 'meaning.a.speed.slow' : 'meaning.a.speed.normal'));
+  const shutdown = dimensions.shutdown;
+  if (shutdown.state === 'nationwide-shutdown-established' && shutdown.establishedEvent) {
+    internet.push(t('meaning.shutdown.established', { from: formatDay(shutdown.establishedEvent.startDate), to: formatDay(shutdown.establishedEvent.endDate) }));
+  }
+  answers.push({ question: t('meaning.q.internet'), lines: internet });
+
+  // How is it blocked?
+  const dominant = services?.vantage?.dominantMechanism;
+  const sampled = services?.visible?.[0];
+  if (dominant?.code && dominant.count && sampled) {
+    answers.push({ question: t('meaning.q.how'), lines: [t(`meaning.a.mechanism.${dominant.code}`, { service: brandName(sampled.id, services) })] });
+  }
+
+  // How sure is this?
+  const sure = [];
+  const vantage = services?.vantage;
+  if (vantage?.runs) {
+    const window = windowDays(interpretation.selection);
+    sure.push(t(vantage.bounded ? 'meaning.a.sure.atLeast' : 'meaning.a.sure.exact', {
+      runs: formatNumber(vantage.runs), days: formatNumber(vantage.observedDays), window: window ? formatNumber(window) : formatNumber(vantage.observedDays),
+    }));
+  }
+  sure.push(t('meaning.a.sure.basis'));
+  if (interpretation.summary?.foreignUnchecked) sure.push(t('meaning.foreignUnchecked'));
+  answers.push({ question: t('meaning.q.sure'), lines: sure });
+  return answers;
+}
+
+function meaningDetails(interpretation) {
+  const { services, dimensions } = interpretation;
+  const lines = [];
+  const period = nationwidePeriod(dimensions.connectivity);
+  const inOutage = Boolean(period && !period.endedInWindow);
+  const latency = evidenceValue(dimensions.quality, 'latency-ms');
+  const download = evidenceValue(dimensions.quality, 'download-mbps');
+  if (latency !== null && !inOutage) {
     const range = dimensions.quality.typicalRange;
-    sentences.push(t(range?.latency?.low != null ? 'meaning.quality.userRange' : 'meaning.quality.user', {
-      download: radarDownload === null ? '—' : formatNumber(radarDownload, 1),
-      latency: formatNumber(radarLatency, 0),
+    lines.push(t(range?.latency?.low != null ? 'meaning.quality.userRange' : 'meaning.quality.user', {
+      download: download === null ? '—' : formatNumber(download, 1),
+      latency: formatNumber(latency, 0),
       low: range?.latency?.low != null ? formatNumber(range.latency.low, 0) : '—',
       high: range?.latency?.high != null ? formatNumber(range.latency.high, 0) : '—',
     }));
   }
-  const shutdown = dimensions.shutdown;
-  if (shutdown.state === 'nationwide-shutdown-established' && shutdown.establishedEvent) {
-    sentences.push(t('meaning.shutdown.established', {
-      from: formatDay(shutdown.establishedEvent.startDate), to: formatDay(shutdown.establishedEvent.endDate),
-    }));
-  } else if (shutdown.contextEvent) {
-    sentences.push(t('meaning.shutdown.context', {
-      verification: t(`board.shutdown.verification.${shutdown.contextEvent.verificationLevel ?? 'unconfirmed'}`),
-      from: formatDay(shutdown.contextEvent.startDate), to: formatDay(shutdown.contextEvent.endDate),
-    }));
-    if (shutdown.contextComparison === 'radar-no-nationwide-outage') sentences.push(t('meaning.shutdown.radarNone'));
-    if (shutdown.contextComparison === 'radar-dates-differ') sentences.push(t('meaning.shutdown.radarDiffers'));
-  }
-  const scope = services?.networkBreakdown ? null : services?.networkScope;
-  if (scope?.measured) {
-    const service = scope.serviceId ? brandName(scope.serviceId, services) : scope.domain;
-    if (scope.blocked > 0) sentences.push(t('meaning.networks.blocked', { service, blocked: formatNumber(scope.blocked), measured: formatNumber(scope.measured) }));
-    else if (scope.restricted > 0) sentences.push(t('meaning.networks.restricted', { service, restricted: formatNumber(scope.restricted), measured: formatNumber(scope.measured) }));
-    if (scope.reachable > 0 && (scope.blocked > 0 || scope.restricted > 0)) {
-      sentences.push(t('meaning.networks.reachable', { service, reachable: formatNumber(scope.reachable) }));
-    }
-  }
+  const loss = evidenceValue(dimensions.quality, 'packet-loss-percent');
+  if (loss !== null && !period) lines.push(t('meaning.connection.fine', { delivered: formatNumber(100 - loss, 1) }));
+  if (period && dimensions.connectivity.outageTraffic?.lowestPercent > 0) lines.push(t('meaning.outage.residual'));
   const vantage = services?.vantage;
   const dominant = vantage?.dominantMechanism;
   const sampled = services?.visible?.[0];
   if (dominant?.code && dominant.count && sampled) {
-    // The sample belongs to one service, so the sentence names it.
-    sentences.push(t(`meaning.mechanism.${dominant.code}`, {
-      service: brandName(sampled.id, services),
-      count: formatNumber(dominant.count), affected: formatNumber(vantage.affected ?? dominant.count),
-    }));
+    lines.push(t(`meaning.mechanism.${dominant.code}`, { service: brandName(sampled.id, services), count: formatNumber(dominant.count), affected: formatNumber(vantage.affected ?? dominant.count) }));
   }
-  if (vantage?.runs) {
-    const window = windowDays(interpretation.selection);
-    sentences.push(t(vantage.bounded ? 'meaning.vantage.atLeast' : 'meaning.vantage.exact', {
-      runs: formatNumber(vantage.runs),
-      days: formatNumber(vantage.observedDays),
-      window: window ? formatNumber(window) : formatNumber(vantage.observedDays),
+  const shutdown = dimensions.shutdown;
+  if (shutdown.state !== 'nationwide-shutdown-established' && shutdown.contextEvent) {
+    lines.push(t('meaning.shutdown.context', {
+      verification: t(`board.shutdown.verification.${shutdown.contextEvent.verificationLevel ?? 'unconfirmed'}`),
+      from: formatDay(shutdown.contextEvent.startDate), to: formatDay(shutdown.contextEvent.endDate),
     }));
+    if (shutdown.contextComparison === 'radar-no-nationwide-outage') lines.push(t('meaning.shutdown.radarNone'));
+    if (shutdown.contextComparison === 'radar-dates-differ') lines.push(t('meaning.shutdown.radarDiffers'));
   }
-  if (interpretation.summary?.foreignUnchecked) sentences.push(t('meaning.foreignUnchecked'));
   const foreign = interpretation.summary?.foreignExcluded;
-  if (foreign?.measurements) {
-    sentences.push(t('meaning.foreignExcluded', { count: formatNumber(foreign.measurements), networks: foreign.networks.join(', ') }));
-  }
-  sentences.push(t('meaning.basis'));
-  return sentences;
+  if (foreign?.measurements) lines.push(t('meaning.foreignExcluded', { count: formatNumber(foreign.measurements), networks: foreign.networks.join(', ') }));
+  return lines;
 }
+
+const jumpLink = ([target, label]) => `<a class="meaning-link" href="#${target}">${escapeHtml(label)}</a>`;
 
 function renderMeaning(interpretation) {
   const element = document.querySelector('#user-meaning');
+  const details = meaningDetails(interpretation);
   element.innerHTML = `<header><span class="section-label">${escapeHtml(t('meaning.kicker'))}</span><h2>${escapeHtml(t('meaning.title'))}</h2></header>
-    ${meaningSentences(interpretation).map((sentence) => `<p class="meaning-line">${escapeHtml(sentence)}</p>`).join('')}`;
+    <div class="meaning-qa">${meaningAnswers(interpretation).map((answer) => `<div class="meaning-item"><p class="meaning-q">${escapeHtml(answer.question)}</p>${answer.lines.map((line) => `<p class="meaning-a">${escapeHtml(line)}</p>`).join('')}${answer.link ? jumpLink(answer.link) : ''}</div>`).join('')}</div>
+    ${details.length ? `<details class="meaning-details"><summary>${escapeHtml(t('meaning.details'))}</summary>${details.map((line) => `<p>${escapeHtml(line)}</p>`).join('')}</details>` : ''}`;
 }
 
 function renderDetailsHead() {
@@ -1195,11 +1198,49 @@ function renderFindings(interpretation) {
     }).join('') : `<p>${escapeHtml(t('interpretation.findings.none'))}</p>`}</div>`;
 }
 
+// "What we do not know": concrete questions these measurements cannot answer, each with what is
+// known and where on the page to look instead.
+function unknownItems(interpretation) {
+  const { services, dimensions } = interpretation;
+  const items = [];
+  if (services?.restricted?.length) {
+    items.push({ question: plural('unknown.slowdown.q', services.restricted.length, { services: listOf(services.restricted.map((id) => brandName(id, services))) }), answer: t('unknown.slowdown.a') });
+  }
+  const untested = [
+    ...(services?.visible ?? []).filter((item) => item.status === 'untested').map((item) => brandName(item.id, services)),
+    ...(services?.more ?? []).flatMap((group) => group.services.filter((service) => !service.scope).map((service) => service.name)),
+  ];
+  if (untested.length) {
+    const shown = untested.slice(0, 5);
+    items.push({
+      question: t('unknown.untested.q'),
+      answer: t(untested.length > shown.length ? 'unknown.untested.aMore' : 'unknown.untested.a', { services: listOf(shown), more: formatNumber(untested.length - shown.length) }),
+    });
+  }
+  // Most Iranian networks have no volunteer testing in a given week; say how many, not "unknown".
+  const coverage = services?.networkBreakdown?.coverage;
+  if (coverage?.registered > coverage?.measured) {
+    items.push({
+      question: t('unknown.networks.q'),
+      answer: t('unknown.networks.a', { count: formatNumber(coverage.registered - coverage.measured), registered: formatNumber(coverage.registered), measured: formatNumber(coverage.measured) }),
+      link: ['access-title', t('board.access.title')],
+    });
+  }
+  const period = nationwidePeriod(dimensions.connectivity);
+  if (period) {
+    items.push({ question: t('unknown.outage.q'), answer: t('unknown.outage.a'), link: dimensions.connectivity.outageAnatomy ? ['anatomy-title', t('board.anatomy.title')] : null });
+  }
+  if ((interpretation.unknowns ?? []).includes('connection-quality')) items.push({ question: t('unknown.speed.q'), answer: t('unknown.speed.a') });
+  items.push({ question: t('unknown.privileged.q'), answer: t('unknown.privileged.a'), link: ['privileged-title', t('unknown.privileged.link')] });
+  items.push({ question: t('unknown.who.q'), answer: t('unknown.who.a'), link: ['control-title', t('unknown.who.link')] });
+  return items;
+}
+
 function renderUnknowns(interpretation) {
   const element = document.querySelector('#current-unknowns');
   element.innerHTML = `<header><span class="section-label">${escapeHtml(t('interpretation.unknowns.kicker'))}</span><h2>${escapeHtml(t('interpretation.unknowns.title'))}</h2></header>
-    <p>${escapeHtml(t('interpretation.unknowns.intro'))}</p>
-    <ul class="unknown-list">${(interpretation.unknowns ?? []).map((item) => `<li>${escapeHtml(t(`interpretation.unknown.${item}`))}</li>`).join('')}</ul>`;
+    <p class="unknown-intro">${escapeHtml(t('unknown.intro'))}</p>
+    <ul class="unknown-list">${unknownItems(interpretation).map((item) => `<li><b>${escapeHtml(item.question)}</b><span>${escapeHtml(item.answer)}</span>${item.link ? jumpLink(item.link) : ''}</li>`).join('')}</ul>`;
 }
 
 function renderEvidenceOverview(assessment) {

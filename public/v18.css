@@ -164,7 +164,7 @@ tr[data-level="blocked"] .access-level b { color: var(--status-blocked); }
 .dimension-evidence b { color: var(--text); }
 .interpretation-card > small { display: block; padding-top: 8px; border-top: 1px solid var(--border); color: var(--muted); font-size: 12px; line-height: 1.5; }
 
-.overview-lower-grid { display: grid; grid-template-columns: minmax(0,1.2fr) minmax(320px,.8fr); gap: 12px; }
+.overview-lower-grid { display: grid; grid-template-columns: minmax(0,1.35fr) minmax(320px,1fr); gap: 12px; align-items: start; }
 .overview-panel { padding: 17px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-elevated); box-shadow: var(--shadow); }
 .overview-panel header h2 { margin: 2px 0 0; font-size: 19px; }
 .finding-list { display: grid; gap: 7px; margin-top: 11px; }
@@ -366,3 +366,28 @@ html[dir="rtl"] .history-strip { transform: scaleX(-1); }
 .anatomy-networks td:nth-child(2) { color: var(--text); font-weight: 700; }
 .anatomy-networks .anatomy-foot { margin-top: 6px; }
 .control-board + .privileged-board { margin-top: 12px; }
+/* Dated context lists: a date column, then the entry and its sources. */
+.privileged-board ul.context-list { list-style: none; padding: 0; margin: 10px 0 8px; gap: 0; }
+.context-list li { display: grid; grid-template-columns: 11.5em auto 1fr; gap: 2px 12px; padding: 7px 0; border-top: 1px solid rgba(89, 168, 255, .1); line-height: 1.5; }
+.context-list li:first-child { border-top: 0; }
+.context-list time { color: var(--text-soft); font-weight: 700; font-size: 12.5px; font-variant-numeric: tabular-nums; padding-top: 1px; }
+.context-list .context-new { align-self: start; padding: 1px 6px; border-radius: 999px; background: rgba(82, 201, 196, .18); color: #9ad9d5; font-size: 11px; }
+.context-list li > span { grid-column: 3; color: var(--text-soft); }
+.context-list li:not(:has(.context-new)) > span { grid-column: 2 / 4; }
+@media (max-width: 640px) { .context-list li { grid-template-columns: auto 1fr; } .context-list time { grid-column: 1 / -1; } .context-list li > span, .context-list li:not(:has(.context-new)) > span { grid-column: 1 / -1; } }
+/* "What this means for you": short questions with plain answers; numbers folded below. */
+.meaning-qa { display: grid; gap: 14px; margin-top: 12px; }
+.meaning-item { padding-inline-start: 12px; border-inline-start: 2px solid rgba(89, 168, 255, .35); }
+.meaning-q { margin: 0 0 3px; color: var(--text); font-size: 15px; font-weight: 700; }
+.meaning-a { margin: 2px 0 0; color: var(--text-soft); font-size: 14.5px; line-height: 1.6; }
+.meaning-link { display: inline-block; margin-top: 4px; color: #9ad9d5; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; }
+.meaning-details { margin-top: 16px; padding-top: 10px; border-top: 1px solid var(--border); color: var(--muted); font-size: 13px; }
+.meaning-details summary { cursor: pointer; color: var(--text-soft); font-weight: 650; }
+.meaning-details p { margin: 8px 0 0; line-height: 1.6; }
+/* "What we do not know": each limit as a question, what is known, and where to look. */
+.unknown-intro { margin: 8px 0 0; color: var(--muted); font-size: 13.5px; }
+#current-unknowns .unknown-list { gap: 10px; margin-top: 12px; }
+#current-unknowns .unknown-list li { display: grid; gap: 3px; padding: 10px 12px; font-size: 14px; line-height: 1.55; }
+#current-unknowns .unknown-list li b { color: var(--text); font-size: 14.5px; }
+#current-unknowns .unknown-list li span { color: var(--text-soft); }
+#control-title, #anatomy-title, #workarounds-title { scroll-margin-top: 96px; }
