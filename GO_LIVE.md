@@ -25,6 +25,14 @@ chats or issues. `.env.example` explains every value.
 - [ ] `HOST=127.0.0.1` behind the reverse proxy; `MONITOR_PREWARM` left on (default) so the first
       visitors do not wait for OONI.
 
+## 1b. Reverse proxy
+
+- [ ] Serve the page over **HTTPS with HTTP/2** (Caddy does both by default; nginx needs `http2`).
+      The page preloads its 26 small script files at once; over HTTP/1.1 a browser opens only six
+      connections, over HTTP/2 all of them arrive in one round, which matters on slow mobile links
+      in Iran (measured: about a second less at 300 ms latency).
+- [ ] Let the proxy pass `content-encoding` through: the server already compresses with Brotli/gzip.
+
 ## 2. Data that must survive restarts and be backed up
 
 Everything lives in `var/` (not in git). Copy it along when moving and back it up regularly:
