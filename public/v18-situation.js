@@ -1226,8 +1226,8 @@ function renderHero(interpretation) {
   hero.innerHTML = `
     <header class="situation-top">
       <span class="section-label">${escapeHtml(stale ? t('board.kicker.stale') : t('board.kicker'))}</span>
-      <p class="situation-scope"><strong class="situation-network"><bdi>${escapeHtml(networkTitle(interpretation))}</bdi></strong><span class="scope-sep"> · </span>${period ? `<bdi>${escapeHtml(period)}</bdi>` : ''}${latest ? `${separator()}<bdi>${escapeHtml(latest)}</bdi>` : ''}${stale ? `${separator()}<bdi class="scope-stale">${escapeHtml(t('board.stale.since', { date: formatDateTime(stale) }))}</bdi>` : ''}</p>
       <h1 id="situation-headline" data-full="${escapeHtml(headlineText(headlineSummary, interpretation.services))}">${escapeHtml(headlineText(headlineSummary, interpretation.services, { compact: true }))}</h1>
+      <p class="situation-scope"><span class="visually-hidden">${escapeHtml(networkTitle(interpretation))}${separator()}</span>${period ? `<bdi>${escapeHtml(period)}</bdi>` : ''}${latest ? `${separator()}<bdi>${escapeHtml(latest)}</bdi>` : ''}${stale ? `${separator()}<bdi class="scope-stale">${escapeHtml(t('board.stale.since', { date: formatDateTime(stale) }))}</bdi>` : ''}</p>
       <p class="situation-lede">${escapeHtml(ledeText(interpretation))}</p>
       ${shareBar()}
     </header>
