@@ -337,9 +337,16 @@ export const MORE_SERVICE_GROUPS = Object.freeze([
   { id: 'circumvention', services: [
     { id: 'psiphon', name: 'Psiphon', domains: ['psiphon.ca', 'www.psiphon.ca'], app: 'psiphon' },
     { id: 'torproject', name: 'Tor Project', domains: ['www.torproject.org', 'torproject.org'], app: 'tor' },
+    { id: 'torbridges', name: 'Tor bridges', nameFa: 'پل‌های تور', domains: ['bridges.torproject.org'] },
     { id: 'protonvpn', name: 'Proton VPN', domains: ['protonvpn.com'] },
     { id: 'expressvpn', name: 'ExpressVPN', domains: ['www.expressvpn.com'] },
+    { id: 'nordvpn', name: 'NordVPN', domains: ['nordvpn.com', 'www.nordvpn.com'] },
+    { id: 'surfshark', name: 'Surfshark', domains: ['surfshark.com', 'www.surfshark.com'] },
+    { id: 'mullvad', name: 'Mullvad', domains: ['mullvad.net', 'www.mullvad.net'] },
+    { id: 'outline', name: 'Outline', domains: ['getoutline.org', 'www.getoutline.org'] },
     { id: 'lantern', name: 'Lantern', domains: ['getlantern.org', 'www.getlantern.org'] },
+    { id: 'hotspotshield', name: 'Hotspot Shield', domains: ['www.hotspotshield.com'] },
+    { id: 'tunnelbear', name: 'TunnelBear', domains: ['www.tunnelbear.com'] },
     { id: 'encrypteddns', name: 'Cloudflare DNS (1.1.1.1)', domains: ['1.1.1.1'] },
   ] },
   { id: 'everyday', services: [
