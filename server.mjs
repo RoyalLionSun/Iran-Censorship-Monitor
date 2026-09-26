@@ -180,6 +180,28 @@ function serverTimingHeader(timings) {
   return { 'server-timing': entries.join(', ') };
 }
 
+// The visitor's address; behind a reverse proxy set TRUST_PROXY=1 so its X-Forwarded-For counts.
+function clientAddress(req) {
+  const forwarded = process.env.TRUST_PROXY === '1' ? String(req.headers['x-forwarded-for'] ?? '').split(',')[0].trim() : '';
+  return forwarded || req.socket?.remoteAddress || 'unknown';
+}
+
+const OVERVIEW_BUDGET = Math.max(5, Number(process.env.OVERVIEW_NEW_PER_10_MIN) || 40);
+const overviewBudgets = new Map();
+function overviewBudget(address, now = Date.now()) {
+  const windowMs = 10 * 60 * 1000;
+  const recent = (overviewBudgets.get(address) ?? []).filter((time) => now - time < windowMs);
+  if (recent.length >= OVERVIEW_BUDGET) {
+    overviewBudgets.set(address, recent);
+    return { ok: false, retryAfterSeconds: Math.ceil((windowMs - (now - recent[0])) / 1000) };
+  }
+  recent.push(now);
+  overviewBudgets.set(address, recent);
+  // Forget addresses that have been quiet, so the table stays small.
+  if (overviewBudgets.size > 5000) for (const [key, times] of overviewBudgets) if (!times.some((time) => now - time < windowMs)) overviewBudgets.delete(key);
+  return { ok: true };
+}
+
 function withDeadline(promise, ms, fallback) {
   let timer;
   return Promise.race([promise, new Promise((resolve) => { timer = setTimeout(() => resolve(fallback()), ms); })]).finally(() => clearTimeout(timer));
@@ -317,6 +339,14 @@ async function handleApi(req, res, url) {
     if (pending) {
       const shared = await pending;
       if (shared) { jsonResponse(res, 200, shared); return true; }
+    }
+    // A new answer costs about thirty upstream requests. One visitor may start a limited number
+    // per ten minutes, so nobody can make OONI block this server for every reader; answers
+    // already computed are served without limit.
+    const budget = overviewBudget(clientAddress(req));
+    if (!budget.ok) {
+      jsonResponse(res, 429, { ok: false, source: 'server', error: 'Too many new views requested from this address. Views already loaded still open; new ones in a few minutes.', retryAfterSeconds: budget.retryAfterSeconds }, { 'retry-after': String(budget.retryAfterSeconds) });
+      return true;
     }
     let settleShared;
     inflightOverviews.set(cacheKey, new Promise((resolve) => { settleShared = resolve; }));

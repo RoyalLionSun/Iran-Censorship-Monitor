@@ -36,6 +36,8 @@ chats or issues. `.env.example` explains every value.
       connections, over HTTP/2 all of them arrive in one round, which matters on slow mobile links
       in Iran (measured: about a second less at 300 ms latency).
 - [ ] Let the proxy pass `content-encoding` through: the server already compresses with Brotli/gzip.
+- [ ] Set `TRUST_PROXY=1` behind the proxy, so the per-visitor limit on new views counts visitors,
+      not the proxy (otherwise all readers share one limit).
 
 ## 2. Data that must survive restarts and be backed up
 
