@@ -73,7 +73,6 @@ function insertViews() {
         <section class="overview-panel" id="current-unknowns"></section>
       </div>
       <div id="situation-sections" class="situation-sections"></div>
-      <p class="overview-more"><button type="button" id="open-technical" class="button"></button></p>
     </section>
     <section id="technical-view" class="technical-view" hidden>
       <div id="overview-services-slot"></div>
@@ -102,7 +101,11 @@ function insertViews() {
   document.querySelectorAll('[data-dashboard-view]').forEach((button) => {
     button.addEventListener('click', () => setView(button.dataset.dashboardView));
   });
-  document.querySelector('#open-technical')?.addEventListener('click', () => {
+  // The connection card links to its details in the technical view; the card is re-rendered, so
+  // the click is caught on the view.
+  document.querySelector('#overview-view')?.addEventListener('click', (event) => {
+    if (!event.target.closest('[data-open-technical]')) return;
+    event.preventDefault();
     setView('technical');
     document.querySelector('#overview-details-head')?.scrollIntoView({ block: 'start' });
   });
@@ -140,8 +143,6 @@ function translateStaticView() {
   if (technicalButton) technicalButton.textContent = t('interpretation.view.technical');
   if (viewSwitch) viewSwitch.setAttribute('aria-label', t('interpretation.view.label'));
   if (dimensions) dimensions.setAttribute('aria-label', t('interpretation.dimensions.label'));
-  const openTechnical = document.querySelector('#open-technical');
-  if (openTechnical) openTechnical.textContent = t('board.openTechnical');
 }
 
 function stateKey(dimension) {
@@ -1340,7 +1341,7 @@ function renderHero(interpretation) {
     ${renderControl()}
     ${renderPrivileged()}
     <section class="connection-board" aria-labelledby="connection-title">
-      <header><h2 id="connection-title">${escapeHtml(t('board.jump.connection'))}</h2></header>
+      <header><h2 id="connection-title">${escapeHtml(t('board.jump.connection'))}</h2><a class="meaning-link" href="?view=technical" data-open-technical>${escapeHtml(t('board.openTechnical'))}</a></header>
       ${statusRow(interpretation)}
       ${renderOutageTraffic(interpretation)}
       ${renderAnatomy(interpretation)}
@@ -1654,7 +1655,7 @@ function renderSituation(assessment, state = assessment ? 'ready' : 'loading') {
   if (interpretation) requestHistory();
   const valid = interpretation?.schemaVersion === 1 && interpretation.summary &&
     ['connectivity', 'interference', 'routing', 'quality', 'shutdown'].every((id) => interpretation.dimensions?.[id]);
-  for (const selector of ['#overview-details-head', '#interpretation-dimensions', '.overview-lower-grid', '#current-findings', '#evidence-overview', '.overview-more', '#situation-sections']) {
+  for (const selector of ['#overview-details-head', '#interpretation-dimensions', '.overview-lower-grid', '#current-findings', '#evidence-overview', '#situation-sections']) {
     document.querySelector(selector).hidden = !valid;
   }
   if (!valid) document.querySelector('#overview-view > .jump-bar')?.remove();

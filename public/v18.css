@@ -122,8 +122,8 @@ tr[data-level="blocked"] .access-level b { color: var(--status-blocked); }
 
 .meaning-line { margin: 9px 0 0; color: var(--text-soft); font-size: 16px; line-height: 1.65; }
 .meaning-line:last-child { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); color: var(--muted); font-size: 14.5px; }
-.overview-more { margin: 2px 0 0; }
-.overview-more button { font-size: 15px; }
+.connection-board > header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; }
+.connection-board > header .meaning-link { margin-top: 0; }
 
 .overview-section-head { margin-top: 10px; }
 .overview-section-head h2 { margin: 3px 0 2px; font-size: 21px; }

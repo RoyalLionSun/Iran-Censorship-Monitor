@@ -429,7 +429,7 @@ export default Object.freeze({
   'meaning.connection.widespread': 'No: outage monitors report a nationwide outage.',
   'meaning.connection.unknown': 'Unclear: the available data do not show whether the connection itself was disrupted.',
   'meaning.basis': 'These results come from volunteers running OONI Probe in this network. They describe the tested services at the tested times, not every user, app or website.',
-  'board.openTechnical': 'See the technical assessment',
+  'board.openTechnical': 'Technical details',
   'board.coverage.days': 'Measured on {days} of {window} days',
   'meaning.vantage.exact': 'This rests on {runs} independent measurement runs, spread over {days} of {window} days.',
   'meaning.vantage.atLeast': 'This rests on at least {runs} independent measurement runs; only the most recent records are counted, which covered {days} days.',
