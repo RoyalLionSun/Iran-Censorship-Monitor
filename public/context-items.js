@@ -25,6 +25,7 @@ export const CONTEXT_SOURCES = {
   iranintlMar: { url: 'https://www.iranintl.com/en/202603106004', date: '2026-03-10', name: { en: 'Iran International', fa: 'ایران اینترنشنال' } },
   euRegulation: { url: 'https://eur-lex.europa.eu/eli/reg_impl/2026/267/oj', date: '2026-01-29', name: { en: 'EU Regulation 2026/267', fa: 'مقررات اتحادیهٔ اروپا ۲۰۲۶/۲۶۷' } },
   euCouncil: { url: 'https://www.consilium.europa.eu/en/press/press-releases/2026/01/29/iran-council-adopts-new-sanctions-over-serious-human-rights-violations-and-iran-s-continued-support-to-russia-s-war-of-aggression-against-ukraine/', date: '2026-01-29', name: { en: 'Council of the EU', fa: 'شورای اتحادیهٔ اروپا' } },
+  article19Feb2026: { url: 'https://www.article19.org/resources/tightening-the-net-chinas-infrastructure-of-oppression-in-iran/', date: '2026-02-09', name: { en: 'ARTICLE 19, “Tightening the Net”', fa: 'آرتیکل ۱۹، «تنگ‌تر کردن تور»' } },
   canadaSep2026: { url: 'https://www.canada.ca/en/global-affairs/news/2026/09/backgrounder-canada-imposes-additional-sanctions-against-iranian-individuals-and-entities.html', date: '2026-09-23', name: { en: 'Global Affairs Canada', fa: 'وزارت امور خارجهٔ کانادا' } },
   usArvan: { url: 'https://2021-2025.state.gov/designation-of-arvan-cloud-and-affiliates-that-have-aided-internet-censorship-in-iran/', date: '2023-06-02', name: { en: 'US Department of State', fa: 'وزارت امور خارجهٔ آمریکا' } },
   rferlArvan: { url: 'https://www.rferl.org/a/iran-eu-sanctions-arvancloud-internet-censorship/32897604.html', date: '2024-04-09', name: { en: 'RFE/RL', fa: 'رادیو فردا' } },
@@ -63,6 +64,13 @@ export const CONTEXT_ITEMS = [
     },
   },
   {
+    id: 'operators', panel: 'control', date: '2026-02-09', added: '2026-09-26', sources: ['article19Feb2026'],
+    text: {
+      en: 'According to experts cited by ARTICLE 19, filtering is largely delegated to the big mobile operators MCI (AS197207) and Irancell (AS44244), which in return receive about a 20% discount on bandwidth.',
+      fa: 'به گفتهٔ کارشناسانی که آرتیکل ۱۹ از آن‌ها نقل می‌کند، فیلترینگ عمدتاً به اپراتورهای بزرگ موبایل، همراه اول (AS197207) و ایرانسل (AS44244)، واگذار شده است و آن‌ها در عوض حدود ۲۰٪ تخفیف پهنای باند می‌گیرند.',
+    },
+  },
+  {
     id: 'filtering', panel: 'control', date: '2026-01-29', sources: ['euRegulation', 'euCouncil'],
     text: {
       en: 'The EU sanctioned the body that decides what is filtered, the Working Group for Determining Instances of Criminal Content (also called the Filtering Committee), which works under the Attorney General’s Office and the Ministry of Justice. According to the EU, the tools it has built with companies reduce bandwidth, block international social media and block unauthorised VPNs.',
@@ -88,6 +96,13 @@ export const CONTEXT_ITEMS = [
     text: {
       en: 'The US sanctioned ArvanCloud (Abr Arvan, network AS205585 in the tables above): a key partner of the ICT ministry in building the National Information Network, which is used to cut people off from the global internet, and it blocked websites at the request of the filtering working group. The EU had listed the company in November 2022 and removed it on 4 April 2024 without giving reasons; the US listing stands.',
       fa: 'آمریکا ابر آروان (شبکهٔ AS205585 در جدول‌های بالا) را تحریم کرد: شریک اصلی وزارت ارتباطات در ساخت شبکهٔ ملی اطلاعات که برای جدا کردن مردم از اینترنت جهانی به کار می‌رود؛ این شرکت به درخواست کارگروه فیلترینگ وب‌سایت‌ها را مسدود کرده است. اتحادیهٔ اروپا این شرکت را در آبان ۱۴۰۱ تحریم کرده بود و در ۱۶ فروردین ۱۴۰۳ بدون ذکر دلیل از فهرست خارج کرد؛ تحریم آمریکا پابرجاست.',
+    },
+  },
+  {
+    id: 'chinaVendors', panel: 'control', date: '2010-12', added: '2026-09-26', sources: ['article19Feb2026'],
+    text: {
+      en: 'ARTICLE 19 documents the Chinese technology behind this: ZTE contracted with TCI (AS58224) for a nationwide “integrated monitoring system” that inspects calls, SMS, email, chat and internet traffic (deep packet inspection); in 2017 the US Justice Department found ZTE guilty of sanctions violations. In 2010 Huawei offered deep-packet-inspection tools to MobinNet (AS50810), according to documents seen by Reuters, and in 2011 sold telecom equipment to Irancell (AS44244). Huawei denies building censorship or surveillance tools.',
+      fa: 'آرتیکل ۱۹ فناوری چینی پشت این سامانه را مستند می‌کند: شرکت زدتی‌ای با شرکت مخابرات ایران (TCI، AS58224) برای یک «سامانهٔ یکپارچهٔ پایش» سراسری قرارداد بست که تماس‌ها، پیامک، ایمیل، گفت‌وگو و ترافیک اینترنت را بررسی می‌کند (بازرسی عمیق بسته‌ها)؛ در سال ۲۰۱۷ میلادی وزارت دادگستری آمریکا زدتی‌ای را به نقض تحریم‌ها محکوم کرد. به استناد اسنادی که رویترز دیده است، هواوی در ۱۳۸۹ ابزار بازرسی عمیق بسته‌ها را به مبین‌نت (AS50810) پیشنهاد داد و در ۱۳۹۰ تجهیزات مخابراتی به ایرانسل (AS44244) فروخت. هواوی ساخت ابزار سانسور یا نظارت را رد می‌کند.',
     },
   },
   {
