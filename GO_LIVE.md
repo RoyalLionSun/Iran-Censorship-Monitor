@@ -5,6 +5,21 @@ server. Collected during development so nothing is forgotten; tick the boxes on 
 Technical details of the service itself (reverse proxy, systemd hardening): see
 [PRODUCTION.md](PRODUCTION.md).
 
+## Before the first push: privacy
+
+- [ ] **No private e-mail in commits.** All local commits carry the anonymous GitHub address
+      `49779453+RoyalLionSun@users.noreply.github.com` (set for this repository in `.git/config`).
+      The newest commit on `main` (2193894, 12 September 2026) was already on GitHub with the
+      private address; it was rewritten locally with the same content. `main` must therefore be
+      pushed once with `git push --force-with-lease origin main`, then the branch normally.
+      Afterwards: GitHub → Settings → Emails → "Keep my email addresses private" and "Block
+      command line pushes that expose my email".
+- [ ] **No home IP.** Git and GitHub do not publish the address you push from. The public
+      dashboard itself must run on a rented server (or behind a tunnel), never on the home
+      computer, because every visitor sees the address of the machine that answers.
+- [ ] Checked on 26 September 2026: no key from `.env` in any commit or file; `.env` and `var/`
+      were never committed; the images in `public/brand` carry no metadata.
+
 ## 0. Release number
 
 - [ ] **Version 1.9.0** — the footer shows the released version, deliberately still `v1.8.0`
