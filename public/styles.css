@@ -576,7 +576,7 @@ select option:disabled { color: #7d8ea6; }
 .footer-title #footer-version { color: var(--muted); font-size: 13.5px; font-weight: 600; margin-inline-start: 6px; }
 .footer-claim { color: #9ad9d5; font-size: 14px; }
 html[lang="fa"] .footer-claim { direction: rtl; }
-.footer-logo { justify-self: end; width: 60px; height: 60px; object-fit: contain; filter: drop-shadow(0 2px 6px rgba(0,0,0,.35)); }
+.footer-logo { justify-self: end; width: 72px; height: 72px; object-fit: contain; filter: drop-shadow(0 2px 6px rgba(0,0,0,.35)); }
 @media (max-width: 760px) {
   .site-footer-inner { grid-template-columns: auto 1fr auto; padding: 10px 12px; }
   .site-footer .footer-handle { font-size: 28px; }
