@@ -22,8 +22,11 @@ them to download the tool. All addresses were checked to exist on 25 September 2
 | `https://one.one.one.one/` | ANON | Cloudflare WARP (1.1.1.1 app) download page |
 | `https://snowflake.torproject.org/` | ANON | Tor Snowflake |
 | `https://conduit.psiphon.ca/` | ANON | Psiphon Conduit (46,799 stations run in Iran, Psiphon statistics) |
+| `https://iranopasmigirim.com/en` | POLR | "We Take Back Iran" (National Revolution TV); no OONI test so far |
+| `https://farahpahlavi.org/` | POLR | Official site of Farah Pahlavi; no OONI test anywhere so far |
 
-Already on the global list and therefore tested in Iran (no action needed): psiphon.ca,
+Already on the Iran list (no action needed): www.rezapahlavi.org and fa.rezapahlavi.org (710 OONI
+tests from Iran since June 2026). Already on the global list and therefore tested in Iran: psiphon.ca,
 torproject.org, bridges.torproject.org, protonvpn.com, nordvpn.com, surfshark.com, mullvad.net,
 getoutline.org, www.hotspotshield.com, www.tunnelbear.com.
 

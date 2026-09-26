@@ -329,10 +329,12 @@ export const MORE_SERVICE_GROUPS = Object.freeze([
     { id: 'independentpersian', name: 'Independent Persian', domains: ['www.independentpersian.com'] },
     { id: 'radiozamaneh', name: 'Radio Zamaneh', domains: ['www.radiozamaneh.com'] },
     { id: 'kayhanlondon', name: 'Kayhan London', domains: ['kayhan.london'] },
-    // Opposition outlets. The Revolution TV page streams through YouTube (measured above); its
-    // website is tested only once it is on Citizen Lab's Iran list, until then it shows untested.
+    // Opposition outlets. The Revolution TV page streams through YouTube (measured above). Its
+    // website and Farah Pahlavi's are tested only once they are on Citizen Lab's Iran list; until
+    // then they show untested (OONI has no test of either, 26 September 2026).
     { id: 'rezapahlavi', name: 'Reza Pahlavi (official site)', nameFa: 'وب‌سایت رسمی شاهزاده رضا پهلوی', domains: ['www.rezapahlavi.org', 'fa.rezapahlavi.org', 'rezapahlavi.org'] },
     { id: 'iranopasmigirim', name: 'We Take Back Iran (National Revolution TV)', nameFa: 'ایران را پس می‌گیریم (تلویزیون انقلاب ملی)', domains: ['iranopasmigirim.com', 'www.iranopasmigirim.com'] },
+    { id: 'farahpahlavi', name: 'Farah Pahlavi (official site)', nameFa: 'وب‌سایت رسمی شهبانو فرح پهلوی', domains: ['farahpahlavi.org', 'www.farahpahlavi.org'] },
   ] },
   { id: 'circumvention', services: [
     { id: 'psiphon', name: 'Psiphon', domains: ['psiphon.ca', 'www.psiphon.ca'], app: 'psiphon' },
