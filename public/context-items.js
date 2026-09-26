@@ -10,7 +10,7 @@
 // Primary or named first-hand sources only, never Wikipedia. Update CONTEXT_CHECKED whenever the
 // entries are checked against their sources again. tests/context-items.test.mjs checks the rules.
 
-export const CONTEXT_CHECKED = '2026-09-25';
+export const CONTEXT_CHECKED = '2026-09-26';
 
 export const CONTEXT_SOURCES = {
   rferlBill: { url: 'https://www.rferl.org/a/iran-internet-bill-restriction-access/33845516.html', date: '2026-09-03', name: { en: 'RFE/RL', fa: 'رادیو فردا' } },
@@ -25,6 +25,10 @@ export const CONTEXT_SOURCES = {
   iranintlMar: { url: 'https://www.iranintl.com/en/202603106004', date: '2026-03-10', name: { en: 'Iran International', fa: 'ایران اینترنشنال' } },
   euRegulation: { url: 'https://eur-lex.europa.eu/eli/reg_impl/2026/267/oj', date: '2026-01-29', name: { en: 'EU Regulation 2026/267', fa: 'مقررات اتحادیهٔ اروپا ۲۰۲۶/۲۶۷' } },
   euCouncil: { url: 'https://www.consilium.europa.eu/en/press/press-releases/2026/01/29/iran-council-adopts-new-sanctions-over-serious-human-rights-violations-and-iran-s-continued-support-to-russia-s-war-of-aggression-against-ukraine/', date: '2026-01-29', name: { en: 'Council of the EU', fa: 'شورای اتحادیهٔ اروپا' } },
+  canadaSep2026: { url: 'https://www.canada.ca/en/global-affairs/news/2026/09/backgrounder-canada-imposes-additional-sanctions-against-iranian-individuals-and-entities.html', date: '2026-09-23', name: { en: 'Global Affairs Canada', fa: 'وزارت امور خارجهٔ کانادا' } },
+  usArvan: { url: 'https://2021-2025.state.gov/designation-of-arvan-cloud-and-affiliates-that-have-aided-internet-censorship-in-iran/', date: '2023-06-02', name: { en: 'US Department of State', fa: 'وزارت امور خارجهٔ آمریکا' } },
+  rferlArvan: { url: 'https://www.rferl.org/a/iran-eu-sanctions-arvancloud-internet-censorship/32897604.html', date: '2024-04-09', name: { en: 'RFE/RL', fa: 'رادیو فردا' } },
+  treasury2012: { url: 'https://home.treasury.gov/system/files/136/archive-documents/Fact-Sheet---Sanctions-on-Iranian-Govt-and-Affiliates---November-8-2012.pdf', date: '2012-11-08', name: { en: 'US Treasury', fa: 'وزارت خزانه‌داری آمریکا' } },
   entekhab: { url: 'https://www.entekhab.ir/fa/news/905154/', date: '2026-01-16', name: { en: 'Entekhab', fa: 'انتخاب' } },
   // Our own measurement of the January 2026 shutdown (the timeline and the networks table).
   measuredJanuary: { url: '/?asn=ALL&since=2026-01-05&until=2026-01-20#anatomy-title', date: '2026-01-15', internal: true, name: { en: 'Measured on this page (Cloudflare Radar)', fa: 'اندازه‌گیری‌شده در همین صفحه (Cloudflare Radar)' } },
@@ -42,6 +46,13 @@ export const CONTEXT_ITEMS = [
     text: {
       en: 'A “Cyberspace Regulation Plan” went to parliament. It hands control of Iran’s internet gateways to the Supreme Council of Cyberspace, obliges providers to identify every user, and requires foreign platforms to have a presence in Iran. The ICT ministry opposes it; no vote date is set.',
       fa: '«طرح تنظیم فضای مجازی» به مجلس رفت. این طرح کنترل درگاه‌های اینترنت ایران را به شورای عالی فضای مجازی می‌سپارد، ارائه‌دهندگان را به احراز هویت هر کاربر ملزم می‌کند و از پلتفرم‌های خارجی حضور در ایران می‌خواهد. وزارت ارتباطات با آن مخالف است؛ زمان رأی‌گیری تعیین نشده است.',
+    },
+  },
+  {
+    id: 'canada', panel: 'control', date: '2026-09-23', added: '2026-09-26', sources: ['canadaSep2026'],
+    text: {
+      en: 'Canada sanctioned the same bodies as the EU in January: the Working Group for Determining Instances of Criminal Content (“Iranian state censorship authority”), the companies Douran Group and Yaftar, SATRA and the IRGC-established Seraj Cyberspace Organization, together with five officials, for digital repression. It names the nationwide shutdown that began in January 2026.',
+      fa: 'کانادا همان نهادهایی را تحریم کرد که اتحادیهٔ اروپا در ژانویه تحریم کرده بود: کارگروه تعیین مصادیق محتوای مجرمانه («نهاد دولتی سانسور ایران»)، شرکت‌های گروه دوران و یافتار، ساترا و سازمان فضای مجازی سراج که سپاه پاسداران آن را تأسیس کرده است؛ همراه با پنج مقام، به‌دلیل سرکوب دیجیتال. کانادا به قطع سراسری اینترنت از دی ۱۴۰۴ اشاره می‌کند.',
     },
   },
   {
@@ -70,6 +81,20 @@ export const CONTEXT_ITEMS = [
     text: {
       en: 'The same act lists SATRA, which oversees online video and streaming content under the state broadcaster IRIB and censors political and cultural content.',
       fa: 'همین سند ساترا را هم فهرست می‌کند که زیر نظر صداوسیما بر محتوای ویدئویی و پخش آنلاین نظارت دارد و محتوای سیاسی و فرهنگی را سانسور می‌کند.',
+    },
+  },
+  {
+    id: 'arvancloud', panel: 'control', date: '2023-06-02', until: '2024-04-04', sources: ['usArvan', 'rferlArvan'],
+    text: {
+      en: 'The US sanctioned ArvanCloud (Abr Arvan, network AS205585 in the tables above): a key partner of the ICT ministry in building the National Information Network, which is used to cut people off from the global internet, and it blocked websites at the request of the filtering working group. The EU had listed the company in November 2022 and removed it on 4 April 2024 without giving reasons; the US listing stands.',
+      fa: 'آمریکا ابر آروان (شبکهٔ AS205585 در جدول‌های بالا) را تحریم کرد: شریک اصلی وزارت ارتباطات در ساخت شبکهٔ ملی اطلاعات که برای جدا کردن مردم از اینترنت جهانی به کار می‌رود؛ این شرکت به درخواست کارگروه فیلترینگ وب‌سایت‌ها را مسدود کرده است. اتحادیهٔ اروپا این شرکت را در آبان ۱۴۰۱ تحریم کرده بود و در ۱۶ فروردین ۱۴۰۳ بدون ذکر دلیل از فهرست خارج کرد؛ تحریم آمریکا پابرجاست.',
+    },
+  },
+  {
+    id: 'amnafzar', panel: 'control', date: '2012-11-08', sources: ['treasury2012'],
+    text: {
+      en: 'The US sanctioned AmnAfzar Gostar-e Sharif, whose filtering system “Separ” many Iranian internet providers use to monitor web traffic and block political websites; its founder had been appointed to the Supreme Council of Cyberspace in March 2012.',
+      fa: 'آمریکا شرکت امن‌افزار گستر شریف را تحریم کرد؛ سامانهٔ فیلترینگ «سپر» این شرکت را بسیاری از ارائه‌دهندگان اینترنت ایران برای پایش ترافیک وب و مسدود کردن وب‌سایت‌های سیاسی به کار می‌برند؛ بنیان‌گذار آن در اسفند ۱۳۹۰ به عضویت شورای عالی فضای مجازی منصوب شده بود.',
     },
   },
   {
