@@ -4,6 +4,7 @@
 
 ### Overview, sources, reports and resilience (2026-09-23 to 2026-09-26)
 
+- performance review (26 September 2026): the last good answers are stored one file per answer, so a save writes only what changed (the single 17 MB file took about 90 ms to serialise and blocked the server on every save); large JSON answers are compressed in Node's worker threads, and a cached Overview is serialised and compressed once and then served from memory (about 1 ms instead of about 10 ms);
 - the former global disruption ladder is replaced by the claim-based contract in `lib/interpretation.mjs`;
 - connectivity, websites/filtering, routing, connection quality and shutdown are assessed separately;
 - severity, confidence, verification, coverage and attribution are separate axes;

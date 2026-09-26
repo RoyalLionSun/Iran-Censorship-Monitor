@@ -152,6 +152,7 @@ async function viaStore(scope, build, live) {
   return live();
 }
 
+// Answers live in var/last-good/entries/; the single sources.json of earlier versions is taken over once.
 const lastGoodSources = createLastGoodStore({ path: join(root, 'var/last-good/sources.json') });
 
 function sourceKey(name, input) {
@@ -330,7 +331,7 @@ async function handleApi(req, res, url) {
     const cacheKey = historicalOverviewKey(input);
     const cached = cacheKey ? historicalOverviews.get(cacheKey) : null;
     if (cached && cached.expires > Date.now()) {
-      jsonResponse(res, 200, cached.payload);
+      jsonResponse(res, 200, cached.payload, {}, { reuse: true });
       return true;
     }
     // The same question already being answered (for example by the warm-up) is waited for,
@@ -338,7 +339,7 @@ async function handleApi(req, res, url) {
     const pending = inflightOverviews.get(cacheKey);
     if (pending) {
       const shared = await pending;
-      if (shared) { jsonResponse(res, 200, shared); return true; }
+      if (shared) { jsonResponse(res, 200, shared, {}, { reuse: true }); return true; }
     }
     // A new answer costs about thirty upstream requests. One visitor may start a limited number
     // per ten minutes, so nobody can make OONI block this server for every reader; answers
@@ -508,7 +509,7 @@ async function handleApi(req, res, url) {
     }
     settleShared(payload);
     timings.set('total', performance.now() - overviewStarted);
-    jsonResponse(res, 200, payload, serverTimingHeader(timings));
+    jsonResponse(res, 200, payload, serverTimingHeader(timings), { reuse: true });
     return true;
     } finally {
       settleShared(null);

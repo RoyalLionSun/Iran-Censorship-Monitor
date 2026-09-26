@@ -178,7 +178,7 @@ Active checks (RIPE Atlas, Globalping) run only when `ACTIVE_MEASUREMENTS_ENABLE
 ## State and storage
 
 - `var/store/monitor.db` (node:sqlite): measurements written by the collector paths, only the fields the dashboard needs. The server answers from it where it covers the requested period.
-- `var/last-good/sources.json`: the last good answer per source and scope, with per-source quotas, so a rate-limited or failing source shows its latest data with a date instead of "no data".
+- `var/last-good/entries/`: the last good answer per source and scope, one file each (only changed answers are written), with per-source quotas, so a rate-limited or failing source shows its latest data with a date instead of "no data".
 - `var/feed/`, `var/reports/`, `var/history/`, `var/anatomy/`: daily entries, finished weekly and monthly reports, monthly service history and shutdown timelines, each written once.
 - `var/asn-coverage/`, `var/asn-directory/`, `var/iran-asns.json`: network inventory snapshots; `var/ris-live/`: the optional routing collector (seven days by default, at most 30).
 - In-process caches are bounded (`FETCH_CACHE_LIMIT`). `var/` is Git-ignored and never served.

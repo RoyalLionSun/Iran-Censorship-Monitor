@@ -103,19 +103,48 @@ test('JSON answers are compressed when the browser offers it and stay readable',
   assert.equal(pickEncoding('gzip;q=1.0'), 'gzip');
   assert.equal(pickEncoding(''), null);
   const payload = { ok: true, rows: Array.from({ length: 500 }, (_, index) => ({ domain: `site-${index}.example`, measurements: index })) };
-  const respond = (acceptEncoding) => {
+  const respond = async (acceptEncoding, options) => {
     const out = {};
-    jsonResponse({ req: { headers: { 'accept-encoding': acceptEncoding } }, writeHead: (status, headers) => Object.assign(out, { status, headers }), end: (body) => { out.body = body; } }, 200, payload);
+    await jsonResponse({ req: { headers: { 'accept-encoding': acceptEncoding } }, writeHead: (status, headers) => Object.assign(out, { status, headers }), end: (body) => { out.body = body; } }, 200, payload, {}, options);
     return out;
   };
-  const br = respond('br, gzip');
+  const br = await respond('br, gzip');
   assert.equal(br.headers['content-encoding'], 'br');
   assert.ok(br.body.length < JSON.stringify(payload).length / 4);
   assert.deepEqual(JSON.parse(brotliDecompressSync(br.body)), payload);
-  assert.deepEqual(JSON.parse(gunzipSync(respond('gzip').body)), payload);
-  const plain = respond('');
+  assert.deepEqual(JSON.parse(gunzipSync((await respond('gzip')).body)), payload);
+  const plain = await respond('');
   assert.equal(plain.headers['content-encoding'], undefined);
   assert.deepEqual(JSON.parse(plain.body), payload);
+  // A reused payload is compressed once and served from memory afterwards.
+  const first = await respond('br', { reuse: true });
+  const second = await respond('br', { reuse: true });
+  assert.equal(first.body, second.body, 'the same buffer, not a second compression');
+  assert.deepEqual(JSON.parse(brotliDecompressSync(second.body)), payload);
+});
+
+test('last good answers are stored one file each, and a single file from before is taken over', async () => {
+  const { mkdtemp, readdir } = await import('node:fs/promises');
+  const { writeFileSync, existsSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const { join } = await import('node:path');
+  const { createLastGoodStore } = await import('../lib/common.mjs');
+  const dir = await mkdtemp(join(tmpdir(), 'last-good-files-'));
+  const path = join(dir, 'sources.json');
+  writeFileSync(path, JSON.stringify([['OONI|old', { value: { ok: true, status: 'observed', n: 1 }, at: '2026-09-20T08:00:00Z' }]]));
+  const store = createLastGoodStore({ path });
+  store.remember('IODA|new', { ok: true, status: 'observed', n: 2, fetchedAt: '2026-09-26T08:00:00Z' });
+  await store.flush();
+  assert.equal(existsSync(path), false, 'the single file is replaced');
+  assert.equal((await readdir(join(dir, 'entries'))).length, 2);
+  const restarted = createLastGoodStore({ path });
+  assert.equal(restarted.stale('OONI|old').n, 1);
+  assert.equal(restarted.stale('IODA|new').n, 2);
+  // Only changed answers are written again; an evicted answer's file is removed.
+  const small = createLastGoodStore({ path, limit: 1 });
+  small.remember('OONI|third', { ok: true, status: 'observed', n: 3 });
+  await small.flush();
+  assert.equal((await readdir(join(dir, 'entries'))).length, 1);
 });
 
 test('the cache of upstream answers stays bounded on a long-running server', async () => {
