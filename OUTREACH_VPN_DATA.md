@@ -23,6 +23,8 @@ them to download the tool. All addresses were checked to exist on 25 September 2
 | `https://snowflake.torproject.org/` | ANON | Tor Snowflake |
 | `https://conduit.psiphon.ca/` | ANON | Psiphon Conduit (46,799 stations run in Iran, Psiphon statistics) |
 | `https://iranopasmigirim.com/en` | POLR | "We Take Back Iran" (National Revolution TV); no OONI test so far |
+| `https://copilot.microsoft.com/` | COMT | Microsoft Copilot (AI assistant); no OONI test so far |
+| `https://grok.com/` | COMT | Grok (AI assistant); no OONI test so far |
 | `https://farahpahlavi.org/` | POLR | Official site of Queen Farah Pahlavi; no OONI test anywhere so far |
 
 Already on the Iran list (no action needed): www.rezapahlavi.org and fa.rezapahlavi.org (710 OONI

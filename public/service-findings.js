@@ -352,10 +352,22 @@ export const MORE_SERVICE_GROUPS = Object.freeze([
     { id: 'tunnelbear', name: 'TunnelBear', domains: ['www.tunnelbear.com'] },
     { id: 'encrypteddns', name: 'Cloudflare DNS (1.1.1.1)', domains: ['1.1.1.1'] },
   ] },
+  // AI assistants. "Reachable" says Iran's filter lets the website through; OpenAI, Anthropic and
+  // Google leave Iran off the countries they serve (their own lists, checked 26 September 2026),
+  // so `notOfferedInIran` marks that the provider itself may refuse use from Iran. Copilot and Grok
+  // are not on Citizen Lab's lists and so not tested.
+  { id: 'ai', services: [
+    { id: 'chatgpt', name: 'ChatGPT', domains: ['chatgpt.com', 'chat.openai.com'], notOfferedInIran: true },
+    { id: 'gemini', name: 'Google Gemini', domains: ['gemini.google.com'], notOfferedInIran: true },
+    { id: 'claude', name: 'Claude', domains: ['claude.ai'], notOfferedInIran: true },
+    { id: 'deepseek', name: 'DeepSeek', domains: ['www.deepseek.com', 'chat.deepseek.com'] },
+    { id: 'perplexity', name: 'Perplexity', domains: ['www.perplexity.ai'] },
+    { id: 'copilot', name: 'Microsoft Copilot', domains: ['copilot.microsoft.com'], onTestList: false },
+    { id: 'grok', name: 'Grok', domains: ['grok.com'], onTestList: false },
+  ] },
   { id: 'everyday', services: [
     { id: 'google', name: 'Google', domains: ['www.google.com', 'google.com'] },
     { id: 'gmail', name: 'Gmail', domains: ['mail.google.com', 'gmail.com'] },
-    { id: 'chatgpt', name: 'ChatGPT', domains: ['chatgpt.com', 'chat.openai.com'] },
     { id: 'wikipedia', name: 'Wikipedia', domains: ['www.wikipedia.org', 'fa.wikipedia.org', 'en.wikipedia.org'] },
     { id: 'github', name: 'GitHub', domains: ['github.com'] },
     { id: 'linkedin', name: 'LinkedIn', domains: ['www.linkedin.com'] },
@@ -407,6 +419,7 @@ export function summarizeMoreServices(networkPayload, countryPayload = null, app
       return {
         id: service.id, name: service.name,
         ...(service.onTestList === false ? { onTestList: false } : {}),
+        ...(service.notOfferedInIran ? { notOfferedInIran: true } : {}),
         app: appResult(appPayload, service.app),
         scope: usable ? 'network' : totals ? 'country' : null,
         status: totals ? networkStatus(totals) : 'untested',

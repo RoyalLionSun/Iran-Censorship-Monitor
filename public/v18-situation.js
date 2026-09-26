@@ -661,14 +661,15 @@ function renderMoreServices(services) {
       total: formatNumber(service.measurements), confirmed: formatNumber(service.confirmed),
       count: formatNumber(service.anomalous), ok: formatNumber(service.ok),
     }) + (service.scope === 'country' ? ` · ${t('board.more.country')}` : '') : t('board.more.untested');
-    const appTitle = service.app ? `${separator()}${t('board.more.appDetail', { total: formatNumber(service.app.measurements), count: formatNumber(service.app.anomalies) })}` : '';
+    const appTitle = (service.app ? `${separator()}${t('board.more.appDetail', { total: formatNumber(service.app.measurements), count: formatNumber(service.app.anomalies) })}` : '')
+      + (service.notOfferedInIran ? `${separator()}${t('board.more.notOfferedDetail')}` : '');
     return `<li class="more-chip" data-status="${escapeHtml(service.status)}"${service.scope === 'country' ? ' data-scope="country"' : ''} title="${escapeHtml(title + appTitle)}">
-      <span class="more-chip-name">${escapeHtml(moreServiceName(service))}</span><span class="more-chip-status">${escapeHtml(t(`board.more.status.${service.status}`))}</span>${service.app ? `<span class="more-chip-app" data-app-status="${escapeHtml(service.app.status)}">${escapeHtml(t(`board.more.app.${service.app.status}`))}</span>` : ''}</li>`;
+      <span class="more-chip-name">${escapeHtml(moreServiceName(service))}</span><span class="more-chip-status">${escapeHtml(t(`board.more.status.${service.status}`))}</span>${service.app ? `<span class="more-chip-app" data-app-status="${escapeHtml(service.app.status)}">${escapeHtml(t(`board.more.app.${service.app.status}`))}</span>` : ''}${service.notOfferedInIran ? `<span class="more-chip-app" data-app-status="provider">${escapeHtml(t('board.more.notOffered'))}</span>` : ''}</li>`;
   };
   return `
     <section class="more-services" aria-labelledby="more-services-title">
       <header><h2 id="more-services-title">${escapeHtml(t('board.more.title'))}</h2><p>${escapeHtml(t('board.more.note'))}${services.countryCheck === 'outage' ? ` ${escapeHtml(t('board.country.outage'))}` : ''}${services.survivorsOnly ? ` ${escapeHtml(t('board.services.survivorsOnly'))}` : ''}</p></header>
-      ${groups.map((group) => `<div class="more-group"><h3>${escapeHtml(t(`board.more.group.${group.id}`))}</h3><div class="more-group-body"><ul>${byReachability(group.services).map(chip).join('')}</ul></div></div>`).join('')}
+      ${groups.map((group) => `<div class="more-group"><h3>${escapeHtml(t(`board.more.group.${group.id}`))}</h3><div class="more-group-body"><ul>${byReachability(group.services).map(chip).join('')}</ul>${group.services.some((service) => service.notOfferedInIran) ? `<p class="more-group-note">${escapeHtml(t('board.more.notOfferedNote'))}</p>` : ''}</div></div>`).join('')}
     </section>`;
 }
 
