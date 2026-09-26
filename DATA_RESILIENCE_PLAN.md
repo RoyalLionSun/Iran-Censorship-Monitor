@@ -81,14 +81,20 @@ A path that fails leaves the others untouched; the next run retries it.
 
 - Measure what OONI measures at the network level: does the DNS answer point to Iran's known
   block addresses (10.10.34.x) or a wrong address; does a TLS handshake to the service complete.
-- **Ethics precaution (proposed 24 September 2026; which targets to allow is still open for the
-  owner to decide):** probes belong to private hosts in Iran who
-  never agreed to test blocked sites. Active checks therefore target **only the six mass
-  services** millions in Iran contact daily (Instagram, WhatsApp, Telegram, YouTube, X,
-  Facebook). News outlets and circumvention tools are **not** measured from these probes; OONI,
-  whose volunteers consented, covers them. Only DNS and TLS/HTTPS HEAD, never page content,
-  every 6 hours at most. `ACTIVE_MEASUREMENTS_ENABLED=true` records the decision on a host; the
-  target list is fixed in `lib/active-collector.mjs` and the round script refuses other hosts.
+- **Which targets (owner's criterion, 26 September 2026):** probes belong to private hosts in
+  Iran who never agreed to test anything. What decides is whether **using** a service is
+  punishable, not whether it is blocked: a blocked service is not automatically one whose use is
+  a crime. Allowed: the six mass services (Instagram, WhatsApp, Telegram, YouTube, X, Facebook)
+  and the AI services (ChatGPT, Gemini, Claude, DeepSeek, Perplexity, Copilot, Grok, Meta AI, the
+  image, video and audio tools). News and opposition outlets and circumvention tools are **not**
+  measured from these probes; OONI, whose volunteers consented, covers them. Other services only
+  after the owner decides with this criterion. Only DNS and TLS/HTTPS HEAD, never page content.
+- **Cost per round** (every 6 hours at most): the six every round plus 5 AI services in turn, so
+  each AI service is checked about once a day. RIPE Atlas: 11 hosts × 2 checks × up to 10 probes
+  × about 20 credits ≈ 4,400 credits per round; Globalping: 11 × 2 × 5 probes = 110 tests per
+  round, under its hourly limit without a token. `ACTIVE_MEASUREMENTS_ENABLED=true` switches the
+  paths on for a host; the target list is fixed in `lib/active-collector.mjs` and the round script
+  refuses other hosts.
 - Without an API key or with the gate off, the paths report "not configured" and the page
   says so; nothing else changes.
 

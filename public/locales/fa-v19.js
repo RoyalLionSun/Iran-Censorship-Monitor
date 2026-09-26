@@ -596,6 +596,8 @@ export default Object.freeze({
   'board.more.kind.video': 'ویدئو',
   'board.more.kind.audio': 'صدا',
   'unknown.unlisted.aMore': '{services} و {more} سرویس دیگر هنوز در فهرست وب‌سایت‌هایی نیستند که برنامهٔ آزمون داوطلبان در ایران بررسی می‌کند؛ پس هنوز کسی آن‌ها را اندازه نگرفته است.',
+  'board.more.independentTag': 'بررسی مستقل',
+  'board.more.independentDetail': 'آزمون OONI در این‌جا نیست. بررسی مستقل از دستگاه‌هایی در شبکه‌های ایران ({sources}): {probes} دستگاه در {networks} شبکه.',
   'board.more.group.everyday': 'سرویس‌های روزمره',
   'board.more.status.blocked': 'مسدود',
   'board.more.status.partial': 'بخشی',

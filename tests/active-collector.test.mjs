@@ -160,8 +160,27 @@ test('an Atlas round the credit balance cannot pay is skipped with a clear reaso
   store.close();
 });
 
-test('active targets are only the six mass services (ethics decision)', async () => {
-  const { ACTIVE_HOSTS } = await import('../lib/active-collector.mjs');
-  assert.deepEqual([...ACTIVE_HOSTS], ['www.instagram.com', 'web.whatsapp.com', 'web.telegram.org', 'www.youtube.com', 'x.com', 'www.facebook.com']);
+test('active targets are the six mass services and the AI services, nothing political', async () => {
+  const { ACTIVE_HOSTS, MASS_HOSTS, AI_HOSTS } = await import('../lib/active-collector.mjs');
+  const { MORE_SERVICE_GROUPS } = await import('../public/service-findings.js');
+  assert.deepEqual([...MASS_HOSTS], ['www.instagram.com', 'web.whatsapp.com', 'web.telegram.org', 'www.youtube.com', 'x.com', 'www.facebook.com']);
   assert.ok(Object.isFrozen(ACTIVE_HOSTS));
+  assert.deepEqual([...ACTIVE_HOSTS], [...MASS_HOSTS, ...AI_HOSTS]);
+  // Every AI host belongs to a listed AI service, and no host of the news or circumvention
+  // groups may ever be a target: contact with them could endanger the probe's host.
+  const domainsOf = (id) => MORE_SERVICE_GROUPS.find((group) => group.id === id).services.flatMap((service) => service.domains);
+  for (const host of AI_HOSTS) assert.ok(domainsOf('ai').includes(host), `${host} is not an AI service's domain`);
+  for (const host of [...domainsOf('news'), ...domainsOf('circumvention')]) assert.ok(!ACTIVE_HOSTS.includes(host), `${host} must stay with OONI`);
+});
+
+test('a round checks the six every time and the AI services in turns', async () => {
+  const { roundHosts, MASS_HOSTS, AI_HOSTS } = await import('../lib/active-collector.mjs');
+  const seen = new Set();
+  for (let round = 0; round < Math.ceil(AI_HOSTS.length / 5); round += 1) {
+    const hosts = roundHosts(round);
+    assert.deepEqual(hosts.slice(0, 6), [...MASS_HOSTS]);
+    assert.equal(hosts.length, 11);
+    hosts.slice(6).forEach((host) => seen.add(host));
+  }
+  assert.equal(seen.size, AI_HOSTS.length, 'every AI service is checked within one cycle');
 });

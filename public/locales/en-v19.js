@@ -596,6 +596,8 @@ export default Object.freeze({
   'board.more.kind.video': 'video',
   'board.more.kind.audio': 'audio',
   'unknown.unlisted.aMore': '{services} and {more} more are not yet on the list of websites that the volunteers’ test app checks in Iran, so nobody has measured them yet.',
+  'board.more.independentTag': 'independent check',
+  'board.more.independentDetail': 'No OONI test here. Independent check from probes in Iranian networks ({sources}): {probes} devices in {networks} networks.',
   'board.more.group.everyday': 'Everyday services',
   'board.more.status.blocked': 'blocked',
   'board.more.status.partial': 'partly',

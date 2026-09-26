@@ -405,3 +405,15 @@ test('circumvention tests that failed take their last good values, dated; answer
   const { isCleanOverview } = await import('../lib/common.mjs');
   assert.equal(isCleanOverview([merged]), false, 'a partly old answer is not saved as a clean snapshot');
 });
+
+test('independent checks of AI services count for the AI service they belong to', async () => {
+  const { summarizeIndependentChecks } = await import('../public/service-findings.js');
+  const result = summarizeIndependentChecks([
+    { host: 'claude.ai', source: 'globalping', kind: 'dns', asn: 'AS58224', probe: 'a', outcome: 'ok', n: 3 },
+    { host: 'claude.ai', source: 'globalping', kind: 'http', asn: 'AS58224', probe: 'a', outcome: 'ok', n: 3 },
+    { host: 'www.midjourney.com', source: 'ripe-atlas', kind: 'dns', asn: 'AS44244', probe: '7', outcome: 'blocked', n: 2 },
+  ]);
+  assert.equal(result.claude.status, 'reachable');
+  assert.equal(result.midjourney.status, 'blocked');
+  assert.deepEqual(result.midjourney.sources, ['ripe-atlas']);
+});

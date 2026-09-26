@@ -659,18 +659,29 @@ function moreServiceName(service) {
 
 // Further services as compact chips per group: blocked, partly, problems or reachable, with the
 // numbers on hover. A dashed chip was answered from other Iranian networks.
+// Where OONI has no test, an independent check from probes in Iran (RIPE Atlas, Globalping)
+// answers instead, tagged as such.
+const INDEPENDENT_CHIP_STATUS = { blocked: 'blocked', failing: 'restricted', partial: 'partial', reachable: 'reachable' };
+function withIndependent(service) {
+  const status = !service.scope && INDEPENDENT_CHIP_STATUS[service.independent?.status];
+  return status ? { ...service, status, viaIndependent: true } : service;
+}
+
 function renderMoreServices(services) {
-  const groups = services?.more;
-  if (!groups?.some((group) => group.services.some((service) => service.scope))) return '';
+  const groups = services?.more?.map((group) => ({ ...group, services: group.services.map(withIndependent) }));
+  if (!groups?.some((group) => group.services.some((service) => service.scope || service.viaIndependent))) return '';
   const chip = (service) => {
-    const title = service.scope ? t('board.more.detail', {
+    const title = service.viaIndependent ? t('board.more.independentDetail', {
+      sources: service.independent.sources.map((source) => (source === 'ripe-atlas' ? 'RIPE Atlas' : 'Globalping')).join(separator()),
+      probes: formatNumber(service.independent.probes), networks: formatNumber(service.independent.networks.length),
+    }) : service.scope ? t('board.more.detail', {
       total: formatNumber(service.measurements), confirmed: formatNumber(service.confirmed),
       count: formatNumber(service.anomalous), ok: formatNumber(service.ok),
     }) + (service.scope === 'country' ? ` · ${t('board.more.country')}` : '') : t('board.more.untested');
     const appTitle = (service.app ? `${separator()}${t('board.more.appDetail', { total: formatNumber(service.app.measurements), count: formatNumber(service.app.anomalies) })}` : '')
       + (service.notOfferedInIran ? `${separator()}${t('board.more.notOfferedDetail')}` : '');
     return `<li class="more-chip" data-status="${escapeHtml(service.status)}"${service.scope === 'country' ? ' data-scope="country"' : ''} title="${escapeHtml(title + appTitle)}">
-      <span class="more-chip-name">${escapeHtml(moreServiceName(service))}</span>${service.kind ? `<span class="more-chip-kind">${escapeHtml(t(`board.more.kind.${service.kind}`))}</span>` : ''}<span class="more-chip-status">${escapeHtml(t(`board.more.status.${service.status}`))}</span>${service.app ? `<span class="more-chip-app" data-app-status="${escapeHtml(service.app.status)}">${escapeHtml(t(`board.more.app.${service.app.status}`))}</span>` : ''}${service.notOfferedInIran ? `<span class="more-chip-app" data-app-status="provider">${escapeHtml(t('board.more.notOffered'))}</span>` : ''}</li>`;
+      <span class="more-chip-name">${escapeHtml(moreServiceName(service))}</span>${service.kind ? `<span class="more-chip-kind">${escapeHtml(t(`board.more.kind.${service.kind}`))}</span>` : ''}${service.viaIndependent ? `<span class="more-chip-kind">${escapeHtml(t('board.more.independentTag'))}</span>` : ''}<span class="more-chip-status">${escapeHtml(t(`board.more.status.${service.status}`))}</span>${service.app ? `<span class="more-chip-app" data-app-status="${escapeHtml(service.app.status)}">${escapeHtml(t(`board.more.app.${service.app.status}`))}</span>` : ''}${service.notOfferedInIran ? `<span class="more-chip-app" data-app-status="provider">${escapeHtml(t('board.more.notOffered'))}</span>` : ''}</li>`;
   };
   return `
     <section class="more-services" aria-labelledby="more-services-title">
@@ -1597,7 +1608,7 @@ function unknownItems(interpretation) {
   }
   // Sites not yet on the list the volunteers' test app checks in Iran are never measured; say so
   // instead of "no tests in this period", which suggests other periods have some.
-  const moreUntested = (services?.more ?? []).flatMap((group) => group.services.filter((service) => !service.scope));
+  const moreUntested = (services?.more ?? []).flatMap((group) => group.services.filter((service) => !service.scope && !withIndependent(service).viaIndependent));
   const unlisted = moreUntested.filter((service) => service.onTestList === false).map(moreServiceName);
   const untested = [
     ...(services?.visible ?? []).filter((item) => item.status === 'untested').map((item) => brandName(item.id, services)),
