@@ -81,7 +81,8 @@ A path that fails leaves the others untouched; the next run retries it.
 
 - Measure what OONI measures at the network level: does the DNS answer point to Iran's known
   block addresses (10.10.34.x) or a wrong address; does a TLS handshake to the service complete.
-- **Ethics decision (owner, 24 September 2026):** probes belong to private hosts in Iran who
+- **Ethics precaution (proposed 24 September 2026; which targets to allow is still open for the
+  owner to decide):** probes belong to private hosts in Iran who
   never agreed to test blocked sites. Active checks therefore target **only the six mass
   services** millions in Iran contact daily (Instagram, WhatsApp, Telegram, YouTube, X,
   Facebook). News outlets and circumvention tools are **not** measured from these probes; OONI,
