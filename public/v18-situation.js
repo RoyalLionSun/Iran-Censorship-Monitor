@@ -241,6 +241,11 @@ function formatDay(value) {
     .format(new Date(`${value.slice(0, 10)}T00:00:00Z`));
 }
 
+// Names before "and N more": a plain comma list, so the sentence has only one "and".
+function commaList(names) {
+  return names.join(getLanguage() === 'fa' ? '، ' : ', ');
+}
+
 function listOf(names) {
   try {
     return new Intl.ListFormat(localeFor(), { style: 'long', type: 'conjunction' }).format(names);
@@ -541,7 +546,8 @@ function renderAccess(services, selection) {
     </section>`;
   }
   const { names, types = {}, coverage } = breakdown;
-  const columns = accessColumns(groupId, services);
+  // Only services tested in some network get a column; untested ones are listed under More services.
+  const columns = accessColumns(groupId, services).filter((column) => groupId === 'main' || access.some((entry) => entry.services[column.id]));
   const brands = columns.map((column) => column.id);
   const tabs = byGroup ? `<div class="access-tabs" role="tablist" aria-label="${escapeHtml(t('board.access.groups'))}">${ACCESS_GROUPS
     .filter((id) => byGroup[id]?.length)
@@ -664,7 +670,7 @@ function renderMoreServices(services) {
     const appTitle = (service.app ? `${separator()}${t('board.more.appDetail', { total: formatNumber(service.app.measurements), count: formatNumber(service.app.anomalies) })}` : '')
       + (service.notOfferedInIran ? `${separator()}${t('board.more.notOfferedDetail')}` : '');
     return `<li class="more-chip" data-status="${escapeHtml(service.status)}"${service.scope === 'country' ? ' data-scope="country"' : ''} title="${escapeHtml(title + appTitle)}">
-      <span class="more-chip-name">${escapeHtml(moreServiceName(service))}</span><span class="more-chip-status">${escapeHtml(t(`board.more.status.${service.status}`))}</span>${service.app ? `<span class="more-chip-app" data-app-status="${escapeHtml(service.app.status)}">${escapeHtml(t(`board.more.app.${service.app.status}`))}</span>` : ''}${service.notOfferedInIran ? `<span class="more-chip-app" data-app-status="provider">${escapeHtml(t('board.more.notOffered'))}</span>` : ''}</li>`;
+      <span class="more-chip-name">${escapeHtml(moreServiceName(service))}</span>${service.kind ? `<span class="more-chip-kind">${escapeHtml(t(`board.more.kind.${service.kind}`))}</span>` : ''}<span class="more-chip-status">${escapeHtml(t(`board.more.status.${service.status}`))}</span>${service.app ? `<span class="more-chip-app" data-app-status="${escapeHtml(service.app.status)}">${escapeHtml(t(`board.more.app.${service.app.status}`))}</span>` : ''}${service.notOfferedInIran ? `<span class="more-chip-app" data-app-status="provider">${escapeHtml(t('board.more.notOffered'))}</span>` : ''}</li>`;
   };
   return `
     <section class="more-services" aria-labelledby="more-services-title">
@@ -1600,8 +1606,9 @@ function unknownItems(interpretation) {
   if (untested.length || unlisted.length) {
     const shown = untested.slice(0, 5);
     const answers = [
-      untested.length ? t(untested.length > shown.length ? 'unknown.untested.aMore' : 'unknown.untested.a', { services: listOf(shown), more: formatNumber(untested.length - shown.length) }) : '',
-      unlisted.length ? plural('unknown.unlisted.a', unlisted.length, { services: listOf(unlisted) }) : '',
+      untested.length ? t(untested.length > shown.length ? 'unknown.untested.aMore' : 'unknown.untested.a', { services: untested.length > shown.length ? commaList(shown) : listOf(shown), more: formatNumber(untested.length - shown.length) }) : '',
+      unlisted.length > 5 ? t('unknown.unlisted.aMore', { services: commaList(unlisted.slice(0, 4)), more: formatNumber(unlisted.length - 4) })
+        : unlisted.length ? plural('unknown.unlisted.a', unlisted.length, { services: listOf(unlisted) }) : '',
     ];
     items.push({ question: t('unknown.untested.q'), answer: answers.filter(Boolean).join(' '), link: ['more-services-title', t('board.more.title')] });
   }

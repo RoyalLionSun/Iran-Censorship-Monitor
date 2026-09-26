@@ -352,10 +352,12 @@ export const MORE_SERVICE_GROUPS = Object.freeze([
     { id: 'tunnelbear', name: 'TunnelBear', domains: ['www.tunnelbear.com'] },
     { id: 'encrypteddns', name: 'Cloudflare DNS (1.1.1.1)', domains: ['1.1.1.1'] },
   ] },
-  // AI assistants. "Reachable" says Iran's filter lets the website through; OpenAI, Anthropic and
-  // Google leave Iran off the countries they serve (their own lists, checked 26 September 2026),
-  // so `notOfferedInIran` marks that the provider itself may refuse use from Iran. Copilot and Grok
-  // are not on Citizen Lab's lists and so not tested.
+  // AI services: chat assistants, then image, video and audio tools. "Reachable" says Iran's filter
+  // lets the website through; OpenAI, Anthropic and Google leave Iran off the countries they serve
+  // (their own lists, checked 26 September 2026), so `notOfferedInIran` marks that the provider
+  // itself may refuse use from Iran. OONI has no test of the image, video and audio tools, Copilot,
+  // Grok or Meta AI (none is on Citizen Lab's lists, 26 September 2026); they show as not tested
+  // until the list includes them (OUTREACH_VPN_DATA.md).
   { id: 'ai', services: [
     { id: 'chatgpt', name: 'ChatGPT', domains: ['chatgpt.com', 'chat.openai.com'], notOfferedInIran: true },
     { id: 'gemini', name: 'Google Gemini', domains: ['gemini.google.com'], notOfferedInIran: true },
@@ -364,6 +366,18 @@ export const MORE_SERVICE_GROUPS = Object.freeze([
     { id: 'perplexity', name: 'Perplexity', domains: ['www.perplexity.ai'] },
     { id: 'copilot', name: 'Microsoft Copilot', domains: ['copilot.microsoft.com'], onTestList: false },
     { id: 'grok', name: 'Grok', domains: ['grok.com'], onTestList: false },
+    { id: 'metaai', name: 'Meta AI', domains: ['www.meta.ai', 'meta.ai'], onTestList: false },
+    { id: 'midjourney', name: 'Midjourney', kind: 'image', domains: ['www.midjourney.com', 'midjourney.com'], onTestList: false },
+    { id: 'firefly', name: 'Adobe Firefly', kind: 'image', domains: ['firefly.adobe.com'], onTestList: false },
+    { id: 'leonardo', name: 'Leonardo AI', kind: 'image', domains: ['leonardo.ai', 'app.leonardo.ai'], onTestList: false },
+    { id: 'ideogram', name: 'Ideogram', kind: 'image', domains: ['ideogram.ai'], onTestList: false },
+    { id: 'sora', name: 'Sora', kind: 'video', domains: ['sora.chatgpt.com', 'sora.com'], onTestList: false },
+    { id: 'runway', name: 'Runway', kind: 'video', domains: ['runway.com', 'runwayml.com', 'app.runwayml.com'], onTestList: false },
+    { id: 'kling', name: 'Kling AI', kind: 'video', domains: ['kling.ai', 'klingai.com'], onTestList: false },
+    { id: 'pika', name: 'Pika', kind: 'video', domains: ['pika.art'], onTestList: false },
+    { id: 'luma', name: 'Luma Dream Machine', kind: 'video', domains: ['lumalabs.ai'], onTestList: false },
+    { id: 'elevenlabs', name: 'ElevenLabs', kind: 'audio', domains: ['elevenlabs.io'], onTestList: false },
+    { id: 'suno', name: 'Suno', kind: 'audio', domains: ['suno.com'], onTestList: false },
   ] },
   { id: 'everyday', services: [
     { id: 'google', name: 'Google', domains: ['www.google.com', 'google.com'] },
@@ -420,6 +434,7 @@ export function summarizeMoreServices(networkPayload, countryPayload = null, app
         id: service.id, name: service.name,
         ...(service.onTestList === false ? { onTestList: false } : {}),
         ...(service.notOfferedInIran ? { notOfferedInIran: true } : {}),
+        ...(service.kind ? { kind: service.kind } : {}),
         app: appResult(appPayload, service.app),
         scope: usable ? 'network' : totals ? 'country' : null,
         status: totals ? networkStatus(totals) : 'untested',

@@ -25,6 +25,18 @@ them to download the tool. All addresses were checked to exist on 25 September 2
 | `https://iranopasmigirim.com/en` | POLR | "We Take Back Iran" (National Revolution TV); no OONI test so far |
 | `https://copilot.microsoft.com/` | COMT | Microsoft Copilot (AI assistant); no OONI test so far |
 | `https://grok.com/` | COMT | Grok (AI assistant); no OONI test so far |
+| `https://www.meta.ai/` | COMT | Meta AI (AI assistant); no OONI test so far |
+| `https://www.midjourney.com/` | COMT | Midjourney (AI images); no OONI test so far |
+| `https://firefly.adobe.com/` | COMT | Adobe Firefly (AI images); no OONI test so far |
+| `https://leonardo.ai/` | COMT | Leonardo AI (AI images); no OONI test so far |
+| `https://ideogram.ai/` | COMT | Ideogram (AI images); no OONI test so far |
+| `https://sora.chatgpt.com/` | COMT | Sora (AI video); no OONI test so far |
+| `https://runway.com/` | COMT | Runway (AI video); no OONI test so far |
+| `https://kling.ai/` | COMT | Kling AI (AI video); no OONI test so far |
+| `https://pika.art/` | COMT | Pika (AI video); no OONI test so far |
+| `https://lumalabs.ai/` | COMT | Luma Dream Machine (AI video); no OONI test so far |
+| `https://elevenlabs.io/` | COMT | ElevenLabs (AI voice); no OONI test so far |
+| `https://suno.com/` | COMT | Suno (AI music); no OONI test so far |
 | `https://farahpahlavi.org/` | POLR | Official site of Queen Farah Pahlavi; no OONI test anywhere so far |
 
 Already on the Iran list (no action needed): www.rezapahlavi.org and fa.rezapahlavi.org (710 OONI

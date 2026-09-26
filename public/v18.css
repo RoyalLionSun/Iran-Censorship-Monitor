@@ -274,6 +274,7 @@ html[dir="rtl"] .topbar-actions { justify-content: flex-start; }
 .more-chip-app[data-app-status="no_signal"] { color: var(--status-reachable); }
 .more-chip-app[data-app-status="partly"] { color: var(--status-restricted); }
 .more-chip-app[data-app-status="provider"] { color: var(--text-soft); font-weight: 600; }
+.more-chip-kind { color: var(--text-soft); font-size: 12.5px; font-weight: 600; }
 .more-group-note { margin: 0; color: var(--text-soft); font-size: 13.5px; }
 
 /* What changed: worse in the blocked colour, better in the reachable colour, both labelled. */
