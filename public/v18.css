@@ -497,3 +497,58 @@ html[lang="fa"] .overview-panel > header .section-label { letter-spacing: normal
 :is(.service-board, .access-board, .privileged-board, .more-services, .workarounds-board, .anatomy-board, .changes-board) h2,
 .usage-heading, .section-label { color: #7fcbe0; }
 .status-row dt { color: #7fcbe0; }
+
+/* ===================================================================================
+   One design language for the Overview (owner's choice, 26 September 2026):
+   - every section is a card of the same kind, separated by the same gap;
+   - every box inside is a tile of the same kind: dark surface, thin border, and a coloured
+     stripe at the start only for a status (red blocked, amber partly/problems, green works,
+     grey unknown or context); no gradients, no tinted surfaces, no dashed borders;
+   - colour means status; titles are blue; the page background, header and footer stay.
+   =================================================================================== */
+:root { --card-bg: var(--bg-elevated); --tile-bg: rgba(255, 255, 255, .028); --stripe-neutral: #3f5878; }
+
+.situation-sections { display: grid; gap: 16px; }
+.situation-sections[hidden] { display: none; }
+.situation-board, .situation-sections > section, .overview-panel, #overview-view > #sources-panel {
+  padding: 20px 22px; border: 1px solid var(--border); border-radius: 14px; background: var(--card-bg); box-shadow: 0 6px 18px rgba(0, 0, 0, .14); }
+.situation-board { background: var(--card-bg); }
+.situation-sections > section > header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin: 0 0 14px; }
+.situation-sections > section > header p { margin: 0; }
+.situation-sections > section { margin: 0; }
+.privileged-board, .changes-board { border-style: solid; background: var(--card-bg); }
+.overview-view > .jump-bar { margin: 0; }
+
+/* Tiles */
+.service-tile, .status-row > div, .usage-card, .workaround, .outage-traffic, #current-unknowns .unknown-list li, .anatomy-timeline li {
+  --stripe: var(--stripe-neutral); background: var(--tile-bg); background-image: none;
+  border: 1px solid var(--border); border-inline-start: 4px solid var(--stripe); border-radius: 10px; }
+.service-tile { --stripe: var(--tile); border-top-width: 1px; }
+.service-tile[data-status] { background-image: none; }
+.status-row > div { --stripe: var(--row); }
+.workaround { --stripe: var(--tone); }
+.usage-card { border-top-width: 1px; }
+.usage-card[data-usage="downloads"] { --stripe: var(--status-blocked); background-image: none; border-color: var(--border); }
+.service-tile[data-scope], .workaround[data-status="thin"], .more-chip[data-scope="country"] { border-style: solid; }
+.anatomy-timeline li { --stripe: var(--stripe-neutral); }
+.anatomy-timeline li.anatomy-phase { border: 0; background: none; }
+
+/* Chips of further services: the same surface, the status as stripe and word. */
+.more-chip { background: var(--tile-bg); border: 1px solid var(--border); border-inline-start: 3px solid var(--chip); }
+
+/* Charts and figures in the one accent blue. */
+.usage-chart .vpn-bar, .vpn-use-chart .vpn-bar { fill: #7fcbe0; }
+.usage-value b { color: var(--text); }
+.meaning-item { border-inline-start-color: var(--stripe-neutral); }
+.access-key-mark { background: var(--tile-bg); }
+#connection-title { scroll-margin-top: calc(var(--topbar-h, 76px) + 64px); }
+/* One title per card, in the same style everywhere: the double titles ("What this means" +
+   "What this means for you", "Data provenance" + "Source register") keep only the second. */
+.overview-panel > header .section-label, #overview-view > #sources-panel .panel-header .section-label { display: none; }
+.connection-board h2, .overview-panel > header h2, #overview-view > #sources-panel .panel-header h2 {
+  margin: 0; font-size: 17px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: #7fcbe0; line-height: 1.3; }
+html[lang="fa"] :is(.connection-board h2, .overview-panel > header h2, #overview-view > #sources-panel .panel-header h2) { font-size: 18px; letter-spacing: normal; }
+.overview-panel > header { margin-bottom: 10px; }
+/* A wide table scrolls inside its card; it must never widen the page (phones). */
+.situation-sections { grid-template-columns: minmax(0, 1fr); }
+.situation-sections > * { min-width: 0; }

@@ -72,6 +72,7 @@ function insertViews() {
         <section class="overview-panel" id="user-meaning"></section>
         <section class="overview-panel" id="current-unknowns"></section>
       </div>
+      <div id="situation-sections" class="situation-sections"></div>
       <p class="overview-more"><button type="button" id="open-technical" class="button"></button></p>
     </section>
     <section id="technical-view" class="technical-view" hidden>
@@ -1282,7 +1283,7 @@ function jumpBar(interpretation) {
     services ? ['service-board-title', 'board.jump.services'] : null,
     services?.more?.some((group) => group.services.some((service) => service.scope)) ? ['more-services-title', 'board.jump.more'] : null,
     ['user-meaning', 'board.jump.meaning'],
-    ['status-row', 'board.jump.connection'],
+    ['connection-title', 'board.jump.connection'],
     interpretation.dimensions?.connectivity?.outageAnatomy ? ['anatomy-title', 'board.jump.anatomy'] : null,
     ['sources-panel', 'board.jump.sources'],
   ].filter(Boolean);
@@ -1322,21 +1323,31 @@ function renderHero(interpretation) {
       </div>
       <p class="situation-scope visually-hidden">${escapeHtml(networkTitle(interpretation))}${period ? `${separator()}${escapeHtml(period)}` : ''}${latest ? `${separator()}${escapeHtml(latest)}` : ''}</p>
       ${stale ? `<p class="situation-stale" role="status">${escapeHtml(staleText)}</p>` : ''}
-    </header>
-    ${jumpBar(interpretation)}
+    </header>`;
+  // The jump bar is a direct child of the overview, so it can stay under the page header while
+  // every section card scrolls past.
+  const overview = document.querySelector('#overview-view');
+  overview.querySelector(':scope > .jump-bar')?.remove();
+  hero.insertAdjacentHTML('afterend', jumpBar(interpretation));
+  // Each section is its own card, in the order of importance for readers.
+  const sections = document.querySelector('#situation-sections');
+  sections.innerHTML = `
     ${renderChanges(interpretation.services)}
     ${renderServiceTiles(interpretation.services, selection, interpretation.dimensions.connectivity)}
-    ${statusRow(interpretation)}
     ${renderWorkarounds(interpretation.services)}
-    ${renderOutageTraffic(interpretation)}
-    ${renderAnatomy(interpretation)}
     ${renderMoreServices(interpretation.services)}
     ${renderAccess(interpretation.services, selection)}
     ${renderControl()}
-    ${renderPrivileged()}`;
-  bindOutageChart(hero, interpretation);
-  bindJumpBar(hero);
-  bindAccess(hero, interpretation);
+    ${renderPrivileged()}
+    <section class="connection-board" aria-labelledby="connection-title">
+      <header><h2 id="connection-title">${escapeHtml(t('board.jump.connection'))}</h2></header>
+      ${statusRow(interpretation)}
+      ${renderOutageTraffic(interpretation)}
+      ${renderAnatomy(interpretation)}
+    </section>`;
+  bindOutageChart(sections, interpretation);
+  bindJumpBar(overview);
+  bindAccess(sections, interpretation);
 }
 
 // The jump bar stays under the page header while scrolling, and the link of the section being
@@ -1637,9 +1648,10 @@ function renderSituation(assessment, state = assessment ? 'ready' : 'loading') {
   if (interpretation) requestHistory();
   const valid = interpretation?.schemaVersion === 1 && interpretation.summary &&
     ['connectivity', 'interference', 'routing', 'quality', 'shutdown'].every((id) => interpretation.dimensions?.[id]);
-  for (const selector of ['#overview-details-head', '#interpretation-dimensions', '.overview-lower-grid', '#current-findings', '#evidence-overview', '.overview-more']) {
+  for (const selector of ['#overview-details-head', '#interpretation-dimensions', '.overview-lower-grid', '#current-findings', '#evidence-overview', '.overview-more', '#situation-sections']) {
     document.querySelector(selector).hidden = !valid;
   }
+  if (!valid) document.querySelector('#overview-view > .jump-bar')?.remove();
   document.querySelector('#overview-view').setAttribute('aria-busy', state === 'loading' ? 'true' : 'false');
   if (!valid) {
     const kind = state === 'error' ? 'error' : assessment ? 'incompatible' : 'loading';
