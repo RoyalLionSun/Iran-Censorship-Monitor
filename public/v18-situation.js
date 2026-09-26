@@ -728,7 +728,7 @@ function renderWorkarounds(services) {
   };
   return `
     <section class="workarounds-board" aria-labelledby="workarounds-title">
-      <header><h2 id="workarounds-title">${escapeHtml(t('board.workarounds.title'))}</h2></header>
+      <header><h2 id="workarounds-title">${escapeHtml(t('board.workarounds.title'))}</h2><a class="meaning-link" href="/tools${getLanguage() === 'fa' ? '?lang=fa' : ''}">${escapeHtml(t('board.workarounds.toolsLink'))}</a></header>
       ${renderUsageCards(services)}
       <h3 class="usage-heading">${escapeHtml(t('board.workarounds.tested'))}</h3>
       <p class="usage-note">${escapeHtml(t('board.workarounds.note'))}</p>

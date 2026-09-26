@@ -43,7 +43,7 @@ import { getServiceHistory } from './lib/history.mjs';
 import { buildFeedEntry, postToTelegram, readEntries, renderAtom, upsertEntry } from './lib/feed.mjs';
 import { renderWidget } from './lib/widget.mjs';
 import { buildDailyData, OPEN_DATA_SCHEMA, openDataStore } from './lib/open-data.mjs';
-import { monthRange, recentMonths, recentWeeks, renderMonthlyReport, renderReportIndex, renderSourcesPage, renderUpdatesPage, weekRange } from './lib/report.mjs';
+import { monthRange, recentMonths, recentWeeks, renderMonthlyReport, renderReportIndex, renderSourcesPage, renderToolsPage, renderUpdatesPage, weekRange } from './lib/report.mjs';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
 
@@ -823,6 +823,14 @@ async function serveOpenData(req, res, url) {
   jsonResponse(res, 200, data, { ...open, 'cache-control': name === 'latest.json' ? 'public, max-age=1800' : 'public, max-age=86400' });
 }
 
+// Ways around the filter with platforms and official downloads (/tools, ?lang=fa), from the
+// same all-Iran snapshot as the feed.
+async function serveTools(req, res, url) {
+  const lang = url.searchParams.get('lang') === 'fa' ? 'fa' : 'en';
+  const snapshot = await Promise.race([currentSnapshot(), new Promise((resolve) => setTimeout(() => resolve(null), 8_000))]).catch(() => null);
+  sendHtml(req, res, renderToolsPage({ lang, interpretation: snapshot?.interpretation ?? null, since: snapshot?.since ?? null, until: snapshot?.until ?? null }));
+}
+
 // The source catalogue page (/sources, ?lang=fa), with each source's answer for the default view.
 async function serveSources(req, res, url) {
   const lang = url.searchParams.get('lang') === 'fa' ? 'fa' : 'en';
@@ -943,6 +951,8 @@ const server = http.createServer(async (req, res) => {
       await serveFeed(req, res, url);
     } else if (/^\/data\/(latest|index|\d{4}-\d{2}-\d{2})\.json$/.test(url.pathname)) {
       await serveOpenData(req, res, url);
+    } else if (url.pathname === '/tools') {
+      await serveTools(req, res, url);
     } else if (url.pathname === '/sources') {
       await serveSources(req, res, url);
     } else if (url.pathname === '/widget.svg') {

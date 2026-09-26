@@ -22,6 +22,8 @@ is dated and names its source.
 - **Reports**: daily updates (`/updates`, also as RSS at `/feed.xml` and optionally on Telegram),
   weekly reports (Saturday to Friday) and monthly reports (`/reports`), printable as PDF; an
   embeddable status image (`/widget.svg`); CSV, PDF and Word exports.
+- **Tools page** (`/tools`): the ways around the filter that are measured from inside Iran, with
+  devices, current test results and the official download pages and email/Telegram channels.
 - **Sources page** (`/sources`): where every source measures from, what it is used for and how it
   answered for the current default view.
 - **Open data**: `/data/latest.json`, the day's findings for all of Iran as small JSON, with an

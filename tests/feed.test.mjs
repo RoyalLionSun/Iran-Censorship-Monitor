@@ -178,3 +178,24 @@ test('the sources page groups sources by what they may support, in both language
   assert.match(fa, /<html lang="fa" dir="rtl">/);
   assert.match(fa, /گواه دسترسی/);
 });
+
+test('the tools page shows measured status and official channels, and recommends nothing', async () => {
+  const { renderToolsPage } = await import('../lib/report.mjs');
+  const interpretation = { services: {
+    workarounds: [{ id: 'tor', status: 'partly', usable: 444, ok: 389, failed: 55 }, { id: 'psiphon', status: 'fails', usable: 455, ok: 100, failed: 355 }],
+    more: [{ id: 'circumvention', services: [{ id: 'psiphon', scope: 'country', status: 'blocked' }, { id: 'torproject', scope: 'country', status: 'blocked' }] }],
+    conduit: { latest: { date: '2026-09-25', connections: 873608 } },
+    encryptedDns: { byName: { tested: 12, ok: 0, failed: 12, status: 'fails' }, byAddress: { tested: 12, ok: 7, failed: 5, status: 'partly' } },
+  } };
+  const en = renderToolsPage({ lang: 'en', interpretation, since: '2026-09-20', until: '2026-09-26' });
+  assert.match(en, /Tor Browser[\s\S]*worked in 389 of 444 tests/);
+  assert.match(en, /Psiphon[\s\S]*failed in 355 of 455 tests[\s\S]*873,608/);
+  assert.match(en, /gettor@torproject\.org/);
+  assert.match(en, /get@psiphon3\.com/);
+  assert.match(en, /Encrypted DNS[\s\S]*failed in 12 of 12 tests/);
+  assert.match(en, /Riseup VPN[\s\S]*not measured from inside Iran/);
+  assert.match(en, /recommends nothing/);
+  const fa = renderToolsPage({ lang: 'fa', interpretation: null });
+  assert.match(fa, /<html lang="fa" dir="rtl">/);
+  assert.match(fa, /مرورگر تور/);
+});

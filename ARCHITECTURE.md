@@ -31,6 +31,7 @@ Node.js HTTP server (server.mjs, no third-party runtime dependencies)
   +--> /updates, /feed.xml        daily "what changed" entries (optional Telegram post)
   +--> /reports, /report          weekly (Saturday to Friday) and monthly reports
   +--> /widget.svg                embeddable status image
+  +--> /tools                     measured ways around the filter with official downloads
   +--> /sources                   source catalogue with each source's answer for the default view
   +--> /data/latest.json, /data/YYYY-MM-DD.json, /data/index.json   open daily data (docs/API.md)
   \--> static files in public/

@@ -42,3 +42,10 @@ footer { margin-top: 28px; padding-top: 12px; border-top: 1px solid #dfe6ef; col
 .update { padding: 14px 0; border-top: 1px solid #dfe6ef; }
 .update h2 { margin: 2px 0 6px; color: #c62828; font-size: 18px; }
 .update p { margin: 4px 0; }
+
+/* Tools page: status words in the dashboard's colours, lists without bullets. */
+ul.plain { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.tool-status[data-status="works"], .tool-status[data-status="reachable"] { color: #13795b; }
+.tool-status[data-status="partly"], .tool-status[data-status="partial"], .tool-status[data-status="restricted"] { color: #9a6700; }
+.tool-status[data-status="fails"], .tool-status[data-status="blocked"] { color: #b42318; }
+.tool-status[data-status="thin"], .tool-status[data-status="untested"], .tool-status[data-status="unavailable"] { color: #5b6b80; }

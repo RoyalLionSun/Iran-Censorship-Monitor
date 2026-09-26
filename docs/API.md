@@ -52,6 +52,7 @@ curl https://example.org/data/latest.json
 | `/report?week=YYYY-MM-DD` | Weekly report; the date is the week's Saturday |
 | `/report?month=YYYY-MM` | Monthly report; add `&lang=fa` for Farsi |
 | `/widget.svg`, `/widget.svg?lang=fa` | Status image of the six main services for embedding |
+| `/tools`, `/tools?lang=fa` | Ways around the filter measured from inside Iran: devices, current results, official downloads |
 | `/sources`, `/sources?lang=fa` | Every source: where it measures from, what it is used for, how it answered for the default view |
 
 ## Dashboard API
