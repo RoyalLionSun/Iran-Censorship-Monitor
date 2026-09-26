@@ -47,13 +47,22 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   });
 }
 
-// Footer links lead to the reports and daily updates in the language being read.
+// Footer links lead to the daily updates and the weekly and monthly reports in the language
+// being read.
 function localizeFooterLinks() {
   const suffix = getLanguage() === 'fa' ? '?lang=fa' : '';
-  const reports = document.querySelector('#footer-reports');
-  const updates = document.querySelector('#footer-updates');
-  if (reports) reports.href = `/reports${suffix}`;
-  if (updates) updates.href = `/updates${suffix}`;
+  const links = [
+    ['#footer-daily', `/updates${suffix}`, 'ui.reports.daily'],
+    ['#footer-weekly', `/reports${suffix}#weekly`, 'ui.reports.weekly'],
+    ['#footer-monthly', `/reports${suffix}#monthly`, 'ui.reports.monthly'],
+  ];
+  for (const [selector, href, key] of links) {
+    const link = document.querySelector(selector);
+    if (link) { link.href = href; link.textContent = t(key); }
+  }
+  const label = document.querySelector('#footer-reports-label');
+  if (label) label.textContent = t('ui.reports.label');
+  document.querySelectorAll('.footer-sep').forEach((sep) => { sep.textContent = getLanguage() === 'fa' ? '، ' : ', '; });
 }
 localizeFooterLinks();
 window.addEventListener('iran-monitor-languagechange', localizeFooterLinks);

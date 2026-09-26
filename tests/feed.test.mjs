@@ -96,6 +96,30 @@ test('the monthly report covers the month, credits the sources and follows Farsi
   assert.match(fa, /Zoom \([^)]*\)، GitHub/, 'Persian list separator');
 });
 
+test('weekly reports run Saturday to Friday and share the monthly report\'s page', async () => {
+  const { weekRange, recentWeeks, renderMonthlyReport, renderReportIndex } = await import('../lib/report.mjs');
+  assert.deepEqual(weekRange('2026-09-19', '2026-09-26'), { week: '2026-09-19', since: '2026-09-19', until: '2026-09-25', complete: true });
+  assert.deepEqual(weekRange('2026-09-26', '2026-09-26'), { week: '2026-09-26', since: '2026-09-26', until: '2026-09-26', complete: false });
+  assert.equal(weekRange('2026-09-20', '2026-09-26'), null, 'a week starts on a Saturday');
+  assert.equal(weekRange('2026-10-03', '2026-09-26'), null, 'no future weeks');
+  assert.equal(weekRange('2026-02-30', '2026-09-26'), null, 'no impossible dates');
+  assert.deepEqual(recentWeeks(3, '2026-09-25'), ['2026-09-19', '2026-09-12', '2026-09-05']);
+  assert.deepEqual(recentWeeks(1, '2026-09-26'), ['2026-09-26']);
+  const interpretation = { summary: { headline: { state: 'services-blocked', services: ['instagram'] } },
+    services: { items: [{ id: 'instagram', status: 'blocked', web: { measurements: 10, confirmed: 8 } }],
+      more: [{ id: 'news', services: [{ id: 'rezapahlavi', name: 'Crown Prince Reza Pahlavi (official site)', scope: 'network', status: 'blocked' }] }] } };
+  const range = weekRange('2026-09-19', '2026-09-26');
+  const en = renderMonthlyReport({ interpretation, history: null, range, lang: 'en', dashboardUrl: 'https://m.example/' });
+  assert.match(en, /Weekly report/);
+  assert.match(en, /Open this week in the dashboard/);
+  assert.doesNotMatch(en, /this month/);
+  const fa = renderMonthlyReport({ interpretation, history: null, range, lang: 'fa', dashboardUrl: 'https://m.example/' });
+  assert.match(fa, /گزارش هفتگی/);
+  assert.match(fa, /شاهزاده رضا پهلوی/, 'Farsi reports use the Farsi service names');
+  const index = renderReportIndex({ lang: 'en', months: ['2026-09'], weeks: ['2026-09-26', '2026-09-19'], today: '2026-09-26' });
+  assert.match(index, /id="weekly"[\s\S]*report\?week=2026-09-19[\s\S]*id="monthly"[\s\S]*report\?month=2026-09/);
+});
+
 test('the monthly report shows how a shutdown unfolded, in Tehran time, without naming private persons', async () => {
   const { monthRange, renderMonthlyReport } = await import('../lib/report.mjs');
   const outageAnatomy = {

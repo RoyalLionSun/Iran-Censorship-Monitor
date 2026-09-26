@@ -42,7 +42,7 @@ import { getApnicCountryComposition, getApnicIpv6, getApnicVpnShare } from './li
 import { getServiceHistory } from './lib/history.mjs';
 import { buildFeedEntry, postToTelegram, readEntries, renderAtom, upsertEntry } from './lib/feed.mjs';
 import { renderWidget } from './lib/widget.mjs';
-import { monthRange, recentMonths, renderMonthlyReport, renderReportIndex, renderUpdatesPage } from './lib/report.mjs';
+import { monthRange, recentMonths, recentWeeks, renderMonthlyReport, renderReportIndex, renderUpdatesPage, weekRange } from './lib/report.mjs';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
 
@@ -802,16 +802,18 @@ async function serveWidget(req, res, url) {
   res.end(body);
 }
 
-// Monthly reports (/report?month=YYYY-MM, /reports): a completed month is written once to
-// var/reports and never computed again; the month in progress is kept for an hour.
+// Weekly and monthly reports (/report?week=YYYY-MM-DD, ?month=YYYY-MM, /reports): a completed
+// period is written once to var/reports and never computed again; one in progress is kept for an
+// hour.
 const reportMemory = new Map();
 const reportInFlight = new Map();
 async function monthlyReportHtml(range, lang, base) {
-  const file = join(root, 'var/reports', `${range.month}-${lang}.html`);
+  const name = range.week ? `week-${range.week}` : range.month;
+  const file = join(root, 'var/reports', `${name}-${lang}.html`);
   if (range.complete) {
     try { return await readFile(file, 'utf8'); } catch { /* not written yet */ }
   }
-  const key = `${range.month}|${lang}`;
+  const key = `${name}|${lang}`;
   const cached = reportMemory.get(key);
   if (cached && Date.now() - cached.at < 60 * 60 * 1000) return cached.html;
   if (!reportInFlight.has(key)) {
@@ -865,13 +867,14 @@ async function serveReport(req, res, url) {
   const today = new Date().toISOString().slice(0, 10);
   let html;
   if (url.pathname === '/reports') {
-    html = renderReportIndex({ lang, months: recentMonths(12, today), today });
+    html = renderReportIndex({ lang, months: recentMonths(12, today), weeks: recentWeeks(8, today), today });
   } else {
     const months = recentMonths(2, today);
-    const range = monthRange(url.searchParams.get('month') || months[1], today);
+    const week = url.searchParams.get('week');
+    const range = week ? weekRange(week, today) : monthRange(url.searchParams.get('month') || months[1], today);
     if (!range) {
       res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' });
-      res.end('Unknown month');
+      res.end(week ? 'Unknown week (a Saturday, YYYY-MM-DD)' : 'Unknown month');
       return;
     }
     html = await monthlyReportHtml(range, lang, base);

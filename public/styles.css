@@ -421,7 +421,7 @@ select:focus-visible, input:focus-visible { border-color: var(--accent-2); box-s
 /* Header: emblem, one-line subtitle, a small source badge, and few actions. */
 .topbar { grid-template-columns: minmax(0, auto) 1fr auto; min-height: 76px; padding: 8px 22px; }
 .brand { gap: 14px; }
-.brand-logo { width: 60px; height: 60px; flex-basis: 60px; }
+.brand-logo { width: 66px; height: 66px; flex-basis: 66px; }
 .brand strong { font-size: 19px; letter-spacing: .005em; }
 .brand small { margin-top: 2px; font-size: 14.5px; letter-spacing: 0; text-transform: none; color: #9ad9d5; white-space: nowrap; }
 .topbar-meta { justify-content: flex-start; }
@@ -443,7 +443,7 @@ html:not([lang="fa"]) .language-switch button[data-lang="en"], html[lang="fa"] .
 .export-menu-list { position: absolute; inset-inline-end: 0; top: calc(100% + 6px); z-index: 30; display: grid; gap: 4px; min-width: 190px; padding: 6px; border: 1px solid var(--border-strong); border-radius: 9px; background: var(--panel-2); box-shadow: 0 12px 28px rgba(0,0,0,.35); }
 .export-menu-list .button { width: 100%; text-align: start; }
 @media (max-width: 1050px) { .updated { display: none; } }
-@media (max-width: 760px) { .brand small { display: none; } .brand-logo { width: 46px; height: 46px; flex-basis: 46px; } .export-menu { display: none; } }
+@media (max-width: 760px) { .brand small { display: none; } .brand-logo { width: 51px; height: 51px; flex-basis: 51px; } .export-menu { display: none; } }
 
 /* Filter bar: fields in the first row; quick ranges and known outages share the second, so
    the date fields never run into the preset buttons. */
@@ -506,14 +506,14 @@ html[dir="rtl"] input[type="date"] { text-align: right; }
 @font-face { font-family: "Handle Script"; src: local("Edwardian Script ITC"), local("EdwardianScriptITC"), url("/fonts/pinyon-script-handle.woff2") format("woff2"); font-display: swap; }
 .topbar-title { color: #ffffff; }
 .topbar-handle {
-  justify-self: end; font-family: "Handle Script", cursive; font-size: 36px; line-height: 1; white-space: nowrap; padding: 2px 6px 6px;
+  justify-self: end; font-family: "Handle Script", cursive; font-size: 40px; line-height: 1; white-space: nowrap; padding: 2px 6px 6px;
   background: linear-gradient(180deg, #f9e098 0%, #f6c860 30%, #deac41 58%, #c58f3b 80%, #97722e 100%);
   -webkit-background-clip: text; background-clip: text; color: transparent;
   filter: drop-shadow(0 2px 5px rgba(0, 0, 0, .45));
 }
 @media (max-width: 760px) {
   .topbar { grid-template-columns: auto 1fr auto; }
-  .topbar-handle { font-size: 26px; }
+  .topbar-handle { font-size: 29px; }
 }
 @media (max-width: 480px) { .topbar-handle { display: none; } }
 /* The header looks the same in both languages: handle left, name in the middle, logo right. */
@@ -570,16 +570,16 @@ select option:disabled { color: #7d8ea6; }
   background: linear-gradient(90deg, rgba(19,36,62,.96), rgba(27,30,64,.96)); }
 .site-footer::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 2px; background: linear-gradient(90deg, var(--accent), var(--accent-2) 55%, var(--accent-3)); opacity: .85; }
 .site-footer-inner { direction: ltr; max-width: 1760px; margin: 0 auto; min-height: 76px; padding: 12px 22px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px 22px; }
-.site-footer .footer-handle { justify-self: start; font-size: 34px; font-weight: 400; }
+.site-footer .footer-handle { justify-self: start; font-size: 39px; font-weight: 400; }
 .footer-center { display: grid; justify-items: center; gap: 3px; text-align: center; }
 .footer-title { color: #ffffff; font-size: 17px; font-weight: 700; letter-spacing: .01em; }
 .footer-title #footer-version { color: var(--muted); font-size: 13.5px; font-weight: 600; margin-inline-start: 6px; }
 .footer-claim { color: #9ad9d5; font-size: 14px; }
 html[lang="fa"] .footer-claim { direction: rtl; }
-.footer-logo { justify-self: end; width: 52px; height: 52px; object-fit: contain; filter: drop-shadow(0 2px 6px rgba(0,0,0,.35)); }
+.footer-logo { justify-self: end; width: 60px; height: 60px; object-fit: contain; filter: drop-shadow(0 2px 6px rgba(0,0,0,.35)); }
 @media (max-width: 760px) {
   .site-footer-inner { grid-template-columns: auto 1fr auto; padding: 10px 12px; }
-  .site-footer .footer-handle { font-size: 24px; }
+  .site-footer .footer-handle { font-size: 28px; }
   .footer-claim { display: none; }
 }
 @media (max-width: 480px) { .site-footer .footer-handle { display: none; } .site-footer-inner { grid-template-columns: 1fr auto; } }

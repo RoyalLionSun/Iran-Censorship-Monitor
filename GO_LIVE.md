@@ -5,6 +5,12 @@ server. Collected during development so nothing is forgotten; tick the boxes on 
 Technical details of the service itself (reverse proxy, systemd hardening): see
 [PRODUCTION.md](PRODUCTION.md).
 
+## 0. Release number
+
+- [ ] **Version 1.9.0** — the footer shows the released version, deliberately still `v1.8.0`
+      while v1.9 is unreleased. At release, set `1.9.0` in `package.json` (and `package-lock.json`)
+      and in `public/app.js` (`footerVersion`) and `public/index.html` (`#footer-version`).
+
 ## 1. Settings in `.env` on the server
 
 The `.env` file stays on the server only; it is never committed and keys are never pasted into
