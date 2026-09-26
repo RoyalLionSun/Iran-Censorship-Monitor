@@ -60,6 +60,8 @@ function localizeFooterLinks() {
     const link = document.querySelector(selector);
     if (link) { link.href = href; link.textContent = t(key); }
   }
+  const sourcesLink = document.querySelector('#sources-page-link');
+  if (sourcesLink) { sourcesLink.href = `/sources${suffix}`; sourcesLink.textContent = t('ui.sourcesPageLink'); }
   const label = document.querySelector('#footer-reports-label');
   if (label) label.textContent = t('ui.reports.label');
   document.querySelectorAll('.footer-sep').forEach((sep) => { sep.textContent = getLanguage() === 'fa' ? '، ' : ', '; });

@@ -207,6 +207,7 @@ export default Object.freeze({
   'ui.provenance': 'DATA PROVENANCE',
   'ui.sourceRegister': 'Source register',
   'ui.footerClaim': 'What people in Iran can reach, measured inside Iran’s own networks',
+  'ui.sourcesPageLink': 'How each source is used',
   'ui.reports.label': 'Reports:',
   'ui.reports.daily': 'Daily',
   'ui.reports.weekly': 'Weekly',

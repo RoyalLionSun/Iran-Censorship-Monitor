@@ -207,6 +207,7 @@ export default Object.freeze({
   'ui.provenance': 'منشأ داده',
   'ui.sourceRegister': 'فهرست منابع',
   'ui.footerClaim': 'آنچه مردم ایران به آن دسترسی دارند، اندازه‌گیری‌شده در درون شبکه‌های خود ایران',
+  'ui.sourcesPageLink': 'هر منبع چگونه به کار می‌رود',
   'ui.reports.label': 'گزارش‌ها:',
   'ui.reports.daily': 'روزانه',
   'ui.reports.weekly': 'هفتگی',

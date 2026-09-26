@@ -43,7 +43,7 @@ import { getServiceHistory } from './lib/history.mjs';
 import { buildFeedEntry, postToTelegram, readEntries, renderAtom, upsertEntry } from './lib/feed.mjs';
 import { renderWidget } from './lib/widget.mjs';
 import { buildDailyData, OPEN_DATA_SCHEMA, openDataStore } from './lib/open-data.mjs';
-import { monthRange, recentMonths, recentWeeks, renderMonthlyReport, renderReportIndex, renderUpdatesPage, weekRange } from './lib/report.mjs';
+import { monthRange, recentMonths, recentWeeks, renderMonthlyReport, renderReportIndex, renderSourcesPage, renderUpdatesPage, weekRange } from './lib/report.mjs';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
 
@@ -823,6 +823,15 @@ async function serveOpenData(req, res, url) {
   jsonResponse(res, 200, data, { ...open, 'cache-control': name === 'latest.json' ? 'public, max-age=1800' : 'public, max-age=86400' });
 }
 
+// The source catalogue page (/sources, ?lang=fa), with each source's answer for the default view.
+async function serveSources(req, res, url) {
+  const lang = url.searchParams.get('lang') === 'fa' ? 'fa' : 'en';
+  // The default view is kept warm; if it is still being computed, the page says so instead of waiting.
+  const overview = await fetch(`http://${HOST}:${PORT}/api/overview`, { signal: AbortSignal.timeout(8_000) })
+    .then((response) => (response.ok ? response.json() : null)).catch(() => null);
+  sendHtml(req, res, renderSourcesPage({ lang, sources: Array.isArray(sources) ? sources : sources.sources ?? [], overview }));
+}
+
 async function serveWidget(req, res, url) {
   const lang = url.searchParams.get('lang') === 'fa' ? 'fa' : 'en';
   const snapshot = await currentSnapshot();
@@ -934,6 +943,8 @@ const server = http.createServer(async (req, res) => {
       await serveFeed(req, res, url);
     } else if (/^\/data\/(latest|index|\d{4}-\d{2}-\d{2})\.json$/.test(url.pathname)) {
       await serveOpenData(req, res, url);
+    } else if (url.pathname === '/sources') {
+      await serveSources(req, res, url);
     } else if (url.pathname === '/widget.svg') {
       await serveWidget(req, res, url);
     } else if (url.pathname === '/updates') {

@@ -159,3 +159,22 @@ test('the daily updates page lists the entries readably and explains how to foll
   assert.match(fa, /به‌روزرسانی روزانه/);
   assert.doesNotMatch(fa, /t\.me/, 'no Telegram line without a channel');
 });
+
+test('the sources page groups sources by what they may support, in both languages', async () => {
+  const { renderSourcesPage } = await import('../lib/report.mjs');
+  const sources = [
+    { id: 'ooni', name: 'OONI', access: 'public', role: 'x', url: 'https://ooni.org/' },
+    { id: 'censored-planet', name: 'Censored Planet', access: 'public', role: 'x', url: 'https://censoredplanet.org/' },
+    { id: 'radar', name: 'Cloudflare Radar', access: 'token', role: 'x', url: 'https://radar.cloudflare.com/' },
+  ];
+  const overview = { input: { asn: 'AS58224', since: '2026-09-20', until: '2026-09-26' }, asnProfile: { name: 'TCI' },
+    ooni: { ok: true, status: 'stale', staleSince: '2026-09-26T20:00:00Z' }, censoredPlanet: { ok: true, status: 'observed', fetchedAt: '2026-09-26T20:56:00Z' }, radar: { ok: true, status: 'token_required' } };
+  const en = renderSourcesPage({ lang: 'en', sources, overview });
+  assert.match(en, /Evidence of access[\s\S]*OONI[\s\S]*Measured from abroad[\s\S]*Censored Planet/);
+  assert.match(en, /not answering; last good answer/);
+  assert.match(en, /needs an operator key/);
+  assert.match(en, /TCI \(⁦AS58224⁩\)/);
+  const fa = renderSourcesPage({ lang: 'fa', sources, overview: null });
+  assert.match(fa, /<html lang="fa" dir="rtl">/);
+  assert.match(fa, /گواه دسترسی/);
+});
