@@ -27,7 +27,7 @@ Node.js HTTP server (server.mjs, no third-party runtime dependencies)
   +--> /api/circumvention, /api/outages, /api/history, /api/providers, /api/routing-updates
   +--> /api/stop, /api/intelligence, /api/targets, /api/asn-registry, /api/asn-coverage
   +--> /api/globalping/probes, /api/globalping/measure (protected, off by default)
-  +--> /api/config, /api/health
+  +--> /api/config, /api/health (operator state: collector paths, caches, issues)
   +--> /updates, /feed.xml        daily "what changed" entries (optional Telegram post)
   +--> /reports, /report          weekly (Saturday to Friday) and monthly reports
   +--> /widget.svg                embeddable status image

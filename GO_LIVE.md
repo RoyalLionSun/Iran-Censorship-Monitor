@@ -60,6 +60,10 @@ chats or issues. `.env.example` explains every value.
 - [ ] Set `TRUST_PROXY=1` behind the proxy, so the per-visitor limit on new views counts visitors,
       not the proxy (otherwise all readers share one limit).
 
+## Monitoring
+
+- [ ] Check `https://…/api/health` from outside, e.g. every 15 minutes with an uptime monitor: `status` should be `ok`; `degraded` lists the problem in `issues` (a collector path that stopped delivering, OONI limiting requests).
+
 ## 2. Data that must survive restarts and be backed up
 
 Everything lives in `var/` (not in git). Copy it along when moving and back it up regularly:

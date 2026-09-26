@@ -6,8 +6,9 @@ import { existsSync } from 'node:fs';
 import { dirname, extname, join, normalize, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildAssessment } from './lib/assessment.mjs';
-import { compressBody, createLastGoodStore, errorPayload, isCleanOverview, isSettledPeriod, jsonResponse, loadEnvFile, pickEncoding, mapLimit, normalizeAsn, validateRange } from './lib/common.mjs';
-import { mergeFailedSignals, getCircumventionSignals, getOoniDomainMeasurements, getOoniDomains, getOoniMeasurementDetail, getOoniNetworks, getOoniServiceNetworks, getOoniTimeline, iranRegisteredAsns, getOoniSample, listOoniMeasurements, OONI_TESTS } from './lib/ooni.mjs';
+import { buildHealth } from './lib/server-health.mjs';
+import { compressBody, createLastGoodStore, errorPayload, FETCH_CACHE_LIMIT, fetchCacheSize, isCleanOverview, isSettledPeriod, jsonResponse, loadEnvFile, pickEncoding, mapLimit, normalizeAsn, validateRange } from './lib/common.mjs';
+import { mergeFailedSignals, ooniRateLimitedUntil, getCircumventionSignals, getOoniDomainMeasurements, getOoniDomains, getOoniMeasurementDetail, getOoniNetworks, getOoniServiceNetworks, getOoniTimeline, iranRegisteredAsns, getOoniSample, listOoniMeasurements, OONI_TESTS } from './lib/ooni.mjs';
 import { getRipeSignals } from './lib/ripe.mjs';
 import { getRadarConnectionQuality, getRadarOutageHistory, getRadarOutageTraffic, getRadarSignals, isNationwideAnnotation } from './lib/radar.mjs';
 import { getIodaSignals } from './lib/ioda.mjs';
@@ -51,6 +52,8 @@ await loadEnvFile(join(root, '.env'));
 const publicRoot = resolve(root, 'public');
 const asnCoverageSnapshotPath = join(root, 'var/asn-coverage/latest.json');
 const asns = JSON.parse(await readFile(join(root, 'data/asns.json'), 'utf8'));
+const SERVER_STARTED_AT = Date.now();
+const PACKAGE_VERSION = JSON.parse(await readFile(join(root, 'package.json'), 'utf8')).version;
 const sources = JSON.parse(await readFile(join(root, 'data/sources.json'), 'utf8'));
 const intelligenceSources = JSON.parse(await readFile(join(root, 'data/intelligence-sources.json'), 'utf8'));
 const HOST = process.env.HOST || '127.0.0.1';
@@ -248,7 +251,22 @@ function scopeRequired(source, input) {
 
 async function handleApi(req, res, url) {
   if (url.pathname === '/api/health') {
-    jsonResponse(res, 200, { ok: true, service: 'iran-censorship-monitor', now: new Date().toISOString(), radarConfigured: Boolean(process.env.CLOUDFLARE_RADAR_API_TOKEN), pulseConfigured: Boolean(process.env.INTERNET_SOCIETY_PULSE_API_TOKEN), globalpingActiveConfigured: process.env.GLOBALPING_ACTIVE_ENABLED === 'true' && Boolean(process.env.GLOBALPING_CONTROL_KEY) });
+    // Which collector paths exist and are on, joined with what each last did.
+    const stored = store.health();
+    const paths = Object.fromEntries(Object.entries(collectorPlan()).map(([name, planned]) => [name, { ...planned, ...(stored[name] ?? {}) }]));
+    jsonResponse(res, 200, buildHealth({
+      startedAt: SERVER_STARTED_AT,
+      version: PACKAGE_VERSION,
+      configured: {
+        radar: Boolean(process.env.CLOUDFLARE_RADAR_API_TOKEN), pulse: Boolean(process.env.INTERNET_SOCIETY_PULSE_API_TOKEN),
+        globalpingActive: process.env.GLOBALPING_ACTIVE_ENABLED === 'true' && Boolean(process.env.GLOBALPING_CONTROL_KEY),
+        publicUrl: Boolean(process.env.PUBLIC_URL?.trim()), telegram: Boolean(process.env.TELEGRAM_BOT_TOKEN?.trim()),
+      },
+      paths,
+      caches: { upstreamAnswers: fetchCacheSize(), upstreamLimit: FETCH_CACHE_LIMIT, lastGoodAnswers: lastGoodSources.size(), overviews: historicalOverviews.size, overviewsInProgress: inflightOverviews.size },
+      ooniLimitedUntil: ooniRateLimitedUntil(),
+      memoryBytes: process.memoryUsage().rss,
+    }));
     return true;
   }
 
