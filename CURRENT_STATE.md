@@ -1,6 +1,6 @@
 # Current state
 
-Date: **2026-09-26** · Branch: **`main`** · Version: **1.8.0**, moving to **1.9.0** at release (see [GO_LIVE.md](GO_LIVE.md))
+Date: **2026-09-27** · Branch: **`main`** · Version: **1.9.0** (released 2026-09-27)
 
 The dated history of every change is in [CHANGELOG.md](CHANGELOG.md); this page says what the project is and does today.
 
@@ -20,20 +20,20 @@ The dated history of every change is in [CHANGELOG.md](CHANGELOG.md); this page 
 - Only measurements from networks registered in Iran count as evidence of access (RIPEstat country resource list); OONI tests filed under Iran from foreign VPN or hosting networks are left out and counted.
 - Outside-in sources (Censored Planet, IODA, routing) are context only. Usage figures (Tor, Psiphon, WARP) are never access claims.
 - No empty answers where a wider scope or another source answers: a network without tests shows the Iran-wide result, labelled; a rate-limited source shows its last good answer with its date.
-- Details: [INTERPRETATION.md](INTERPRETATION.md), [DATA_SOURCES.md](DATA_SOURCES.md).
+- Details: [INTERPRETATION.md](docs/INTERPRETATION.md), [DATA_SOURCES.md](docs/DATA_SOURCES.md).
 
 ## Operation
 
 - **Default is live and lightweight:** the server asks the public sources on demand, caches bounded answers and keeps the last good answer per source in `var/`. No heavy downloads.
 - **Optional collector** (`MONITOR_COLLECTOR=1`): hourly OONI pages into the local store (`var/store/monitor.db`); OONI raw files only with `OONI_S3_ENABLED=1`.
-- **Optional independent checks** (`ACTIVE_MEASUREMENTS_ENABLED=true`): RIPE Atlas (needs credits) and Globalping probes on Iranian networks check only services whose use is not punishable: the six mass services every round and five of the AI services in turn; news, opposition and circumvention stay with OONI. See [DATA_RESILIENCE_PLAN.md](DATA_RESILIENCE_PLAN.md).
-- **Verification (2026-09-26):** `npm run check` 514/514 tests; release-notes gate, build and live public-source acceptance (`npm run verify:public`, AS58224) pass; GitHub CI on `main` green; browser checks in English, Farsi and at phone width without errors or horizontal overflow.
+- **Optional independent checks** (`ACTIVE_MEASUREMENTS_ENABLED=true`): RIPE Atlas (needs credits) and Globalping probes on Iranian networks check only services whose use is not punishable: the six mass services every round and five of the AI services in turn; news, opposition and circumvention stay with OONI. See [DATA_RESILIENCE_PLAN.md](docs/DATA_RESILIENCE_PLAN.md).
+- **Verification:** the latest round (tests, build, live sources, browser checks) is recorded in [docs/VERIFICATION.md](docs/VERIFICATION.md); `npm run check` also checks that versions, test count and links in the documents are current.
 
 ## Open items
 
-- **Going online:** [GO_LIVE.md](GO_LIVE.md): public address, a server that is not a home connection, `TRUST_PROXY`, backups, version 1.9.0.
+- **Going online:** [GO_LIVE.md](GO_LIVE.md): public address, a server that is not a home connection, `TRUST_PROXY`, backups.
 - **Reachable from Iran:** plan hosting that Iran does not block, mirrors and an .onion address; once online, test the dashboard's own address from inside Iran (OONI Run link or a Citizen Lab list entry).
-- **Test lists:** Citizen Lab pull request #2277 (app servers; fix the `robots.txt.txt` typo); submit the sites in [OUTREACH_VPN_DATA.md](OUTREACH_VPN_DATA.md) that OONI does not test yet (opposition sites, 14 AI services).
+- **Test lists:** Citizen Lab pull request #2277 (app servers; fix the `robots.txt.txt` typo); submit the sites in [OUTREACH_VPN_DATA.md](docs/OUTREACH_VPN_DATA.md) that OONI does not test yet (opposition sites, 14 AI services).
 - **RIPE Atlas credits:** request sent once the repository is public; alternatively host a probe.
 
 ## Known limits

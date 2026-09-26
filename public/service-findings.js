@@ -357,7 +357,7 @@ export const MORE_SERVICE_GROUPS = Object.freeze([
   // (their own lists, checked 26 September 2026), so `notOfferedInIran` marks that the provider
   // itself may refuse use from Iran. OONI has no test of the image, video and audio tools, Copilot,
   // Grok or Meta AI (none is on Citizen Lab's lists, 26 September 2026); they show as not tested
-  // until the list includes them (OUTREACH_VPN_DATA.md).
+  // until the list includes them (docs/OUTREACH_VPN_DATA.md).
   { id: 'ai', services: [
     { id: 'chatgpt', name: 'ChatGPT', domains: ['chatgpt.com', 'chat.openai.com'], notOfferedInIran: true },
     { id: 'gemini', name: 'Google Gemini', domains: ['gemini.google.com'], notOfferedInIran: true },

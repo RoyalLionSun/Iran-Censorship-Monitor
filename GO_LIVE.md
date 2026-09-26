@@ -3,7 +3,7 @@
 Everything that still has to be done when the dashboard moves from the test machine to the real
 server. Collected during development so nothing is forgotten; tick the boxes on the day.
 Technical details of the service itself (reverse proxy, systemd hardening): see
-[PRODUCTION.md](PRODUCTION.md).
+[PRODUCTION.md](docs/PRODUCTION.md).
 
 ## Before the first push: privacy
 
@@ -19,12 +19,6 @@ Technical details of the service itself (reverse proxy, systemd hardening): see
       computer, because every visitor sees the address of the machine that answers.
 - [ ] Checked on 26 September 2026: no key from `.env` in any commit or file; `.env` and `var/`
       were never committed; the images in `public/brand` carry no metadata.
-
-## 0. Release number
-
-- [ ] **Version 1.9.0** — the footer shows the released version, deliberately still `v1.8.0`
-      while v1.9 is unreleased. At release, set `1.9.0` in `package.json` (and `package-lock.json`)
-      and in `public/app.js` (`footerVersion`) and `public/index.html` (`#footer-version`).
 
 ## 1. Settings in `.env` on the server
 
@@ -92,7 +86,7 @@ The Farsi version is for people in Iran; a dashboard they cannot open misses its
       (https://github.com/citizenlab/test-lists/pull/2277): fix the typo
       `https://api.x.com/robots.txt.txt` → `https://api.x.com/robots.txt`. Once merged, OONI Probe
       tests the app servers and iranopasmigirim.com; the dashboard picks the results up by itself.
-- [ ] **Test-list entries and data requests for VPN tools**: see [OUTREACH_VPN_DATA.md](OUTREACH_VPN_DATA.md)
+- [ ] **Test-list entries and data requests for VPN tools**: see [OUTREACH_VPN_DATA.md](docs/OUTREACH_VPN_DATA.md)
       (eight URLs to submit on test-lists.ooni.org; a ready letter to Psiphon, Lantern, Hiddify, ASL19, Windscribe).
 - [ ] **RIPE Atlas credits** for regular independent checks (request drafted during development).
 - [ ] **Telegram channels** (English and Farsi) and the bot as administrator, if daily posts are wanted.

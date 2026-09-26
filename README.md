@@ -59,7 +59,7 @@ people in Iran can reach.
 - Probes in Iran belong to private hosts. They check only services whose **use** is not
   punishable (the six mass services and AI services), never news, opposition or circumvention
   sites; those stay with OONI, whose volunteers consented. Only DNS lookups and TLS/HTTPS
-  handshakes (HEAD requests), never page content. See [DATA_RESILIENCE_PLAN.md](DATA_RESILIENCE_PLAN.md).
+  handshakes (HEAD requests), never page content. See [DATA_RESILIENCE_PLAN.md](docs/DATA_RESILIENCE_PLAN.md).
 
 ## Run it yourself
 
@@ -90,7 +90,7 @@ pushing.
 
 ```bash
 npm ci
-npm run check                 # syntax checks and 514 tests
+npm run check                 # syntax checks and all deterministic tests
 npm run verify:release-notes
 npm run build
 npm run verify:public
@@ -106,17 +106,16 @@ Vazirmatn.
 
 - **Add sites to the test list:** OONI tests in Iran what is on Citizen Lab's Iran list. Sites the
   dashboard shows as "not tested" (for example several AI tools) can be proposed at
-  <https://test-lists.ooni.org/>; see [OUTREACH_VPN_DATA.md](OUTREACH_VPN_DATA.md).
+  <https://test-lists.ooni.org/>; see [OUTREACH_VPN_DATA.md](docs/OUTREACH_VPN_DATA.md).
 - **Host a RIPE Atlas probe** outside Iran to earn measurement credits for the project.
 - Issues and pull requests: see [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
 
 ## Status and documentation
 
-Version 1.9 (the plain-language redesign) is on `main`; the release number moves from 1.8.0 to
-1.9.0 at release. History: [CHANGELOG.md](CHANGELOG.md). Current state and decisions:
-[CURRENT_STATE.md](CURRENT_STATE.md). Method: [INTERPRETATION.md](INTERPRETATION.md),
-[DATA_SOURCES.md](DATA_SOURCES.md), [ARCHITECTURE.md](ARCHITECTURE.md),
-[VERIFICATION.md](VERIFICATION.md), [PRODUCTION.md](PRODUCTION.md). Dated design and review
+Current release: **1.9.0** (27 September 2026), the plain-language redesign. History: [CHANGELOG.md](CHANGELOG.md). Current state and decisions:
+[CURRENT_STATE.md](CURRENT_STATE.md). Method: [INTERPRETATION.md](docs/INTERPRETATION.md),
+[DATA_SOURCES.md](docs/DATA_SOURCES.md), [ARCHITECTURE.md](docs/ARCHITECTURE.md),
+[VERIFICATION.md](docs/VERIFICATION.md), [PRODUCTION.md](docs/PRODUCTION.md). Dated design and review
 records (network inventory, circumvention, measurement fleet, shutdown context, audits) are in
 [docs/design-records/](docs/design-records/README.md).
 

@@ -145,7 +145,7 @@ function ooniScope(input) {
 }
 
 // Access evidence is read from the local store when it covers the whole period; otherwise
-// from OONI directly, as before. The collector fills the store (see DATA_RESILIENCE_PLAN.md).
+// from OONI directly, as before. The collector fills the store (see docs/DATA_RESILIENCE_PLAN.md).
 const store = openStore(join(root, 'var/store/monitor.db'));
 
 async function viaStore(scope, build, live) {

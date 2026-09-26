@@ -2,7 +2,7 @@
 
 ## Release state
 
-`main` carries v1.9 (the plain-language redesign); the latest published release is v1.8.0, and `package.json` moves to 1.9.0 at the next release. The step-by-step checklist for going online is [GO_LIVE.md](GO_LIVE.md).
+The current release is v1.9.0 (27 September 2026), the plain-language redesign. The step-by-step checklist for going online is [GO_LIVE.md](../GO_LIVE.md).
 
 Publishing the dashboard does not authorize a probe deployment in Iran: `deploymentAuthorized:false` stays, and the Fleet Stage-1 material remains a laboratory design.
 
@@ -52,7 +52,7 @@ npm run verify:ui
 npm run verify:radar       # optional token
 ```
 
-`npm run check` runs **514 deterministic tests** (26 September 2026). Routine CI also validates syntax, canonical release notes, production build, real Headless Chrome presentation, committed-secret/private-key leakage and runtime/404/traversal behavior.
+`npm run check` runs all deterministic tests; the latest count and date are recorded in [VERIFICATION.md](VERIFICATION.md). Routine CI also validates syntax, canonical release notes, production build, real Headless Chrome presentation, committed-secret/private-key leakage and runtime/404/traversal behavior.
 
 ## Dashboard service
 

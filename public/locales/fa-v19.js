@@ -853,7 +853,7 @@ export default Object.freeze({
   'sources.page.status.scope': 'نیاز به انتخاب یک شبکه',
   'sources.page.status.error': 'پاسخ نمی‌دهد',
   'sources.page.status.separate': 'جداگانه بارگذاری می‌شود',
-  'sources.page.footer': 'قواعد هر منبع در فایل‌های DATA_SOURCES.md و INTERPRETATION.md در مخزن پروژه شرح داده شده است. نتایج: CC BY-NC-SA 4.0.',
+  'sources.page.footer': 'قواعد هر منبع در فایل‌های docs/DATA_SOURCES.md و docs/INTERPRETATION.md در مخزن پروژه شرح داده شده است. نتایج: CC BY-NC-SA 4.0.',
   'monthly.open.dashboard': 'باز کردن داشبورد',
   'tools.page.title': 'راه‌های دورزدن فیلتر: ابزارها و محل دریافت آن‌ها',
   'tools.page.intro': 'اندازه‌گیری‌های درون ایران دربارهٔ هر ابزار چه می‌گویند (کل ایران، {from} تا {to}). این صفحه چیزی را توصیه نمی‌کند: نشان می‌دهد در آزمون‌ها چه چیزی عبور کرد. ابزارها را فقط از صفحه‌ها یا راه‌های رسمی نام‌برده در این‌جا دریافت کنید؛ نسخه‌هایی از جاهای دیگر ممکن است دست‌کاری شده باشند.',

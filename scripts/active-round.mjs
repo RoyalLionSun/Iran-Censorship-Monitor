@@ -13,14 +13,14 @@ await loadEnvFile(join(root, '.env'));
 const args = process.argv.slice(2);
 const option = (name, fallback) => { const index = args.indexOf(`--${name}`); return index >= 0 ? args[index + 1] : fallback; };
 if (process.env.ACTIVE_MEASUREMENTS_ENABLED !== 'true') {
-  console.error('Active measurements are off. Set ACTIVE_MEASUREMENTS_ENABLED=true only after deciding the ethics question (DATA_RESILIENCE_PLAN.md).');
+  console.error('Active measurements are off. Set ACTIVE_MEASUREMENTS_ENABLED=true to switch them on (docs/DATA_RESILIENCE_PLAN.md).');
   process.exit(2);
 }
 const source = option('source', 'ripe-atlas');
 const hosts = option('hosts', ACTIVE_HOSTS.join(',')).split(',').map((host) => host.trim().toLowerCase()).filter(Boolean);
 const refused = hosts.filter((host) => !ACTIVE_HOSTS.includes(host));
 if (refused.length) {
-  console.error(`Not allowed as an active target (ethics decision, DATA_RESILIENCE_PLAN.md): ${refused.join(', ')}`);
+  console.error(`Not allowed as an active target (docs/DATA_RESILIENCE_PLAN.md): ${refused.join(', ')}`);
   process.exit(2);
 }
 const probes = Math.max(1, Math.min(Number(option('probes', '5')), 20));

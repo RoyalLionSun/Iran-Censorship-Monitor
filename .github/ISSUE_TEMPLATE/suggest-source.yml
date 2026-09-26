@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Only measurements taken **inside networks registered in Iran** can show what people in Iran can reach. Sources that measure from abroad can only be context. See DATA_SOURCES.md for the sources in use.
+        Only measurements taken **inside networks registered in Iran** can show what people in Iran can reach. Sources that measure from abroad can only be context. See docs/DATA_SOURCES.md for the sources in use.
   - type: input
     id: name
     attributes:

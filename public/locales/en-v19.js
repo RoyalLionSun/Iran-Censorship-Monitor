@@ -853,7 +853,7 @@ export default Object.freeze({
   'sources.page.status.scope': 'needs a selected network',
   'sources.page.status.error': 'not answering',
   'sources.page.status.separate': 'loaded separately',
-  'sources.page.footer': 'The rules for each source are described in DATA_SOURCES.md and INTERPRETATION.md in the project repository. Results: CC BY-NC-SA 4.0.',
+  'sources.page.footer': 'The rules for each source are described in docs/DATA_SOURCES.md and docs/INTERPRETATION.md in the project repository. Results: CC BY-NC-SA 4.0.',
   'monthly.open.dashboard': 'Open the dashboard',
   'tools.page.title': 'Ways around the filter: tools and where to get them',
   'tools.page.intro': 'What measurements from inside Iran say about each tool (all of Iran, {from} – {to}). This page recommends nothing: it shows what got through in the tests. Download tools only from the official pages or channels named here; copies from elsewhere can be manipulated.',

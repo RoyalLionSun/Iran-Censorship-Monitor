@@ -3,8 +3,8 @@
 Dated records of how parts of the project were designed, reviewed or decided. Each states its own
 version and status; where a record and the current documents in the repository root differ, the
 current documents apply ([CURRENT_STATE.md](../../CURRENT_STATE.md),
-[ARCHITECTURE.md](../../ARCHITECTURE.md), [INTERPRETATION.md](../../INTERPRETATION.md),
-[DATA_SOURCES.md](../../DATA_SOURCES.md)).
+[ARCHITECTURE.md](../ARCHITECTURE.md), [INTERPRETATION.md](../INTERPRETATION.md),
+[DATA_SOURCES.md](../DATA_SOURCES.md)).
 
 ## Network inventory
 

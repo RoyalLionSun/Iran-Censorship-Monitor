@@ -1,0 +1,9 @@
+#!/bin/sh
+# Runs the project's checks before every commit: syntax, all tests, and that versions, the test
+# count and the links in the documents are current. Enable once per clone:
+#   git config core.hooksPath .githooks
+npm run --silent check >/tmp/iran-monitor-precommit.log 2>&1 || {
+  grep -E "^not ok|error:" /tmp/iran-monitor-precommit.log | head -20
+  echo "Commit stopped: npm run check failed (full log: /tmp/iran-monitor-precommit.log)."
+  exit 1
+}
