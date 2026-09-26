@@ -42,6 +42,7 @@ import { getApnicCountryComposition, getApnicIpv6, getApnicVpnShare } from './li
 import { getServiceHistory } from './lib/history.mjs';
 import { buildFeedEntry, postToTelegram, readEntries, renderAtom, upsertEntry } from './lib/feed.mjs';
 import { renderWidget } from './lib/widget.mjs';
+import { buildDailyData, OPEN_DATA_SCHEMA, openDataStore } from './lib/open-data.mjs';
 import { monthRange, recentMonths, recentWeeks, renderMonthlyReport, renderReportIndex, renderUpdatesPage, weekRange } from './lib/report.mjs';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
@@ -789,6 +790,39 @@ async function serveFeed(req, res, url) {
 }
 
 // The embeddable status image (/widget.svg, ?lang=fa for Farsi).
+// Open daily data for all of Iran (/data/latest.json, /data/YYYY-MM-DD.json, /data/index.json).
+// Built from the same snapshot as the feed, at most every six hours; each day is kept in var/data/.
+const openData = openDataStore(join(root, 'var/data'));
+let openDataInFlight = null;
+async function latestOpenData(base) {
+  const today = new Date().toISOString().slice(0, 10);
+  const stored = await openData.read(today);
+  if (stored && Date.now() - Date.parse(stored.generatedAt) < FEED_REFRESH_MS) return stored;
+  openDataInFlight ??= (async () => {
+    const { since, until, interpretation, history } = await currentSnapshot();
+    const data = buildDailyData({ interpretation, history, since, until, date: today, dashboardUrl: `${base}/?asn=ALL&testName=web_connectivity&since=${since}&until=${until}` });
+    if (data) await openData.write(data);
+    return data ?? stored;
+  })().catch(() => stored).finally(() => { openDataInFlight = null; });
+  return openDataInFlight;
+}
+
+async function serveOpenData(req, res, url) {
+  const base = process.env.PUBLIC_URL?.replace(/\/+$/, '') || `http://${req.headers.host || `${HOST}:${PORT}`}`;
+  const open = { 'access-control-allow-origin': '*' };
+  const name = url.pathname.slice('/data/'.length);
+  if (name === 'index.json') {
+    jsonResponse(res, 200, { schema: OPEN_DATA_SCHEMA, latest: `${base}/data/latest.json`, days: (await openData.dates()).map((day) => `${base}/data/${day}.json`) }, { ...open, 'cache-control': 'public, max-age=1800' });
+    return;
+  }
+  const data = name === 'latest.json' ? await latestOpenData(base) : await openData.read(name.replace(/\.json$/, ''));
+  if (!data) {
+    jsonResponse(res, name === 'latest.json' ? 503 : 404, { ok: false, error: name === 'latest.json' ? 'Today\'s data is not ready yet; try again in a few minutes.' : 'No data for this day.' }, open);
+    return;
+  }
+  jsonResponse(res, 200, data, { ...open, 'cache-control': name === 'latest.json' ? 'public, max-age=1800' : 'public, max-age=86400' });
+}
+
 async function serveWidget(req, res, url) {
   const lang = url.searchParams.get('lang') === 'fa' ? 'fa' : 'en';
   const snapshot = await currentSnapshot();
@@ -898,6 +932,8 @@ const server = http.createServer(async (req, res) => {
     const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
     if (url.pathname === '/feed.xml') {
       await serveFeed(req, res, url);
+    } else if (/^\/data\/(latest|index|\d{4}-\d{2}-\d{2})\.json$/.test(url.pathname)) {
+      await serveOpenData(req, res, url);
     } else if (url.pathname === '/widget.svg') {
       await serveWidget(req, res, url);
     } else if (url.pathname === '/updates') {

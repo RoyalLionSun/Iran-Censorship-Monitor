@@ -68,6 +68,7 @@ Everything lives in `var/` (not in git). Copy it along when moving and back it u
 - `var/anatomy/` — hour-by-hour timelines of finished shutdowns; never fetched again.
 - `var/history/` — monthly "blocked since" history per service.
 - `var/feed/` — the daily "What changed" entries (feed, `/updates`, Telegram).
+- `var/data/` — the open daily data (`/data/YYYY-MM-DD.json`), one small file per day.
 - `var/store/` — collected measurements (SQLite).
 - `var/iran-asns.json` — the list of Iran-registered networks (fallback when RIPEstat is down).
 - `var/last-good/`, `var/asn-coverage/`, `var/asn-directory/` — fallbacks and caches.

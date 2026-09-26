@@ -31,6 +31,7 @@ Node.js HTTP server (server.mjs, no third-party runtime dependencies)
   +--> /updates, /feed.xml        daily "what changed" entries (optional Telegram post)
   +--> /reports, /report          weekly (Saturday to Friday) and monthly reports
   +--> /widget.svg                embeddable status image
+  +--> /data/latest.json, /data/YYYY-MM-DD.json, /data/index.json   open daily data (docs/API.md)
   \--> static files in public/
 
 Collector (inside the server, off unless MONITOR_COLLECTOR=1)
@@ -179,7 +180,7 @@ Active checks (RIPE Atlas, Globalping) run only when `ACTIVE_MEASUREMENTS_ENABLE
 
 - `var/store/monitor.db` (node:sqlite): measurements written by the collector paths, only the fields the dashboard needs. The server answers from it where it covers the requested period.
 - `var/last-good/entries/`: the last good answer per source and scope, one file each (only changed answers are written), with per-source quotas, so a rate-limited or failing source shows its latest data with a date instead of "no data".
-- `var/feed/`, `var/reports/`, `var/history/`, `var/anatomy/`: daily entries, finished weekly and monthly reports, monthly service history and shutdown timelines, each written once.
+- `var/feed/`, `var/data/`, `var/reports/`, `var/history/`, `var/anatomy/`: daily entries, open daily data, finished weekly and monthly reports, monthly service history and shutdown timelines, each written once.
 - `var/asn-coverage/`, `var/asn-directory/`, `var/iran-asns.json`: network inventory snapshots; `var/ris-live/`: the optional routing collector (seven days by default, at most 30).
 - In-process caches are bounded (`FETCH_CACHE_LIMIT`). `var/` is Git-ignored and never served.
 - Manually entered VPN field measurements stay in the reader's browser (`localStorage`) and are never uploaded.

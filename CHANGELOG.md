@@ -4,6 +4,7 @@
 
 ### Overview, sources, reports and resilience (2026-09-23 to 2026-09-26)
 
+- **open daily data** (26 September 2026): `/data/latest.json`, `/data/YYYY-MM-DD.json` and `/data/index.json` publish the day's findings for all of Iran (headline, six services with "blocked since", changes, further services, ways around the filter, usage, network counts) as aggregated JSON under CC BY-NC-SA 4.0, readable from any website; one file per day in `var/data/`; described with the other public interfaces in `docs/API.md`. GitHub issue forms (service, finding, source) and a pull-request checklist; each form warns against anything that could identify people in Iran;
 - performance review (26 September 2026): the last good answers are stored one file per answer, so a save writes only what changed (the single 17 MB file took about 90 ms to serialise and blocked the server on every save); large JSON answers are compressed in Node's worker threads, and a cached Overview is serialised and compressed once and then served from memory (about 1 ms instead of about 10 ms);
 - the former global disruption ladder is replaced by the claim-based contract in `lib/interpretation.mjs`;
 - connectivity, websites/filtering, routing, connection quality and shutdown are assessed separately;
