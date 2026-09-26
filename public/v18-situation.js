@@ -1632,7 +1632,8 @@ function renderEvidenceOverview(assessment) {
     <p>${escapeHtml(t('interpretation.evidence.intro'))}</p>
     <div class="evidence-matrix">${dimensions.map((dimension) => `
       <div data-coverage="${escapeHtml(dimension.coverage)}"><strong>${escapeHtml(t(`interpretation.${dimension.id}.title`))}</strong><span>${escapeHtml(t(`interpretation.coverage.${dimension.coverage}`))}</span><small>${escapeHtml(dimension.availableSources.join(separator()) || t('interpretation.noUsableSources'))}</small></div>`).join('')}</div>
-    <p class="method-boundary">${escapeHtml(assessment.methodologicalBoundary)}</p>`;
+`;
+  // The methodological boundary is said once, in the assessment card below; not repeated here.
 }
 
 let lastAssessment = null;

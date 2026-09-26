@@ -552,3 +552,36 @@ html[lang="fa"] :is(.connection-board h2, .overview-panel > header h2, #overview
 /* A wide table scrolls inside its card; it must never widen the page (phones). */
 .situation-sections { grid-template-columns: minmax(0, 1fr); }
 .situation-sections > * { min-width: 0; }
+
+/* The technical view in the same design language as the Overview: cards with one surface, a
+   status stripe at the start instead of a coloured top edge with a gradient, tiles inside. */
+.technical-view { display: grid; gap: 16px; }
+.interpretation-grid { gap: 16px; }
+.interpretation-card { --stripe: var(--stripe-neutral); padding: 20px 22px; border: 1px solid var(--border); border-inline-start: 4px solid var(--stripe);
+  border-top-width: 1px; border-top-color: var(--border); border-radius: 14px; background: var(--card-bg); background-image: none; }
+.interpretation-card[data-finding] { background: var(--card-bg); border-top-color: var(--border); }
+.interpretation-card[data-finding="bad"] { --stripe: var(--status-blocked); }
+.interpretation-card[data-finding="warn"] { --stripe: var(--status-restricted); }
+.interpretation-card[data-finding="ok"] { --stripe: var(--status-reachable); }
+.interpretation-card[data-finding="unknown"] { --stripe: var(--status-unknown); }
+.interpretation-card[data-finding="info"] { --stripe: #7fcbe0; }
+.interpretation-card dl div { background: var(--tile-bg); border-radius: 8px; }
+.interpretation-card header span:not(.dimension-icon) { color: #7fcbe0; }
+.technical-view .overview-lower-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: stretch; }
+.technical-view .panel, .technical-view .kpi-card { background: var(--card-bg); background-image: none; border-radius: 14px; }
+.technical-view .kpi-card { border-radius: 10px; background: var(--tile-bg); }
+.assessment-strip { border: 1px solid var(--border); border-inline-start: 4px solid var(--stripe-neutral); border-radius: 14px; background: var(--card-bg); padding: 18px 22px; }
+.assessment-strip[data-severity="ok"] { border-inline-start-color: var(--status-reachable); }
+.assessment-strip[data-severity="warning"] { border-inline-start-color: var(--status-restricted); }
+.assessment-strip[data-severity="critical"] { border-inline-start-color: var(--status-blocked); }
+.assessment-meta b { font-family: inherit; }
+@media (max-width: 900px) { .technical-view .overview-lower-grid { grid-template-columns: 1fr; } }
+.evidence-matrix > div { --stripe: var(--stripe-neutral); background: var(--tile-bg); border: 1px solid var(--border); border-inline-start: 4px solid var(--stripe); border-top-width: 1px; border-top-color: var(--border); border-radius: 10px; }
+.evidence-matrix > div[data-coverage="broad"], .evidence-matrix > div[data-coverage="adequate"] { --stripe: #7fcbe0; }
+.evidence-matrix > div[data-coverage="limited"] { --stripe: var(--status-restricted); }
+.assessment-strip .section-label { font-family: inherit; font-size: 15px; font-weight: 800; letter-spacing: .05em; }
+.technical-view .panel[data-source-state], .technical-view #divergence-panel[data-finding] { border-top: 1px solid var(--border); border-inline-start: 4px solid var(--stripe, var(--stripe-neutral)); }
+.technical-view .panel[data-source-state="ok"] { --stripe: var(--status-reachable); }
+.technical-view .panel[data-source-state="partial"], .technical-view #divergence-panel[data-finding="warn"] { --stripe: var(--status-restricted); }
+.technical-view .panel[data-source-state="error"] { --stripe: var(--status-blocked); }
+.technical-view #divergence-panel[data-finding="info"] { --stripe: #7fcbe0; }
