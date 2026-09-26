@@ -331,10 +331,11 @@ export const MORE_SERVICE_GROUPS = Object.freeze([
     { id: 'kayhanlondon', name: 'Kayhan London', domains: ['kayhan.london'] },
     // Opposition outlets. The Revolution TV page streams through YouTube (measured above). Its
     // website and Farah Pahlavi's are tested only once they are on Citizen Lab's Iran list; until
-    // then they show untested (OONI has no test of either, 26 September 2026).
+    // then they show untested (OONI has no test of either, 26 September 2026). `onTestList: false`
+    // lets the page say why; remove it once the list includes the site.
     { id: 'rezapahlavi', name: 'Crown Prince Reza Pahlavi (official site)', nameFa: 'وب‌سایت رسمی شاهزاده رضا پهلوی', domains: ['www.rezapahlavi.org', 'fa.rezapahlavi.org', 'rezapahlavi.org'] },
-    { id: 'iranopasmigirim', name: 'We Take Back Iran (National Revolution TV)', nameFa: 'ایران را پس می‌گیریم (تلویزیون انقلاب ملی)', domains: ['iranopasmigirim.com', 'www.iranopasmigirim.com'] },
-    { id: 'farahpahlavi', name: 'Farah Pahlavi (official site)', nameFa: 'وب‌سایت رسمی شهبانو فرح پهلوی', domains: ['farahpahlavi.org', 'www.farahpahlavi.org'] },
+    { id: 'iranopasmigirim', name: 'We Take Back Iran (National Revolution TV)', nameFa: 'ایران را پس می‌گیریم (تلویزیون انقلاب ملی)', domains: ['iranopasmigirim.com', 'www.iranopasmigirim.com'], onTestList: false },
+    { id: 'farahpahlavi', name: 'Queen Farah Pahlavi (official site)', nameFa: 'وب‌سایت رسمی شهبانو فرح پهلوی', domains: ['farahpahlavi.org', 'www.farahpahlavi.org'], onTestList: false },
   ] },
   { id: 'circumvention', services: [
     { id: 'psiphon', name: 'Psiphon', domains: ['psiphon.ca', 'www.psiphon.ca'], app: 'psiphon' },
@@ -405,6 +406,7 @@ export function summarizeMoreServices(networkPayload, countryPayload = null, app
       const totals = usable ? own : country?.measurements ? country : null;
       return {
         id: service.id, name: service.name,
+        ...(service.onTestList === false ? { onTestList: false } : {}),
         app: appResult(appPayload, service.app),
         scope: usable ? 'network' : totals ? 'country' : null,
         status: totals ? networkStatus(totals) : 'untested',

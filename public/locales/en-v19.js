@@ -408,6 +408,8 @@ export default Object.freeze({
   'meaning.a.blocked.other': 'No: {services} are blocked here and do not open without a way around the filter.',
   'meaning.a.blocked.one.iran': 'No: {services} is blocked in Iran and does not open without a way around the filter.',
   'meaning.a.blocked.other.iran': 'No: {services} are blocked in Iran and do not open without a way around the filter.',
+  'unknown.unlisted.a.one': '{services} is not yet on the list of websites that the volunteers’ test app checks in Iran, so nobody has measured it yet.',
+  'unknown.unlisted.a.other': '{services} are not yet on the list of websites that the volunteers’ test app checks in Iran, so nobody has measured them yet.',
   'unknown.slowdown.q.one': 'Is {services} blocked, or slowed down on purpose?',
   'unknown.slowdown.q.other': 'Are {services} blocked, or slowed down on purpose?',
   'unknown.networks.q': 'What about the other Iranian networks?',

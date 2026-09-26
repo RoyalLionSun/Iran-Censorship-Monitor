@@ -1587,16 +1587,21 @@ function unknownItems(interpretation) {
   if (services?.restricted?.length) {
     items.push({ question: plural('unknown.slowdown.q', services.restricted.length, { services: listOf(services.restricted.map((id) => brandName(id, services))) }), answer: t('unknown.slowdown.a') });
   }
+  // Sites not yet on the list the volunteers' test app checks in Iran are never measured; say so
+  // instead of "no tests in this period", which suggests other periods have some.
+  const moreUntested = (services?.more ?? []).flatMap((group) => group.services.filter((service) => !service.scope));
+  const unlisted = moreUntested.filter((service) => service.onTestList === false).map(moreServiceName);
   const untested = [
     ...(services?.visible ?? []).filter((item) => item.status === 'untested').map((item) => brandName(item.id, services)),
-    ...(services?.more ?? []).flatMap((group) => group.services.filter((service) => !service.scope).map(moreServiceName)),
+    ...moreUntested.filter((service) => service.onTestList !== false).map(moreServiceName),
   ];
-  if (untested.length) {
+  if (untested.length || unlisted.length) {
     const shown = untested.slice(0, 5);
-    items.push({
-      question: t('unknown.untested.q'),
-      answer: t(untested.length > shown.length ? 'unknown.untested.aMore' : 'unknown.untested.a', { services: listOf(shown), more: formatNumber(untested.length - shown.length) }),
-    });
+    const answers = [
+      untested.length ? t(untested.length > shown.length ? 'unknown.untested.aMore' : 'unknown.untested.a', { services: listOf(shown), more: formatNumber(untested.length - shown.length) }) : '',
+      unlisted.length ? plural('unknown.unlisted.a', unlisted.length, { services: listOf(unlisted) }) : '',
+    ];
+    items.push({ question: t('unknown.untested.q'), answer: answers.filter(Boolean).join(' '), link: ['more-services-title', t('board.more.title')] });
   }
   // Most Iranian networks have no volunteer testing in a given week; say how many, not "unknown".
   const coverage = services?.networkBreakdown?.coverage;

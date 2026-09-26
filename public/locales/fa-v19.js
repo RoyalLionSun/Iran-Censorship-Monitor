@@ -408,6 +408,8 @@ export default Object.freeze({
   'meaning.a.blocked.other': 'نه: {services} در این شبکه مسدودند و بدون راهی برای دور زدن فیلتر باز نمی‌شوند.',
   'meaning.a.blocked.one.iran': 'نه: {services} در ایران مسدود است و بدون راهی برای دور زدن فیلتر باز نمی‌شود.',
   'meaning.a.blocked.other.iran': 'نه: {services} در ایران مسدودند و بدون راهی برای دور زدن فیلتر باز نمی‌شوند.',
+  'unknown.unlisted.a.one': '{services} هنوز در فهرست وب‌سایت‌هایی نیست که برنامهٔ آزمون داوطلبان در ایران بررسی می‌کند؛ پس هنوز کسی آن را اندازه نگرفته است.',
+  'unknown.unlisted.a.other': '{services} هنوز در فهرست وب‌سایت‌هایی نیستند که برنامهٔ آزمون داوطلبان در ایران بررسی می‌کند؛ پس هنوز کسی آن‌ها را اندازه نگرفته است.',
   'unknown.slowdown.q.one': 'آیا {services} مسدود است یا عمداً کند شده؟',
   'unknown.slowdown.q.other': 'آیا {services} مسدودند یا عمداً کند شده‌اند؟',
   'unknown.networks.q': 'شبکه‌های دیگر ایران چه؟',
