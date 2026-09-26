@@ -4,6 +4,7 @@
 
 ### Overview, sources, reports and resilience (2026-09-23 to 2026-09-26)
 
+- **offline copy fix** (26 September 2026): the service worker stored every opened page (reports, updates, tools, sources) under the dashboard's address, so offline the dashboard could be replaced by the last report opened; other pages now keep their own address (cache `icm-offline-v2` replaces the old one);
 - **operator health** (26 September 2026): `/api/health` reports uptime, version, each collector path with last run, last success, newest measurement and last error, cache sizes and `issues` (a switched-on path silent for three hours or with data older than 36 hours, a path error, OONI limiting requests) with `status: degraded`; `ok` stays true for readiness checks;
 - **tools page** (26 September 2026): `/tools` lists only tools measured from inside Iran (Tor Browser, Snowflake, Psiphon, Riseup VPN, Cloudflare WARP, encrypted DNS) with devices, current results, the official download pages and the official channels for blocked sites (gettor@torproject.org, @GetTor_Bot, get@psiphon3.com), checked on the providers' pages; linked from the "Ways around the filter" card;
 - **sources page** (26 September 2026): `/sources` in English and Farsi groups every source by what it may support and shows how it answered for the default view, taken from the warm cache; the source register links to it;

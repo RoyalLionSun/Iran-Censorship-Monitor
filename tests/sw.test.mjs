@@ -63,3 +63,11 @@ test('the page is kept once for any query; other API routes and other sites are 
   assert.equal(await dispatch('https://stat.ripe.net/data/x'), null, 'other origins pass through');
   assert.equal(await dispatch('https://monitor.example/api/overview', { method: 'POST' }), null);
 });
+
+test('opening a report or the tools page never replaces the saved dashboard', async () => {
+  const { dispatch, store } = await loadWorker();
+  await dispatch('https://monitor.example/?lang=fa', { mode: 'navigate' });
+  await dispatch('https://monitor.example/reports?lang=fa', { mode: 'navigate' });
+  await dispatch('https://monitor.example/tools', { mode: 'navigate' });
+  assert.deepEqual([...store.keys()].sort(), ['https://monitor.example/', 'https://monitor.example/reports?lang=fa', 'https://monitor.example/tools']);
+});

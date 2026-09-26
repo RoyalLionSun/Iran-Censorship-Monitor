@@ -3,7 +3,7 @@
 // reserve. When the network fails, the last answer for exactly the same request is returned,
 // marked with the header x-offline-copy, and the page says from when it is.
 
-const CACHE = 'icm-offline-v1';
+const CACHE = 'icm-offline-v2';
 const API_KEPT = new Set(['/api/overview', '/api/config', '/api/outages', '/api/circumvention', '/api/ooni/domains']);
 const MAX_API_ENTRIES = 12;
 const PAGE = new URL('/', self.location).href;
@@ -28,18 +28,21 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) return;
   const isApi = url.pathname.startsWith('/api/');
   if (isApi && !API_KEPT.has(url.pathname)) return;
+  // The dashboard is one page whatever its query (the view is in the query); other pages
+  // (reports, updates, tools, sources) are kept under their own address, so opening one never
+  // replaces the saved dashboard.
+  const key = request.mode === 'navigate' && url.pathname === '/' ? PAGE : request;
   event.respondWith((async () => {
     const cache = await caches.open(CACHE);
     try {
       const response = await fetch(request);
       if (response.ok) {
-        // The page itself is kept once, whatever its query; data answers per exact request.
-        await cache.put(request.mode === 'navigate' ? PAGE : request, response.clone());
+        await cache.put(key, response.clone());
         if (isApi) trimApi(cache);
       }
       return response;
     } catch (error) {
-      const saved = await cache.match(request.mode === 'navigate' ? PAGE : request);
+      const saved = await cache.match(key);
       if (!saved) throw error;
       const headers = new Headers(saved.headers);
       headers.set('x-offline-copy', saved.headers.get('date') || 'unknown');
