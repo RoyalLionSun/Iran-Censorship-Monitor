@@ -208,6 +208,8 @@ export default Object.freeze({
   'ui.sourceRegister': 'Source register',
   'ui.footerClaim': 'What people in Iran can reach, measured inside Iran’s own networks',
   'ui.sourcesPageLink': 'How each source is used',
+  'ui.support': 'Support the project',
+  'ui.supportNote': '(for supporters outside Iran)',
   'ui.reports.label': 'Reports:',
   'ui.reports.daily': 'Daily',
   'ui.reports.weekly': 'Weekly',

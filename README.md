@@ -120,6 +120,13 @@ Version 1.9 (the plain-language redesign) is on `main`; the release number moves
 records (network inventory, circumvention, measurement fleet, shutdown context, audits) are in
 [docs/design-records/](docs/design-records/README.md).
 
+## Support the project
+
+The dashboard runs on donations. Support from outside Iran is possible through
+[GitHub Sponsors](https://github.com/sponsors/RoyalLionSun), monthly or once, and privately if you
+prefer; it pays for the server, the domain, measurement services and further development. Please do
+not try to pay from inside Iran.
+
 ## Licence
 
 Code: MIT ([LICENSE](LICENSE)). Published results (dashboard findings, feed, widget, reports,

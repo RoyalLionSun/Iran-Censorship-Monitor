@@ -62,6 +62,10 @@ function localizeFooterLinks() {
   }
   const sourcesLink = document.querySelector('#sources-page-link');
   if (sourcesLink) { sourcesLink.href = `/sources${suffix}`; sourcesLink.textContent = t('ui.sourcesPageLink'); }
+  const support = document.querySelector('#footer-support');
+  const supportNote = document.querySelector('#footer-support-note');
+  if (support) support.textContent = t('ui.support');
+  if (supportNote) supportNote.textContent = t('ui.supportNote');
   const label = document.querySelector('#footer-reports-label');
   if (label) label.textContent = t('ui.reports.label');
   document.querySelectorAll('.footer-sep').forEach((sep) => { sep.textContent = getLanguage() === 'fa' ? '، ' : ', '; });
