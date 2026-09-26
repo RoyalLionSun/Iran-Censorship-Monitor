@@ -4,7 +4,7 @@
   "license": "MIT",
   "private": true,
   "type": "module",
-  "description": "Iran-focused censorship intelligence monitor combining technical measurements, routing analysis, circumvention context and OSINT.",
+  "description": "Plain-language dashboard in English and Farsi showing what people in Iran can reach online, from measurements inside Iranian networks.",
   "engines": {
     "node": ">=20.11"
   },

@@ -3,7 +3,7 @@
 **Code** (this repository's software): MIT, see `LICENSE`.
 
 **Published results** — the dashboard's findings, the "What changed" feed (`/feed.xml`), the
-embeddable widget (`/widget.svg`), the monthly reports and the exports (CSV, Word, PDF) — are
+embeddable widget (`/widget.svg`), the daily updates, the weekly and monthly reports and the exports (CSV, Word, PDF) — are
 released under **Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International**
 (CC BY-NC-SA 4.0, https://creativecommons.org/licenses/by-nc-sa/4.0/).
 

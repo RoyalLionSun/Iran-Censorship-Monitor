@@ -110,9 +110,9 @@ Version 1.9 (the plain-language redesign) is on `main`; the release number moves
 1.9.0 at release. History: [CHANGELOG.md](CHANGELOG.md). Current state and decisions:
 [CURRENT_STATE.md](CURRENT_STATE.md). Method: [INTERPRETATION.md](INTERPRETATION.md),
 [DATA_SOURCES.md](DATA_SOURCES.md), [ARCHITECTURE.md](ARCHITECTURE.md),
-[VERIFICATION.md](VERIFICATION.md), [PRODUCTION.md](PRODUCTION.md). Earlier design reviews
-(ASN inventory, circumvention, measurement fleet, shutdown context) remain as separate documents in
-the repository root. `legacy/prototype-export/` is reference material only.
+[VERIFICATION.md](VERIFICATION.md), [PRODUCTION.md](PRODUCTION.md). Dated design and review
+records (network inventory, circumvention, measurement fleet, shutdown context, audits) are in
+[docs/design-records/](docs/design-records/README.md).
 
 ## Licence
 

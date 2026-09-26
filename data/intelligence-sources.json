@@ -11,7 +11,7 @@
   {"id":"freedomhouse","name":"Freedom House","domain":"freedomhouse.org","class":"rights-policy-context","role":"Long-term Internet freedom and policy baseline","url":"https://freedomhouse.org/country/iran/freedom-net"},
   {"id":"kentik","name":"Kentik","domain":"kentik.com","class":"network-analysis-context","role":"Traffic and routing analysis used for independent technical context","url":"https://www.kentik.com/"},
   {"id":"ooni","name":"OONI","domain":"ooni.org","class":"technical-sensor","role":"Open censorship measurements and findings","url":"https://ooni.org/"},
-  {"id":"censoredplanet","name":"Censored Planet","domain":"censoredplanet.org","class":"technical-sensor","role":"Remote censorship measurement research","url":"https://censoredplanet.org/"},
+  {"id":"censoredplanet","name":"Censored Planet","domain":"censoredplanet.org","class":"technical-sensor","role":"Measurements from abroad towards servers in Iran (context only)","url":"https://censoredplanet.org/"},
   {"id":"ripe","name":"RIPE NCC","domain":"ripe.net","class":"routing-measurement","role":"RIPE Atlas, RIS and RIPEstat routing/active measurement context","url":"https://www.ripe.net/"},
   {"id":"tor","name":"Tor Project","domain":"torproject.org","class":"circumvention-context","role":"Tor network, bridge and pluggable-transport documentation","url":"https://www.torproject.org/"},
   {"id":"ioda","name":"IODA / Georgia Tech","domain":"gatech.edu","class":"technical-sensor","role":"Internet outage detection and analysis","url":"https://ioda.inetintel.cc.gatech.edu/"},

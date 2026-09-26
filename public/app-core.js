@@ -247,10 +247,17 @@ function renderConfig(config) {
   renderIntelligenceSourceRegistry(config.intelligenceSources || []);
 }
 
+// A plain description of each source in the reader's language, saying where it measures from.
+function sourceRole(source) {
+  const key = `source.role.${source.id}`;
+  const text = t(key);
+  return text === key ? source.role : text;
+}
+
 function renderSources(sources, radarConfigured) {
   $('#source-grid').innerHTML = sources.map((source) => {
     const access = source.id === 'radar' && !radarConfigured ? 'token not configured' : source.access;
-    return `<div class="source-card" data-source="${escapeHtml(source.id)}"><div class="source-card-head"><strong>${escapeHtml(source.name)}</strong><span class="access">${escapeHtml(access)}</span></div><span class="source-status" hidden></span><p>${escapeHtml(source.role)}</p><a href="${escapeHtml(source.url)}" target="_blank" rel="noreferrer">Open source ↗</a>${source.docs ? ` · <a href="${escapeHtml(source.docs)}" target="_blank" rel="noreferrer">Docs ↗</a>` : ''}</div>`;
+    return `<div class="source-card" data-source="${escapeHtml(source.id)}"><div class="source-card-head"><strong>${escapeHtml(source.name)}</strong><span class="access">${escapeHtml(access)}</span></div><span class="source-status" hidden></span><p>${escapeHtml(sourceRole(source))}</p><a href="${escapeHtml(source.url)}" target="_blank" rel="noreferrer">Open source ↗</a>${source.docs ? ` · <a href="${escapeHtml(source.docs)}" target="_blank" rel="noreferrer">Docs ↗</a>` : ''}</div>`;
   }).join('');
 }
 
@@ -1212,6 +1219,12 @@ $('#ooni-detail-more').addEventListener('click', () => {
   if (payload?.hasMore && !state.ooniDomainDetailsLoading) loadOoniDomainPage(payload.offset + payload.pageSize);
 });
 window.addEventListener('iran-monitor-languagechange', () => {
+  // Only the descriptions change; the cards keep the status other code has set on them.
+  document.querySelectorAll('#source-grid .source-card').forEach((card) => {
+    const source = state.config?.sources?.find((item) => item.id === card.dataset.source);
+    const text = card.querySelector(':scope > p');
+    if (source && text) text.textContent = sourceRole(source);
+  });
   renderOutageOptions();
   if (state.config) writeUrlState();
   renderOoniDomains();

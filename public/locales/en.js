@@ -107,9 +107,9 @@ export default Object.freeze({
   'ui.asPath': 'AS path',
   'ui.collectorPeer': 'Collector / peer',
   'ui.loadUpdatesSelected': 'Load updates for a selected ASN.',
-  'ui.cpSection': 'CENSORED PLANET / REMOTE MEASUREMENT',
+  'ui.cpSection': 'CENSORED PLANET / MEASURED FROM ABROAD',
   'ui.cpTitle': 'Interference & CenAlert signals',
-  'ui.cpNote': "Remote measurement complements OONI's probe model. Unexpected responses and CenAlert events are investigation signals; they are not automatically classified as censorship.",
+  'ui.cpNote': "Measured from abroad towards servers in Iran: it shows how Iranian servers answer, not what people in Iran can reach. Context only; it never supports a finding about access.",
   'ui.globalpingSection': 'GLOBALPING / IRAN VANTAGE COVERAGE',
   'ui.globalpingTitle': 'Available in-country probes',
   'ui.globalpingNote': 'This is passive probe inventory only. Probe presence is not a censorship signal. Active tests are disabled by default and remain operator-controlled.',
@@ -237,6 +237,6 @@ export default Object.freeze({
   'meaning.routing': 'High BGP visibility means routes are still visible to the global routing system. Users can still experience severe disruption while BGP remains visible.',
   'meaning.radar': 'Traffic drops, anomalies or outage annotations show changes observed by Cloudflare. Missing token or missing data is never interpreted as normal connectivity.',
   'meaning.tor': 'Changes in direct or bridge-user estimates can be consistent with access pressure or circumvention changes, but other causes remain possible.',
-  'meaning.cp': 'Unexpected responses and CenAlert events are investigation signals from remote measurements; they need corroboration before a censorship conclusion.',
+  'meaning.cp': 'Censored Planet measures from outside Iran. Its unexpected responses and CenAlert events are context about Iranian servers, never evidence of what people in Iran can reach.',
   'meaning.globalping': 'Probe presence only shows where measurement vantage points are available. It says nothing by itself about whether Internet access is working normally.'
 });

@@ -1,10 +1,10 @@
 # Production Deployment
 
-## Supported release state
+## Release state
 
-The release candidate is **v1.6.0** on `release/v1.6.0`, based on pre-release `main` commit `42e8775cfd7a51f882a78172caee181ed613e23f`. v1.4.0 is the latest previously published GitHub Release; the repository-verified v1.5 line was not tagged/published, so v1.6.0 is the next publication and includes both v1.5 ASN/inventory work and v1.6 shutdown-context work.
+`main` carries v1.9 (the plain-language redesign); the latest published release is v1.8.0, and `package.json` moves to 1.9.0 at the next release. The step-by-step checklist for going online is [GO_LIVE.md](GO_LIVE.md).
 
-Release publication does not authorize an Iran probe deployment. Repository policy remains `deploymentAuthorized:false` and the Fleet Stage-1 material remains laboratory architecture.
+Publishing the dashboard does not authorize a probe deployment in Iran: `deploymentAuthorized:false` stays, and the Fleet Stage-1 material remains a laboratory design.
 
 ## Dashboard topology
 
@@ -17,14 +17,15 @@ Reverse proxy (TLS, access control, rate limit)
         |
   127.0.0.1:4173
         v
-Iran Censorship Monitor / Node.js
+Iran Censorship Monitor / Node.js  (state in var/: local store, last good answers, reports)
         |
-        +--> OONI / Censored Planet
-        +--> RIPE Atlas / RIPEstat / RPKI / IODA
-        +--> M-Lab / APNIC / Tor / Globalping
+        +--> OONI (+ optional collector into var/store/monitor.db)
+        +--> Cloudflare Radar / Internet Society Pulse (optional tokens)
+        +--> RIPE Atlas / RIPEstat / RPKI / IODA / Censored Planet
+        +--> M-Lab / APNIC / Tor Metrics / Psiphon statistics / Globalping
         +--> PeeringDB / IHR / CAIDA ASRank
-        +--> Access Now / Citizen Lab / GDELT
-        \--> Cloudflare Radar / Internet Society Pulse (optional tokens)
+        \--> Access Now / Citizen Lab / GDELT
+        (optional: RIPE Atlas and Globalping DNS/TLS checks, Telegram posts)
 
 Optional passive operator processes
         +--> RIPE RIS Live
@@ -51,25 +52,13 @@ npm run verify:ui
 npm run verify:radar       # optional token
 ```
 
-The v1.6.0 release candidate contains **277 deterministic tests** after the final context-export regressions. Routine CI also validates syntax, canonical release notes, production build, real Headless Chrome presentation, committed-secret/private-key leakage and runtime/404/traversal behavior.
+`npm run check` runs **514 deterministic tests** (26 September 2026). Routine CI also validates syntax, canonical release notes, production build, real Headless Chrome presentation, committed-secret/private-key leakage and runtime/404/traversal behavior.
 
 ## Dashboard service
 
 Keep the Node listener private where practical and terminate HTTPS at a reverse proxy. Run the service as an unprivileged account with appropriate systemd hardening (`NoNewPrivileges`, private temporary space and read-only system/home protections appropriate to the distribution).
 
-Typical environment values:
-
-```text
-HOST=127.0.0.1
-PORT=4173
-CACHE_TTL_MS=120000
-CLOUDFLARE_RADAR_API_TOKEN=
-INTERNET_SOCIETY_PULSE_API_TOKEN=
-GLOBALPING_API_TOKEN=
-GLOBALPING_ACTIVE_ENABLED=false
-GLOBALPING_CONTROL_KEY=
-GLOBALPING_SERVER_RUNS_PER_HOUR=10
-```
+Every setting is explained in `.env.example`. On a public server set at least `PUBLIC_URL` (shared links, feed, reports) and, behind a reverse proxy, `TRUST_PROXY=1` so the per-address budget sees real visitor addresses. Keep the server off a home connection: visitors see the address of the machine that answers. Back up `var/` (last good answers, finished reports, history).
 
 Protect environment/secret files outside Git and never expose tokens to browser JavaScript.
 
@@ -94,7 +83,7 @@ npm run collect:routeviews -- --asn AS58224
 
 Both are separate optional operator processes, bounded to validated scope. BGPStream is not a separate sensor when it transports another provider's data. Routing observations remain control-plane context only.
 
-## Shutdown context — v1.6
+## Shutdown context
 
 Internet Society Pulse is an optional token-gated curated source. The runtime preserves explicit `token_required`, `no_data`, observed and error states. Missing Pulse access is never treated as zero incidents.
 

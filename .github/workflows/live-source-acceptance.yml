@@ -1,37 +1,8 @@
 name: Live public source acceptance
 
+# Queries live public sources, so it runs only when started by hand (Actions → Run workflow).
 on:
   workflow_dispatch:
-  push:
-    branches: [develop/v1.5]
-    paths:
-      - '.github/workflows/live-source-acceptance.yml'
-      - 'data/asns.json'
-      - 'ASN_IDENTITY_METHOD.md'
-      - 'scripts/verify-public-sources.mjs'
-      - 'scripts/verify-asn-registry.mjs'
-      - 'scripts/verify-ris-live.mjs'
-      - 'scripts/verify-bgpstream-broker.mjs'
-      - 'package.json'
-      - 'server.mjs'
-      - 'lib/asn-registry.mjs'
-      - 'lib/ripe.mjs'
-      - 'lib/mlab.mjs'
-      - 'lib/apnic.mjs'
-      - 'lib/accessnow.mjs'
-      - 'lib/censoredplanet.mjs'
-      - 'lib/citizenlab.mjs'
-      - 'lib/globalping.mjs'
-      - 'lib/ioda.mjs'
-      - 'lib/tor.mjs'
-      - 'lib/ripestat.mjs'
-      - 'lib/rpki.mjs'
-      - 'lib/asrank.mjs'
-      - 'lib/rislive.mjs'
-      - 'lib/bgpstream.mjs'
-      - 'lib/peeringdb.mjs'
-      - 'lib/ihr.mjs'
-      - 'lib/osint.mjs'
 
 permissions:
   contents: read

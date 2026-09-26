@@ -2,7 +2,7 @@
 
 Status: **all seven steps built; default operation stays live and lightweight.**
 
-**Owner decision, 24 September 2026:** the project is public on GitHub and hosted by others, so
+**Decision, 24 September 2026:** the project is public on GitHub and hosted by others, so
 no host may be made to download OONI's raw files (about 400 MB per day for Iran) or keep an
 archive. The raw-file path and the backfill are therefore **opt-in only** (`OONI_S3_ENABLED=1`,
 `scripts/backfill-ooni-s3.mjs`) and never part of default operation; the 8-day test backfill was
@@ -81,14 +81,14 @@ A path that fails leaves the others untouched; the next run retries it.
 
 - Measure what OONI measures at the network level: does the DNS answer point to Iran's known
   block addresses (10.10.34.x) or a wrong address; does a TLS handshake to the service complete.
-- **Which targets (owner's criterion, 26 September 2026):** probes belong to private hosts in
+- **Which targets (decided 26 September 2026):** probes belong to private hosts in
   Iran who never agreed to test anything. What decides is whether **using** a service is
   punishable, not whether it is blocked: a blocked service is not automatically one whose use is
   a crime. Allowed: the six mass services (Instagram, WhatsApp, Telegram, YouTube, X, Facebook)
   and the AI services (ChatGPT, Gemini, Claude, DeepSeek, Perplexity, Copilot, Grok, Meta AI, the
   image, video and audio tools). News and opposition outlets and circumvention tools are **not**
   measured from these probes; OONI, whose volunteers consented, covers them. Other services only
-  after the owner decides with this criterion. Only DNS and TLS/HTTPS HEAD, never page content.
+  after a decision by this criterion. Only DNS and TLS/HTTPS HEAD, never page content.
 - **Cost per round** (every 6 hours at most): the six every round plus 5 AI services in turn, so
   each AI service is checked about once a day. RIPE Atlas: 11 hosts × 2 checks × up to 10 probes
   × about 20 credits ≈ 4,400 credits per round; Globalping: 11 × 2 × 5 probes = 110 tests per
@@ -121,7 +121,7 @@ A path that fails leaves the others untouched; the next run retries it.
 5. Source health per path in the header badge. **Done** — the overview carries `dataPaths`
    (which route answered, and per path: switched on or what is missing, last run, last error,
    newest measurement); the header badge's tooltip lists it in EN and FA.
-6. RIPE Atlas and Globalping paths behind the ethics gate and keys. **Done** —
+6. RIPE Atlas and Globalping paths behind the switch and keys. **Done** —
    `lib/active-collector.mjs`: `collectorPlan()` names what each path still needs; Atlas picks
    connected probes on Iranian-registered networks only (spread over networks) and runs one-off
    DNS (probe resolver) and TLS (with SNI) measurements; Globalping runs DNS and HTTPS HEAD from
@@ -144,10 +144,9 @@ Operation: `MONITOR_COLLECTOR=1` runs every enabled path hourly; `MONITOR_COLLEC
 pauses single paths while the others continue. The raw-file path additionally needs
 `OONI_S3_ENABLED=1` and is not recommended for ordinary hosts.
 
-## Open for the owner
+## Open items
 
-- RIPE Atlas account and credits (or hosting a probe to earn them).
+- RIPE Atlas credits (requested; alternatively host a probe to earn them).
 - Globalping token (optional, raises limits).
-- The ethics decision for active measurements from probes in Iran.
 - Server operation: the collector runs inside the server process by default; a separate
   timer (systemd) is possible for production.

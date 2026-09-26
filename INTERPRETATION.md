@@ -1,6 +1,6 @@
 # Interpretation Contract
 
-Status: **unreleased v1.9 working contract**
+Status: **current contract (v1.9)**
 
 Implementation: `lib/interpretation.mjs`
 
@@ -30,13 +30,14 @@ Only a measurement that starts inside an Iranian network and goes outward can sh
 |---|---|---|---|
 | OONI Probe | volunteers' devices in networks registered in Iran | inside → out | access claims (service, website, app) |
 | Cloudflare Radar traffic, quality, outage annotations | traffic from Iranian networks reaching Cloudflare | inside → out | connectivity, depth, quality |
-| RIPE Atlas, Globalping | probes in Iranian networks | inside → out | path quality |
+| RIPE Atlas, Globalping | probes in Iranian networks | inside → out | path quality; optional DNS/TLS checks answer for a service only where OONI has no test, labelled "independent check" and never added to OONI's counts |
 | IODA | active probing, BGP and telescope from outside | outside → in / control plane | connectivity only |
 | RIPEstat / RIPE RIS | global route collectors | control plane | routing only |
 | Censored Planet | servers abroad querying servers in Iran | outside → in | nothing; context only |
 | APNIC | client geolocation, with a per-network table | inside → out | context only; for all of Iran the share of networks registered abroad and the Iranian-only IPv6 value are shown |
 | Tor Metrics | client geolocation, country totals only | inside → out | context only; cannot be filtered by network, so VPN exits geolocated to Iran may be counted |
 | M-Lab NDT | client geolocation, country and network aggregates | inside → out | context only; the country aggregate cannot be filtered by network |
+| Psiphon Conduit statistics | Psiphon's count of connections from clients in Iran | inside → out | usage context only |
 
 **Geolocation is not network.** OONI files a measurement under Iran by the probe's geolocation. In the 2026 blackouts most "Iranian" Web Connectivity tests came from networks registered abroad (1–20 March 2026: 66% from AS142578, Hong Kong; 10–20 January 2026: all from AS9009, a hosting/VPN provider). They show what works outside Iran. Country-wide OONI figures therefore count only probes on networks in the RIPEstat country resource list for Iran; excluded tests are subtracted day by day, reported to the reader, and individual records from such networks are marked in the URL drilldown. Without the registry the exclusion is reported as not applied.
 

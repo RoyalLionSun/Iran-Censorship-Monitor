@@ -1,6 +1,17 @@
 # Verification Report
 
-## Unreleased v1.9 UX/interpretation working state
+## Latest verification — 2026-09-26, `main`
+
+- `npm run check`: syntax checks and **514/514** deterministic tests passed;
+- `npm run verify:release-notes`: passed (published line v1.8.0);
+- `npm run build`: passed;
+- `npm run verify:public`: live public-source acceptance passed for `2026-09-13..2026-09-26`, `AS58224` (GDELT unreachable, reported as information);
+- GitHub CI on `main`: passed;
+- headless Chromium (Linux) page checks of the Overview and Technical analysis in English and Farsi, at desktop and phone width (390 px): no script errors, no untranslated keys or placeholders, no horizontal overflow.
+
+The sections below are the dated records of earlier verification rounds.
+
+## v1.9 working state — 2026-09-12
 
 Date: **2026-09-12**
 

@@ -1,63 +1,54 @@
 # Architecture
 
-Last verified: **2026-09-12**
+Last verified: **2026-09-26**
 
 ## Design goal
 
-Iran Censorship Monitor is a measurement/intelligence work surface, not an editorial page and not a generic uptime monitor. It keeps control plane, data plane, censorship measurements, performance/protocol context, circumvention and human-rights/OSINT context separable so uncertainty and source lineage remain visible.
+Iran Censorship Monitor answers, for readers in and outside Iran, what people in Iran can reach on the internet, and keeps every statement traceable to a dated source. The Overview is written for non-technical readers; the Technical analysis keeps control plane, data plane, censorship measurements, performance/protocol context, circumvention and curated incident context separate, so uncertainty and source lineage stay visible.
 
 ## Runtime
 
 ```text
-Browser
+Browser (public/, service worker keeps the last answer for offline reading)
   |
   | same-origin HTTP
   v
-Node.js HTTP server (server.mjs)
+Node.js HTTP server (server.mjs, no third-party runtime dependencies)
   |
-  +--> /api/overview
-  |      +--> OONI
-  |      +--> RIPE Atlas
-  |      +--> IODA
-  |      +--> Cloudflare Radar (token gated)
-  |      +--> Tor Metrics
-  |      +--> M-Lab NDT
-  |      +--> APNIC Labs IPv6
-  |      +--> RIPEstat / RIPE RIS
-  |      +--> Globalping passive inventory
-  |      +--> Censored Planet
-  |      +--> PeeringDB
-  |      +--> Internet Health Report
-  |      +--> Internet Society Pulse (token gated, selected-window context)
-  |      \--> claim-based interpretation + source-health/technical observations
+  +--> /api/overview            one answer per network and period, from:
+  |      +--> OONI (via the local store where it covers the period, else the OONI API)
+  |      +--> Cloudflare Radar (token), IODA, RIPE Atlas, RIPEstat / RIPE RIS, RPKI
+  |      +--> Tor Metrics, Psiphon Conduit statistics, APNIC Labs, M-Lab NDT
+  |      +--> Censored Planet, PeeringDB, Internet Health Report, CAIDA ASRank
+  |      +--> Internet Society Pulse (token), independent checks from the local store
+  |      \--> claim-based interpretation (lib/interpretation.mjs) + source health
   |
-  +--> /api/circumvention       --> OONI Tor/Psiphon/Signal/WhatsApp/Telegram
-  +--> /api/routing-updates     --> bounded RIPEstat BGP update drilldown
-  +--> /api/globalping/probes   --> passive Iran probe inventory
-  +--> /api/globalping/measure  --> protected active measurement (disabled by default)
-  +--> /api/globalping/measurement/:id
-  +--> /api/targets             --> Citizen Lab Iran list
-  +--> /api/stop                --> Access Now #KeepItOn STOP Iran incident context
-  +--> /api/intelligence        --> STOP + Pulse + conservative shutdown correlation + GDELT discovery
-  +--> /api/providers           --> bounded provider comparison
-  +--> /api/ooni/*              --> raw measurement explorer
-  +--> /api/config
-  +--> /api/health
+  +--> /api/ooni/domains, /api/ooni/measurements, /api/ooni/domain-measurements
+  +--> /api/circumvention, /api/outages, /api/history, /api/providers, /api/routing-updates
+  +--> /api/stop, /api/intelligence, /api/targets, /api/asn-registry, /api/asn-coverage
+  +--> /api/globalping/probes, /api/globalping/measure (protected, off by default)
+  +--> /api/config, /api/health
+  +--> /updates, /feed.xml        daily "what changed" entries (optional Telegram post)
+  +--> /reports, /report          weekly (Saturday to Friday) and monthly reports
+  +--> /widget.svg                embeddable status image
   \--> static files in public/
 
-Operator process (not started by server)
-  |
-  +--> scripts/collect-ris-live.mjs
-          +--> RIPEstat announced-prefix scope
-          +--> RIPE RIS Live HTTP JSON stream
-          \--> var/ris-live/*.jsonl + status-ASxxxxx.json
+Collector (inside the server, off unless MONITOR_COLLECTOR=1)
+  +--> OONI API, hourly small pages ---------------+
+  +--> OONI raw files (OONI_S3_ENABLED=1, heavy) --+--> var/store/monitor.db (node:sqlite)
+  +--> RIPE Atlas DNS/TLS (key + credits) --------+
+  \--> Globalping DNS/HTTPS -----------------------+
+       (active paths need ACTIVE_MEASUREMENTS_ENABLED=true)
+
+Operator processes (not started by the server)
+  +--> scripts/collect-ris-live.mjs, scripts/collect-bgpstream-routeviews.mjs
+  +--> scripts/fetch-iran-asn-inventory.mjs --> var/asn-coverage/latest.json
+  \--> scripts/active-round.mjs (a hand-started test round of the active paths)
 ```
 
 ## Browser composition
 
-`public/app.js` is a small loader. The established dashboard application remains in `public/app-core.js`. `public/v11-context.js` adds the M-Lab/APNIC/STOP presentation and context export. `public/v18-situation.js` composes the unreleased v1.9 default Overview and moves the established source cards, charts and drill-down into the Technical analysis view without refetching data.
-
-The v1.1 context layer observes/clones the same successful same-origin API responses used by the core application rather than issuing a second set of upstream source requests. This keeps presentation additions separate from the assessment logic and avoids duplicate source load.
+`public/app.js` is a small loader. `public/app-core.js` holds the source cards, charts and drill-down; `public/v18-situation.js` composes the Overview (headline, sections in order of importance, jump bar) and moves the technical material into the Technical analysis view without fetching it again. Dated context (who decides what is blocked, privileged access) comes from `public/context-items.js`; the further services and their domains from `public/service-findings.js`. All interface text is in `public/locales/` (English and Farsi); the page switches direction for Farsi.
 
 ## Why the browser does not call upstream APIs directly
 
@@ -75,18 +66,18 @@ The RIS Live collector is also server/operator side and uses a fixed public RIPE
 
 ## Evidence families
 
+Only measurements taken inside networks registered in Iran count as evidence of what people in Iran can reach.
+
 ```text
-Censorship/interference      OONI, Censored Planet
-Data plane/connectivity      RIPE Atlas, IODA, Cloudflare Radar
-Performance context          M-Lab NDT
-Protocol/deployment context  Radar protocol distributions, APNIC IPv6
-Control plane                RIPEstat / RIPE RIS + optional RIPE RIS Live collector
-Vantage inventory            Globalping
-Circumvention context        Tor Metrics + contextual specialist reporting
-Topology/chokepoints         PeeringDB, IHR AS Hegemony
-Test inventory               Citizen Lab
-Curated shutdown incidents   Access Now STOP, Internet Society Pulse
-OSINT discovery              curated source registry, GDELT
+Access (inside Iranian networks)   OONI; independent checks from RIPE Atlas and Globalping probes
+Traffic and outages                 Cloudflare Radar (traffic from Iranian networks)
+Connectivity context                IODA, RIPE Atlas ping, RIPEstat / RIPE RIS (+ RIS Live, Route Views)
+Outside-in context only             Censored Planet (never evidence of access)
+Performance / protocol context      M-Lab NDT, Radar protocol distributions, APNIC Labs
+Ways around the filter              OONI circumvention tests; Tor Metrics, Psiphon Conduit, APNIC WARP (usage)
+Topology                            PeeringDB, IHR AS Hegemony, CAIDA ASRank, RPKI
+Test inventory                      Citizen Lab Iran list
+Curated incidents and documents     Internet Society Pulse, Access Now STOP, dated primary sources
 ```
 
 These labels are architectural boundaries, not confidence rankings.
@@ -158,7 +149,7 @@ The currently published STOP corpus covers records through 2025. Later selected 
 
 `lib/pulse.mjs` provides the token-gated current Internet Society Pulse shutdown context for the same selected window. It preserves verification level, cause, type and affected-region context, rejects malformed Iran records, deduplicates identical normalized records and marks every event `independentTechnicalVote: false`.
 
-`lib/shutdown-context.mjs` compares STOP and Pulse only as analyst context. It emits `possibleSameIncident:true` only when date intervals overlap and both records normalize to the same broad scope class (`national`, `regional`, or `service`). It always emits `automaticMerge:false`; unknown/conflicting scope or date non-overlap does not correlate. The detailed contract is documented in `SHUTDOWN_CONTEXT.md`.
+`lib/shutdown-context.mjs` compares STOP and Pulse only as analyst context. It emits `possibleSameIncident:true` only when date intervals overlap and both records normalize to the same broad scope class (`national`, `regional`, or `service`). It always emits `automaticMerge:false`; unknown/conflicting scope or date non-overlap does not correlate. The detailed contract is documented in `docs/design-records/SHUTDOWN_CONTEXT.md`.
 
 ## Passive continuous routing collection
 
@@ -182,15 +173,16 @@ The collector is passive and is not started by `server.mjs`.
 
 ## Active measurement safety
 
-Globalping active measurements are disabled unless both explicit enablement and a server-only operator key are configured. Requests are Iran-vantage-only, type-limited, probe-count-limited and server-rate-limited. Private/loopback/link-local/CGNAT/reserved/documentation destinations and URL credentials are rejected.
+Active checks (RIPE Atlas, Globalping) run only when `ACTIVE_MEASUREMENTS_ENABLED=true` and the collector are set, and only from probes on networks registered in Iran. Targets are limited to services whose use is not punishable in Iran: the six mass services every round and the AI services in rotation (`lib/active-collector.mjs`); news, opposition and circumvention sites are never targets. Only DNS lookups and TLS/HTTPS handshakes, never page content, at most every six hours. The protected `/api/globalping/measure` route additionally needs a server-only operator key; private, loopback, reserved and credential-bearing destinations are rejected.
 
 ## State and storage
 
-The dashboard server has no database. Upstream responses are cached only in process memory for bounded TTLs.
-
-Manually entered VPN field measurements remain in browser `localStorage`; they are not uploaded and never become national telemetry.
-
-The optional RIS Live collector intentionally persists local control-plane events under `var/ris-live/`. It writes one JSONL file per ASN/day plus a status file. Default retention is seven days; maximum configured retention is 30 days. `var/` is Git-ignored and is not served by the dashboard.
+- `var/store/monitor.db` (node:sqlite): measurements written by the collector paths, only the fields the dashboard needs. The server answers from it where it covers the requested period.
+- `var/last-good/sources.json`: the last good answer per source and scope, with per-source quotas, so a rate-limited or failing source shows its latest data with a date instead of "no data".
+- `var/feed/`, `var/reports/`, `var/history/`, `var/anatomy/`: daily entries, finished weekly and monthly reports, monthly service history and shutdown timelines, each written once.
+- `var/asn-coverage/`, `var/asn-directory/`, `var/iran-asns.json`: network inventory snapshots; `var/ris-live/`: the optional routing collector (seven days by default, at most 30).
+- In-process caches are bounded (`FETCH_CACHE_LIMIT`). `var/` is Git-ignored and never served.
+- Manually entered VPN field measurements stay in the reader's browser (`localStorage`) and are never uploaded.
 
 ## Build and CI
 
@@ -205,6 +197,6 @@ Permanent GitHub CI performs:
 - local `/api/health` and root smoke tests;
 - unknown/traversal path 404 checks.
 
-The separate live-source acceptance workflow verifies the real server API against credential-free public sources and performs a bounded passive RIPE RIS Live subscription handshake. Active Globalping remains disabled during this gate.
+The separate live-source acceptance workflow (`npm run verify:public`, started by hand) verifies the real server API against credential-free public sources and performs a bounded passive RIPE RIS Live subscription handshake. Active measurements stay off during this gate.
 
 GitHub Actions dependencies are pinned to verified commit SHAs.

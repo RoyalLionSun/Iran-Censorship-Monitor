@@ -33,8 +33,8 @@ chats or issues. `.env.example` explains every value.
 
 - [ ] **`PUBLIC_URL=https://…`** — the public address. Without it, shared links contain the
       address the page was opened with (on the test machine `127.0.0.1`, useless to anyone else),
-      link previews on Telegram/WhatsApp/X have no image, and HSTS stays off. Feed, monthly reports
-      and the embeddable widget also use it.
+      link previews on Telegram/WhatsApp/X have no image, and HSTS stays off. Feed, weekly and monthly
+      reports and the embeddable widget also use it.
 - [ ] **`CLOUDFLARE_RADAR_API_TOKEN`** — traffic, outage dates, the outage chart and the
       hour-by-hour shutdown timeline. Without it these parts stay empty ("needs an operator token").
 - [ ] **`INTERNET_SOCIETY_PULSE_API_TOKEN`** — optional, shutdown records as context.
@@ -64,7 +64,7 @@ chats or issues. `.env.example` explains every value.
 
 Everything lives in `var/` (not in git). Copy it along when moving and back it up regularly:
 
-- `var/reports/` — finished monthly reports; written once and never recomputed.
+- `var/reports/` — finished weekly and monthly reports; written once and never recomputed.
 - `var/anatomy/` — hour-by-hour timelines of finished shutdowns; never fetched again.
 - `var/history/` — monthly "blocked since" history per service.
 - `var/feed/` — the daily "What changed" entries (feed, `/updates`, Telegram).

@@ -1,6 +1,6 @@
 # Security
 
-Last reviewed: **2026-09-09**
+Last reviewed: **2026-09-26**
 
 ## Secrets
 
@@ -11,9 +11,13 @@ Credential-bearing integrations:
 - `CLOUDFLARE_RADAR_API_TOKEN` — server-side only; use `Account > Radar > Read`, never a Global API Key;
 - `INTERNET_SOCIETY_PULSE_API_TOKEN` — server-side only;
 - optional `GLOBALPING_API_TOKEN` — server-side only;
-- `GLOBALPING_CONTROL_KEY` — server-only operator control for active measurements and must never be exposed to the browser.
+- `GLOBALPING_CONTROL_KEY` — server-only operator control for active measurements and must never be exposed to the browser;
+- `RIPE_ATLAS_API_KEY` — server-side only; needs only "Schedule a new measurement" (and optionally "Get information about your credits");
+- `TELEGRAM_BOT_TOKEN` — server-side only; the bot needs only the right to post in its channels.
 
-M-Lab, APNIC, Access Now STOP, OONI, RIPE, IODA, Tor, Censored Planet, Citizen Lab, PeeringDB, IHR, GDELT and passive RIPE RIS Live integration paths do not require stored credentials in the current design.
+M-Lab, APNIC, Access Now STOP, OONI, RIPE (public data), IODA, Tor, Psiphon statistics, Censored Planet, Citizen Lab, PeeringDB, IHR, GDELT and passive RIPE RIS Live integration paths do not require stored credentials.
+
+Commits in this repository use the maintainer's anonymous GitHub address; personal e-mail addresses, home paths and IP addresses must never appear in commits or files.
 
 ## Network exposure
 
@@ -22,8 +26,9 @@ Default bind address is `127.0.0.1`. For production Internet exposure:
 1. keep Node on loopback/private networking where practical;
 2. terminate HTTPS at a maintained reverse proxy/managed ingress;
 3. apply access control if the dashboard is operationally sensitive;
-4. rate-limit public requests at the proxy;
-5. log only metadata needed for operations and avoid credentials/raw sensitive probe identities.
+4. rate-limit public requests at the proxy (the server also limits new Overview computations per visitor address; set `TRUST_PROXY=1` behind a proxy so it sees real addresses);
+5. never serve the public dashboard from a home connection: visitors see the address of the machine that answers;
+6. log only metadata needed for operations and avoid credentials/raw sensitive probe identities.
 
 ## Browser security headers
 
@@ -51,19 +56,17 @@ Examples:
 
 ## Active-measurement safety
 
-Globalping active measurements are disabled by default. Enabling them requires `GLOBALPING_ACTIVE_ENABLED=true` and a server-only `GLOBALPING_CONTROL_KEY`.
+Active checks from probes in Iran are off by default. The collector's RIPE Atlas and Globalping paths need `MONITOR_COLLECTOR=1` and `ACTIVE_MEASUREMENTS_ENABLED=true` (RIPE Atlas also a key and credits); the protected on-demand route `/api/globalping/measure` needs `GLOBALPING_ACTIVE_ENABLED=true` and a server-only `GLOBALPING_CONTROL_KEY`.
+
+The probes belong to private hosts in Iran. Targets are therefore limited to services whose use is not punishable in Iran (the six mass services and the AI services, fixed in `lib/active-collector.mjs` and guarded by a test); news, opposition and circumvention sites are never targets.
 
 Controls include:
 
-- Iran vantage restriction;
-- maximum five probes;
-- measurement-type allowlist;
-- server-side hourly rate limit;
-- rejection of localhost/private/link-local/CGNAT/reserved/documentation destinations;
-- rejection of URL credentials;
-- control-key requirement for create/read active measurement routes.
-
-Do not enable active mode on an Internet-facing service without reverse-proxy access controls and an explicit operational reason.
+- only probes on networks registered in Iran;
+- DNS lookups and TLS/HTTPS handshakes only, never page content; at most one round every six hours;
+- a credit check before each RIPE Atlas round;
+- maximum five probes per on-demand Globalping request, measurement-type allowlist and server-side hourly rate limit;
+- rejection of localhost/private/link-local/CGNAT/reserved/documentation destinations and URL credentials.
 
 ## Passive RIPE RIS Live collector safety
 
@@ -97,7 +100,7 @@ GDELT and professional reporting are discovery/context only. Any future correlat
 
 ## Data sensitivity and persistence
 
-The ordinary Node dashboard service has no database and does not persist upstream API payloads to disk. Its source caches are in process memory.
+The dashboard keeps its state under `var/`: the local measurement store (`var/store/monitor.db`, only the fields the dashboard needs, never raw measurement bodies), the last good answer per source, finished reports, feed entries and history. None of it identifies measurement participants, and `var/` is never served.
 
 Manually entered local VPN field measurements remain in browser `localStorage` and are not uploaded.
 
@@ -118,4 +121,4 @@ The runtime has no third-party npm dependencies. Node.js and the host/reverse pr
 
 GitHub Actions used in permanent CI are pinned to exact verified commit SHAs instead of floating major tags. CI uses read-only repository contents permission, checks for committed token/private-key patterns and `.env`, builds the production artifact and runs local security smoke tests.
 
-The separate live-source workflow performs credential-free public-source acceptance and a bounded passive RIS Live subscription handshake. It does not enable active Globalping measurements or print server-side credentials.
+The separate live-source workflow performs credential-free public-source acceptance and a bounded passive RIS Live subscription handshake. It runs only when started by hand, does not enable active measurements and does not print server-side credentials.
