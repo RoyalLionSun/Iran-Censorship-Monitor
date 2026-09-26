@@ -493,3 +493,7 @@ html[lang="fa"] .overview-panel > header .section-label { letter-spacing: normal
 .access-cell[data-status="none"] { font-weight: 600; }
 .history-legend { font-size: 14px; color: var(--text-soft); gap: 6px 10px; }
 .history-key { width: 12px; height: 12px; }
+/* All section titles in one blue, like "Current situation" (owner's choice). */
+:is(.service-board, .access-board, .privileged-board, .more-services, .workarounds-board, .anatomy-board, .changes-board) h2,
+.usage-heading, .section-label { color: #7fcbe0; }
+.status-row dt { color: #7fcbe0; }
