@@ -1,0 +1,44 @@
+name: Suggest a service to monitor
+description: A website or app people in Iran use that the dashboard should show.
+title: "Service: "
+labels: ["service suggestion"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Do not include anything that could identify you or anyone in Iran:** no names, phone numbers, city, network details of a person, screenshots or times of your own tests.
+        The dashboard shows a service once OONI tests it in Iran. Sites that OONI does not test yet can be proposed for Citizen Lab's Iran test list (https://test-lists.ooni.org/); we prepare that.
+  - type: input
+    id: name
+    attributes:
+      label: Service
+      placeholder: e.g. Signal
+    validations:
+      required: true
+  - type: input
+    id: address
+    attributes:
+      label: Web address(es)
+      description: The address people use, e.g. https://signal.org/
+    validations:
+      required: true
+  - type: dropdown
+    id: group
+    attributes:
+      label: Group
+      options:
+        - Social media and messaging
+        - Persian-language news
+        - VPN and ways around the filter
+        - AI services
+        - Everyday services
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why it matters for people in Iran
+      description: Public sources (with date) are welcome.
+    validations:
+      required: true

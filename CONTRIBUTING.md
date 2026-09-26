@@ -1,5 +1,7 @@
 # Contributing
 
+To suggest a service, report a wrong finding or propose a data source, use the issue forms (New issue). Never include anything that could identify you or anyone in Iran. People in Iran who want to contribute measurements should use OONI Probe (https://ooni.org/install/) after reading OONI's risk information; its results reach the dashboard automatically.
+
 `main` is the canonical branch. Develop changes on short-lived branches and merge them through pull requests after CI succeeds.
 
 Before opening a pull request:

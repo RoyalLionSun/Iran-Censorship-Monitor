@@ -1,0 +1,37 @@
+name: Report a wrong or unclear finding
+description: Something on the dashboard looks wrong, outdated or hard to understand.
+title: "Finding: "
+labels: ["data correction"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Do not include anything that could identify you or anyone in Iran.** Share the dashboard link of the view you mean (it contains network, period and language), not screenshots of your own device or connection.
+  - type: input
+    id: link
+    attributes:
+      label: Link to the view
+      description: Use "Share" on the dashboard and copy the link.
+    validations:
+      required: true
+  - type: textarea
+    id: shown
+    attributes:
+      label: What the dashboard says
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you think is correct, and the public source for it
+      description: A dated primary source (measurement, official document, established news outlet).
+    validations:
+      required: true
+  - type: dropdown
+    id: language
+    attributes:
+      label: Language of the view
+      options:
+        - English
+        - Farsi
+        - Both

@@ -1,0 +1,33 @@
+name: Suggest a data source
+description: A public data source that could improve the dashboard.
+title: "Source: "
+labels: ["source suggestion"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Only measurements taken **inside networks registered in Iran** can show what people in Iran can reach. Sources that measure from abroad can only be context. See DATA_SOURCES.md for the sources in use.
+  - type: input
+    id: name
+    attributes:
+      label: Source and link
+    validations:
+      required: true
+  - type: dropdown
+    id: direction
+    attributes:
+      label: Where does it measure from?
+      options:
+        - Inside Iranian networks
+        - From abroad towards Iran
+        - Routing or registry data
+        - Reports or documents
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What it measures, how often, and how it can be accessed (API, files, licence)
+    validations:
+      required: true
