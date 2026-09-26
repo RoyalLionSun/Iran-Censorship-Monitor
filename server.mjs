@@ -380,7 +380,7 @@ async function handleApi(req, res, url) {
       // Route-origin validation is technical context: at most five seconds, then the answer
       // finishes in the background (its requests are cached) and appears with the next request.
       input.asn ? withDeadline(safeSource('RIPEstat RPKI', () => getRpkiIntegrity(input), sourceKey('RIPEstat RPKI', input)), 5_000,
-        () => lastGoodSources.stale(sourceKey('RIPEstat RPKI', input), 'still loading') ?? { ok: true, source: 'RIPEstat RPKI', status: 'pending', partialStale: true }) : Promise.resolve(scopeRequired('RIPEstat RPKI', input)),
+        () => lastGoodSources.stale(sourceKey('RIPEstat RPKI', input), 'still loading') ?? { ok: true, source: 'RIPEstat RPKI', status: 'pending', partialStale: true, coverage: { state: 'pending' }, evidenceRole: 'route-origin-integrity-context', routingSourceFamily: 'ripe', independentCensorshipVote: false }) : Promise.resolve(scopeRequired('RIPEstat RPKI', input)),
       safeSource('Internet Society Pulse', () => getPulseShutdowns(input), sourceKey('Pulse', input)),
       // Priority-service summary for the Overview. The full domain list stays on /api/ooni/domains.
       input.testName === 'web_connectivity' ? safeSource('OONI domains', () => viaStore(ooniScope(input), (iran) => storeDomains(store, ooniScope(input), iran), () => getOoniDomains(ooniScope(input))), sourceKey('OONI domains', input)) : Promise.resolve(null),
