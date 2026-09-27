@@ -28,6 +28,7 @@ Presence in the runtime does not make a source an independent censorship sensor.
 | IHR AS Hegemony | Public API | dependency/chokepoints | context only |
 | Citizen Lab Test Lists | Public CSV | Iran target inventory | inventory only |
 | Internet Society Pulse | Token API | current curated Iran shutdown context | context only; no technical vote |
+| Filterwatch | Public WordPress API (English and Persian sites) | expert reports on Iran's network and censorship policy published in a report's period, linked in the weekly and monthly reports in the reader's language | context only; analysis, not a measurement |
 | Access Now #KeepItOn STOP | Public dataset | curated shutdown incidents, currently published through 2025 | context only; lineage preserved |
 | GDELT DOC 2.0 | Public API | professional-source discovery | OSINT context only |
 | Dated primary sources | `public/context-items.js` | who decides what is blocked, privileged access | documented context, each entry dated and sourced; never a measurement |

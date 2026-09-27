@@ -33,6 +33,7 @@ import { getCitizenLabIranTargets } from './lib/citizenlab.mjs';
 import { getPeeringDbTopology } from './lib/peeringdb.mjs';
 import { getIhrDependencies } from './lib/ihr.mjs';
 import { getPulseShutdowns } from './lib/pulse.mjs';
+import { getFilterwatchReports } from './lib/filterwatch.mjs';
 import { correlateShutdownContext } from './lib/shutdown-context.mjs';
 import { getGdeltIranIntelligence } from './lib/osint.mjs';
 import { getMlabPerformance } from './lib/mlab.mjs';
@@ -43,6 +44,7 @@ import { getPsiphonConduit } from './lib/psiphon.mjs';
 import { getApnicCountryComposition, getApnicIpv6, getApnicVpnShare } from './lib/apnic.mjs';
 import { getServiceHistory } from './lib/history.mjs';
 import { buildFeedEntry, postToTelegram, readEntries, renderAtom, upsertEntry } from './lib/feed.mjs';
+import { alertState, buildAlertEntries, decideAlerts, readAlertState, writeAlertState } from './lib/alerts.mjs';
 import { renderWidget } from './lib/widget.mjs';
 import { buildDailyData, OPEN_DATA_SCHEMA, openDataStore } from './lib/open-data.mjs';
 import { monthRange, recentMonths, recentWeeks, renderMonthlyReport, renderReportIndex, renderSourcesPage, renderToolsPage, renderUpdatesPage, weekRange } from './lib/report.mjs';
@@ -786,11 +788,21 @@ async function currentSnapshot() {
   })().finally(() => { snapshotInFlight = null; });
   return snapshotInFlight;
 }
+// The daily entry and change alerts write the same file; one write at a time, in order.
+const feedWrites = new Map();
+function queueFeedWrite(path, write) {
+  const next = (feedWrites.get(path) ?? Promise.resolve()).catch(() => {}).then(write);
+  feedWrites.set(path, next);
+  return next;
+}
+
 async function feedEntries(lang, base) {
   const path = join(root, `var/feed/${lang}.json`);
   const entries = await readEntries(path);
   const today = new Date().toISOString().slice(0, 10);
-  if (entries[0]?.id === today && Date.now() - Date.parse(entries[0].updated) < FEED_REFRESH_MS) return entries;
+  // Change alerts sit between the daily entries; the daily entry is found by its id.
+  const todayEntry = entries.find((entry) => entry.id === today);
+  if (todayEntry && Date.now() - Date.parse(todayEntry.updated) < FEED_REFRESH_MS) return entries;
   if (!feedInFlight.has(lang)) {
     feedInFlight.set(lang, (async () => {
       const { since, until, interpretation, history } = await currentSnapshot();
@@ -799,12 +811,12 @@ async function feedEntries(lang, base) {
       if (!entry) return entries;
       // The first entry of a new day goes to the language's Telegram channel, if one is set, and
       // only with a public address: a link to this machine's own address helps no reader.
-      if (entries[0]?.id !== today && process.env.PUBLIC_URL?.trim()) {
+      if (!todayEntry && process.env.PUBLIC_URL?.trim()) {
         postToTelegram(entry, { token: process.env.TELEGRAM_BOT_TOKEN?.trim(), chat: process.env[`TELEGRAM_CHANNEL_${lang.toUpperCase()}`]?.trim() })
           .then((result) => { if (!result.ok && !result.skipped) console.log(`telegram ${lang}: ${result.error}`); })
           .catch((error) => console.log(`telegram ${lang}: ${error?.message ?? error}`));
       }
-      return upsertEntry(path, entry);
+      return queueFeedWrite(path, () => upsertEntry(path, entry));
     })().catch(() => entries).finally(() => feedInFlight.delete(lang)));
   }
   return feedInFlight.get(lang);
@@ -823,6 +835,34 @@ async function serveFeed(req, res, url) {
     ...(encoding ? { 'content-encoding': encoding } : {}), 'content-length': body.length,
   });
   res.end(body);
+}
+
+// Change alerts (lib/alerts.mjs): the all-Iran snapshot is checked every ALERT_CHECK_MINUTES
+// (default 30; 0 turns it off). A nationwide outage beginning or ending, or a main service turning
+// blocked or reachable across Iran, becomes a feed entry in both languages as soon as a second
+// check confirms it, and a Telegram post where one is set up.
+const ALERT_CHECK_MINUTES = Math.max(0, Number(process.env.ALERT_CHECK_MINUTES ?? 30) || 0);
+async function checkAlerts() {
+  const snapshot = await currentSnapshot();
+  if (!snapshot?.interpretation) return;
+  const statePath = join(root, 'var/feed/alert-state.json');
+  const { alerts, next } = decideAlerts(await readAlertState(statePath), alertState(snapshot.interpretation));
+  await writeAlertState(statePath, next);
+  if (!alerts.length) return;
+  const base = linkBase();
+  for (const lang of ['en', 'fa']) {
+    const path = join(root, `var/feed/${lang}.json`);
+    const link = `${base}/?asn=ALL&testName=web_connectivity&since=${snapshot.since}&until=${snapshot.until}&lang=${lang}`;
+    for (const entry of buildAlertEntries(alerts, { lang, link })) {
+      await queueFeedWrite(path, () => upsertEntry(path, entry));
+      if (process.env.PUBLIC_URL?.trim()) {
+        postToTelegram(entry, { token: process.env.TELEGRAM_BOT_TOKEN?.trim(), chat: process.env[`TELEGRAM_CHANNEL_${lang.toUpperCase()}`]?.trim() })
+          .then((result) => { if (!result.ok && !result.skipped) console.log(`telegram ${lang}: ${result.error}`); })
+          .catch((error) => console.log(`telegram ${lang}: ${error?.message ?? error}`));
+      }
+    }
+  }
+  console.log('alerts', alerts.map((alert) => [alert.kind, alert.service].filter(Boolean).join(':')).join(' '));
 }
 
 // The embeddable status image (/widget.svg, ?lang=fa for Farsi).
@@ -902,7 +942,7 @@ const reportInFlight = new Map();
 async function monthlyReportHtml(range, lang, base, admit = () => ({ ok: true })) {
   const name = range.week ? `week-${range.week}` : range.month;
   // The format number changes when a report shows something new; older files are then written again.
-  const file = join(root, 'var/reports', `${name}-${lang}.v3.html`);
+  const file = join(root, 'var/reports', `${name}-${lang}.v4.html`);
   if (range.complete) {
     try { return await readFile(file, 'utf8'); } catch { /* not written yet */ }
   }
@@ -919,9 +959,11 @@ async function monthlyReportHtml(range, lang, base, admit = () => ({ ok: true })
       const history = await serviceHistory().catch(() => null);
       const outages = await getRadarOutageHistory().then((result) => result?.outages ?? []).catch(() => []);
       const dashboardUrl = `${base}/?asn=ALL&testName=web_connectivity&since=${range.since}&until=${range.until}&lang=${lang}`;
-      const html = renderMonthlyReport({ interpretation, history, outages, range, lang, dashboardUrl });
+      // Filterwatch's reports of the period in the reader's language: dated context, linked only.
+      const expert = await getFilterwatchReports({ lang, since: range.since, until: range.until, complete: range.complete }).catch(() => null);
+      const html = renderMonthlyReport({ interpretation, history, outages, range, lang, dashboardUrl, expert });
       // Only a complete answer for a finished month becomes the permanent report.
-      if (range.complete && interpretation && isCleanOverview([overview.ooni])) {
+      if (range.complete && interpretation && isCleanOverview([overview.ooni]) && expert?.ok) {
         await mkdir(dirname(file), { recursive: true });
         await writeFile(`${file}.tmp`, html);
         await rename(`${file}.tmp`, file);
@@ -1064,6 +1106,11 @@ server.listen(PORT, HOST, () => {
     };
     setTimeout(collect, 5_000).unref();
     setInterval(collect, 60 * 60 * 1000).unref();
+  }
+  if (ALERT_CHECK_MINUTES > 0) {
+    const check = () => checkAlerts().catch((error) => console.log(`alerts: ${error?.message ?? error}`));
+    setTimeout(check, 2 * 60_000).unref();
+    setInterval(check, ALERT_CHECK_MINUTES * 60_000).unref();
   }
   if (process.env.MONITOR_PREWARM !== '0') {
     const warm = () => {

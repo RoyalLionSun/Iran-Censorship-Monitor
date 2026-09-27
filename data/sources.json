@@ -17,5 +17,6 @@
   {"id":"peeringdb","name":"PeeringDB","class":"live-api","access":"public","role":"Operator-maintained ASN, exchange and facility topology context","url":"https://www.peeringdb.com/","docs":"https://docs.peeringdb.com/api_specs/"},
   {"id":"ihr","name":"Internet Health Report","class":"live-api","access":"public","role":"AS Hegemony dependency and chokepoint context","url":"https://www.ihr.live/","docs":"https://github.com/InternetHealthReport/ihr-api"},
   {"id":"pulse","name":"Internet Society Pulse","class":"curated-api","access":"token","role":"Curated shutdown incidents and verification levels; context only","url":"https://pulse.internetsociety.org/en/shutdowns/","docs":"https://pulse.internetsociety.org/api/docs"},
+  {"id":"filterwatch","name":"Filterwatch","class":"curated-reports","access":"public","role":"Expert reports on Iran's network and censorship policy, linked in the weekly and monthly reports; context only","url":"https://filter.watch/english/","docs":"https://filter.watch/english/wp-json/wp/v2/posts"},
   {"id":"gdelt","name":"GDELT DOC 2.0","class":"osint-discovery","access":"public","role":"Professional-source discovery for Iran censorship reporting; context only","url":"https://www.gdeltproject.org/","docs":"https://blog.gdeltproject.org/gdelt-doc-2-0-api-debuts/"}
 ]

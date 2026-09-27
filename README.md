@@ -19,8 +19,10 @@ is dated and names its source.
   connection itself, and the sources.
 - **Technical analysis**: the measurements behind every statement, per address and per network,
   with routing, traffic and quality charts.
-- **Reports**: daily updates (`/updates`, also as RSS at `/feed.xml` and optionally on Telegram),
-  weekly reports (Saturday to Friday) and monthly reports (`/reports`), printable as PDF; an
+- **Reports**: daily updates and change alerts (a nationwide outage beginning or ending, a main
+  service turning blocked or reachable), at `/updates`, as RSS at `/feed.xml` and optionally on
+  Telegram; weekly reports (Saturday to Friday) and monthly reports (`/reports`) with the period's
+  expert analysis by Filterwatch linked, printable as PDF; an
   embeddable status image (`/widget.svg`); CSV, PDF and Word exports.
 - **Tools page** (`/tools`): the ways around the filter that are measured from inside Iran, with
   devices, current test results and the official download pages and email/Telegram channels.
@@ -42,7 +44,7 @@ people in Iran can reach.
 | Tor Metrics, Psiphon statistics, APNIC Labs | users in Iran | use of ways around the filter |
 | IODA, RIPEstat / RIPE RIS, M-Lab | from outside or from routing | context: is Iran connected, are routes announced |
 | Censored Planet | from outside into Iran | context only, never evidence of access |
-| Pulse, Access Now STOP, official documents | curated reports | dated context, never a measurement |
+| Pulse, Access Now STOP, Filterwatch, official documents | curated reports and expert analysis | dated context, never a measurement |
 
 - Measurements OONI files under Iran but that come from foreign VPN or hosting networks are left
   out: a network counts only if it is registered in Iran (RIPEstat country resource list).

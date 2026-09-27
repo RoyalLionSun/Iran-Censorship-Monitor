@@ -288,6 +288,14 @@ function countryOnly(summary, services) {
   return Boolean(services?.countryBlocked?.length && !services.blocked?.length && !services.restricted?.length && !outage);
 }
 
+// The day of a nationwide outage that is still under way: the day it began is day 1.
+function outageDay(start, asOf) {
+  const began = Date.parse(start);
+  const until = asOf ? Math.min(Date.now(), Date.parse(`${asOf}T23:59:59Z`)) : Date.now();
+  if (!Number.isFinite(began) || !Number.isFinite(until) || until < began) return null;
+  return Math.floor((until - began) / 86_400_000) + 1;
+}
+
 function headlineText(summary, services, { compact = false } = {}) {
   const headline = summary.headline;
   if (countryOnly(summary, services)) {
@@ -306,7 +314,13 @@ function headlineText(summary, services, { compact = false } = {}) {
   if (headline.state === 'major-outage') {
     // A dated nationwide outage is plainer than "a major outage has been reported".
     const period = headline.period;
-    if (period?.scope === 'nationwide' && !period.endedInWindow) return t('board.headline.nationwide-since', { date: formatDay(period.start) });
+    if (period?.scope === 'nationwide' && !period.endedInWindow) {
+      // How long it has lasted, counted to the end of the selected period (or to now).
+      const day = outageDay(period.start, headline.asOf);
+      return day
+        ? t('board.headline.nationwide-since.day', { date: formatDay(period.start), day: formatNumber(day) })
+        : t('board.headline.nationwide-since', { date: formatDay(period.start) });
+    }
   }
   if (headline.state === 'outage-ended') {
     const date = formatDay(headline.endedOn);
@@ -1340,7 +1354,7 @@ function renderHero(interpretation) {
   renderShareMenu();
   updateFilterSummary();
   hero.dataset.headline = summary.headline?.state ?? summary.state;
-  const headlineSummary = { ...summary, headline: summary.headline && { ...summary.headline, period: nationwidePeriod(interpretation.dimensions.connectivity) } };
+  const headlineSummary = { ...summary, headline: summary.headline && { ...summary.headline, period: nationwidePeriod(interpretation.dimensions.connectivity), asOf: selection.until ?? null } };
   hero.dataset.stale = stale ? 'yes' : 'no';
   hero.innerHTML = `
     <header class="situation-top">

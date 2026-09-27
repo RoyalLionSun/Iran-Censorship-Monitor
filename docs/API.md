@@ -46,7 +46,7 @@ curl https://example.org/data/latest.json
 
 | Address | Content |
 |---|---|
-| `/feed.xml`, `/feed.xml?lang=fa` | Daily "what changed" entries (Atom) in English or Farsi |
+| `/feed.xml`, `/feed.xml?lang=fa` | Daily "what changed" entries and change alerts (Atom) in English or Farsi; an alert's id carries its UTC time |
 | `/updates` | The same entries as a readable page |
 | `/reports` | Index of weekly (Saturday to Friday) and monthly reports |
 | `/report?week=YYYY-MM-DD` | Weekly report; the date is the week's Saturday |
