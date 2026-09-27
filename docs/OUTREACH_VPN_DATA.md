@@ -51,7 +51,7 @@ Whether Iran's own services keep working while the country is cut off from the w
 Iranian networks, mostly news and government pages, plus Digikala, Divar, Aparat, Eitaa, Bale,
 iGap, Torob, Sheypoor, Varzesh3 and Telewebion (OONI aggregation, 27 June – 27 September 2026).
 The everyday services below are on neither the Iran nor the global list. Submit them the same way
-(list "Iran (ir)"). All names resolved on 27 September 2026; 16 of them (shaparak.ir, nine banks,
+(list "Iran (ir)"). All names resolved on 27 September 2026; 16 of them (shaparak.ir, eight banks,
 my.gov.ir, adliran.ir, tax.gov.ir, epolice.ir, post.ir, shad.ir, rightel.ir) do not answer from
 abroad, which is why only a test from inside can say whether they work.
 
