@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- privacy (27 September 2026): the documents no longer describe the machine the project was developed and checked on (operating system layer, shell, browser, paths); a test time zone is now Tehran; the browser gates look for Chrome, then Edge, then Brave; a document check rejects descriptions of a personal setup or home directory, and the commit hook asks for commits in UTC;
 - code security review (27 September 2026): links that are stored or sent to others (feed, open data, reports, Telegram posts) no longer take the request's `Host` header, which a visitor could set to their own address; they use `PUBLIC_URL` or the server's own address, and Telegram posts need `PUBLIC_URL`. A report not yet written counts against the visitor's budget for new Overviews; before, any visitor could make the server start one Overview per week or month and spend the budget its own requests (feed, widget, sources page) share, so these now carry a key made at each start and are not charged. A server bound to `0.0.0.0` or `::` reaches itself over loopback. GDELT links are kept only when they are web addresses (`http`/`https`);
 - the all-Iran snapshot behind the open data, `/tools`, the feed and the widget is built a minute after start and every six hours, so the first reader after a restart gets it at once (it took seconds to minutes on demand);
 - hardening (27 September 2026): every page carries the same security headers, now also `Cross-Origin-Opener-Policy` and `Cross-Origin-Resource-Policy` (cross-origin only for the widget, the feed and open data) and the Permissions-Policy on report pages; the server cuts off requests that arrive too slowly; the browser gates repeat a page that is still loading with a larger time budget instead of failing on a busy CI runner;
@@ -141,7 +142,7 @@ The plain-language redesign; summary in `release-notes/v1.9.0.md`.
 - suppressed control-/data-plane divergence when routing time alignment is unknown;
 - stopped describing BGP visibility as control-plane health and stopped treating generic IODA/Radar event counts as severe data-plane impact;
 - replaced legacy assessment regression expectations with claim-boundary, missing-data, shutdown, partial-source and time-alignment tests;
-- before the runtime compatibility changes, passed the 324/324 deterministic suite, production build, browser presentation and EN/FA/RTL fixtures, and live public-source acceptance for `2026-08-30..2026-09-12` / `AS58224`; the additional real-app browser gate still needs a browser run;
+- before the runtime compatibility changes, passed the 324/324 deterministic suite, production build, browser presentation and EN/FA/RTL fixtures, and live public-source acceptance for `2026-08-30..2026-09-12` / `AS58224`; the additional real-app browser gate still needed a browser run;
 - restored and regression-tested the stable `#situation-headline` DOM hook required by the browser presentation contract;
 - kept `package.json` at `1.8.0` until the 1.9.0 release on 2026-09-27.
 

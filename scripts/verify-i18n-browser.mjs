@@ -36,14 +36,14 @@ function findBrowser() {
 
     const candidates = [
       process.env.CHROME_BIN,
-      `${programFiles}\\BraveSoftware\\Brave-Browser\\Application\\brave.exe`,
-      `${programFilesX86}\\BraveSoftware\\Brave-Browser\\Application\\brave.exe`,
-      localAppData ? `${localAppData}\\BraveSoftware\\Brave-Browser\\Application\\brave.exe` : null,
       `${programFiles}\\Google\\Chrome\\Application\\chrome.exe`,
       `${programFilesX86}\\Google\\Chrome\\Application\\chrome.exe`,
       localAppData ? `${localAppData}\\Google\\Chrome\\Application\\chrome.exe` : null,
       `${programFiles}\\Microsoft\\Edge\\Application\\msedge.exe`,
       `${programFilesX86}\\Microsoft\\Edge\\Application\\msedge.exe`,
+      `${programFiles}\\BraveSoftware\\Brave-Browser\\Application\\brave.exe`,
+      `${programFilesX86}\\BraveSoftware\\Brave-Browser\\Application\\brave.exe`,
+      localAppData ? `${localAppData}\\BraveSoftware\\Brave-Browser\\Application\\brave.exe` : null,
     ];
 
     for (const candidate of candidates.filter(Boolean)) {

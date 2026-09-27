@@ -2,6 +2,13 @@
 # Runs the project's checks before every commit: syntax, all tests, and that versions, the test
 # count and the links in the documents are current. Enable once per clone:
 #   git config core.hooksPath .githooks
+# Commit dates carry the committing machine's time zone offset; this project's commits use UTC.
+# Git passes the author date to the hook ("@<seconds> <offset>"); the committer date uses TZ.
+case "${GIT_AUTHOR_DATE:-+0000}" in *+0000) author_utc=1 ;; *) author_utc=0 ;; esac
+if [ "$author_utc" = 0 ] || [ "$(date +%z)" != "+0000" ]; then
+  echo "Commit stopped: commit in UTC (TZ=UTC git commit ...), so the dates carry +0000."
+  exit 1
+fi
 npm run --silent check >/tmp/iran-monitor-precommit.log 2>&1 || {
   grep -E "^not ok|error:" /tmp/iran-monitor-precommit.log | head -20
   echo "Commit stopped: npm run check failed (full log: /tmp/iran-monitor-precommit.log)."

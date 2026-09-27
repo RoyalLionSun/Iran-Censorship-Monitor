@@ -105,5 +105,5 @@ The Farsi version is for people in Iran; a dashboard they cannot open misses its
 
 ## Test machine (development only)
 
-Screenshots and browser gates run with a headless browser, so no windows open on the
-desktop: `CHROME_BIN=$HOME/.local/bin/chrome-headless npm run verify:ui` (see README, "Validate").
+Screenshots and browser gates run with a headless browser, so no windows open on the desktop:
+`CHROME_BIN=<path to a headless Chromium> npm run verify:ui` (see README, "Validate").

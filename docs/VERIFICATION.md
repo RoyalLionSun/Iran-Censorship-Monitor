@@ -2,7 +2,7 @@
 
 ## Latest verification — 2026-09-27, release v1.9.0
 
-- `npm run check`: syntax checks and **534/534** deterministic tests passed, including the document checks (versions, test count, links, no tool attribution or private addresses);
+- `npm run check`: syntax checks and **535/535** deterministic tests passed, including the document checks (versions, test count, links, no tool attribution or private addresses);
 - `npm run verify:release-notes`: passed for v1.9.0;
 - `npm run build`: passed;
 - `npm run verify:public`: live public-source acceptance passed for `2026-09-13..2026-09-26`, `AS58224` (GDELT unreachable, reported as information);
@@ -46,7 +46,7 @@ Cross-platform working-state results:
 - committed-token/private-key/local-`.env` scan: **passed**;
 - baseline comparison whitespace gate (`git diff --no-index --check`, excluding generated/dependency trees): **passed with no findings**;
 - `npm run verify:ui`: **passed** with a Chromium-based browser, including the established presentation fixture and the EN → FA/RTL → EN interpretation/view-switch fixture;
-- live public-source acceptance: **passed** for `2026-08-30..2026-09-12`, `AS58224`;
+- live public-source acceptance: **passed** for `2026-08-30..2026-09-12`, `AS58224`.
 
 One pre-hotfix wrapper run reported 323/324 deterministic tests without retaining the failing assertion. An immediate direct rerun passed 324/324, and the final post-hotfix full check again passed 324/324. No deterministic failure was reproduced. The browser gate initially identified the missing stable `#situation-headline` hook; the hook was restored, added to the UI contract test and the complete browser gate then passed.
 

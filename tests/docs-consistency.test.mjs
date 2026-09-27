@@ -55,3 +55,18 @@ test('files talk about the project only and carry no private e-mail address', ()
   }
   assert.deepEqual(offending, []);
 });
+
+// Nothing may describe the maintainer's own machine or working setup: operating system layers,
+// shells, user home directories. The patterns are generic on purpose; a check must never name
+// anything real.
+test('files describe no personal machine, shell or home directory', () => {
+  const text = tracked.filter((file) => /\.(md|mjs|js|json|yml|html|css|example|service|sh)$/.test(file) && file !== 'tests/docs-consistency.test.mjs');
+  const offending = [];
+  for (const file of text) {
+    const content = read(file);
+    if (/\bWSL\b|PowerShell/i.test(content)) offending.push(`${file}: local setup`);
+    if (/\/home\/[a-z_][a-z0-9_-]*\/|\/Users\/[A-Za-z][\w.-]*\/|[A-Z]:\\{1,2}Users\\{1,2}/.test(content)) offending.push(`${file}: home directory`);
+    if (/scratch copy|the user's (Windows|machine|computer)/i.test(content)) offending.push(`${file}: working-copy details`);
+  }
+  assert.deepEqual(offending, []);
+});
