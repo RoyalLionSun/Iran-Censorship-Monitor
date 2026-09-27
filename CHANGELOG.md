@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- error answers (27 September 2026, found by CodeQL): an unexpected internal error (file system, programming) now answers with a generic message and goes to the server log instead of reaching the reader; every error text shown to readers has the server's paths removed; validation errors are still explained;
 - repository security (27 September 2026): secret scanning with push protection, private vulnerability reporting, Dependabot alerts and security updates with monthly updates of the pinned Actions (`.github/dependabot.yml`), CodeQL code scanning, rulesets protecting `main` from deletion and force-push and release tags `v*` from change or deletion, Actions limited to GitHub's own actions pinned to commits with a read-only default token and approval for workflows from forks; wiki and projects off, squash merge only; `SECURITY.md` describes reporting and protection.
 
 ## 1.9.0 — 2026-09-27

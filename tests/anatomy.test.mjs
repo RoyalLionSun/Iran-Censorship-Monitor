@@ -118,7 +118,7 @@ test('a finished shutdown answered by every source is kept on disk and not fetch
   let calls = 0;
   const fetch = async (url) => {
     calls += 1;
-    if (url.includes('stat.ripe.net')) return { data: { stats: [] } };
+    if (new URL(url).hostname === 'stat.ripe.net') return { data: { stats: [] } };
     if (url.includes('ioda')) return { data: [[]] };
     if (url.includes('/top/ases')) return { success: true, result: { top_0: [{ clientASN: 49666, clientASName: 'Telecommunication Infrastructure Company', value: '31' }] } };
     return { success: true, result: { serie_0: { timestamps: [], values: [] } } };

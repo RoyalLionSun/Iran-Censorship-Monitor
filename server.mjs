@@ -7,7 +7,7 @@ import { dirname, extname, join, normalize, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildAssessment } from './lib/assessment.mjs';
 import { buildHealth } from './lib/server-health.mjs';
-import { compressBody, createLastGoodStore, errorPayload, FETCH_CACHE_LIMIT, fetchCacheSize, isCleanOverview, isSettledPeriod, jsonResponse, loadEnvFile, pickEncoding, mapLimit, normalizeAsn, validateRange } from './lib/common.mjs';
+import { compressBody, createLastGoodStore, errorPayload, FETCH_CACHE_LIMIT, fetchCacheSize, isInternalError, isCleanOverview, isSettledPeriod, jsonResponse, loadEnvFile, pickEncoding, mapLimit, normalizeAsn, validateRange } from './lib/common.mjs';
 import { mergeFailedSignals, ooniRateLimitedUntil, getCircumventionSignals, getOoniDomainMeasurements, getOoniDomains, getOoniMeasurementDetail, getOoniNetworks, getOoniServiceNetworks, getOoniTimeline, iranRegisteredAsns, getOoniSample, listOoniMeasurements, OONI_TESTS } from './lib/ooni.mjs';
 import { getRipeSignals } from './lib/ripe.mjs';
 import { getRadarConnectionQuality, getRadarOutageHistory, getRadarOutageTraffic, getRadarSignals, isNationwideAnnotation } from './lib/radar.mjs';
@@ -987,7 +987,12 @@ const server = http.createServer(async (req, res) => {
       res.end('Not found');
     }
   } catch (error) {
-    jsonResponse(res, 400, errorPayload(error));
+    if (isInternalError(error)) {
+      console.error(`${req.method} ${req.url}:`, error);
+      jsonResponse(res, 500, { ok: false, source: 'server', error: 'Internal error; the details are in the server log.', fetchedAt: new Date().toISOString() });
+    } else {
+      jsonResponse(res, 400, errorPayload(error));
+    }
   } finally {
     const ms = Date.now() - started;
     if (process.env.NODE_ENV !== 'test') console.log(`${req.method} ${req.url} ${ms}ms`);

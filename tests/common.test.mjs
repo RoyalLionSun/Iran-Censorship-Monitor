@@ -176,3 +176,14 @@ test('stored answers: quotas per source, and the nearest period for the same net
   assert.equal(store.staleNearest('OONI domains|AS44244|2026-09-18|2026-09-24|web_connectivity|', 'x'), null, 'never another network');
   assert.equal(store.staleNearest('OONI domains|AS58224|2026-12-18|2026-12-24|web_connectivity|', 'x'), null, 'never months away');
 });
+
+test('error texts shown to readers never contain the server\'s paths; internal errors are not shown', async () => {
+  const { errorPayload, isInternalError } = await import('../lib/common.mjs');
+  const { homedir } = await import('node:os');
+  const fsError = Object.assign(new Error(`ENOENT: no such file or directory, open '${process.cwd()}/var/x.json'`), { code: 'ENOENT' });
+  assert.equal(isInternalError(fsError), true);
+  assert.equal(isInternalError(new TypeError('x is undefined')), true);
+  assert.equal(isInternalError(new Error('Invalid date range.')), false, 'validation errors are shown');
+  const payload = errorPayload(new Error(`upstream failed reading ${homedir()}/secret`));
+  assert.doesNotMatch(payload.error, new RegExp(homedir().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+});
