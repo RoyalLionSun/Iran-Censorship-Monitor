@@ -988,7 +988,7 @@ const server = http.createServer(async (req, res) => {
     }
   } catch (error) {
     if (isInternalError(error)) {
-      console.error(`${req.method} ${req.url}:`, error);
+      console.error('%s %s:', req.method, req.url, error);
       jsonResponse(res, 500, { ok: false, source: 'server', error: 'Internal error; the details are in the server log.', fetchedAt: new Date().toISOString() });
     } else {
       jsonResponse(res, 400, errorPayload(error));
