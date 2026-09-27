@@ -999,6 +999,7 @@ export default Object.freeze({
   'board.anatomy.networks.before': 'هفتهٔ قبل',
   'board.anatomy.networks.below': 'کمتر از {value}',
   'board.anatomy.networks.private': 'شبکهٔ {asn}، ثبت‌شده به نام یک شخص',
+  'board.anatomy.networks.registrant': 'شبکهٔ {asn}، ثبت‌شده به نام {name} (پایگاه دادهٔ RIPE)',
   'board.anatomy.networks.foreign.one': '{count} شبکهٔ ثبت\u200cشده در خارج (وی\u200cپی\u200cان یا میزبانی) کنار گذاشته شد.',
   'board.anatomy.networks.foreign.other': '{count} شبکهٔ ثبت\u200cشده در خارج (وی\u200cپی\u200cان و میزبانی) کنار گذاشته شد.',
   'board.outage.table': 'نمایش مقادیر روزانه',

@@ -54,7 +54,10 @@ people in Iran can reach.
 
 ## Protecting people in Iran
 
-- Networks registered to private persons are shown by their number only.
+- Networks registered to private persons are shown by their number only. The one exception is a
+  network that still carried traffic during a nationwide shutdown, when almost nobody had a
+  connection: the shutdown timeline then names its registrant as the RIPE Database lists it, next
+  to the measurement. The name states in whose name the network is registered, nothing more.
 - The dashboard never tries to identify who ran a test.
 - Probes in Iran belong to private hosts. They check only services whose **use** is not
   punishable (the six mass services and AI services), never news, opposition or circumvention

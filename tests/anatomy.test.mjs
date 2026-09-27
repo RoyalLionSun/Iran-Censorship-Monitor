@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
-  getShutdownAnatomy, onsetEvents, organisationName, parseIodaHourly, parseRadarHourly, parseRoutingSeries, parseTopAses, restorationEvents, survivingNetworks,
+  ANATOMY_FORMAT, getShutdownAnatomy, onsetEvents, organisationName, parseIodaHourly, parseRadarHourly, parseRoutingSeries, parseTopAses, restorationEvents, survivingNetworks,
 } from '../lib/anatomy.mjs';
 
 const HOUR = 3_600_000;
@@ -67,7 +67,7 @@ test('the end of a shutdown: reachability against the normal level, traffic doub
   assert.equal(events.some((event) => event.kind.startsWith('routes-v4')), false);
 });
 
-test('surviving networks: registered abroad left out, private registrants never named, shares against the week before', () => {
+test('surviving networks: registered abroad left out, the registrant named as the registry lists it, shares against the week before', () => {
   const iranAsns = new Set(['AS49666', 'AS12880', 'AS210705', 'AS197207']);
   const during = [
     { asn: 'AS49666', name: 'Telecommunication Infrastructure Company', share: 35.4 },
@@ -89,6 +89,8 @@ test('surviving networks: registered abroad left out, private registrants never 
   assert.equal(result.networks[0].before, null);
   assert.equal(result.networks[0].beforeBelow, 0.03);
   assert.equal(result.networks[2].name, null);
+  assert.equal(result.networks[2].registrant, 'Firstname Lastname', 'a network that kept access names its registrant');
+  assert.equal(result.networks[0].registrant, null);
   assert.equal(result.networks[3].before, 33.1);
   assert.equal(organisationName('AS1', 'Aria Shatel PJSC'), 'Aria Shatel PJSC');
   assert.equal(organisationName('AS2', 'Firstname Lastname'), null);
@@ -130,4 +132,12 @@ test('a finished shutdown answered by every source is kept on disk and not fetch
   const before = calls;
   await getShutdownAnatomy({ ...options, fetch: async () => { throw new Error('must not fetch'); } });
   assert.equal(calls, before);
+  // A file stored in an older format is built again once.
+  const { writeFile } = await import('node:fs/promises');
+  const older = { ...options, start: '2025-06-17T12:50:00Z' };
+  await writeFile(join(storeDir, '20250617T125000Z-20250625T050000Z.json'), JSON.stringify({ ok: true, networks: null }));
+  const rebuilt = await getShutdownAnatomy(older);
+  assert.ok(calls > before, 'the old file was not used');
+  assert.equal(rebuilt.format, ANATOMY_FORMAT);
+  assert.equal(rebuilt.networks.networks[0].asn, 'AS49666');
 });

@@ -120,7 +120,7 @@ test('weekly reports run Saturday to Friday and share the monthly report\'s page
   assert.match(index, /id="weekly"[\s\S]*report\?week=2026-09-19[\s\S]*id="monthly"[\s\S]*report\?month=2026-09/);
 });
 
-test('the monthly report shows how a shutdown unfolded, in Tehran time, without naming private persons', async () => {
+test('the monthly report shows how a shutdown unfolded, in Tehran time, naming the registrant of a network that kept access', async () => {
   const { monthRange, renderMonthlyReport } = await import('../lib/report.mjs');
   const outageAnatomy = {
     start: '2026-01-08T16:30:00Z',
@@ -128,7 +128,8 @@ test('the monthly report shows how a shutdown unfolded, in Tehran time, without 
     restoration: [{ kind: 'reach-day-after', from: '2026-02-01T18:00:00Z', to: '2026-02-02T06:00:00Z', percent: 97.9 }],
     networks: { from: '2026-01-09T00:00:00Z', to: '2026-01-16T00:00:00Z', foreignLeftOut: 5, networks: [
       { asn: 'AS49666', name: 'TIC / Zirsakht Gateway', share: 35.4, before: null, beforeBelow: 0.03 },
-      { asn: 'AS210705', name: null, share: 4.5, before: 0.1, beforeBelow: null },
+      { asn: 'AS210705', name: null, registrant: 'Firstname Lastname', share: 4.5, before: 0.1, beforeBelow: null },
+      { asn: 'AS64500', name: null, registrant: null, share: 0.2, before: 0.1, beforeBelow: null },
     ] },
   };
   const interpretation = { summary: { headline: { state: 'major-outage' } }, services: { items: [] }, dimensions: { connectivity: { outageAnatomy } } };
@@ -139,7 +140,9 @@ test('the monthly report shows how a shutdown unfolded, in Tehran time, without 
   assert.match(en, /Jan 2026 · \u206614:30–15:30\u2069/);
   assert.match(en, /33 of 433 Iranian IPv6 address ranges/);
   assert.match(en, /TIC \/ Zirsakht Gateway \(\u2066AS49666\u2069\)<\/th><td>35%<\/td><td>under 0.1%/);
-  assert.match(en, /\u2066AS210705\u2069 · registered to a private person/);
+  assert.match(en, /\u2066AS210705\u2069 · registered to \u2066Firstname Lastname\u2069 \(RIPE Database\)/);
+  assert.match(en, /\u2066AS64500\u2069 · registered to a private person/, 'without a registry name, the number alone');
+  assert.doesNotMatch(renderMonthlyReport({ interpretation: { ...interpretation, dimensions: { connectivity: { outageAnatomy: { ...outageAnatomy, networks: { ...outageAnatomy.networks, networks: [{ asn: 'AS64501', name: null, registrant: '<b>x</b>', share: 1, before: null, beforeBelow: null }] } } } } }, history: null, range, lang: 'en', dashboardUrl: 'https://m.example/' }), /<b>x<\/b>/, 'a registry name is escaped');
   assert.match(en, /5 networks registered abroad/);
   const fa = renderMonthlyReport({ interpretation, history: null, range, lang: 'fa', dashboardUrl: 'https://m.example/' });
   assert.match(fa, /قطعی چگونه پیش رفت/);

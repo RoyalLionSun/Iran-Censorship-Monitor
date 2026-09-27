@@ -889,7 +889,8 @@ const reportInFlight = new Map();
 // returns their budget, so reports cannot be used to start Overviews beyond that visitor's limit.
 async function monthlyReportHtml(range, lang, base, admit = () => ({ ok: true })) {
   const name = range.week ? `week-${range.week}` : range.month;
-  const file = join(root, 'var/reports', `${name}-${lang}.html`);
+  // The format number changes when a report shows something new; older files are then written again.
+  const file = join(root, 'var/reports', `${name}-${lang}.v2.html`);
   if (range.complete) {
     try { return await readFile(file, 'utf8'); } catch { /* not written yet */ }
   }

@@ -985,7 +985,9 @@ function renderAnatomy(interpretation) {
   const phase = (label, events) => (events.length ? `<li class="anatomy-phase">${escapeHtml(label)}</li>${events.map(item).join('')}` : '');
   const networks = anatomy.networks?.networks ?? [];
   const share = (value) => formatPercent(value);
-  const networkName = (row) => (row.name ? `${row.name} (${ltr(row.asn)})` : t('board.anatomy.networks.private', { asn: ltr(row.asn) }));
+  const networkName = (row) => (row.name ? `${row.name} (${ltr(row.asn)})`
+    : row.registrant ? t('board.anatomy.networks.registrant', { asn: ltr(row.asn), name: ltr(row.registrant) })
+    : t('board.anatomy.networks.private', { asn: ltr(row.asn) }));
   const table = networks.length ? `
       <div class="anatomy-networks">
         <h3>${escapeHtml(t('board.anatomy.networks.title'))}</h3>
