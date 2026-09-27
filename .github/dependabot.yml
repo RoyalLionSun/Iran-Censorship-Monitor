@@ -1,0 +1,11 @@
+# Keeps the GitHub Actions used by the workflows current. They are pinned to exact commits;
+# Dependabot proposes each update as a pull request. The application itself has no npm
+# dependencies.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "chore(actions)"

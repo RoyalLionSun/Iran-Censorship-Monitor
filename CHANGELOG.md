@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- repository security (27 September 2026): secret scanning with push protection, private vulnerability reporting, Dependabot alerts and security updates with monthly updates of the pinned Actions (`.github/dependabot.yml`), CodeQL code scanning, rulesets protecting `main` from deletion and force-push and release tags `v*` from change or deletion, Actions limited to GitHub's own actions pinned to commits with a read-only default token and approval for workflows from forks; wiki and projects off, squash merge only; `SECURITY.md` describes reporting and protection.
+
 ## 1.9.0 — 2026-09-27
 
 The plain-language redesign; summary in `release-notes/v1.9.0.md`.

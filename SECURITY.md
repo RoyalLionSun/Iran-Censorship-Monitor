@@ -1,6 +1,17 @@
 # Security
 
-Last reviewed: **2026-09-26**
+Last reviewed: **2026-09-27**
+
+## Reporting a vulnerability
+
+Report security problems privately through GitHub: **Security → Report a vulnerability** in this repository (private vulnerability reporting). Please do not open a public issue for them, and do not include anything that could identify people in Iran.
+
+## Repository protection
+
+- secret scanning with push protection: a push containing a recognised key is refused;
+- `main` cannot be deleted or force-pushed; release tags `v*` cannot be changed or deleted;
+- GitHub Actions: read-only token by default, only GitHub's own actions, pinned to exact commits (Dependabot proposes updates); workflows from forks need approval;
+- CodeQL code scanning and Dependabot alerts are on.
 
 ## Secrets
 
