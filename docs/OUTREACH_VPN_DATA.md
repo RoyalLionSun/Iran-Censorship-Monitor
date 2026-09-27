@@ -44,6 +44,58 @@ tests from Iran since June 2026). Already on the global list and therefore teste
 torproject.org, bridges.torproject.org, protonvpn.com, nordvpn.com, surfshark.com, mullvad.net,
 getoutline.org, www.hotspotshield.com, www.tunnelbear.com.
 
+## 1b. Domestic services — entries to submit
+
+Whether Iran's own services keep working while the country is cut off from the world (the
+"National Information Network") can only be told from inside. OONI tests 175 domestic sites from
+Iranian networks, mostly news and government pages, plus Digikala, Divar, Aparat, Eitaa, Bale,
+iGap, Torob, Sheypoor, Varzesh3 and Telewebion (OONI aggregation, 27 June – 27 September 2026).
+The everyday services below are on neither the Iran nor the global list. Submit them the same way
+(list "Iran (ir)"). All names resolved on 27 September 2026; 16 of them (shaparak.ir, nine banks,
+my.gov.ir, adliran.ir, tax.gov.ir, epolice.ir, post.ir, shad.ir, rightel.ir) do not answer from
+abroad, which is why only a test from inside can say whether they work.
+
+| URL | Category | Note |
+|---|---|---|
+| `https://www.shaparak.ir/` | COMM | Shaparak, the national card payment network |
+| `https://www.cbi.ir/` | GOVT | Central Bank of Iran |
+| `https://bmi.ir/` | COMM | Bank Melli Iran |
+| `https://www.bankmellat.ir/` | COMM | Bank Mellat |
+| `https://www.tejaratbank.ir/` | COMM | Tejarat Bank |
+| `https://www.banksepah.ir/` | COMM | Bank Sepah |
+| `https://www.bsi.ir/` | COMM | Bank Saderat Iran |
+| `https://www.sb24.ir/` | COMM | Saman Bank |
+| `https://www.parsian-bank.ir/` | COMM | Parsian Bank |
+| `https://www.bki.ir/` | COMM | Bank Keshavarzi (agriculture bank) |
+| `https://www.bank-maskan.ir/` | COMM | Bank Maskan (housing bank) |
+| `https://www.postbank.ir/` | COMM | Post Bank of Iran |
+| `https://snapp.ir/` | COMM | Snapp, ride-hailing |
+| `https://tapsi.ir/` | COMM | Tapsi, ride-hailing |
+| `https://snappfood.ir/` | COMM | SnappFood, food delivery |
+| `https://rubika.ir/` | COMT | Rubika, domestic messenger |
+| `https://splus.ir/` | COMT | Soroush Plus, domestic messenger |
+| `https://cafebazaar.ir/` | COMM | Cafe Bazaar, Android app store |
+| `https://myket.ir/` | COMM | Myket, Android app store |
+| `https://balad.ir/` | MISC | Balad, maps and navigation |
+| `https://neshan.org/` | MISC | Neshan, maps and navigation |
+| `https://my.gov.ir/` | GOVT | Government e-services portal |
+| `https://www.adliran.ir/` | GOVT | Judiciary e-services (Adl Iran) |
+| `https://www.tax.gov.ir/` | GOVT | Iranian National Tax Administration |
+| `https://epolice.ir/` | GOVT | Police e-services |
+| `https://post.ir/` | GOVT | Iran Post |
+| `https://www.tamin.ir/` | GOVT | Social Security Organization |
+| `https://shad.ir/` | GOVT | Shad, the school platform of the Ministry of Education |
+| `https://mci.ir/` | COMM | Hamrah-e Aval (MCI), mobile operator |
+| `https://irancell.ir/` | COMM | Irancell, mobile operator |
+| `https://www.rightel.ir/` | COMM | Rightel, mobile operator |
+| `https://www.shatel.ir/` | COMM | Shatel, internet provider |
+| `https://www.filimo.com/` | MMED | Filimo, video streaming |
+| `https://www.namava.ir/` | MMED | Namava, video streaming |
+
+For these sites OONI's usual verdict compares the probe's result with a control measured from
+abroad. When a site answers only inside Iran, that comparison fails even though the site works, so
+the dashboard will read what the probe in Iran itself received.
+
 ## 2. Request to tool developers for aggregate figures (English, ready to send)
 
 Recipients: Psiphon (info@psiphon.ca — they already publish Conduit figures; ask for the same per
