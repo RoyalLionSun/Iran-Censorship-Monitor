@@ -66,6 +66,15 @@ jobs:
             echo 'Potential private key committed to repository.' >&2
             exit 1
           fi
+          if grep -RInE \
+            --exclude-dir=.git \
+            --exclude-dir=node_modules \
+            --exclude-dir=dist \
+            --exclude='.env.example' \
+            '[0-9]{8,10}:AA[A-Za-z0-9_-]{30,}|(RIPE_ATLAS_API_KEY|INTERNET_SOCIETY_PULSE_API_TOKEN|GLOBALPING_API_TOKEN|GLOBALPING_CONTROL_KEY|TELEGRAM_BOT_TOKEN|CLOUDFLARE_RADAR_API_TOKEN)=[A-Za-z0-9:_-]{16,}' .; then
+            echo 'Potential Telegram bot token or service key committed to repository.' >&2
+            exit 1
+          fi
           if find . -maxdepth 3 -type f -name '.env' -print -quit | grep -q .; then
             echo 'A .env file is committed or present in the CI checkout.' >&2
             exit 1

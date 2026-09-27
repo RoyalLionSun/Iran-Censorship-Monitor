@@ -7,6 +7,7 @@ import { dirname, extname, join, normalize, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildAssessment } from './lib/assessment.mjs';
 import { buildHealth } from './lib/server-health.mjs';
+import { clientAddress, createRequestBudget } from './lib/request-budget.mjs';
 import { compressBody, createLastGoodStore, errorPayload, FETCH_CACHE_LIMIT, fetchCacheSize, isInternalError, isCleanOverview, isSettledPeriod, jsonResponse, loadEnvFile, pickEncoding, mapLimit, normalizeAsn, validateRange } from './lib/common.mjs';
 import { mergeFailedSignals, ooniRateLimitedUntil, getCircumventionSignals, getOoniDomainMeasurements, getOoniDomains, getOoniMeasurementDetail, getOoniNetworks, getOoniServiceNetworks, getOoniTimeline, iranRegisteredAsns, getOoniSample, listOoniMeasurements, OONI_TESTS } from './lib/ooni.mjs';
 import { getRipeSignals } from './lib/ripe.mjs';
@@ -186,26 +187,13 @@ function serverTimingHeader(timings) {
 }
 
 // The visitor's address; behind a reverse proxy set TRUST_PROXY=1 so its X-Forwarded-For counts.
-function clientAddress(req) {
-  const forwarded = process.env.TRUST_PROXY === '1' ? String(req.headers['x-forwarded-for'] ?? '').split(',')[0].trim() : '';
-  return forwarded || req.socket?.remoteAddress || 'unknown';
-}
-
 const OVERVIEW_BUDGET = Math.max(5, Number(process.env.OVERVIEW_NEW_PER_10_MIN) || 40);
-const overviewBudgets = new Map();
-function overviewBudget(address, now = Date.now()) {
-  const windowMs = 10 * 60 * 1000;
-  const recent = (overviewBudgets.get(address) ?? []).filter((time) => now - time < windowMs);
-  if (recent.length >= OVERVIEW_BUDGET) {
-    overviewBudgets.set(address, recent);
-    return { ok: false, retryAfterSeconds: Math.ceil((windowMs - (now - recent[0])) / 1000) };
-  }
-  recent.push(now);
-  overviewBudgets.set(address, recent);
-  // Forget addresses that have been quiet, so the table stays small.
-  if (overviewBudgets.size > 5000) for (const [key, times] of overviewBudgets) if (!times.some((time) => now - time < windowMs)) overviewBudgets.delete(key);
-  return { ok: true };
-}
+const overviewBudget = createRequestBudget({ limit: OVERVIEW_BUDGET });
+// Lookups a visitor can make unique (any domain, measurement, search, network): generous for
+// people, a stop for scripts that would spend the server's upstream quota.
+const LOOKUP_BUDGET = Math.max(20, Number(process.env.LOOKUPS_PER_10_MIN) || 120);
+const lookupBudget = createRequestBudget({ limit: LOOKUP_BUDGET });
+const BUDGETED_LOOKUPS = /^\/api\/(ooni\/(domain-measurements|measurements?)(\/|$)|targets$|intelligence$|providers$|routing-updates$)/;
 
 function withDeadline(promise, ms, fallback) {
   let timer;
@@ -250,6 +238,13 @@ function scopeRequired(source, input) {
 }
 
 async function handleApi(req, res, url) {
+  if (BUDGETED_LOOKUPS.test(url.pathname)) {
+    const budget = lookupBudget.take(clientAddress(req));
+    if (!budget.ok) {
+      jsonResponse(res, 429, { ok: false, error: 'Too many lookups from this address; please wait a few minutes.', retryAfterSeconds: budget.retryAfterSeconds }, { 'retry-after': String(budget.retryAfterSeconds) });
+      return true;
+    }
+  }
   if (url.pathname === '/api/health') {
     // Which collector paths exist and are on, joined with what each last did.
     const stored = store.health();
@@ -363,7 +358,7 @@ async function handleApi(req, res, url) {
     // A new answer costs about thirty upstream requests. One visitor may start a limited number
     // per ten minutes, so nobody can make OONI block this server for every reader; answers
     // already computed are served without limit.
-    const budget = overviewBudget(clientAddress(req));
+    const budget = overviewBudget.take(clientAddress(req));
     if (!budget.ok) {
       jsonResponse(res, 429, { ok: false, source: 'server', error: 'Too many new views requested from this address. Views already loaded still open; new ones in a few minutes.', retryAfterSeconds: budget.retryAfterSeconds }, { 'retry-after': String(budget.retryAfterSeconds) });
       return true;
@@ -702,7 +697,7 @@ async function staticEntry(file) {
   if (cached && cached.mtimeMs === info.mtimeMs && cached.size === info.size) return cached;
   let body = await readFile(file);
   if (file.endsWith(`${sep}index.html`) && process.env.PUBLIC_URL) {
-    const base = process.env.PUBLIC_URL.replace(/\/+$/, '');
+    const base = process.env.PUBLIC_URL.replace(/\/+$/, '').replace(/[&"<>]/g, (char) => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' }[char]));
     body = Buffer.from(body.toString('utf8').replace('content="/brand/og-image.png"', `content="${base}/brand/og-image.png"`)
       .replace('<meta property="og:type"', `<meta property="og:url" content="${base}/" />\n  <meta property="og:type"`));
   }

@@ -1099,7 +1099,13 @@ async function loadMeasurementDetail() {
   } catch (error) { $('#measurement-json').textContent = `Error: ${error.message}`; }
 }
 
-function csvCell(value) { return `"${String(value ?? '').replaceAll('"','""')}"`; }
+// A cell starting with = + - @ or a control character would run as a formula in a spreadsheet;
+// such cells get a leading apostrophe. Values come partly from upstream sources.
+function csvCell(value) {
+  const text = String(value ?? '');
+  const safe = /^[=+\-@\t\r]/.test(text) && !/^-?\d+(\.\d+)?$/.test(text) ? `'${text}` : text;
+  return `"${safe.replaceAll('"', '""')}"`;
+}
 function exportCsv() {
   if (!state.overview) return;
   const rows = [['source','scope','metric','date','value','unit','note']];

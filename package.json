@@ -6,7 +6,7 @@
   "type": "module",
   "description": "Plain-language dashboard in English and Farsi showing what people in Iran can reach online, from measurements inside Iranian networks.",
   "engines": {
-    "node": ">=20.11"
+    "node": ">=22.13"
   },
   "scripts": {
     "dev": "node --watch server.mjs",

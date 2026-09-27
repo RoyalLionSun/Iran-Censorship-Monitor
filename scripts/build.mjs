@@ -18,5 +18,5 @@ for (const file of ['README.md', 'SECURITY.md', 'GO_LIVE.md', 'docs/PRODUCTION.m
   await mkdir(join(dist, file, '..'), { recursive: true });
   await cp(join(root, file), join(dist, file));
 }
-await writeFile(join(dist, 'BUILD.txt'), `Built ${new Date().toISOString()}\nRuntime: Node.js >=20.11\n`);
+await writeFile(join(dist, 'BUILD.txt'), `Built ${new Date().toISOString()}\nRuntime: Node.js >=22.13\n`);
 console.log(`Production bundle created at ${dist}`);

@@ -63,7 +63,7 @@ people in Iran can reach.
 
 ## Run it yourself
 
-Requirements: Node.js 20.11+ (22 in CI), outbound HTTPS. No third-party npm runtime dependencies,
+Requirements: Node.js 22.13 or newer (the local store uses `node:sqlite`), outbound HTTPS. No third-party npm runtime dependencies,
 no database server, no heavy downloads in default operation.
 
 ```bash
