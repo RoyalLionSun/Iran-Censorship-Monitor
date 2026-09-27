@@ -31,7 +31,9 @@ for (const profile of profiles) {
     console.error(`REGISTRY DRIFT · ${profile.asn} · ${comparison.mismatches.join(' · ')}`);
     continue;
   }
-  console.log(`REGISTRY PASS · ${profile.asn} · ${identity.asName} · ${identity.orgId} · ${identity.registryName || 'org-name unavailable'}`);
+  // CI logs are public: a network held by a private person is listed by number only.
+  console.log(profile.privateRegistrant ? `REGISTRY PASS · ${profile.asn} · private registrant`
+    : `REGISTRY PASS · ${profile.asn} · ${identity.asName} · ${identity.orgId} · ${identity.registryName || 'org-name unavailable'}`);
 }
 
 if (hardFailures.length) {

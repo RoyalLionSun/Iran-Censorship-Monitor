@@ -28,7 +28,7 @@ import { storeCircumvention, storeCovers, storeDomains, storeNetworks, storeSamp
 import { collectOoniApi, runCollectors } from './lib/collector.mjs';
 import { collectOoniS3 } from './lib/ooni-raw.mjs';
 import { ACTIVE_HOSTS, activeHttp, atlasPath, collectActivePath, collectorPlan, globalpingPath } from './lib/active-collector.mjs';
-import { getAsnNames } from './lib/asn-names.mjs';
+import { getAsnNames, publicNetworkName } from './lib/asn-names.mjs';
 import { getCitizenLabIranTargets } from './lib/citizenlab.mjs';
 import { getPeeringDbTopology } from './lib/peeringdb.mjs';
 import { getIhrDependencies } from './lib/ihr.mjs';
@@ -314,6 +314,8 @@ async function handleApi(req, res, url) {
     const profile = asns.find((item) => item.asn === asn);
     if (!profile) throw new Error('ASN is not in the curated Iran profile catalogue.');
     const registry = await getAsnRegistryIdentity(asn);
+    // A network held by a private person: the registry's names and handles would name them.
+    if (profile.privateRegistrant) Object.assign(registry, { asName: null, orgId: null, registryName: null });
     jsonResponse(res, 200, {
       ...registry,
       profile,
@@ -326,6 +328,14 @@ async function handleApi(req, res, url) {
   if (url.pathname === '/api/asn-coverage') {
     const maxAgeHours = Number(process.env.ASN_COVERAGE_MAX_AGE_HOURS || 168);
     const result = await readAsnCoverageSnapshot({ path: asnCoverageSnapshotPath, maxAgeHours });
+    // Registry names of networks held by private persons stay numbers (see publicNetworkName).
+    if (Array.isArray(result.candidateQueue)) {
+      result.candidateQueue = result.candidateQueue.map((row) => ({
+        ...row,
+        displayName: publicNetworkName(row.asn, row.displayName, asns) ?? row.asn,
+        ...(row.secondary ? { secondary: { ...row.secondary, description: publicNetworkName(row.asn, row.secondary.description, asns) } } : {}),
+      }));
+    }
     jsonResponse(res, result.ok ? 200 : 500, result);
     return true;
   }
@@ -458,8 +468,7 @@ async function handleApi(req, res, url) {
       // then RIPEstat for a name. Institutional and public networks are named as such.
       const directory = await readAsnDirectory();
       const kinds = Object.fromEntries(shown.map((asn) => [asn, asns.find((item) => item.asn === asn)?.type ?? directory?.entries?.[asn]?.kind ?? null]));
-      const known = [...asns, ...shown.filter((asn) => directory?.entries?.[asn]?.name).map((asn) => ({ asn, name: directory.entries[asn].name }))];
-      const [names, inventory] = await Promise.all([getAsnNames(shown, known), iranRegisteredAsns()]);
+      const [names, inventory] = await Promise.all([getAsnNames(shown, asns, directory), iranRegisteredAsns()]);
       // Networks without any test in the period: nothing can be said about them, and the
       // reader has to know that, especially for public bodies.
       const unmeasured = inventory ? [...inventory].filter((asn) => !shown.includes(asn)) : [];
@@ -469,7 +478,7 @@ async function handleApi(req, res, url) {
         unmeasuredKinds[kind] = (unmeasuredKinds[kind] ?? 0) + 1;
       }
       const publicUnmeasured = unmeasured.filter((asn) => ['government_admin', 'institutional'].includes(directory?.entries?.[asn]?.kind))
-        .map((asn) => ({ asn, name: directory.entries[asn].name }));
+        .map((asn) => ({ asn, name: publicNetworkName(asn, directory.entries[asn].name, asns) }));
       return {
         ok: true, ...(raw.status === 'stale' ? { status: 'stale', staleSince: raw.staleSince } : {}),
         breakdown, access, accessByGroup, names, types: kinds, excludedMeasurements: raw.excludedMeasurements, sourceUrl: raw.sourceUrl,

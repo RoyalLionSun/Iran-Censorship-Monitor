@@ -91,7 +91,7 @@ test('surviving networks: registered abroad left out, private registrants never 
   assert.equal(result.networks[2].name, null);
   assert.equal(result.networks[3].before, 33.1);
   assert.equal(organisationName('AS1', 'Aria Shatel PJSC'), 'Aria Shatel PJSC');
-  assert.equal(organisationName('AS2', 'Ivan Petrov'), null);
+  assert.equal(organisationName('AS2', 'Firstname Lastname'), null);
 });
 
 test('the three sources are parsed into hourly series', () => {

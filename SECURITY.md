@@ -113,6 +113,8 @@ GDELT and professional reporting are discovery/context only. Any future correlat
 
 ## Data sensitivity and persistence
 
+Some Iranian networks are registered to private persons. Registry names are shown only when they name an organisation (`publicNetworkName` in `lib/asn-names.mjs`), in every table, API answer and log; otherwise the network appears by its number.
+
 The dashboard keeps its state under `var/`: the local measurement store (`var/store/monitor.db`, only the fields the dashboard needs, never raw measurement bodies), the last good answer per source, finished reports, feed entries and history. None of it identifies measurement participants, and `var/` is never served.
 
 Manually entered local VPN field measurements remain in browser `localStorage` and are not uploaded.

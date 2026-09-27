@@ -464,10 +464,13 @@
     "country": "IR",
     "aliases": [],
     "operatorFamily": "private-registrant-as210705",
-    "roles": ["access"],
+    "privateRegistrant": true,
+    "roles": [
+      "access"
+    ],
     "providerComparison": false,
     "identityConfidence": "registry_confirmed",
-    "identityNote": "Added on 24 September 2026 from the RIPE Database (aut-num and organisation); RIPE Atlas population coverage lists users in this network. Access type not yet classified.",
+    "identityNote": "Added on 24 September 2026 from the RIPE Database; the network is registered to a private person, so the dashboard shows its number only. RIPE Atlas population coverage lists users in this network. Access type not yet classified.",
     "independentCensorshipVote": false
   }
 ]
