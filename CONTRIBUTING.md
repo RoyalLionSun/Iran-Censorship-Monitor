@@ -26,4 +26,6 @@ Never commit `.env`, credentials, API tokens, private probe identifiers, raw dat
 
 Only measurements from inside Iranian networks may support a claim about what people in Iran can reach (see `docs/INTERPRETATION.md`). Every Farsi interface string needs its English counterpart and must not start with a Latin word; `npm run check` enforces both.
 
+The dashboard's text and code must stay under 220 KB compressed (`tests/page-weight.test.mjs`); raising the budget is a decision to record in the changelog, not a routine fix.
+
 Do not turn missing data into zeroes, infer censorship intent from a single telemetry family, or publish province/provider/VPN status without a defensible measurement source.
