@@ -11,7 +11,9 @@ also verifies that versions, the test count and the links in the documents are c
 git config core.hooksPath .githooks
 ```
 
-Commit in UTC (`TZ=UTC git commit …`); the hook stops a commit otherwise. A commit's date carries
+Commit in UTC (`TZ=UTC git commit …`); the hook stops a commit otherwise. The message hook also
+refuses co-author trailers with any address other than an anonymous GitHub one, and session or tool
+links. A commit's date carries
 the committer's time zone, which tells where they live.
 
 Before opening a pull request:

@@ -1,0 +1,12 @@
+#!/bin/sh
+# Commit messages name no one but the committer: a co-author trailer is allowed only with an
+# anonymous GitHub address (…@users.noreply.github.com), and session or tool links are refused.
+msg="$1"
+if grep -i -E '^co-authored-by:' "$msg" | grep -v -i -E '<[^>]+@users\.noreply\.github\.com>' | grep -q .; then
+  echo "Commit stopped: a co-author trailer with an address that is not an anonymous GitHub address."
+  exit 1
+fi
+if grep -i -q -E '^[a-z-]*session:|^generated with ' "$msg"; then
+  echo "Commit stopped: the message carries a session or tool trailer."
+  exit 1
+fi
