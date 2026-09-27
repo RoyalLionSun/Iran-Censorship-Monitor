@@ -1,10 +1,9 @@
 import { readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import http from 'node:http';
-import { execFile, spawnSync } from 'node:child_process';
-import { promisify } from 'node:util';
+import { spawnSync } from 'node:child_process';
+import { dumpDom } from './headless-dump.mjs';
 
-const execFileAsync = promisify(execFile);
 const v11Source = await readFile(new URL('../public/v11-context.js', import.meta.url), 'utf8');
 const v13Source = await readFile(new URL('../public/v13-context.js', import.meta.url), 'utf8');
 const v14Source = await readFile(new URL('../public/v14-context.js', import.meta.url), 'utf8');
@@ -228,13 +227,9 @@ try {
   const address = server.address();
   if (!address || typeof address === 'string') throw new Error('UI fixture server did not expose a TCP port.');
   const browser = findBrowser();
-  const args = [
-    '--headless=new', '--disable-gpu', '--no-sandbox', '--disable-dev-shm-usage', '--virtual-time-budget=6000', '--dump-dom',
-    `http://127.0.0.1:${address.port}/fixture`,
-  ];
   let stdout;
   try {
-    ({ stdout } = await execFileAsync(browser, args, { encoding: 'utf8', timeout: 35_000, maxBuffer: 4 * 1024 * 1024 }));
+    stdout = await dumpDom(browser, `http://127.0.0.1:${address.port}/fixture`, { ready: (dom) => dom.includes('data-fixture-ready="1"') });
   } catch (error) {
     const detail = error?.stderr || error?.message || String(error);
     throw new Error(`Headless browser execution failed: ${detail}`);

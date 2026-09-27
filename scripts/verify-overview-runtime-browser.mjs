@@ -1,15 +1,14 @@
 // Exercise the actual index.html -> app.js -> app-core.js startup path. Other
 // browser fixtures render isolated modules and cannot catch old API processes.
+import { dumpDom } from './headless-dump.mjs';
 import { readdir, readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import http from 'node:http';
-import { execFile, spawnSync } from 'node:child_process';
-import { promisify } from 'node:util';
+import { spawnSync } from 'node:child_process';
 import { join, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildAssessment } from '../lib/assessment.mjs';
 
-const execFileAsync = promisify(execFile);
 const publicRoot = fileURLToPath(new URL('../public/', import.meta.url));
 const files = new Map();
 for (const relativePath of await readdir(publicRoot, { recursive: true })) {
@@ -99,10 +98,10 @@ async function runScenario(browser, scenario) {
   await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });
   try {
     const port = server.address().port;
-    const { stdout } = await execFileAsync(browser, [
-      '--headless=new', '--disable-gpu', '--no-sandbox', '--disable-dev-shm-usage',
-      '--virtual-time-budget=7000', '--dump-dom', `http://127.0.0.1:${port}/`,
-    ], { encoding: 'utf8', timeout: 40_000, maxBuffer: 8 * 1024 * 1024 });
+    const stdout = await dumpDom(browser, `http://127.0.0.1:${port}/`, {
+      budgets: [7_000, 15_000, 30_000],
+      ready: (dom) => /<h1 id="situation-headline"[^>]*>(?!\s*Analyzing current measurements)[^<]+<\/h1>/i.test(dom),
+    });
     if (!requests.includes('/api/config') || !requests.includes('/api/overview')) {
       throw new Error(`${scenario}: real app did not request config AND overview (${requests.join(', ')})`);
     }

@@ -1,10 +1,9 @@
+import { dumpDom } from './headless-dump.mjs';
 import { readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import http from 'node:http';
-import { execFile, spawnSync } from 'node:child_process';
-import { promisify } from 'node:util';
+import { spawnSync } from 'node:child_process';
 
-const execFileAsync = promisify(execFile);
 const files = new Map();
 for (const path of [
   'public/styles.css',
@@ -236,10 +235,7 @@ try {
   const address = server.address();
   if (!address || typeof address === 'string') throw new Error('i18n fixture server did not expose a TCP port.');
   const browser = findBrowser();
-  const { stdout } = await execFileAsync(browser, [
-    '--headless=new', '--disable-gpu', '--no-sandbox', '--disable-dev-shm-usage', '--virtual-time-budget=4500', '--dump-dom',
-    `http://127.0.0.1:${address.port}/fixture`,
-  ], { encoding: 'utf8', timeout: 30_000, maxBuffer: 4 * 1024 * 1024 });
+  const stdout = await dumpDom(browser, `http://127.0.0.1:${address.port}/fixture`, { budgets: [4_500, 15_000, 30_000], ready: (dom) => dom.includes('data-fixture-ready="1"') });
   const required = [
     'data-fixture-ready="1"', 'data-fa-dir="rtl"', 'data-fa-lang="fa"', 'data-fa-headline="yes"', 'data-fa-kpi="yes"',
     'data-meaning="yes"', 'data-fa-runtime-fixed="yes"', 'data-fa-runtime-assessment="yes"', 'data-fa-runtime-context="yes"',
