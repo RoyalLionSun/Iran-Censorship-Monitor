@@ -37,7 +37,7 @@ Default bind address is `127.0.0.1`. For production Internet exposure:
 1. keep Node on loopback/private networking where practical;
 2. terminate HTTPS at a maintained reverse proxy/managed ingress;
 3. apply access control if the dashboard is operationally sensitive;
-4. rate-limit public requests at the proxy (the server also limits new Overview computations per visitor address; set `TRUST_PROXY=1` behind a proxy so it sees real addresses);
+4. rate-limit public requests at the proxy (the server also limits new Overview computations and unique lookups per visitor address; set `TRUST_PROXY=1` behind exactly one proxy so it sees real addresses);
 5. never serve the public dashboard from a home connection: visitors see the address of the machine that answers;
 6. log only metadata needed for operations and avoid credentials/raw sensitive probe identities.
 

@@ -77,5 +77,8 @@ Parameters of `/api/overview` and `/api/ooni/domains`:
 
 A new, not yet cached answer for `/api/overview` asks about thirty sources and can take tens of
 seconds. Each address may start a limited number of new answers per ten minutes
-(`OVERVIEW_NEW_PER_10_MIN`, default 40); answers already computed are served without limit. For
-regular use prefer `/data/latest.json`.
+(`OVERVIEW_NEW_PER_10_MIN`, default 40); answers already computed are served without limit.
+Lookups that can be made unique (single measurements, domain drill-downs, target searches,
+providers, routing updates, intelligence) are limited per address too (`LOOKUPS_PER_10_MIN`,
+default 120). Beyond a limit the answer is `429` with `retryAfterSeconds` and a `Retry-After`
+header. For regular use prefer `/data/latest.json`.
