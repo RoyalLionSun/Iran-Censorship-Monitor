@@ -46,6 +46,7 @@ The dated history of every change is in [CHANGELOG.md](CHANGELOG.md); this page 
 
 ## Decisions
 
+- **Names of networks held by private persons — decided (27 September 2026):** they appear by number only, except a network that still carried traffic during a nationwide shutdown: the shutdown timeline then names its registrant as the RIPE Database lists it, next to the measurement, with no claim about who the person is. Example: AS210705 carried about 5.8% of Iran's remaining traffic on 2–5 March 2026 (0.08% the week before) while Iran as a whole was at about 0.4% of normal.
 - **Targets of the independent checks — decided (26 September 2026):** whether *using* a service is punishable decides, not whether it is blocked; the six mass services and the AI services are allowed, news, opposition and circumvention stay with OONI.
 - **Lightweight self-hosting — decided (24 September 2026):** no default path may download OONI's raw files or keep an archive.
 - **Maximum selectable period (currently 120 days) — decided: keep.** Internet Society Pulse lists one *unconfirmed* national record for 8 January to 26 May 2026 (138 days). Cloudflare Radar, a technical source, dates two separate nationwide outages inside it: 8 January 16:30 UTC to 1 February 2026 and 28 February 07:00 UTC to 26 May 12:00 UTC (about 23 and 87 days). Both fit the limit, each is now charted with its week before and after, and the Pulse record stays visible with the note that Radar dates it differently. Raising the limit is therefore not needed to show the 2026 blackout.
