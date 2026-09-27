@@ -8,6 +8,7 @@ test('a network name is shown only when it names an organisation', () => {
   assert.equal(publicNetworkName('AS1', 'Example Pardazesh PJSC'), 'Example Pardazesh PJSC');
   assert.equal(publicNetworkName('AS2', 'Example University of Medical Sciences'), 'Example University of Medical Sciences');
   assert.equal(publicNetworkName('AS3', 'Example Online'), 'Example Online');
+  assert.equal(publicNetworkName('AS3', 'Moavenate rasaneh majazi seda va sima'), 'Moavenate rasaneh majazi seda va sima', 'a department of the state broadcaster');
   assert.equal(publicNetworkName('AS4', 'Firstname Lastname'), null);
   assert.equal(publicNetworkName('AS5', 'LASTNAME Firstname'), null);
   assert.equal(publicNetworkName('AS6', ''), null);
