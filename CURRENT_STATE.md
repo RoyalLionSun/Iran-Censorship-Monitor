@@ -33,8 +33,8 @@ The dated history of every change is in [CHANGELOG.md](CHANGELOG.md); this page 
 
 - **Going online:** [GO_LIVE.md](GO_LIVE.md): public address, a server that is not a home connection, `TRUST_PROXY`, backups.
 - **Reachable from Iran:** plan hosting that Iran does not block, mirrors and an .onion address; once online, test the dashboard's own address from inside Iran (OONI Run link or a Citizen Lab list entry).
-- **Test lists:** Citizen Lab pull request #2277 (app servers; fix the `robots.txt.txt` typo); submit the sites in [OUTREACH_VPN_DATA.md](docs/OUTREACH_VPN_DATA.md) that OONI does not test yet (opposition sites, 14 AI services).
-- **RIPE Atlas credits:** request sent once the repository is public; alternatively host a probe.
+- **Test lists:** Citizen Lab pull request #2277 (app servers and iranopasmigirim.com) is open, not yet merged, and still has the `robots.txt.txt` typo; submit the sites in [OUTREACH_VPN_DATA.md](docs/OUTREACH_VPN_DATA.md) that OONI does not test yet (opposition sites, 14 AI services).
+- **RIPE Atlas credits:** requested from RIPE NCC on 27 September 2026, reply pending; alternatively host a probe.
 
 ## Known limits
 

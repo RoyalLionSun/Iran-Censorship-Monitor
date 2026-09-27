@@ -91,7 +91,7 @@ The Farsi version is for people in Iran; a dashboard they cannot open misses its
       tests the app servers and iranopasmigirim.com; the dashboard picks the results up by itself.
 - [ ] **Test-list entries and data requests for VPN tools**: see [OUTREACH_VPN_DATA.md](docs/OUTREACH_VPN_DATA.md)
       (eight URLs to submit on test-lists.ooni.org; a ready letter to Psiphon, Lantern, Hiddify, ASL19, Windscribe).
-- [ ] **RIPE Atlas credits** for regular independent checks (request drafted during development).
+- [ ] **RIPE Atlas credits** for regular independent checks: requested on 27 September 2026, reply pending.
 - [ ] **Telegram channels** (English and Farsi) and the bot as administrator, if daily posts are wanted.
 
 ## 5. Checks on the day

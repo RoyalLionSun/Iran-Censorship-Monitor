@@ -146,7 +146,7 @@ pauses single paths while the others continue. The raw-file path additionally ne
 
 ## Open items
 
-- RIPE Atlas credits (requested; alternatively host a probe to earn them).
+- RIPE Atlas credits (requested on 27 September 2026; alternatively host a probe to earn them).
 - Globalping token (optional, raises limits).
 - Server operation: the collector runs inside the server process by default; a separate
   timer (systemd) is possible for production.
