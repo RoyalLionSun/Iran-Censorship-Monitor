@@ -196,6 +196,7 @@ test('the tools page shows measured status and official channels, and recommends
   assert.match(en, /Riseup VPN[\s\S]*not measured from inside Iran/);
   assert.match(en, /recommends nothing/);
   const fa = renderToolsPage({ lang: 'fa', interpretation: null });
+  assert.doesNotMatch(fa, /از درون ایران اندازه‌گیری نشده/, 'without data a tool is not called unmeasured');
   assert.match(fa, /<html lang="fa" dir="rtl">/);
   assert.match(fa, /مرورگر تور/);
 });

@@ -1036,7 +1036,8 @@ server.listen(PORT, HOST, () => {
     // The all-Iran snapshot behind the open data, the tools page, the feed and the widget: built
     // once a minute after start and then with the daily data (every six hours), so the first
     // reader after a restart does not wait for it. A reader in between gets it on demand.
-    const warmIran = () => latestOpenData(process.env.PUBLIC_URL?.replace(/\/+$/, '') || `http://${HOST}:${PORT}`).catch(() => {});
+    const warmIran = () => currentSnapshot()
+      .then(() => latestOpenData(process.env.PUBLIC_URL?.replace(/\/+$/, '') || `http://${HOST}:${PORT}`)).catch(() => {});
     setTimeout(warmIran, 60_000).unref();
     setInterval(warmIran, FEED_REFRESH_MS).unref();
   }
