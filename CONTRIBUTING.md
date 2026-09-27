@@ -11,6 +11,9 @@ also verifies that versions, the test count and the links in the documents are c
 git config core.hooksPath .githooks
 ```
 
+Commit in UTC (`TZ=UTC git commit …`); the hook stops a commit otherwise. A commit's date carries
+the committer's time zone, which tells where they live.
+
 Before opening a pull request:
 
 ```bash
@@ -19,7 +22,7 @@ npm run check
 npm run build
 ```
 
-Never commit `.env`, credentials, API tokens, private probe identifiers, raw data that can identify measurement participants, or personal details (private e-mail addresses, home paths, IP addresses). Use your anonymous GitHub e-mail address for commits.
+Never commit `.env`, credentials, API tokens, private probe identifiers, raw data that can identify measurement participants, or personal details (private e-mail addresses, home paths, IP addresses). Use your anonymous GitHub e-mail address for commits, and do not describe your own machine or setup in files or commit messages.
 
 Only measurements from inside Iranian networks may support a claim about what people in Iran can reach (see `docs/INTERPRETATION.md`). Every Farsi interface string needs its English counterpart and must not start with a Latin word; `npm run check` enforces both.
 

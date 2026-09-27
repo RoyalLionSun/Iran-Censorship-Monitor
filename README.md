@@ -112,6 +112,8 @@ Vazirmatn.
 
 ## Status and documentation
 
+There is no public instance yet: the dashboard runs where someone starts it (see *Run it yourself*).
+
 Current release: **1.9.0** (27 September 2026), the plain-language redesign. History: [CHANGELOG.md](CHANGELOG.md). Current state and decisions:
 [CURRENT_STATE.md](CURRENT_STATE.md). Method: [INTERPRETATION.md](docs/INTERPRETATION.md),
 [DATA_SOURCES.md](docs/DATA_SOURCES.md), [ARCHITECTURE.md](docs/ARCHITECTURE.md),

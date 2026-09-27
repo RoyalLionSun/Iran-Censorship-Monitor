@@ -2,6 +2,10 @@
 
 Last reviewed: **2026-09-27**
 
+## Supported versions
+
+Fixes go to `main` and into the next release; older releases are not patched.
+
 ## Reporting a vulnerability
 
 Report security problems privately through GitHub: **Security → Report a vulnerability** in this repository (private vulnerability reporting). Please do not open a public issue for them, and do not include anything that could identify people in Iran.
