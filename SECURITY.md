@@ -43,14 +43,15 @@ Default bind address is `127.0.0.1`. For production Internet exposure:
 
 ## Browser security headers
 
-Static responses set:
+The dashboard and every page (reports, updates, tools, sources) set:
 
-- same-origin Content-Security-Policy including `connect-src 'self'`;
-- `frame-ancestors 'none'`;
-- `base-uri 'self'`;
-- `form-action 'self'`;
-- `X-Content-Type-Options: nosniff`;
-- `Referrer-Policy: strict-origin-when-cross-origin`.
+- same-origin Content-Security-Policy (`script-src 'self'`, `connect-src 'self'` on the dashboard, `frame-ancestors 'none'`, `base-uri 'self'`, `form-action 'self'`);
+- `X-Content-Type-Options: nosniff` and `Referrer-Policy: strict-origin-when-cross-origin`;
+- `Permissions-Policy` without camera, microphone, location, payment or USB;
+- `Cross-Origin-Opener-Policy: same-origin` and `Cross-Origin-Resource-Policy: same-origin`;
+- `Strict-Transport-Security` once `PUBLIC_URL` is https.
+
+JSON answers are `same-origin` too; only what is meant for other sites (`/widget.svg`, `/feed.xml`, `/data/*.json`) is `cross-origin`, the open data also with `Access-Control-Allow-Origin: *`. The server cuts off requests whose headers take longer than 20 s or whose request takes longer than 30 s to arrive.
 
 ## External-fetch boundary
 

@@ -718,13 +718,8 @@ async function serveStatic(req, res, pathname) {
     'cache-control': ['.html', '.js', '.css'].includes(extension) ? 'no-cache' : 'public, max-age=86400',
     etag: entry.etag,
     vary: 'accept-encoding',
-    'x-content-type-options': 'nosniff',
-    'referrer-policy': 'strict-origin-when-cross-origin',
+    ...pageSecurityHeaders(),
     'content-security-policy': "default-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
-    // The page needs no camera, microphone, location or payment access.
-    'permissions-policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()',
-    // Once served over HTTPS (PUBLIC_URL), browsers keep to HTTPS for a year.
-    ...(/^https:/i.test(process.env.PUBLIC_URL ?? '') ? { 'strict-transport-security': 'max-age=31536000' } : {}),
   };
   if (req.headers['if-none-match'] === entry.etag) {
     res.writeHead(304, headers);
@@ -797,7 +792,8 @@ async function serveFeed(req, res, url) {
   if (encoding) body = compressBody(body, encoding);
   res.writeHead(200, {
     'content-type': 'application/atom+xml; charset=utf-8', 'cache-control': 'public, max-age=1800', vary: 'accept-encoding',
-    'x-content-type-options': 'nosniff', ...(encoding ? { 'content-encoding': encoding } : {}), 'content-length': body.length,
+    'x-content-type-options': 'nosniff', 'cross-origin-resource-policy': 'cross-origin',
+    ...(encoding ? { 'content-encoding': encoding } : {}), 'content-length': body.length,
   });
   res.end(body);
 }
@@ -822,7 +818,7 @@ async function latestOpenData(base) {
 
 async function serveOpenData(req, res, url) {
   const base = process.env.PUBLIC_URL?.replace(/\/+$/, '') || `http://${req.headers.host || `${HOST}:${PORT}`}`;
-  const open = { 'access-control-allow-origin': '*' };
+  const open = { 'access-control-allow-origin': '*', 'cross-origin-resource-policy': 'cross-origin' };
   const name = url.pathname.slice('/data/'.length);
   if (name === 'index.json') {
     jsonResponse(res, 200, { schema: OPEN_DATA_SCHEMA, latest: `${base}/data/latest.json`, days: (await openData.dates()).map((day) => `${base}/data/${day}.json`) }, { ...open, 'cache-control': 'public, max-age=1800' });
@@ -862,6 +858,8 @@ async function serveWidget(req, res, url) {
   res.writeHead(200, {
     'content-type': 'image/svg+xml; charset=utf-8', 'cache-control': 'public, max-age=1800', vary: 'accept-encoding',
     'x-content-type-options': 'nosniff', 'content-security-policy': "default-src 'none'; style-src 'unsafe-inline'",
+    // Meant to be embedded on other sites.
+    'cross-origin-resource-policy': 'cross-origin',
     ...(encoding ? { 'content-encoding': encoding } : {}), 'content-length': body.length,
   });
   res.end(body);
@@ -913,13 +911,27 @@ async function serveUpdates(req, res, url) {
   sendHtml(req, res, renderUpdatesPage({ lang, entries, feedUrl: `${base}/feed.xml${lang === 'fa' ? '?lang=fa' : ''}`, telegramUrl }));
 }
 
+// Headers every page carries: no sniffing, no referrer beyond the origin, no device access, its
+// own browsing context (other sites cannot reach into a window they opened), resources only for
+// this site, and HTTPS kept once served over it.
+function pageSecurityHeaders() {
+  return {
+    'x-content-type-options': 'nosniff',
+    'referrer-policy': 'strict-origin-when-cross-origin',
+    'permissions-policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()',
+    'cross-origin-opener-policy': 'same-origin',
+    'cross-origin-resource-policy': 'same-origin',
+    ...(/^https:/i.test(process.env.PUBLIC_URL ?? '') ? { 'strict-transport-security': 'max-age=31536000' } : {}),
+  };
+}
+
 function sendHtml(req, res, html) {
   let body = Buffer.from(html);
   const encoding = pickEncoding(req.headers['accept-encoding']);
   if (encoding) body = compressBody(body, encoding);
   res.writeHead(200, {
     'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache', vary: 'accept-encoding',
-    'x-content-type-options': 'nosniff', 'referrer-policy': 'strict-origin-when-cross-origin',
+    ...pageSecurityHeaders(),
     'content-security-policy': "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
     ...(encoding ? { 'content-encoding': encoding } : {}), 'content-length': body.length,
   });
@@ -944,16 +956,7 @@ async function serveReport(req, res, url) {
     }
     html = await monthlyReportHtml(range, lang, base);
   }
-  let body = Buffer.from(html);
-  const encoding = pickEncoding(req.headers['accept-encoding']);
-  if (encoding) body = compressBody(body, encoding);
-  res.writeHead(200, {
-    'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache', vary: 'accept-encoding',
-    'x-content-type-options': 'nosniff', 'referrer-policy': 'strict-origin-when-cross-origin',
-    'content-security-policy': "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
-    ...(encoding ? { 'content-encoding': encoding } : {}), 'content-length': body.length,
-  });
-  res.end(body);
+  sendHtml(req, res, html);
 }
 
 const server = http.createServer(async (req, res) => {
@@ -994,6 +997,9 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
+// A connection that sends its request very slowly holds a socket; such requests are cut off.
+server.headersTimeout = 20_000;
+server.requestTimeout = 30_000;
 server.listen(PORT, HOST, () => {
   console.log(`Iran Censorship Monitor listening on http://${HOST}:${PORT}`);
   // Warm the view most readers open first, and keep it warm, so the first visitor does not wait
