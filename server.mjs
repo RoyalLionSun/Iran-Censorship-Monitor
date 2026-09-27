@@ -198,7 +198,10 @@ const overviewBudget = createRequestBudget({ limit: OVERVIEW_BUDGET });
 // people, a stop for scripts that would spend the server's upstream quota.
 const LOOKUP_BUDGET = Math.max(20, Number(process.env.LOOKUPS_PER_10_MIN) || 120);
 const lookupBudget = createRequestBudget({ limit: LOOKUP_BUDGET });
-const BUDGETED_LOOKUPS = /^\/api\/(ooni\/(domain-measurements|measurements?)(\/|$)|targets$|intelligence$|providers$|routing-updates$)/;
+// The domain list and the ways around the filter are loaded with every page view and stay outside:
+// many readers in Iran share one address (carrier NAT), and their answers are cached and bounded by
+// the OONI gate.
+const BUDGETED_LOOKUPS = /^\/api\/(ooni\/(domain-measurements|measurements?)(\/|$)|stop$|targets$|intelligence$|providers$|routing-updates$)/;
 
 function withDeadline(promise, ms, fallback) {
   let timer;
@@ -450,8 +453,17 @@ async function handleApi(req, res, url) {
     const trafficFor = (asn) => safeSource('Cloudflare Radar outage traffic', () => getRadarOutageTraffic({ start: outage.startDate, end: outage.endDate, asn }), `Radar outage traffic|${outage.startDate}|${outage.endDate ?? ''}|${asn}`);
     const trafficTask = outage ? Promise.all([trafficFor(''), input.asn ? trafficFor(input.asn) : null]) : Promise.resolve([null, null]);
     // How the same outage unfolded hour by hour (routes, traffic, reachability) for all of Iran.
+    // A first build asks several sources and the RIPE Database; it never holds up the answer for
+    // more than ten seconds: the last timeline for the same outage stands in (or none yet), the
+    // answer is not kept as complete, and the build finishes in the background for the next reader.
+    const anatomyKey = outage ? `Shutdown timeline|${outage.startDate}|${outage.endDate ?? ''}` : null;
     const anatomyTask = outage
-      ? safeSource('Shutdown timeline', async () => getShutdownAnatomy({ start: outage.startDate, end: outage.endDate ?? null, storeDir: join(root, 'var/anatomy'), iranAsns: await iranRegisteredAsns(), catalog: asns }), `Shutdown timeline|${outage.startDate}|${outage.endDate ?? ''}`)
+      ? withDeadline(safeSource('Shutdown timeline', async () => getShutdownAnatomy({ start: outage.startDate, end: outage.endDate ?? null, storeDir: join(root, 'var/anatomy'), iranAsns: await iranRegisteredAsns(), catalog: asns }), anatomyKey), 10_000, () => {
+        const last = lastGoodSources.stale(anatomyKey, 'still loading');
+        if (!last) return { ok: true, source: 'Shutdown timeline', status: 'pending', partialStale: true };
+        const observed = last.onset?.length || last.restoration?.length || last.networks?.networks?.length;
+        return { ...last, status: observed ? 'observed' : 'no_data', partialStale: true };
+      })
       : Promise.resolve(null);
     // Where each service was and was not blocked, by named Iranian network.
     const serviceNetworksTask = input.testName !== 'web_connectivity' ? Promise.resolve(null) : (async () => {

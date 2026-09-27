@@ -50,3 +50,10 @@ test("stored and shared links never take the visitor's Host header", async () =>
   assert.doesNotMatch(server, /headers\.host/);
   assert.doesNotMatch(server, /fetch\(`http:\/\/\$\{HOST\}/, 'self requests go through selfFetch');
 });
+
+test('a slow shutdown timeline cannot hold up a new Overview', async () => {
+  const server = await readFile(new URL('../server.mjs', import.meta.url), 'utf8');
+  assert.match(server, /const anatomyTask = outage\s*\n\s*\? withDeadline\(safeSource\('Shutdown timeline'/);
+  assert.match(server, /status: 'pending', partialStale: true/);
+  assert.match(server, /\|stop\$\|/, 'Access Now STOP lookups are budgeted');
+});

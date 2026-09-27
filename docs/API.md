@@ -81,6 +81,7 @@ seconds. Each address may start a limited number of new answers per ten minutes
 weekly or monthly report that is not yet written counts as one new answer for the address that
 opens it.
 Lookups that can be made unique (single measurements, domain drill-downs, target searches,
-providers, routing updates, intelligence) are limited per address too (`LOOKUPS_PER_10_MIN`,
-default 120). Beyond a limit the answer is `429` with `retryAfterSeconds` and a `Retry-After`
+providers, routing updates, intelligence, Access Now STOP) are limited per address too
+(`LOOKUPS_PER_10_MIN`, default 120). The domain list and the ways around the filter, which every
+page view loads, are not: many readers in Iran share one address. Beyond a limit the answer is `429` with `retryAfterSeconds` and a `Retry-After`
 header. For regular use prefer `/data/latest.json`.

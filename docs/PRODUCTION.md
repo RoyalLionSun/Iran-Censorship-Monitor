@@ -56,6 +56,8 @@ npm run verify:radar       # optional token
 
 ## Dashboard service
 
+Node.js 22.13 or newer is required (`node:sqlite`); the project is tested on the current Node.js 22 release (CI) and on 22.22. `node:sqlite` is still marked experimental upstream, so update Node within the 22 line and run `npm run check` after each update.
+
 Keep the Node listener private where practical and terminate HTTPS at a reverse proxy. Run the service as an unprivileged account with appropriate systemd hardening (`NoNewPrivileges`, private temporary space and read-only system/home protections appropriate to the distribution).
 
 Every setting is explained in `.env.example`. On a public server set at least `PUBLIC_URL` (shared links, feed, reports) and, behind a reverse proxy, `TRUST_PROXY=1` so the per-address budget sees real visitor addresses. Keep the server off a home connection: visitors see the address of the machine that answers. Back up `var/` (last good answers, finished reports, history).
