@@ -84,7 +84,7 @@ pushing.
 1. In Telegram, open **@BotFather**, send `/newbot` and copy the token.
 2. Create a channel per language and add the bot as an administrator that may post.
 3. In `.env` set `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHANNEL_EN=@…` and/or `TELEGRAM_CHANNEL_FA=@…`,
-   then restart. Nothing is posted without these settings.
+   then restart. Nothing is posted without these settings or without `PUBLIC_URL`.
 
 ## Validate
 

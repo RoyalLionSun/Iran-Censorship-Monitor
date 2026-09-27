@@ -7,7 +7,7 @@ import { dirname, extname, join, normalize, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildAssessment } from './lib/assessment.mjs';
 import { buildHealth } from './lib/server-health.mjs';
-import { clientAddress, createRequestBudget } from './lib/request-budget.mjs';
+import { clientAddress, createRequestBudget, createSelfRequestKey, publicBase, selfOrigin } from './lib/request-budget.mjs';
 import { compressBody, createLastGoodStore, errorPayload, FETCH_CACHE_LIMIT, fetchCacheSize, isInternalError, isCleanOverview, isSettledPeriod, jsonResponse, loadEnvFile, pickEncoding, mapLimit, normalizeAsn, validateRange } from './lib/common.mjs';
 import { mergeFailedSignals, ooniRateLimitedUntil, getCircumventionSignals, getOoniDomainMeasurements, getOoniDomains, getOoniMeasurementDetail, getOoniNetworks, getOoniServiceNetworks, getOoniTimeline, iranRegisteredAsns, getOoniSample, listOoniMeasurements, OONI_TESTS } from './lib/ooni.mjs';
 import { getRipeSignals } from './lib/ripe.mjs';
@@ -59,6 +59,11 @@ const sources = JSON.parse(await readFile(join(root, 'data/sources.json'), 'utf8
 const intelligenceSources = JSON.parse(await readFile(join(root, 'data/intelligence-sources.json'), 'utf8'));
 const HOST = process.env.HOST || '127.0.0.1';
 const PORT = Number(process.env.PORT || 4173);
+const SELF_ORIGIN = selfOrigin(HOST, PORT);
+const selfKey = createSelfRequestKey();
+// The server's own /api/overview, not charged to a visitor's budget (see createSelfRequestKey).
+const selfFetch = (path, options = {}) => fetch(`${SELF_ORIGIN}${path}`, { ...options, headers: selfKey.headers });
+const linkBase = () => publicBase(process.env.PUBLIC_URL, SELF_ORIGIN);
 
 const mime = {
   '.html': 'text/html; charset=utf-8',
@@ -238,7 +243,7 @@ function scopeRequired(source, input) {
 }
 
 async function handleApi(req, res, url) {
-  if (BUDGETED_LOOKUPS.test(url.pathname)) {
+  if (BUDGETED_LOOKUPS.test(url.pathname) && !selfKey.matches(req)) {
     const budget = lookupBudget.take(clientAddress(req));
     if (!budget.ok) {
       jsonResponse(res, 429, { ok: false, error: 'Too many lookups from this address; please wait a few minutes.', retryAfterSeconds: budget.retryAfterSeconds }, { 'retry-after': String(budget.retryAfterSeconds) });
@@ -358,7 +363,7 @@ async function handleApi(req, res, url) {
     // A new answer costs about thirty upstream requests. One visitor may start a limited number
     // per ten minutes, so nobody can make OONI block this server for every reader; answers
     // already computed are served without limit.
-    const budget = overviewBudget.take(clientAddress(req));
+    const budget = selfKey.matches(req) ? { ok: true } : overviewBudget.take(clientAddress(req));
     if (!budget.ok) {
       jsonResponse(res, 429, { ok: false, source: 'server', error: 'Too many new views requested from this address. Views already loaded still open; new ones in a few minutes.', retryAfterSeconds: budget.retryAfterSeconds }, { 'retry-after': String(budget.retryAfterSeconds) });
       return true;
@@ -751,7 +756,7 @@ async function currentSnapshot() {
   if (snapshotCache && Date.now() - snapshotCache.at < 30 * 60 * 1000) return snapshotCache.value;
   snapshotInFlight ??= (async () => {
     const { since, until } = defaultRange();
-    const response = await fetch(`http://${HOST}:${PORT}/api/overview?asn=ALL&testName=web_connectivity&since=${since}&until=${until}`);
+    const response = await selfFetch(`/api/overview?asn=ALL&testName=web_connectivity&since=${since}&until=${until}`);
     const overview = await response.json();
     const history = await serviceHistory().catch(() => null);
     const value = { since, until, interpretation: overview?.assessment?.interpretation ?? null, history };
@@ -771,8 +776,9 @@ async function feedEntries(lang, base) {
       const link = `${base}/?asn=ALL&testName=web_connectivity&since=${since}&until=${until}&lang=${lang}`;
       const entry = buildFeedEntry({ interpretation, lang, date: today, link, history });
       if (!entry) return entries;
-      // The first entry of a new day goes to the language's Telegram channel, if one is set.
-      if (entries[0]?.id !== today) {
+      // The first entry of a new day goes to the language's Telegram channel, if one is set, and
+      // only with a public address: a link to this machine's own address helps no reader.
+      if (entries[0]?.id !== today && process.env.PUBLIC_URL?.trim()) {
         postToTelegram(entry, { token: process.env.TELEGRAM_BOT_TOKEN?.trim(), chat: process.env[`TELEGRAM_CHANNEL_${lang.toUpperCase()}`]?.trim() })
           .then((result) => { if (!result.ok && !result.skipped) console.log(`telegram ${lang}: ${result.error}`); })
           .catch((error) => console.log(`telegram ${lang}: ${error?.message ?? error}`));
@@ -785,7 +791,7 @@ async function feedEntries(lang, base) {
 
 async function serveFeed(req, res, url) {
   const lang = url.searchParams.get('lang') === 'fa' ? 'fa' : 'en';
-  const base = process.env.PUBLIC_URL?.replace(/\/+$/, '') || `http://${req.headers.host || `${HOST}:${PORT}`}`;
+  const base = linkBase();
   const entries = await feedEntries(lang, base);
   let body = Buffer.from(renderAtom({ entries, lang, selfUrl: `${base}/feed.xml${lang === 'fa' ? '?lang=fa' : ''}`, siteUrl: `${base}/` }));
   const encoding = pickEncoding(req.headers['accept-encoding']);
@@ -817,7 +823,7 @@ async function latestOpenData(base) {
 }
 
 async function serveOpenData(req, res, url) {
-  const base = process.env.PUBLIC_URL?.replace(/\/+$/, '') || `http://${req.headers.host || `${HOST}:${PORT}`}`;
+  const base = linkBase();
   const open = { 'access-control-allow-origin': '*', 'cross-origin-resource-policy': 'cross-origin' };
   const name = url.pathname.slice('/data/'.length);
   if (name === 'index.json') {
@@ -844,7 +850,7 @@ async function serveTools(req, res, url) {
 async function serveSources(req, res, url) {
   const lang = url.searchParams.get('lang') === 'fa' ? 'fa' : 'en';
   // The default view is kept warm; if it is still being computed, the page says so instead of waiting.
-  const overview = await fetch(`http://${HOST}:${PORT}/api/overview`, { signal: AbortSignal.timeout(8_000) })
+  const overview = await selfFetch('/api/overview', { signal: AbortSignal.timeout(8_000) })
     .then((response) => (response.ok ? response.json() : null)).catch(() => null);
   sendHtml(req, res, renderSourcesPage({ lang, sources: Array.isArray(sources) ? sources : sources.sources ?? [], overview }));
 }
@@ -870,7 +876,9 @@ async function serveWidget(req, res, url) {
 // hour.
 const reportMemory = new Map();
 const reportInFlight = new Map();
-async function monthlyReportHtml(range, lang, base) {
+// A report not yet computed costs one new Overview; `admit` charges it to the visitor who asked and
+// returns their budget, so reports cannot be used to start Overviews beyond that visitor's limit.
+async function monthlyReportHtml(range, lang, base, admit = () => ({ ok: true })) {
   const name = range.week ? `week-${range.week}` : range.month;
   const file = join(root, 'var/reports', `${name}-${lang}.html`);
   if (range.complete) {
@@ -880,8 +888,10 @@ async function monthlyReportHtml(range, lang, base) {
   const cached = reportMemory.get(key);
   if (cached && Date.now() - cached.at < 60 * 60 * 1000) return cached.html;
   if (!reportInFlight.has(key)) {
+    const budget = admit();
+    if (!budget.ok) return { refused: budget };
     reportInFlight.set(key, (async () => {
-      const response = await fetch(`http://${HOST}:${PORT}/api/overview?asn=ALL&testName=web_connectivity&since=${range.since}&until=${range.until}`);
+      const response = await selfFetch(`/api/overview?asn=ALL&testName=web_connectivity&since=${range.since}&until=${range.until}`);
       const overview = await response.json();
       const interpretation = overview?.assessment?.interpretation ?? null;
       const history = await serviceHistory().catch(() => null);
@@ -904,7 +914,7 @@ async function monthlyReportHtml(range, lang, base) {
 // Daily updates as a readable page: the feed's entries, plus how to follow them.
 async function serveUpdates(req, res, url) {
   const lang = url.searchParams.get('lang') === 'fa' ? 'fa' : 'en';
-  const base = process.env.PUBLIC_URL?.replace(/\/+$/, '') || `http://${req.headers.host || `${HOST}:${PORT}`}`;
+  const base = linkBase();
   const entries = await feedEntries(lang, base);
   const channel = process.env[`TELEGRAM_CHANNEL_${lang.toUpperCase()}`]?.trim() ?? '';
   const telegramUrl = /^@\w{4,}$/.test(channel) ? `https://t.me/${channel.slice(1)}` : '';
@@ -940,7 +950,7 @@ function sendHtml(req, res, html) {
 
 async function serveReport(req, res, url) {
   const lang = url.searchParams.get('lang') === 'fa' ? 'fa' : 'en';
-  const base = process.env.PUBLIC_URL?.replace(/\/+$/, '') || `http://${req.headers.host || `${HOST}:${PORT}`}`;
+  const base = linkBase();
   const today = new Date().toISOString().slice(0, 10);
   let html;
   if (url.pathname === '/reports') {
@@ -954,7 +964,13 @@ async function serveReport(req, res, url) {
       res.end(week ? 'Unknown week (a Saturday, YYYY-MM-DD)' : 'Unknown month');
       return;
     }
-    html = await monthlyReportHtml(range, lang, base);
+    html = await monthlyReportHtml(range, lang, base, () => overviewBudget.take(clientAddress(req)));
+    if (html?.refused) {
+      const wait = String(html.refused.retryAfterSeconds);
+      res.writeHead(429, { 'content-type': 'text/plain; charset=utf-8', 'retry-after': wait, ...pageSecurityHeaders() });
+      res.end(lang === 'fa' ? 'درخواست‌های تازه از این نشانی زیاد بوده است؛ چند دقیقه دیگر دوباره امتحان کنید.' : 'Too many new reports requested from this address; please try again in a few minutes.');
+      return;
+    }
   }
   sendHtml(req, res, html);
 }
@@ -962,7 +978,8 @@ async function serveReport(req, res, url) {
 const server = http.createServer(async (req, res) => {
   const started = Date.now();
   try {
-    const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
+    // Only the path and query are read; a fixed base keeps a malformed Host header from mattering.
+    const url = new URL(req.url || '/', 'http://localhost');
     if (url.pathname === '/feed.xml') {
       await serveFeed(req, res, url);
     } else if (/^\/data\/(latest|index|\d{4}-\d{2}-\d{2})\.json$/.test(url.pathname)) {
@@ -1029,7 +1046,7 @@ server.listen(PORT, HOST, () => {
   if (process.env.MONITOR_PREWARM !== '0') {
     const warm = () => {
       const { since, until } = defaultRange();
-      fetch(`http://${HOST}:${PORT}/api/overview?asn=AS58224&testName=web_connectivity&since=${since}&until=${until}`).catch(() => {});
+      selfFetch(`/api/overview?asn=AS58224&testName=web_connectivity&since=${since}&until=${until}`).catch(() => {});
     };
     setTimeout(warm, 1_000).unref();
     setInterval(warm, CURRENT_OVERVIEW_TTL_MS - 30_000).unref(); // every 9.5 minutes
@@ -1037,7 +1054,7 @@ server.listen(PORT, HOST, () => {
     // once a minute after start and then with the daily data (every six hours), so the first
     // reader after a restart does not wait for it. A reader in between gets it on demand.
     const warmIran = () => currentSnapshot()
-      .then(() => latestOpenData(process.env.PUBLIC_URL?.replace(/\/+$/, '') || `http://${HOST}:${PORT}`)).catch(() => {});
+      .then(() => latestOpenData(linkBase())).catch(() => {});
     setTimeout(warmIran, 60_000).unref();
     setInterval(warmIran, FEED_REFRESH_MS).unref();
   }

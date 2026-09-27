@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import test from 'node:test';
-import { clientAddress, createRequestBudget } from '../lib/request-budget.mjs';
+import { clientAddress, createRequestBudget, createSelfRequestKey, publicBase, selfOrigin } from '../lib/request-budget.mjs';
 
 test('a visitor gets a limited number per window, then a wait time', () => {
   const budget = createRequestBudget({ limit: 2, windowMs: 60_000 });
@@ -24,4 +25,28 @@ test('behind one proxy the address is the one the proxy appended, not what the v
   assert.equal(clientAddress(req, true), '5.6.7.8');
   assert.equal(clientAddress(req, false), '127.0.0.1', 'without TRUST_PROXY the header is ignored');
   assert.equal(clientAddress({ headers: {}, socket: { remoteAddress: '9.9.9.9' } }, true), '9.9.9.9');
+});
+
+test("only the server's own requests carry its self-request key", () => {
+  const key = createSelfRequestKey('k'.repeat(32));
+  assert.equal(key.matches({ headers: key.headers }), true);
+  assert.equal(key.matches({ headers: { 'x-self-request': 'k'.repeat(31) } }), false);
+  assert.equal(key.matches({ headers: {} }), false);
+  assert.notDeepEqual(createSelfRequestKey().headers, createSelfRequestKey().headers, 'a new key per start');
+});
+
+test('the server reaches itself over loopback when bound to a wildcard address', () => {
+  assert.equal(selfOrigin('127.0.0.1', 4173), 'http://127.0.0.1:4173');
+  assert.equal(selfOrigin('0.0.0.0', 4173), 'http://127.0.0.1:4173');
+  assert.equal(selfOrigin('::', 4173), 'http://[::1]:4173');
+  assert.equal(selfOrigin('::1', 80), 'http://[::1]:80');
+});
+
+test("stored and shared links never take the visitor's Host header", async () => {
+  assert.equal(publicBase('https://example.org/', 'http://127.0.0.1:4173'), 'https://example.org');
+  assert.equal(publicBase('', 'http://127.0.0.1:4173'), 'http://127.0.0.1:4173');
+  assert.equal(publicBase(undefined, 'http://127.0.0.1:4173'), 'http://127.0.0.1:4173');
+  const server = await readFile(new URL('../server.mjs', import.meta.url), 'utf8');
+  assert.doesNotMatch(server, /headers\.host/);
+  assert.doesNotMatch(server, /fetch\(`http:\/\/\$\{HOST\}/, 'self requests go through selfFetch');
 });

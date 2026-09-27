@@ -37,9 +37,10 @@ Default bind address is `127.0.0.1`. For production Internet exposure:
 1. keep Node on loopback/private networking where practical;
 2. terminate HTTPS at a maintained reverse proxy/managed ingress;
 3. apply access control if the dashboard is operationally sensitive;
-4. rate-limit public requests at the proxy (the server also limits new Overview computations and unique lookups per visitor address; set `TRUST_PROXY=1` behind exactly one proxy so it sees real addresses);
-5. never serve the public dashboard from a home connection: visitors see the address of the machine that answers;
-6. log only metadata needed for operations and avoid credentials/raw sensitive probe identities.
+4. rate-limit public requests at the proxy (the server also limits new Overview computations, new reports and unique lookups per visitor address; set `TRUST_PROXY=1` behind exactly one proxy so it sees real addresses). The server's own requests to `/api/overview` (feed, widget, reports, sources page) carry a key made at each start and are not charged to any visitor;
+5. set `PUBLIC_URL`: links that are stored or sent to others (feed, open data, reports, Telegram posts) use it, or the server's own address, never the request's `Host` header; Telegram posts need it;
+6. never serve the public dashboard from a home connection: visitors see the address of the machine that answers;
+7. log only metadata needed for operations and avoid credentials/raw sensitive probe identities.
 
 ## Browser security headers
 

@@ -22,3 +22,12 @@ test('GDELT parser keeps only professional allowlisted domains', () => {
   ]});
   assert.deepEqual(rows.map((row)=>row.domain), ['asl19.org','bbc.com']);
 });
+
+test('GDELT parser drops non-web links even with an allowlisted host', () => {
+  const rows = parseGdelt({ articles: [
+    { url:'javascript://bbc.com/%0Aalert(1)', title:'x' },
+    { url:'data://bbc.com/text', title:'x' },
+    { url:'https://bbc.com/news/ok', title:'ok' },
+  ]});
+  assert.deepEqual(rows.map((row)=>row.url), ['https://bbc.com/news/ok']);
+});

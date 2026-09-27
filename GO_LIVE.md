@@ -27,8 +27,8 @@ chats or issues. `.env.example` explains every value.
 
 - [ ] **`PUBLIC_URL=https://…`** — the public address. Without it, shared links contain the
       address the page was opened with (on the test machine `127.0.0.1`, useless to anyone else),
-      link previews on Telegram/WhatsApp/X have no image, and HSTS stays off. Feed, weekly and monthly
-      reports and the embeddable widget also use it.
+      link previews on Telegram/WhatsApp/X have no image, and HSTS stays off. Feed, open data, weekly
+      and monthly reports and the embeddable widget also use it; Telegram posts need it.
 - [ ] **`CLOUDFLARE_RADAR_API_TOKEN`** — traffic, outage dates, the outage chart and the
       hour-by-hour shutdown timeline. Without it these parts stay empty ("needs an operator token").
 - [ ] **`INTERNET_SOCIETY_PULSE_API_TOKEN`** — optional, shutdown records as context.
@@ -39,7 +39,7 @@ chats or issues. `.env.example` explains every value.
 - [ ] **`RIPE_ATLAS_API_KEY`** and `ACTIVE_MEASUREMENTS_ENABLED=true` — the independent check of the
       six main services from RIPE Atlas probes in Iran. Needs enough RIPE Atlas credits (see 4).
 - [ ] `GLOBALPING_API_TOKEN` — optional second independent check.
-- [ ] `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHANNEL_EN`, `TELEGRAM_CHANNEL_FA` — optional daily posts
+- [ ] `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHANNEL_EN`, `TELEGRAM_CHANNEL_FA` — optional daily posts, only with `PUBLIC_URL` set
       (README, "Daily Telegram posts").
 - [ ] `HOST=127.0.0.1` behind the reverse proxy; `MONITOR_PREWARM` left on (default) so the first
       visitors do not wait for OONI.
