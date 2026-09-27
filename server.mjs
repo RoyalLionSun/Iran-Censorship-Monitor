@@ -890,7 +890,7 @@ const reportInFlight = new Map();
 async function monthlyReportHtml(range, lang, base, admit = () => ({ ok: true })) {
   const name = range.week ? `week-${range.week}` : range.month;
   // The format number changes when a report shows something new; older files are then written again.
-  const file = join(root, 'var/reports', `${name}-${lang}.v2.html`);
+  const file = join(root, 'var/reports', `${name}-${lang}.v3.html`);
   if (range.complete) {
     try { return await readFile(file, 'utf8'); } catch { /* not written yet */ }
   }

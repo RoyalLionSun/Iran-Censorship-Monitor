@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
-  ANATOMY_FORMAT, getShutdownAnatomy, onsetEvents, organisationName, parseIodaHourly, parseRadarHourly, parseRoutingSeries, parseTopAses, restorationEvents, survivingNetworks,
+  ANATOMY_FORMAT, buildShutdownAnatomy, getShutdownAnatomy, onsetEvents, organisationName, parseIodaHourly, parseRadarHourly, parseRoutingSeries, parseTopAses, restorationEvents, survivingNetworks,
 } from '../lib/anatomy.mjs';
 
 const HOUR = 3_600_000;
@@ -94,6 +94,32 @@ test('surviving networks: registered abroad left out, the registrant named as th
   assert.equal(result.networks[3].before, 33.1);
   assert.equal(organisationName('AS1', 'Aria Shatel PJSC'), 'Aria Shatel PJSC');
   assert.equal(organisationName('AS2', 'Firstname Lastname'), null);
+});
+
+test('a network that kept access keeps the registrant it had then, even after a change', async () => {
+  // Invented names only.
+  const fetch = async (url) => {
+    if (url.includes('/top/ases') && url.includes('dateStart=2026-03-01')) return { success: true, result: { top_0: [{ clientASN: 64500, clientASName: 'New Holder Name', value: '5.8' }] } };
+    if (url.includes('/top/ases')) return { success: true, result: { top_0: [{ clientASN: 64500, clientASName: 'New Holder Name', value: '0.1' }] } };
+    if (url.includes('rest.db.ripe.net')) {
+      if (url.endsWith('/aut-num/AS64500/versions')) return { versions: { version: [{ revision: 1, date: '2025-04-01T00:00:00Z', operation: 'ADD/UPD' }, { revision: 2, date: '2026-09-07T00:00:00Z', operation: 'ADD/UPD' }] } };
+      if (url.endsWith('/aut-num/AS64500/versions/1')) return { objects: { object: [{ attributes: { attribute: [{ name: 'as-name', value: 'ExampleServer' }, { name: 'org', value: 'ORG-EX1-RIPE' }] } }] } };
+      if (url.endsWith('/organisation/ORG-EX1-RIPE/versions')) return { versions: { version: [{ revision: 1, date: '2025-03-27T00:00:00Z', operation: 'ADD/UPD' }] } };
+      if (url.endsWith('/organisation/ORG-EX1-RIPE/versions/1')) return { objects: { object: [{ attributes: { attribute: [{ name: 'org-name', value: 'Firstname Lastname' }] } }] } };
+    }
+    if (new URL(url).hostname === 'stat.ripe.net') return { data: { stats: [] } };
+    if (url.includes('ioda')) return { data: [[]] };
+    return { success: true, result: { serie_0: { timestamps: [], values: [] } } };
+  };
+  const result = await buildShutdownAnatomy({ start: '2026-02-28T07:00:00Z', end: '2026-05-26T12:00:00Z', now: at('2026-09-25T00:00:00Z'), token: 'x', iranAsns: new Set(['AS64500']), fetch });
+  const row = result.networks.networks[0];
+  assert.equal(row.registrant, 'Firstname Lastname', 'the registrant then, not the current name from Radar');
+  assert.equal(row.registrantAsName, 'ExampleServer');
+  assert.equal(row.registrantAsOf, '2026-03-01T00:00:00.000Z');
+  // Without an answer from the RIPE Database the shutdown is not stored as finished.
+  const failing = await buildShutdownAnatomy({ start: '2026-02-28T07:00:00Z', end: '2026-05-26T12:00:00Z', now: at('2026-09-25T00:00:00Z'), token: 'x', iranAsns: new Set(['AS64500']), fetch: async (url) => { if (url.includes('rest.db.ripe.net')) throw new Error('down'); return fetch(url); } });
+  assert.equal(failing.complete, false);
+  assert.equal(failing.networks.networks[0].registrant, 'New Holder Name');
 });
 
 test('the three sources are parsed into hourly series', () => {

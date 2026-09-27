@@ -1000,6 +1000,8 @@ export default Object.freeze({
   'board.anatomy.networks.below': 'under {value}',
   'board.anatomy.networks.private': '{asn} · registered to a private person',
   'board.anatomy.networks.registrant': '{asn} · registered to {name} (RIPE Database)',
+  'board.anatomy.networks.registrantAt': '{asn} · registered to {name} on {date} (RIPE Database)',
+  'board.anatomy.networks.asNameThen': 'network name then: {name}',
   'board.anatomy.networks.foreign.one': '{count} network registered abroad (VPN or hosting provider) left out.',
   'board.anatomy.networks.foreign.other': '{count} networks registered abroad (VPN and hosting providers) left out.',
   'board.outage.table': 'Show daily values',

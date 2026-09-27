@@ -985,8 +985,15 @@ function renderAnatomy(interpretation) {
   const phase = (label, events) => (events.length ? `<li class="anatomy-phase">${escapeHtml(label)}</li>${events.map(item).join('')}` : '');
   const networks = anatomy.networks?.networks ?? [];
   const share = (value) => formatPercent(value);
+  // A network that kept access names its registrant as registered then, and the network's name then
+  // when it differs.
+  const sameName = (a, b) => String(a ?? '').replace(/[^\p{L}\p{N}]/gu, '').toLowerCase() === String(b ?? '').replace(/[^\p{L}\p{N}]/gu, '').toLowerCase();
+  const registrantText = (row) => (row.registrantAsOf
+    ? t('board.anatomy.networks.registrantAt', { asn: ltr(row.asn), name: ltr(row.registrant), date: formatDay(row.registrantAsOf) })
+      + (row.registrantAsName && !sameName(row.registrantAsName, row.registrant) ? ` · ${t('board.anatomy.networks.asNameThen', { name: ltr(row.registrantAsName) })}` : '')
+    : t('board.anatomy.networks.registrant', { asn: ltr(row.asn), name: ltr(row.registrant) }));
   const networkName = (row) => (row.name ? `${row.name} (${ltr(row.asn)})`
-    : row.registrant ? t('board.anatomy.networks.registrant', { asn: ltr(row.asn), name: ltr(row.registrant) })
+    : row.registrant ? registrantText(row)
     : t('board.anatomy.networks.private', { asn: ltr(row.asn) }));
   const table = networks.length ? `
       <div class="anatomy-networks">

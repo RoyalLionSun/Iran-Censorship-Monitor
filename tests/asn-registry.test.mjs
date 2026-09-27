@@ -174,3 +174,34 @@ test('server provider selection no longer depends on static array position', asy
   assert.match(source, /asns\.filter\(\(network\) => network\.providerComparison === true\)/);
   assert.doesNotMatch(source, /asns\.slice\(0,\s*10\)/);
 });
+
+// Invented names only.
+function ripeVersions(list) {
+  return { versions: { version: list.map(([revision, date, operation = 'ADD/UPD']) => ({ revision, date, operation })) } };
+}
+function ripeObject(attributes) {
+  return { objects: { object: [{ attributes: { attribute: Object.entries(attributes).map(([name, value]) => ({ name, value })) } }] } };
+}
+const registryHistory = (url) => {
+  if (url.endsWith('/aut-num/AS64500/versions')) return ripeVersions([[1, '2025-04-01T00:00:00Z'], [2, '2026-03-03T09:00:00Z'], [3, '2026-09-07T09:00:00Z']]);
+  if (url.endsWith('/aut-num/AS64500/versions/1')) return ripeObject({ 'aut-num': 'AS64500', 'as-name': 'ExampleServer', org: 'ORG-EX1-RIPE' });
+  if (url.endsWith('/aut-num/AS64500/versions/2')) return ripeObject({ 'aut-num': 'AS64500', 'as-name': 'ExampleServer', org: 'ORG-EX1-RIPE' });
+  if (url.endsWith('/aut-num/AS64500/versions/3')) return ripeObject({ 'aut-num': 'AS64500', 'as-name': 'NewHolderName', org: 'ORG-EX2-RIPE' });
+  if (url.endsWith('/organisation/ORG-EX1-RIPE/versions')) return ripeVersions([[1, '2025-03-27T00:00:00Z'], [2, '2026-04-29T00:00:00Z']]);
+  if (url.endsWith('/organisation/ORG-EX1-RIPE/versions/1')) return ripeObject({ organisation: 'ORG-EX1-RIPE', 'org-name': 'Firstname Lastname' });
+  if (url.endsWith('/organisation/ORG-EX1-RIPE/versions/2')) return ripeObject({ organisation: 'ORG-EX1-RIPE', 'org-name': 'Someone Else' });
+  throw new Error(`unexpected ${url}`);
+};
+
+test('the registrant of a past day comes from the RIPE Database version valid then', async () => {
+  const { getRegistrationAt, revisionAt } = await import('../lib/asn-registry.mjs');
+  const then = await getRegistrationAt('AS64500', '2026-03-02T00:00:00Z', { fetch: async (url) => registryHistory(url) });
+  assert.equal(then.asName, 'ExampleServer');
+  assert.equal(then.orgName, 'Firstname Lastname', 'a later change of the organisation does not count');
+  assert.equal(then.at, '2026-03-02T00:00:00.000Z');
+  assert.equal(then.sourceUrls.length, 2);
+  const later = await getRegistrationAt('AS64500', '2026-05-01T00:00:00Z', { fetch: async (url) => registryHistory(url) });
+  assert.equal(later.orgName, 'Someone Else');
+  assert.equal(await getRegistrationAt('AS64500', '2025-01-01T00:00:00Z', { fetch: async (url) => registryHistory(url) }), null, 'before the network existed');
+  assert.equal(revisionAt(ripeVersions([[1, '2025-01-01T00:00:00Z'], [2, '2025-06-01T00:00:00Z', 'DEL']]), Date.parse('2025-07-01T00:00:00Z')), null, 'deleted then');
+});
