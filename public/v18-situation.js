@@ -931,6 +931,32 @@ function eventHint(connectivity) {
   return t(event.end ? 'board.event.range' : 'board.event.since', { source: event.source, kind, from: time(event.start), to: event.end ? time(event.end) : '' });
 }
 
+function durationText(ms) {
+  const minutes = Math.max(1, Math.round(ms / 60_000));
+  if (minutes < 60) return plural('meaning.duration.minutes', minutes);
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  return rest ? t('meaning.duration.hoursMinutes', { hours: formatNumber(hours), minutes: formatNumber(rest) }) : plural('meaning.duration.hours', hours);
+}
+
+// The latest disruption signal in plain words, Tehran time, and whether traffic dropped.
+function latestDisruption(connectivity, allIran = false) {
+  const event = connectivity?.latestEvent;
+  if (!event?.start) return [];
+  // For all of Iran a routing signal concerns Iran's networks, not one network.
+  const kindKey = [`meaning.event.kind.${event.kind}${allIran ? '.iran' : ''}`, `meaning.event.kind.${event.kind}`].find((key) => t(key) !== key);
+  const kind = kindKey ? t(kindKey) : t('meaning.event.kind.other');
+  const start = Date.parse(event.start);
+  const end = event.end ? Date.parse(event.end) : null;
+  const when = t('meaning.event.when', { day: tehranDay(event.start), time: ltr(end ? `${tehranTime(event.start)}–${tehranTime(event.end)}` : tehranTime(event.start)) });
+  const lines = [end && end > start
+    ? t('meaning.event.latest', { kind, duration: durationText(end - start), when, source: event.source })
+    : t('meaning.event.latestOpen', { kind, when, source: event.source })];
+  const radarEvents = (connectivity.evidence ?? []).find((item) => item.source === 'Cloudflare Radar' && item.metric === 'events')?.value;
+  if (radarEvents === 0 && event.source !== 'Cloudflare Radar') lines.push(t('meaning.event.noTrafficDrop'));
+  return lines;
+}
+
 function formatPercent(value) {
   if (value === null || value === undefined) return '—';
   if (value > 0 && value < 0.1) return t('board.outage.belowTenth');
@@ -1503,6 +1529,9 @@ function meaningAnswers(interpretation) {
     internet.push(connection === 'none' ? t('meaning.a.internet.fine')
       : connection === 'signals' ? plural('meaning.connection.signals', dimensions.connectivity.eventCount ?? 0)
         : t(`meaning.connection.${connection}`));
+    // "1 disruption" tells a reader nothing: the latest one is named with what, when and how long,
+    // and whether Cloudflare saw less traffic at all.
+    if (connection === 'signals') internet.push(...latestDisruption(dimensions.connectivity, !interpretation.selection?.asn));
   } else {
     internet.push(period.end
       ? t('meaning.outage.period', { from: formatDay(period.start), to: formatDay(period.end) })
