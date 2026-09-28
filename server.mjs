@@ -19,7 +19,8 @@ import { getRpkiIntegrity } from './lib/rpki.mjs';
 import { getAsRankTopology } from './lib/asrank.mjs';
 import { compareAsnIdentity, getAsnRegistryIdentity } from './lib/asn-registry.mjs';
 import { readAsnCoverageSnapshot } from './lib/asn-coverage-snapshot.mjs';
-import { authorizeGlobalpingControl, createGlobalpingMeasurement, getGlobalpingIranProbes, getGlobalpingMeasurement, globalpingRateLimit } from './lib/globalping.mjs';
+import { readCommit } from './lib/build-info.mjs';
+import { authorizeGlobalpingControl, buildGlobalpingMeasurement, createGlobalpingMeasurement, getGlobalpingIranProbes, getGlobalpingMeasurement, globalpingRateLimit } from './lib/globalping.mjs';
 import { getCensoredPlanetSignals } from './lib/censoredplanet.mjs';
 import { SERVICE_BRANDS, selectionBrand, MORE_SERVICE_GROUPS, summarizeMoreServices, summarizeNetworkAccess, summarizeNetworkAccessByGroup, summarizeServiceBrands, summarizeServiceNetworks } from './public/service-findings.js';
 import { readAsnDirectory } from './lib/asn-directory.mjs';
@@ -57,6 +58,7 @@ const asnCoverageSnapshotPath = join(root, 'var/asn-coverage/latest.json');
 const asns = JSON.parse(await readFile(join(root, 'data/asns.json'), 'utf8'));
 const SERVER_STARTED_AT = Date.now();
 const PACKAGE_VERSION = JSON.parse(await readFile(join(root, 'package.json'), 'utf8')).version;
+const BUILD_COMMIT = await readCommit(root);
 const sources = JSON.parse(await readFile(join(root, 'data/sources.json'), 'utf8'));
 const intelligenceSources = JSON.parse(await readFile(join(root, 'data/intelligence-sources.json'), 'utf8'));
 const HOST = process.env.HOST || '127.0.0.1';
@@ -262,6 +264,7 @@ async function handleApi(req, res, url) {
     jsonResponse(res, 200, buildHealth({
       startedAt: SERVER_STARTED_AT,
       version: PACKAGE_VERSION,
+      commit: BUILD_COMMIT,
       configured: {
         radar: Boolean(process.env.CLOUDFLARE_RADAR_API_TOKEN), pulse: Boolean(process.env.INTERNET_SOCIETY_PULSE_API_TOKEN),
         globalpingActive: process.env.GLOBALPING_ACTIVE_ENABLED === 'true' && Boolean(process.env.GLOBALPING_CONTROL_KEY),
@@ -407,7 +410,7 @@ async function handleApi(req, res, url) {
         return result;
       }),
       input.asn ? safeSource('RIPEstat / RIPE RIS', () => getRipeStatSignals(input), sourceKey('RIPEstat', input)) : Promise.resolve(scopeRequired('RIPEstat / RIPE RIS', input)),
-      safeSource('Globalping', () => getGlobalpingIranProbes(input)),
+      safeSource('Globalping', () => getGlobalpingIranProbes(input, asns)),
       safeSource('Censored Planet', () => getCensoredPlanetSignals(input), sourceKey('Censored Planet', input)),
       input.asn ? safeSource('PeeringDB', () => getPeeringDbTopology(input)) : Promise.resolve(scopeRequired('PeeringDB', input)),
       input.asn ? safeSource('Internet Health Report', () => getIhrDependencies(input)) : Promise.resolve(scopeRequired('Internet Health Report', input)),
@@ -610,7 +613,7 @@ async function handleApi(req, res, url) {
 
   if (url.pathname === '/api/globalping/probes') {
     const input = queryInput(url);
-    const result = await getGlobalpingIranProbes(input);
+    const result = await getGlobalpingIranProbes(input, asns);
     jsonResponse(res, 200, result);
     return true;
   }
@@ -618,10 +621,14 @@ async function handleApi(req, res, url) {
   if (url.pathname === '/api/globalping/measure' && req.method === 'POST') {
     const auth = authorizeGlobalpingControl(req.headers['x-control-key']);
     if (!auth.ok) { jsonResponse(res, auth.status, { ok: false, source: 'Globalping', error: auth.error }); return true; }
+    const body = await readJsonBody(req);
+    const input = { type: body.type, target: body.target, asn: body.asn, limit: body.limit };
+    const allowed = { hosts: ACTIVE_HOSTS, iranAsns: await iranRegisteredAsns() };
+    // A request outside the allowed checks is refused before it uses up the hourly limit.
+    try { buildGlobalpingMeasurement(input, allowed); } catch (error) { jsonResponse(res, 400, { ok: false, source: 'Globalping', error: error.message }); return true; }
     const rate = globalpingRateLimit();
     if (!rate.ok) { jsonResponse(res, 429, { ok: false, source: 'Globalping', error: 'Server-side active measurement rate limit reached.', retryAfterSeconds: rate.retryAfterSeconds }, { 'retry-after': String(rate.retryAfterSeconds) }); return true; }
-    const body = await readJsonBody(req);
-    const result = await createGlobalpingMeasurement({ type: body.type, target: body.target, asn: body.asn ?? '', limit: body.limit });
+    const result = await createGlobalpingMeasurement(input, allowed);
     jsonResponse(res, 202, result);
     return true;
   }

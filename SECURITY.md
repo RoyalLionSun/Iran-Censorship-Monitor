@@ -73,7 +73,7 @@ Examples:
 
 ## Active-measurement safety
 
-Active checks from probes in Iran are off by default. The collector's RIPE Atlas and Globalping paths need `MONITOR_COLLECTOR=1` and `ACTIVE_MEASUREMENTS_ENABLED=true` (RIPE Atlas also a key and credits); the protected on-demand route `/api/globalping/measure` needs `GLOBALPING_ACTIVE_ENABLED=true` and a server-only `GLOBALPING_CONTROL_KEY`.
+Active checks from probes in Iran are off by default. The collector's RIPE Atlas and Globalping paths need `MONITOR_COLLECTOR=1` and `ACTIVE_MEASUREMENTS_ENABLED=true` (RIPE Atlas also a key and credits); the protected on-demand route `/api/globalping/measure` needs `GLOBALPING_ACTIVE_ENABLED=true` and a server-only `GLOBALPING_CONTROL_KEY`, and asks no more than the collector does: a DNS lookup or an HTTPS `HEAD` request of one of the allowed services, from one network registered in Iran; any other target, measurement type or network is refused before it counts against the hourly limit. The public probe inventory (`/api/globalping/probes`) gives counts per network only, never a probe's city, coordinates, resolvers or tags, and a network held by a private person by its number.
 
 The probes belong to private hosts in Iran. Targets are therefore limited to services whose use is not punishable in Iran (the six mass services and the AI services, fixed in `lib/active-collector.mjs` and guarded by a test); news, opposition and circumvention sites are never targets.
 

@@ -36,10 +36,9 @@ self.addEventListener('fetch', (event) => {
     const cache = await caches.open(CACHE);
     try {
       const response = await fetch(request);
-      if (response.ok) {
-        await cache.put(key, response.clone());
-        if (isApi) trimApi(cache);
-      }
+      // Saving and trimming finish even after the answer is handed over: the browser keeps the
+      // worker alive until they are done, so the kept answers never grow past the limit.
+      if (response.ok) event.waitUntil(cache.put(key, response.clone()).then(() => (isApi ? trimApi(cache) : undefined)));
       return response;
     } catch (error) {
       const saved = await cache.match(key);

@@ -1,6 +1,7 @@
-import { cp, mkdir, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readCommit } from '../lib/build-info.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const dist = join(root, 'dist');
@@ -18,5 +19,7 @@ for (const file of ['README.md', 'SECURITY.md', 'GO_LIVE.md', 'docs/PRODUCTION.m
   await mkdir(join(dist, file, '..'), { recursive: true });
   await cp(join(root, file), join(dist, file));
 }
-await writeFile(join(dist, 'BUILD.txt'), `Built ${new Date().toISOString()}\nRuntime: Node.js >=22.13\n`);
+const { version, engines } = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'));
+const commit = await readCommit(root);
+await writeFile(join(dist, 'BUILD.txt'), `Version: ${version}\n${commit ? `Commit: ${commit}\n` : ''}Built ${new Date().toISOString()}\nRuntime: Node.js ${engines.node}\n`);
 console.log(`Production bundle created at ${dist}`);

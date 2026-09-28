@@ -411,11 +411,8 @@ function renderGlobalping(globalping) {
     table.innerHTML = '<tr><td colspan="6" class="table-empty">Probe inventory unavailable.</td></tr>';
     return;
   }
-  const cities = new Set((globalping.probes || []).map((p)=>p.city).filter(Boolean));
-  const asnCount = new Set((globalping.probes || []).map((p)=>p.asn).filter(Boolean)).size;
-  const eyeball = (globalping.probes || []).filter((p)=>p.tags?.some((tag)=>/eyeball/i.test(tag))).length;
-  summary.innerHTML = `<div class="mini-stat"><span>Iran probes</span><b>${number(globalping.probeCount,0)}</b></div><div class="mini-stat"><span>ASNs covered</span><b>${number(asnCount,0)}</b></div><div class="mini-stat"><span>Cities observed</span><b>${number(cities.size,0)}</b></div><div class="mini-stat"><span>Eyeball probes</span><b>${number(eyeball,0)}</b></div>`;
-  table.innerHTML = globalping.networks?.length ? globalping.networks.slice(0,20).map((row)=>`<tr><td><strong>${escapeHtml(row.asn)}</strong></td><td>${escapeHtml(row.network || '—')}</td><td>${number(row.probes,0)}</td><td>${escapeHtml((row.cities || []).join(', ') || '—')}</td><td>${number(row.eyeball,0)}</td><td>${number(row.datacenter,0)}</td></tr>`).join('') : '<tr><td colspan="6" class="table-empty">No matching Iran probes are currently visible for this scope.</td></tr>';
+  summary.innerHTML = `<div class="mini-stat"><span>Iran probes</span><b>${number(globalping.probeCount,0)}</b></div><div class="mini-stat"><span>ASNs covered</span><b>${number(globalping.networkCount,0)}</b></div><div class="mini-stat"><span>Cities observed</span><b>${number(globalping.cityCount,0)}</b></div><div class="mini-stat"><span>Eyeball probes</span><b>${number(globalping.eyeballCount,0)}</b></div>`;
+  table.innerHTML = globalping.networks?.length ? globalping.networks.slice(0,20).map((row)=>`<tr><td><strong>${escapeHtml(row.asn)}</strong></td><td>${escapeHtml(row.network || '—')}</td><td>${number(row.probes,0)}</td><td>${number(row.cities,0)}</td><td>${number(row.eyeball,0)}</td><td>${number(row.datacenter,0)}</td></tr>`).join('') : '<tr><td colspan="6" class="table-empty">No matching Iran probes are currently visible for this scope.</td></tr>';
 }
 
 function renderProtocolMix(radar) {

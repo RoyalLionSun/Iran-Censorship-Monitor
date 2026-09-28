@@ -66,7 +66,7 @@ The API the page itself uses. It is not versioned; field names can change betwee
 | `/api/outages` | Nationwide and network outages dated by Cloudflare Radar since 2022 |
 | `/api/history` | Monthly "blocked since" history of the main services |
 | `/api/config` | Networks, sources and the default period |
-| `/api/health` | The server's state for operators: `status` (`ok` or `degraded`), uptime, version, each collector path (switched on, last run, last success, newest measurement, last error), cache sizes and `issues`, e.g. a path that stopped delivering or OONI limiting requests; `ok` stays `true` while the server runs |
+| `/api/health` | The server's state for operators: `status` (`ok` or `degraded`), uptime, version and the commit it runs (`commit`, from `BUILD.txt` or the git checkout; `null` if neither says), each collector path (switched on, last run, last success, newest measurement, last error), cache sizes and `issues`, e.g. a path that stopped delivering or OONI limiting requests; `ok` stays `true` while the server runs |
 
 Parameters of `/api/overview` and `/api/ooni/domains`:
 

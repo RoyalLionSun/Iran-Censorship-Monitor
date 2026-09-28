@@ -32,10 +32,14 @@ async function loadWorker() {
   new Function(...Object.keys(globals), source)(...Object.values(globals));
   const dispatch = async (url, { mode = 'cors', method = 'GET' } = {}) => {
     let responded = null;
+    const pending = [];
     const request = new Request(url, { method });
     Object.defineProperty(request, 'mode', { value: mode });
-    listeners.fetch({ request, respondWith: (promise) => { responded = promise; } });
-    return responded ? await responded : null;
+    listeners.fetch({ request, respondWith: (promise) => { responded = promise; }, waitUntil: (promise) => { pending.push(promise); } });
+    const response = responded ? await responded : null;
+    // What the worker was asked to finish (saving, trimming) completes before the next request.
+    while (pending.length) await pending.shift();
+    return response;
   };
   return { dispatch, network, store };
 }
@@ -70,4 +74,13 @@ test('opening a report or the tools page never replaces the saved dashboard', as
   await dispatch('https://monitor.example/reports?lang=fa', { mode: 'navigate' });
   await dispatch('https://monitor.example/tools', { mode: 'navigate' });
   assert.deepEqual([...store.keys()].sort(), ['https://monitor.example/', 'https://monitor.example/reports?lang=fa', 'https://monitor.example/tools']);
+});
+
+test('no more than twelve kept answers stay, the oldest go first', async () => {
+  const { dispatch, store } = await loadWorker();
+  for (let day = 1; day <= 15; day += 1) await dispatch(`https://monitor.example/api/overview?asn=ALL&since=2026-09-${String(day).padStart(2, '0')}&until=2026-09-20`);
+  const kept = [...store.keys()].filter((url) => url.includes('/api/'));
+  assert.equal(kept.length, 12);
+  assert.ok(!kept.some((url) => url.includes('since=2026-09-01&')), 'the oldest was removed');
+  assert.ok(kept.some((url) => url.includes('since=2026-09-15&')));
 });

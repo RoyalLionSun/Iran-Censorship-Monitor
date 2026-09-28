@@ -176,7 +176,7 @@ The collector is passive and is not started by `server.mjs`.
 
 ## Active measurement safety
 
-Active checks (RIPE Atlas, Globalping) run only when `ACTIVE_MEASUREMENTS_ENABLED=true` and the collector are set, and only from probes on networks registered in Iran. Targets are limited to services whose use is not punishable in Iran: the six mass services every round and the AI services in rotation (`lib/active-collector.mjs`); news, opposition and circumvention sites are never targets. Only DNS lookups and TLS/HTTPS handshakes, never page content, at most every six hours. The protected `/api/globalping/measure` route additionally needs a server-only operator key; private, loopback, reserved and credential-bearing destinations are rejected.
+Active checks (RIPE Atlas, Globalping) run only when `ACTIVE_MEASUREMENTS_ENABLED=true` and the collector are set, and only from probes on networks registered in Iran. Targets are limited to services whose use is not punishable in Iran: the six mass services every round and the AI services in rotation (`lib/active-collector.mjs`); news, opposition and circumvention sites are never targets. Only DNS lookups and TLS/HTTPS handshakes, never page content, at most every six hours. The protected `/api/globalping/measure` route additionally needs a server-only operator key and accepts only what the collector asks: a DNS lookup or an HTTPS `HEAD` request of an allowed service, from one network registered in Iran.
 
 ## State and storage
 
