@@ -589,21 +589,32 @@ html[lang="fa"] :is(.connection-board h2, .overview-panel > header h2, #overview
 .technical-view .panel[data-source-state="error"] { --stripe: var(--status-blocked); }
 .technical-view #divergence-panel[data-finding="info"] { --stripe: #7fcbe0; }
 
-/* Technical view layout: a card keeps its own height instead of stretching to a taller
-   neighbour (no empty card interiors); a long table scrolls inside its card with its header kept;
-   a table with nothing loaded yet is one line, not an empty table; a card left alone in a row
-   takes the whole row. */
-.technical-view .dashboard-grid { align-items: start; }
-.technical-view .panel .table-wrap { max-height: 440px; overflow: auto; }
+/* Technical view layout: a plain two-column grid. Every card is half or full width, so edges line
+   up and the two cards of a row are equally tall; long tables scroll inside their card with their
+   header kept; a table with nothing loaded yet is one line. Cards with nothing for the selection
+   are small and gathered after the cards with data (arranged in v18-situation.js). */
+.technical-view .dashboard-grid { gap: 12px; align-items: stretch; }
+.technical-view .dashboard-grid > .panel { grid-column: span 6; margin: 0; }
+.technical-view .dashboard-grid > :is(#ooni-panel, #signals-panel, #asn-coverage-panel, #v14-tor-context-panel, #targets-panel, #providers-panel, #vpn-field-panel, #measurement-explorer, #intelligence-panel),
+.technical-view .dashboard-grid > .panel.panel-alone { grid-column: 1 / -1; }
+/* Cards with nothing for this selection: title and reason only, three to a row, after the data. */
+.technical-view .dashboard-grid > .panel:is([data-source-state="scope"], [data-source-state="nodata"]) { grid-column: span 4; order: 80; padding-bottom: 14px; }
+/* While the cards are measured: natural heights at half width. */
+.technical-view .dashboard-grid.measuring { align-items: start; }
+.technical-view .dashboard-grid.measuring > .panel.panel-alone { grid-column: span 6; }
+.technical-view .dashboard-grid > .panel:is([data-source-state="scope"], [data-source-state="nodata"]) > :not(.panel-header, .panel-compact-note) { display: none; }
+.technical-view .panel-compact-note { margin: 6px 0 0; color: var(--text-soft); font-size: 14.5px; line-height: 1.5; }
+.technical-view .dashboard-grid > :is(#targets-panel, #providers-panel, #vpn-field-panel, #measurement-explorer, #intelligence-panel) { order: 90; }
+/* The independent signal review as one strip of source tiles. */
+.technical-view #signals-panel .signal-list { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px; }
+.technical-view .panel .table-wrap, .technical-view #event-feed { max-height: 440px; overflow: auto; }
+.technical-view .dashboard-grid > .panel:is([data-source-state="scope"], [data-source-state="nodata"]) .panel-header :is(button, .button) { display: none; }
 .technical-view .panel .table-wrap thead th { position: sticky; top: 0; z-index: 1; }
 .technical-view .table-wrap:has(td.table-empty) { max-height: none; }
 .technical-view .table-wrap:has(td.table-empty) thead { display: none; }
 .technical-view .table-wrap td.table-empty { padding: 10px 12px; text-align: start; }
-.technical-view .dashboard-grid > #v14-tor-context-panel, .technical-view .dashboard-grid > #routing-panel { grid-column: 1 / -1; }
 .technical-view .mini-stat b { white-space: normal; overflow-wrap: anywhere; }
-.technical-view .dashboard-grid.packed { grid-auto-rows: 4px; row-gap: 0; }
-.technical-view .dashboard-grid.packed > .panel { margin-bottom: 10px; }
-@media print { .technical-view .dashboard-grid.packed { grid-auto-rows: auto; row-gap: 10px; } .technical-view .dashboard-grid.packed > .panel { grid-row-end: auto !important; margin-bottom: 0; } }
+@media (max-width: 900px) { .technical-view .dashboard-grid > .panel, .technical-view .dashboard-grid > .panel:is([data-source-state="scope"], [data-source-state="nodata"]) { grid-column: 1 / -1; } }
 /* "How well each question is measured" as a strip above the findings, which use the full width
    in two columns, instead of a short card next to a long list. */
 .technical-view .overview-lower-grid { grid-template-columns: minmax(0, 1fr); align-items: start; }

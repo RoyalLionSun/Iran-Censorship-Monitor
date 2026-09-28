@@ -877,6 +877,8 @@ export default Object.freeze({
   'sources.page.status.stale': 'not answering; last good answer',
   'sources.page.status.token': 'needs an operator key',
   'sources.page.status.scope': 'needs a selected network',
+  'technical.compact.scope': 'Needs a selected network: choose one under “Network scope” above.',
+  'technical.compact.nodata': 'No data for this selection.',
   'sources.page.status.error': 'not answering',
   'sources.page.status.separate': 'loaded separately',
   'sources.page.footer': 'The rules for each source are described in docs/DATA_SOURCES.md and docs/INTERPRETATION.md in the project repository. Results: CC BY-NC-SA 4.0.',

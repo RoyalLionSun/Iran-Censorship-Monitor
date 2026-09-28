@@ -111,32 +111,79 @@ function insertViews() {
   });
   // A shared link can open the technical view directly.
   setView(new URLSearchParams(window.location.search).get('view') === 'technical' ? 'technical' : 'overview');
-  packTechnicalGrid();
+  arrangeTechnicalGrid();
 }
 
-// The technical cards differ a lot in height. Each card spans as many small grid rows as it is
-// tall, so the next card moves up under the shorter one in its columns (reading order kept) instead
-// of waiting for the tallest card of the row. Heights are measured again whenever a card changes.
-const PACK_ROW = 4;
-const PACK_GAP = 10;
-function packTechnicalGrid() {
+// The technical cards in a plain two-column grid: every card is half or full width, so edges line
+// up and the two cards of a row are equally tall. Within each run of half cards (between full-width
+// ones) the cards are placed by height, so cards of similar height share a row instead of a short
+// card being stretched next to a tall one. A card with nothing for this selection (it needs one
+// network, or has no data) shrinks to its title and the reason and moves, with the others like it,
+// to a row of small cards after the cards with data; an odd card left over takes the whole row.
+// Arranged again when a card is added, changes its state or its content changes size.
+const FULL_PANELS = ['ooni-panel', 'signals-panel', 'asn-coverage-panel', 'v14-tor-context-panel', 'targets-panel', 'providers-panel', 'vpn-field-panel', 'measurement-explorer', 'intelligence-panel'];
+const TOOL_PANELS = ['targets-panel', 'providers-panel', 'vpn-field-panel', 'measurement-explorer', 'intelligence-panel'];
+function arrangeTechnicalGrid() {
   const grid = document.querySelector('#technical-view .dashboard-grid');
-  if (!grid || typeof ResizeObserver === 'undefined') return;
-  grid.classList.add('packed');
-  const size = (panel) => {
-    // Layout height, unaffected by the page zoom the Farsi view uses.
-    const height = panel.offsetHeight;
-    if (height > 0) panel.style.gridRowEnd = `span ${Math.ceil((height + PACK_GAP) / PACK_ROW)}`;
+  if (!grid) return;
+  const compact = (panel) => ['scope', 'nodata'].includes(panel.dataset.sourceState);
+  let pending = false;
+  let lastPlan = '';
+  const arrange = () => {
+    pending = false;
+    if (grid.closest('[hidden]')) return;
+    const panels = [...grid.querySelectorAll(':scope > .panel')].filter((panel) => !panel.hidden);
+    for (const panel of panels) {
+      const note = panel.querySelector(':scope > .panel-compact-note');
+      if (compact(panel)) {
+        const text = t(panel.dataset.sourceState === 'scope' ? 'technical.compact.scope' : 'technical.compact.nodata');
+        if (!note) panel.querySelector(':scope > .panel-header')?.insertAdjacentHTML('afterend', `<p class="panel-compact-note">${escapeHtml(text)}</p>`);
+        else if (note.textContent !== text) note.textContent = text;
+      } else note?.remove();
+    }
+    // Natural heights at half width: measured without stretching and without the full-row rule.
+    grid.classList.add('measuring');
+    const height = new Map(panels.map((panel) => [panel, panel.offsetHeight]));
+    grid.classList.remove('measuring');
+    const data = panels.filter((panel) => !compact(panel) && !TOOL_PANELS.includes(panel.id));
+    const ordered = [];
+    const alone = new Set();
+    let run = [];
+    const flush = () => {
+      run.sort((a, b) => height.get(b) - height.get(a));
+      if (run.length % 2) alone.add(run.at(-1));
+      ordered.push(...run);
+      run = [];
+    };
+    for (const panel of data) {
+      if (FULL_PANELS.includes(panel.id)) { flush(); ordered.push(panel); } else run.push(panel);
+    }
+    flush();
+    const smalls = panels.filter(compact);
+    const tools = panels.filter((panel) => TOOL_PANELS.includes(panel.id) && !compact(panel));
+    const plan = [...ordered, ...smalls, ...tools].map((panel) => `${panel.id}${alone.has(panel) ? '*' : ''}`).join(' ');
+    if (plan === lastPlan) return;
+    lastPlan = plan;
+    [...ordered, ...smalls, ...tools].forEach((panel, index) => {
+      panel.style.order = String(index);
+      panel.classList.toggle('panel-alone', alone.has(panel));
+    });
   };
-  const observer = new ResizeObserver((entries) => entries.forEach((entry) => size(entry.target)));
+  // A short pause gathers the changes of one render; it runs in every browser, frames or not.
+  const schedule = () => { if (!pending) { pending = true; setTimeout(arrange, 80); } };
+  schedule();
+  const sizes = new ResizeObserver(schedule);
+  const attributes = new MutationObserver(schedule);
   const watch = () => grid.querySelectorAll(':scope > .panel').forEach((panel) => {
-    if (panel.dataset.packed) return;
-    panel.dataset.packed = '1';
-    observer.observe(panel);
+    if (panel.dataset.arranged) return;
+    panel.dataset.arranged = '1';
+    sizes.observe(panel);
+    attributes.observe(panel, { attributes: true, attributeFilter: ['data-source-state', 'hidden'] });
   });
   watch();
-  // Context cards are added later by their own scripts.
-  new MutationObserver(watch).observe(grid, { childList: true });
+  new MutationObserver(() => { watch(); schedule(); }).observe(grid, { childList: true });
+  // The view may be opened later; arrange once it is visible.
+  document.querySelectorAll('[data-dashboard-view]').forEach((button) => button.addEventListener('click', schedule));
 }
 
 function setView(view) {

@@ -877,6 +877,8 @@ export default Object.freeze({
   'sources.page.status.stale': 'پاسخ نمی‌دهد؛ آخرین پاسخ معتبر',
   'sources.page.status.token': 'نیاز به کلید گردانندهٔ سرور',
   'sources.page.status.scope': 'نیاز به انتخاب یک شبکه',
+  'technical.compact.scope': 'به یک شبکهٔ انتخاب‌شده نیاز دارد: در «محدوده شبکه» در بالا یکی را انتخاب کنید.',
+  'technical.compact.nodata': 'برای این انتخاب داده‌ای نیست.',
   'sources.page.status.error': 'پاسخ نمی‌دهد',
   'sources.page.status.separate': 'جداگانه بارگذاری می‌شود',
   'sources.page.footer': 'قواعد هر منبع در فایل‌های docs/DATA_SOURCES.md و docs/INTERPRETATION.md در مخزن پروژه شرح داده شده است. نتایج: CC BY-NC-SA 4.0.',

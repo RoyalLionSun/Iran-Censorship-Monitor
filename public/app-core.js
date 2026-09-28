@@ -302,6 +302,24 @@ function chartLabels(points, x, bottomY) {
   return points.map((point, index) => index % step === 0 || index === points.length - 1 ? `<text x="${x(index)}" y="${bottomY}" text-anchor="middle" fill="#6f8094" font-size="9">${escapeHtml(shortDate(point.date))}</text>` : '').join('');
 }
 
+// Charts are drawn at the width they are shown at (never narrower than their design width), so a
+// wide card keeps a chart at its height instead of scaling its lines and text up; each chart is
+// drawn again when its width changes (a hidden view opened, a card rearranged, a resized window).
+const chartRedraw = new Map();
+function chartWidth(el, base, redraw) {
+  const shown = Math.round(el.clientWidth || 0);
+  el.dataset.drawnWidth = String(shown);
+  chartRedraw.set(el, redraw);
+  if (!el.dataset.resizeWatched && typeof ResizeObserver !== 'undefined') {
+    el.dataset.resizeWatched = '1';
+    new ResizeObserver(() => {
+      const width = Math.round(el.clientWidth || 0);
+      if (width && Math.abs(width - Number(el.dataset.drawnWidth || 0)) > 40) chartRedraw.get(el)?.();
+    }).observe(el);
+  }
+  return Math.max(base, shown);
+}
+
 function renderOoniChart(ooni) {
   const el = $('#ooni-chart');
   if (!ooni?.ok || !ooni.points?.length) {
@@ -312,7 +330,7 @@ function renderOoniChart(ooni) {
   }
   el.className = 'chart large-chart';
   const data = ooni.points;
-  const W = 920, H = 285, L = 42, R = 18, T = 32, B = 34;
+  const W = chartWidth(el, 920, () => renderOoniChart(ooni)), H = 285, L = 42, R = 18, T = 32, B = 34;
   const innerW = W - L - R, innerH = H - T - B;
   const x = (index) => L + (data.length === 1 ? innerW / 2 : index * innerW / (data.length - 1));
   const yRate = (value) => T + innerH - (Math.max(0, Math.min(100, value)) / 100) * innerH;
@@ -436,7 +454,7 @@ function renderRipeChart(ripe) {
   }
   el.className = 'chart';
   const data = ripe.series;
-  const W = 760, H = 235, L = 44, R = 42, T = 28, B = 32;
+  const W = chartWidth(el, 760, () => renderRipeChart(ripe)), H = 235, L = 44, R = 42, T = 28, B = 32;
   const innerW = W-L-R, innerH = H-T-B;
   const x = (index) => L + (data.length === 1 ? innerW/2 : index * innerW/(data.length-1));
   const rttValues = data.map((row) => row.rttMs).filter(Number.isFinite);
@@ -466,7 +484,7 @@ function renderRadarChart(radar) {
     el.innerHTML = `<span>${escapeHtml(radar.traffic?.error || 'Radar returned no HTTP series for this window.')}</span>`;
   } else {
     el.className = 'chart';
-    const W=760,H=235,L=44,R=18,T=28,B=32,innerW=W-L-R,innerH=H-T-B;
+    const W=chartWidth(el,760,()=>renderRadarChart(radar)),H=235,L=44,R=18,T=28,B=32,innerW=W-L-R,innerH=H-T-B;
     const x=(i)=>L+(series.length===1?innerW/2:i*innerW/(series.length-1));
     const values=series.map((r)=>Number(r.value)).filter(Number.isFinite);
     let min=Math.min(...values), max=Math.max(...values); if (min===max) { min-=1; max+=1; }
@@ -494,7 +512,7 @@ function renderIodaChart(ioda) {
     return;
   }
   el.className = 'chart';
-  const W=760,H=235,L=38,R=18,T=34,B=32,innerW=W-L-R,innerH=H-T-B;
+  const W=chartWidth(el,760,()=>renderIodaChart(ioda)),H=235,L=38,R=18,T=34,B=32,innerW=W-L-R,innerH=H-T-B;
   const colors=['#59a8ff','#52c9c4','#9d8cf2','#e2bd59'];
   const classes=['ioda-a','ioda-b','ioda-c','ioda-d'];
   const picked=series.slice(0,4);
@@ -532,7 +550,7 @@ function renderTorChart(tor) {
   const relayBy=new Map(relay.map(r=>[r.date,r])); const bridgeBy=new Map(bridge.map(r=>[r.date,r]));
   const direct=dates.map(d=>relayBy.get(d)?.users ?? null), lower=dates.map(d=>relayBy.get(d)?.lower ?? null), bridged=dates.map(d=>bridgeBy.get(d)?.users ?? null);
   const values=[...direct,...lower,...bridged].filter(Number.isFinite);
-  const W=760,H=235,L=48,R=18,T=30,B=32,innerW=W-L-R,innerH=H-T-B;
+  const W=chartWidth(el,760,()=>renderTorChart(tor)),H=235,L=48,R=18,T=30,B=32,innerW=W-L-R,innerH=H-T-B;
   const max=Math.max(...values,1)*1.08;
   const x=(i)=>L+(dates.length===1?innerW/2:i*innerW/(dates.length-1));
   const y=(v)=>T+innerH-Math.max(0,v)/max*innerH;
@@ -854,6 +872,8 @@ function sourceState(source) {
   if (source.ok === false || source.status === 'error') return 'error';
   if (['partial', 'stale'].includes(source.status)) return 'partial';
   if (source.status === 'observed') return 'ok';
+  // Answers only for one selected network (routing, route origins, topology).
+  if (source.status === 'scope_required') return 'scope';
   return 'nodata';
 }
 
