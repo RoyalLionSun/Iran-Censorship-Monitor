@@ -922,13 +922,14 @@ function periodHint(connectivity) {
     : t('board.connection.periodOngoing', { from: formatDay(period.start) });
 }
 
-function eventHint(connectivity) {
+// The same plain words and Tehran time as the answer "Does the internet itself work?".
+function eventHint(connectivity, allIran = false) {
   const event = connectivity?.latestEvent;
-  if (!event || connectivity.state !== 'disruption-signals') return null;
-  const kindKey = `board.event.kind.${event.kind}`;
-  const kind = t(kindKey) === kindKey ? t('board.event.kind.other') : t(kindKey);
-  const time = (value) => formatDateTime(value);
-  return t(event.end ? 'board.event.range' : 'board.event.since', { source: event.source, kind, from: time(event.start), to: event.end ? time(event.end) : '' });
+  if (!event?.start || connectivity.state !== 'disruption-signals') return null;
+  const kindKey = [`meaning.event.kind.${event.kind}${allIran ? '.iran' : ''}`, `meaning.event.kind.${event.kind}`].find((key) => t(key) !== key);
+  const kind = kindKey ? t(kindKey) : t('meaning.event.kind.other');
+  const when = t('meaning.event.when', { day: tehranDay(event.start), time: ltr(event.end ? `${tehranTime(event.start)}\u2060–\u2060${tehranTime(event.end)}` : tehranTime(event.start)) });
+  return t('board.event.plain', { source: event.source, kind, when });
 }
 
 function durationText(ms) {
@@ -948,7 +949,7 @@ function latestDisruption(connectivity, allIran = false) {
   const kind = kindKey ? t(kindKey) : t('meaning.event.kind.other');
   const start = Date.parse(event.start);
   const end = event.end ? Date.parse(event.end) : null;
-  const when = t('meaning.event.when', { day: tehranDay(event.start), time: ltr(end ? `${tehranTime(event.start)}–${tehranTime(event.end)}` : tehranTime(event.start)) });
+  const when = t('meaning.event.when', { day: tehranDay(event.start), time: ltr(end ? `${tehranTime(event.start)}\u2060–\u2060${tehranTime(event.end)}` : tehranTime(event.start)) });
   const lines = [end && end > start
     ? t('meaning.event.latest', { kind, duration: durationText(end - start), when, source: event.source })
     : t('meaning.event.latestOpen', { kind, when, source: event.source })];
@@ -1159,7 +1160,7 @@ function statusRow(interpretation) {
       status: ended ? 'warn' : { none: 'ok', signals: 'warn', unknown: 'unknown' }[connection] ?? 'bad',
       value: ended ? t('board.connection.ended', { date: formatDay(ended.end) })
         : connection === 'signals' ? plural('board.connection.signals', connectivity.eventCount ?? 0) : t(`board.connection.${connection}`),
-      hint: periodHint(connectivity) ?? eventHint(connectivity) ?? t('board.connection.hint'),
+      hint: periodHint(connectivity) ?? eventHint(connectivity, !interpretation.selection?.asn) ?? t('board.connection.hint'),
     },
     radarLatency !== null
       // Real user traffic in this network says more to a reader than a probe ping.

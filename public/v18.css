@@ -386,8 +386,9 @@ html[dir="rtl"] .history-strip { transform: scaleX(-1); }
 .context-list li:not(:has(.context-new)) > span { grid-column: 2 / 4; }
 @media (max-width: 640px) { .context-list li { grid-template-columns: auto 1fr; } .context-list time { grid-column: 1 / -1; } .context-list li > span, .context-list li:not(:has(.context-new)) > span { grid-column: 1 / -1; } }
 /* "What this means for you": short questions with plain answers; numbers folded below. */
-.meaning-qa { display: grid; gap: 14px; margin-top: 12px; }
-.meaning-item { padding-inline-start: 12px; border-inline-start: 2px solid rgba(89, 168, 255, .35); }
+.meaning-qa { display: grid; gap: 10px; margin-top: 12px; }
+/* The same tile as "What we do not know" next to it. */
+.meaning-item { padding: 10px 12px; }
 .meaning-q { margin: 0 0 3px; color: var(--text); font-size: 16px; font-weight: 700; }
 .meaning-a { margin: 2px 0 0; color: var(--text-soft); font-size: 15.5px; line-height: 1.6; }
 .meaning-link { display: inline-block; margin-top: 4px; color: #9ad9d5; font-size: 14.5px; text-decoration: underline; text-underline-offset: 3px; }
@@ -523,7 +524,7 @@ html[lang="fa"] .overview-panel > header .section-label { letter-spacing: normal
 .overview-view > .jump-bar { margin: 0; }
 
 /* Tiles */
-.service-tile, .status-row > div, .usage-card, .workaround, .outage-traffic, #current-unknowns .unknown-list li, .anatomy-timeline li {
+.service-tile, .status-row > div, .usage-card, .workaround, .outage-traffic, #current-unknowns .unknown-list li, .meaning-item, .anatomy-timeline li {
   --stripe: var(--stripe-neutral); background: var(--tile-bg); background-image: none;
   border: 1px solid var(--border); border-inline-start: 4px solid var(--stripe); border-radius: 10px; }
 .service-tile { --stripe: var(--tile); border-top-width: 1px; }
@@ -542,7 +543,6 @@ html[lang="fa"] .overview-panel > header .section-label { letter-spacing: normal
 /* Charts and figures in the one accent blue. */
 .usage-chart .vpn-bar, .vpn-use-chart .vpn-bar { fill: #7fcbe0; }
 .usage-value b { color: var(--text); }
-.meaning-item { border-inline-start-color: var(--stripe-neutral); }
 .access-key-mark { background: var(--tile-bg); }
 #connection-title { scroll-margin-top: calc(var(--topbar-h, 76px) + 64px); }
 /* One title per card, in the same style everywhere: the double titles ("What this means" +
