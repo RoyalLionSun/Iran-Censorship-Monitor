@@ -111,6 +111,32 @@ function insertViews() {
   });
   // A shared link can open the technical view directly.
   setView(new URLSearchParams(window.location.search).get('view') === 'technical' ? 'technical' : 'overview');
+  packTechnicalGrid();
+}
+
+// The technical cards differ a lot in height. Each card spans as many small grid rows as it is
+// tall, so the next card moves up under the shorter one in its columns (reading order kept) instead
+// of waiting for the tallest card of the row. Heights are measured again whenever a card changes.
+const PACK_ROW = 4;
+const PACK_GAP = 10;
+function packTechnicalGrid() {
+  const grid = document.querySelector('#technical-view .dashboard-grid');
+  if (!grid || typeof ResizeObserver === 'undefined') return;
+  grid.classList.add('packed');
+  const size = (panel) => {
+    // Layout height, unaffected by the page zoom the Farsi view uses.
+    const height = panel.offsetHeight;
+    if (height > 0) panel.style.gridRowEnd = `span ${Math.ceil((height + PACK_GAP) / PACK_ROW)}`;
+  };
+  const observer = new ResizeObserver((entries) => entries.forEach((entry) => size(entry.target)));
+  const watch = () => grid.querySelectorAll(':scope > .panel').forEach((panel) => {
+    if (panel.dataset.packed) return;
+    panel.dataset.packed = '1';
+    observer.observe(panel);
+  });
+  watch();
+  // Context cards are added later by their own scripts.
+  new MutationObserver(watch).observe(grid, { childList: true });
 }
 
 function setView(view) {

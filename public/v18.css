@@ -588,3 +588,27 @@ html[lang="fa"] :is(.connection-board h2, .overview-panel > header h2, #overview
 .technical-view .panel[data-source-state="partial"], .technical-view #divergence-panel[data-finding="warn"] { --stripe: var(--status-restricted); }
 .technical-view .panel[data-source-state="error"] { --stripe: var(--status-blocked); }
 .technical-view #divergence-panel[data-finding="info"] { --stripe: #7fcbe0; }
+
+/* Technical view layout: a card keeps its own height instead of stretching to a taller
+   neighbour (no empty card interiors); a long table scrolls inside its card with its header kept;
+   a table with nothing loaded yet is one line, not an empty table; a card left alone in a row
+   takes the whole row. */
+.technical-view .dashboard-grid { align-items: start; }
+.technical-view .panel .table-wrap { max-height: 440px; overflow: auto; }
+.technical-view .panel .table-wrap thead th { position: sticky; top: 0; z-index: 1; }
+.technical-view .table-wrap:has(td.table-empty) { max-height: none; }
+.technical-view .table-wrap:has(td.table-empty) thead { display: none; }
+.technical-view .table-wrap td.table-empty { padding: 10px 12px; text-align: start; }
+.technical-view .dashboard-grid > #v14-tor-context-panel, .technical-view .dashboard-grid > #routing-panel { grid-column: 1 / -1; }
+.technical-view .mini-stat b { white-space: normal; overflow-wrap: anywhere; }
+.technical-view .dashboard-grid.packed { grid-auto-rows: 4px; row-gap: 0; }
+.technical-view .dashboard-grid.packed > .panel { margin-bottom: 10px; }
+@media print { .technical-view .dashboard-grid.packed { grid-auto-rows: auto; row-gap: 10px; } .technical-view .dashboard-grid.packed > .panel { grid-row-end: auto !important; margin-bottom: 0; } }
+/* "How well each question is measured" as a strip above the findings, which use the full width
+   in two columns, instead of a short card next to a long list. */
+.technical-view .overview-lower-grid { grid-template-columns: minmax(0, 1fr); align-items: start; }
+.technical-view #evidence-overview { order: -1; }
+.technical-view #current-findings .finding-list { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 28px; }
+.technical-view #current-findings .finding-list article:nth-child(2) { border-top: 0; }
+@media (max-width: 900px) { .technical-view #current-findings .finding-list { grid-template-columns: minmax(0, 1fr); } .technical-view #current-findings .finding-list article:nth-child(2) { border-top: 1px solid var(--border); } }
+@media print { .technical-view .panel .table-wrap { max-height: none; overflow: visible; } }
