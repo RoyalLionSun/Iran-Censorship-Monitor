@@ -165,7 +165,7 @@ tr[data-level="blocked"] .access-level b { color: var(--status-blocked); }
 .dimension-evidence b { color: var(--text); }
 .interpretation-card > small { display: block; padding-top: 8px; border-top: 1px solid var(--border); color: var(--muted); font-size: 13.5px; line-height: 1.5; }
 
-.overview-lower-grid { display: grid; grid-template-columns: minmax(0,1.35fr) minmax(320px,1fr); gap: 12px; align-items: start; }
+.overview-lower-grid { display: grid; grid-template-columns: minmax(0,1.35fr) minmax(320px,1fr); gap: 12px; align-items: stretch; }
 .overview-panel { padding: 17px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-elevated); box-shadow: var(--shadow); }
 .overview-panel header h2 { margin: 2px 0 0; font-size: 19px; }
 .finding-list { display: grid; gap: 7px; margin-top: 11px; }
@@ -623,3 +623,16 @@ html[lang="fa"] :is(.connection-board h2, .overview-panel > header h2, #overview
 .technical-view #current-findings .finding-list article:nth-child(2) { border-top: 0; }
 @media (max-width: 900px) { .technical-view #current-findings .finding-list { grid-template-columns: minmax(0, 1fr); } .technical-view #current-findings .finding-list article:nth-child(2) { border-top: 1px solid var(--border); } }
 @media print { .technical-view .panel .table-wrap { max-height: none; overflow: visible; } }
+
+/* Overview alignment: the filter fields share one height, so every label sits on one line; the
+   tested ways around the filter fill whole rows of four on wide screens; a network row of "Who has
+   access" is two lines (level and tests, then the bar); the source cards keep their links at the
+   bottom edge. */
+.filterbar :is(select, input[type="date"]) { height: 36px; min-height: 36px; box-sizing: border-box; padding-block: 0; }
+@media (min-width: 1200px) { .workarounds-board ul { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.access-board .access-level { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 8px; align-items: baseline; }
+.access-board .access-level small { display: inline; grid-column: 2; grid-row: 1; white-space: nowrap; }
+.access-board td.access-level { min-width: 170px; }
+.access-board .access-level .access-meter { grid-column: 1 / -1; grid-row: 2; }
+.source-card { display: flex; flex-direction: column; }
+.source-card .source-card-links { margin-top: auto; }
