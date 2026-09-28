@@ -1,6 +1,6 @@
 # Current state
 
-Date: **2026-09-27** · Branch: **`main`** · Version: **1.9.0** (released 2026-09-27)
+Date: **2026-09-28** · Branch: **`main`** · Version: **1.9.1** (released 2026-09-28)
 
 The dated history of every change is in [CHANGELOG.md](CHANGELOG.md); this page says what the project is and does today.
 
@@ -8,7 +8,7 @@ The dated history of every change is in [CHANGELOG.md](CHANGELOG.md); this page 
 
 - **Overview** (English and Farsi, for non-technical readers), one card per section in order of importance: current situation with headline and "what changed"; what this means for you and what we do not know; the six main services (website, app and app servers, "blocked since", per-network exceptions); ways around the filter (OONI's Tor, Snowflake, Psiphon, Riseup VPN, STUN and encrypted-DNS tests, download sites, Tor and Psiphon Conduit use, Cloudflare WARP share); further services in five groups (social and messaging, Persian-language news, VPN tools, 19 AI services, everyday services); who has access, per Iranian network and service group; who decides what is blocked and privileged access (dated primary sources, `public/context-items.js`); the connection (status tiles, outage traffic, how a shutdown unfolded); sources.
 - **Technical analysis**: test results per website and address, the per-claim assessment, source cards, routing, traffic, quality and IPv6 charts, raw measurements.
-- **Reports and sharing**: daily updates (`/updates`, `/feed.xml`, optional Telegram), weekly reports (Saturday to Friday) and monthly reports (`/reports`), `/widget.svg`, CSV/PDF/Word export, share menu, installable app, offline copy of the last answer.
+- **Reports and sharing**: daily updates and change alerts (`/updates`, `/feed.xml`, optional Telegram: a nationwide outage beginning or ending, a main service turning blocked or reachable, each confirmed by a second check), weekly reports (Saturday to Friday) and monthly reports (`/reports`, with the period's Filterwatch expert reports as context), `/widget.svg`, CSV/PDF/Word export, share menu, installable app, offline copy of the last answer.
 - **Support**: GitHub Sponsors (`.github/FUNDING.yml`, the "Sponsor" button); the footer links to it in English and Farsi, addressed to supporters outside Iran.
 - **Tools page** (`/tools`, English and Farsi): Tor Browser, Snowflake, Psiphon, Riseup VPN, Cloudflare WARP and encrypted DNS with devices, the current results from inside Iran and the official download pages plus the official email/Telegram channels (checked on the providers' pages, 26 September 2026); it recommends nothing; linked from "Ways around the filter".
 - **Sources page** (`/sources`, English and Farsi): every source grouped by what it may support (evidence of access, traffic, usage, routing, measured from abroad, reports), with its answer for the default view; linked from the source register.

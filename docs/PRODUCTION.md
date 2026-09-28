@@ -2,7 +2,7 @@
 
 ## Release state
 
-The current release is v1.9.0 (27 September 2026), the plain-language redesign. The step-by-step checklist for going online is [GO_LIVE.md](../GO_LIVE.md).
+The current release is v1.9.1 (28 September 2026), security, privacy and presentation fixes after the plain-language redesign of 1.9.0. The step-by-step checklist for going online is [GO_LIVE.md](../GO_LIVE.md).
 
 Publishing the dashboard does not authorize a probe deployment in Iran: `deploymentAuthorized:false` stays, and the Fleet Stage-1 material remains a laboratory design.
 
@@ -56,7 +56,7 @@ npm run verify:radar       # optional token
 
 ## Dashboard service
 
-Node.js 22.13 or newer is required (`node:sqlite`); the project is tested on the current Node.js 22 release (CI) and on 22.22. `node:sqlite` is still marked experimental upstream, so update Node within the 22 line and run `npm run check` after each update.
+Node.js 22.13 or newer is required (`node:sqlite`); CI tests on Node.js 22.13.0, the oldest allowed release, and on the current 22 release. `node:sqlite` is still marked experimental upstream, so update Node within the 22 line and run `npm run check` after each update.
 
 Keep the Node listener private where practical and terminate HTTPS at a reverse proxy. Run the service as an unprivileged account with appropriate systemd hardening (`NoNewPrivileges`, private temporary space and read-only system/home protections appropriate to the distribution).
 
