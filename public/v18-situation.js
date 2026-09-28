@@ -1482,7 +1482,9 @@ function meaningAnswers(interpretation) {
     const service = scope.serviceId ? brandName(scope.serviceId, services) : scope.domain;
     if (scope.blocked > 0) apps.push(t('meaning.networks.blocked', { service, blocked: formatNumber(scope.blocked), measured: formatNumber(scope.measured) }));
     else if (scope.restricted > 0) apps.push(t('meaning.networks.restricted', { service, restricted: formatNumber(scope.restricted), measured: formatNumber(scope.measured) }));
-    if (scope.reachable > 0 && (scope.blocked > 0 || scope.restricted > 0)) apps.push(t('meaning.networks.reachable', { service, reachable: formatNumber(scope.reachable) }));
+    // Networks where most tests got through, some blocked ones included, still count as working.
+    const worked = scope.reachable + (scope.partial ?? 0);
+    if (worked > 0 && (scope.blocked > 0 || scope.restricted > 0)) apps.push(t('meaning.networks.reachable', { service, reachable: formatNumber(worked) }));
   }
   if (apps.length) answers.push({ question: t('meaning.q.apps'), lines: apps });
 

@@ -47,7 +47,11 @@ test('timeline, networks and the complete sample come from the store', () => {
   assert.equal(timeline.totalAnomalies, 2);
   const networks = storeNetworks(store, { ...input, asn: '' }, 'www.instagram.com', new Set(['AS58224']));
   assert.equal(networks.measured, 1);
-  assert.equal(networks.blocked, 1);
+  // 1 confirmed, 1 anomaly, 1 ok: most tests failed, but confirmed blocks do not outnumber the
+  // successes, so the network shows problems rather than a block (majority rule).
+  assert.equal(networks.blocked, 0);
+  assert.equal(networks.restricted, 1);
+  assert.equal(networks.networks[0].status, 'restricted');
   const sample = storeSample(store, input, 'www.instagram.com', null);
   assert.deepEqual({ runs: sample.runs, sampled: sample.sampled, affected: sample.affected, bounded: sample.bounded, dominant: sample.dominantMechanism },
     { runs: 3, sampled: 3, affected: 2, bounded: false, dominant: { code: 'dns', count: 2 } });

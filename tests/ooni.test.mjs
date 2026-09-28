@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { aggregateOoniNetworks, buildOoniNetworkQuery, summarizeOoniNetworks, OONI_CACHE_TTL_MS, OONI_MAX_PARALLEL_REQUESTS, OONI_RATE_LIMIT_MESSAGE, OONI_SAMPLE_SIZE, getCircumventionSignals, getOoniDomains, sampleMechanism, aggregateOoniAggregationRows, aggregateOoniDomains, aggregateOoniRows, buildOoniAggregationQuery, buildOoniDomainMeasurementsQuery, buildOoniDomainQuery, buildOoniQuery, buildOoniSampleQuery, inferDetailedMethods, parseOoniDomainMeasurements, summarizeOoniSample } from '../lib/ooni.mjs';
@@ -304,6 +305,18 @@ test('the network comparison asks one aggregation for one service across all Ira
   assert.equal(params.get('probe_cc'), 'IR');
   assert.equal(params.get('probe_asn'), null, 'the comparison must not be limited to the selected network');
   assert.equal(params.get('input'), null);
+});
+
+test('a network is classified by majority, the same way as in the per-network table', async () => {
+  const { networkStatus } = await import('../public/service-findings.js');
+  // One confirmed block and four anomalies among 100 tests do not make the network "blocked".
+  const [network] = aggregateOoniNetworks([{ probe_asn: 'AS58224', measurement_count: 100, anomaly_count: 4, confirmed_count: 1, failure_count: 0, ok_count: 95 }]);
+  assert.equal(network.status, 'partial');
+  assert.equal(network.status, networkStatus({ confirmed: 1, anomalous: 4, ok: 95 }));
+  const summary = summarizeOoniNetworks([network], 'www.instagram.com');
+  assert.deepEqual([summary.blocked, summary.partial, summary.reachable], [0, 1, 0]);
+  const source = await readFile(new URL('../lib/ooni.mjs', import.meta.url), 'utf8');
+  assert.match(source, /if \(!iran\) return \{ ok: false, source: 'OONI', status: 'error', error: 'Iranian network registry unavailable\.' \};\n  const all = aggregateOoniNetworks/, 'without the registry there is no network comparison');
 });
 
 test('each network is classified on its own and repeated or inconsistent rows fail closed', () => {

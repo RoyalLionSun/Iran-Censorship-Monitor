@@ -722,14 +722,17 @@ const staticCache = new Map();
 async function staticEntry(file) {
   const info = await stat(file);
   const cached = staticCache.get(file);
-  if (cached && cached.mtimeMs === info.mtimeMs && cached.size === info.size) return cached;
+  // Besides time and size, the inode and the change time: a replaced file (a new deployment that
+  // keeps the old modification time, or an atomic rename) always gets a new entry.
+  const version = `${info.ino}:${info.size}:${info.mtimeMs}:${info.ctimeMs}`;
+  if (cached && cached.version === version) return cached;
   let body = await readFile(file);
   if (file.endsWith(`${sep}index.html`) && process.env.PUBLIC_URL) {
     const base = process.env.PUBLIC_URL.replace(/\/+$/, '').replace(/[&"<>]/g, (char) => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' }[char]));
     body = Buffer.from(body.toString('utf8').replace('content="/brand/og-image.png"', `content="${base}/brand/og-image.png"`)
       .replace('<meta property="og:type"', `<meta property="og:url" content="${base}/" />\n  <meta property="og:type"`));
   }
-  const entry = { mtimeMs: info.mtimeMs, size: info.size, body, etag: `"${createHash('sha1').update(body).digest('base64url').slice(0, 22)}"`, encoded: new Map() };
+  const entry = { version, body, etag: `"${createHash('sha1').update(body).digest('base64url').slice(0, 22)}"`, encoded: new Map() };
   staticCache.set(file, entry);
   return entry;
 }
@@ -1039,6 +1042,14 @@ async function serveReport(req, res, url) {
   sendHtml(req, res, html);
 }
 
+// The log keeps the path only: query strings carry what a reader looked at (a site, a network, a
+// period), and that is not needed to run the server.
+function logPath(req) {
+  const raw = String(req.url ?? '/');
+  const path = raw.split('?')[0].slice(0, 200);
+  return raw.includes('?') ? `${path}?…` : path;
+}
+
 const server = http.createServer(async (req, res) => {
   const started = Date.now();
   try {
@@ -1067,14 +1078,14 @@ const server = http.createServer(async (req, res) => {
     }
   } catch (error) {
     if (isInternalError(error)) {
-      console.error('%s %s:', req.method, req.url, error);
+      console.error('%s %s:', req.method, logPath(req), error);
       jsonResponse(res, 500, { ok: false, source: 'server', error: 'Internal error; the details are in the server log.', fetchedAt: new Date().toISOString() });
     } else {
       jsonResponse(res, 400, errorPayload(error));
     }
   } finally {
     const ms = Date.now() - started;
-    if (process.env.NODE_ENV !== 'test') console.log(`${req.method} ${req.url} ${ms}ms`);
+    if (process.env.NODE_ENV !== 'test') console.log(`${req.method} ${logPath(req)} ${res.statusCode} ${ms}ms`);
   }
 });
 

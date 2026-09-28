@@ -57,3 +57,10 @@ test('a slow shutdown timeline cannot hold up a new Overview', async () => {
   assert.match(server, /status: 'pending', partialStale: true/);
   assert.match(server, /\|stop\$\|/, 'Access Now STOP lookups are budgeted');
 });
+
+test('the log keeps paths without query strings, and a replaced static file is never served from the old cache', async () => {
+  const server = await readFile(new URL('../server.mjs', import.meta.url), 'utf8');
+  assert.doesNotMatch(server, /console\.(log|error)\([^)]*req\.url/, 'no full request URL in the log');
+  assert.match(server, /console\.log\(`\$\{req\.method\} \$\{logPath\(req\)\}/);
+  assert.match(server, /const version = `\$\{info\.ino\}:\$\{info\.size\}:\$\{info\.mtimeMs\}:\$\{info\.ctimeMs\}`/);
+});
