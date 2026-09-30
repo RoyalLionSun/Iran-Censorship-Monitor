@@ -196,7 +196,7 @@ export default Object.freeze({
   'runtime.template.cenalertImpact': 'رویداد CenAlert، اثر {impact}',
   'runtime.template.dayCount': '{count} روز',
   'runtime.template.radarLegend': 'سری HTTP در Radar، {scope}، {interval}، اطمینان {confidence}',
-  'runtime.template.latestMedian': '{source} آخرین مقدار / میانه بازه',
+  'runtime.template.latestMedian': 'آخرین مقدار / میانهٔ بازه در {source}',
   'runtime.template.topology': 'دسترسی {reach}، مشتریان {customers}، درجه {degree}',
   'runtime.template.dashboardFailure': 'درخواست داشبورد ناموفق بود: {message}',
   'runtime.template.initFailure': 'راه‌اندازی ناموفق بود: {message}',

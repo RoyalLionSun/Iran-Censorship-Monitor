@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Farsi wording (30 September 2026): 24 Farsi texts opened with a name filled in at run time (a service, domain or source), which can be Latin ("ChatGPT", "instagram.com") and then broke the reading order; they were written anew from the English original and open with Persian (e.g. "دسترسی به {services} مسدود است"). New checks: no Farsi text opens with a placeholder that can hold a Latin name (one list fragment inserted after a Persian opening is named as the exception), every Farsi text keeps the placeholders of its English original, Persian ی and ک instead of the Arabic letters, composed Unicode, no direction embeddings or overrides, and a left-to-right mark only before a Latin handle;
 ## 1.9.1 — 2026-09-28
 
 Security, privacy and presentation fixes after 1.9.0; summary in `release-notes/v1.9.1.md`.

@@ -1,15 +1,20 @@
 # Verification Report
 
-## Latest verification — 2026-09-28, release v1.9.1
+## Latest verification — 2026-09-30, `main` after release v1.9.1
 
-- `npm run check`: syntax checks and **558/558** deterministic tests passed, including the document checks (versions, test count, links, no tool attribution or private addresses);
+- `npm run check`: syntax checks and **561/561** deterministic tests passed, including the Farsi text checks (no sentence opens with a Latin word or with a placeholder that can hold a Latin name, placeholders as in English, Persian ی and ک, composed Unicode, no direction overrides);
+- `npm run build` and the headless browser gates (`npm run verify:ui`): passed.
+
+The sections below are the dated records of earlier verification rounds.
+
+## Release v1.9.1 — 2026-09-28
+
+- `npm run check`: syntax checks and 558/558 deterministic tests passed, including the document checks (versions, test count, links, no tool attribution or private addresses);
 - `npm run verify:release-notes`: passed for v1.9.1;
 - `npm run build`: passed;
 - `npm run verify:public`: live public-source acceptance passed for `2026-09-15..2026-09-28`, `AS58224` (GDELT unreachable, reported as information);
 - GitHub CI on `main`: passed;
 - headless Chromium (Linux) page checks of the Overview, Technical analysis, reports, `/tools` and `/sources` in English and Farsi, at desktop and phone width (390 px): no script errors, no untranslated keys or placeholders, no horizontal overflow.
-
-The sections below are the dated records of earlier verification rounds.
 
 ## v1.9 working state — 2026-09-12
 
