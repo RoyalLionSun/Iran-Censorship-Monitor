@@ -34,7 +34,7 @@ The dated history of every change is in [CHANGELOG.md](CHANGELOG.md); this page 
 - **Going online:** [GO_LIVE.md](GO_LIVE.md): public address, a server that is not a home connection, `TRUST_PROXY`, backups.
 - **Reachable from Iran:** plan hosting that Iran does not block, mirrors and an .onion address; once online, test the dashboard's own address from inside Iran (OONI Run link or a Citizen Lab list entry).
 - **Test lists:** Citizen Lab pull request #2277 (app servers and iranopasmigirim.com) is open, not yet merged, and still has the `robots.txt.txt` typo; submit the sites in [OUTREACH_VPN_DATA.md](docs/OUTREACH_VPN_DATA.md) that OONI does not test yet (opposition sites, 14 AI services, 34 domestic everyday services such as banks, Shaparak, Snapp, Rubika, app stores, maps and government e-services).
-- **RIPE Atlas credits:** requested from RIPE NCC on 27 September 2026, reply pending; alternatively host a probe.
+- **RIPE Atlas credits:** RIPE NCC agreed on 1 October 2026 to grant them once it has the RIPE Atlas account's address; a software probe could earn more later on the project's server (not on a private connection, since a probe shows its network and approximate location).
 
 ## Known limits
 
@@ -46,6 +46,7 @@ The dated history of every change is in [CHANGELOG.md](CHANGELOG.md); this page 
 
 ## Decisions
 
+- **RIPE Atlas in public texts — decided (2 October 2026):** RIPE NCC does not see censorship monitoring as a use of RIPE Atlas (OONI is the platform for it) and sees no need to name RIPE Atlas on the dashboard. The independent checks keep running; the dashboard, reports and the sources page call them an independent check from devices in Iran and name no probe network next to a finding, which also keeps attention away from the probe hosts in Iran. RIPE Atlas is named for connection quality (delay, packet loss), which it is meant for; the operator documents keep the configuration names.
 - **Names of networks held by private persons — decided (27 September 2026):** they appear by number only, except a network that still carried traffic during a nationwide shutdown: the shutdown timeline then names the registrant it had at the time (RIPE Database version history, with date and the network's name then), kept with the finished shutdown so that a later change of registrant does not replace it, next to the measurement, with no claim about who the person is. Example: AS210705 carried about 5.8% of Iran's remaining traffic on 2–5 March 2026 (0.08% the week before) while Iran as a whole was at about 0.4% of normal.
 - **Targets of the independent checks — decided (26 September 2026):** whether *using* a service is punishable decides, not whether it is blocked; the six mass services and the AI services are allowed, news, opposition and circumvention stay with OONI.
 - **Lightweight self-hosting — decided (24 September 2026):** no default path may download OONI's raw files or keep an archive.

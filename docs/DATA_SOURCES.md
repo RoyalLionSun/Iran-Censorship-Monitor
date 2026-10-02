@@ -41,6 +41,8 @@ An anomaly or failed control is an investigation input, not automatic proof of c
 
 ### RIPE Atlas / IODA / Radar
 
+Public texts (dashboard, reports, feed, sources page) name RIPE Atlas only for connection quality. Its optional checks of the allowed services appear there as an independent check from devices in Iran, without naming the probe network, because RIPE NCC does not see censorship monitoring as a use of RIPE Atlas.
+
 RIPE Atlas preserves per-probe coverage; zero samples remain unknown and partial coverage is not promoted to national confirmation. IODA and Radar provide connectivity observations without establishing filtering, political intent or actor. Counts of IODA/Radar events never determine severity. Radar source-native national/regional/network scope may determine impact only when its outage/anomaly channels satisfy the eligibility contract. Radar credentials remain server-side.
 
 ### RIPE / routing / RPKI

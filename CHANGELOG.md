@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- RIPE Atlas in public texts (2 October 2026): the independent checks of the allowed services appear as "independent check from devices in Iran" without naming the probe network (tiles, further-service chips, the collector paths in the source status); the sources page lists RIPE Atlas under traffic and connection quality instead of evidence of access, and its source card describes delay and packet loss only; README lists RIPE Atlas for connection quality. RIPE NCC does not see censorship monitoring as a use of RIPE Atlas, and naming it next to a finding would point at the probe hosts in Iran;
 - Farsi wording (30 September 2026): 24 Farsi texts opened with a name filled in at run time (a service, domain or source), which can be Latin ("ChatGPT", "instagram.com") and then broke the reading order; they were written anew from the English original and open with Persian (e.g. "دسترسی به {services} مسدود است"). New checks: no Farsi text opens with a placeholder that can hold a Latin name (one list fragment inserted after a Persian opening is named as the exception), every Farsi text keeps the placeholders of its English original, Persian ی and ک instead of the Arabic letters, composed Unicode, no direction embeddings or overrides, and a left-to-right mark only before a Latin handle;
 ## 1.9.1 — 2026-09-28
 

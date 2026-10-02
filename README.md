@@ -39,7 +39,8 @@ people in Iran can reach.
 | Source | Where it measures | Used for |
 |---|---|---|
 | OONI | volunteers' phones and computers in Iranian networks | website and app blocking (main source) |
-| RIPE Atlas, Globalping | probes in Iranian networks (active checks off by default) | independent DNS/TLS checks |
+| RIPE Atlas | probes in Iranian networks | delay and packet loss: connection quality |
+| Probe networks in Iran (Globalping and others) | devices in Iranian networks (off by default) | independent DNS/TLS checks of the allowed services |
 | Cloudflare Radar | traffic from Iranian networks | outages, traffic, connection quality |
 | Tor Metrics, Psiphon statistics, APNIC Labs | users in Iran | use of ways around the filter |
 | IODA, RIPEstat / RIPE RIS, M-Lab | from outside or from routing | context: is Iran connected, are routes announced |

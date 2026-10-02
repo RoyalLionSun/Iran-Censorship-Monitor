@@ -515,17 +515,17 @@ function historyLine(id) {
 
 // Tile colour for an independent answer; "failing" is a failed connection, not proof of a block.
 const INDEPENDENT_STATUS = { blocked: 'blocked', failing: 'restricted', partial: 'restricted', reachable: 'reachable' };
-const INDEPENDENT_SOURCE = { 'ripe-atlas': 'RIPE Atlas', globalping: 'Globalping' };
 
-// Independent inside-out checks, as their own line: which source, how many devices in how many
-// networks, and what they saw. Never merged into OONI's figures.
+// Independent inside-out checks, as their own line: how many devices in how many networks, and
+// what they saw. Never merged into OONI's figures. The probe networks are not named next to a
+// finding: RIPE NCC asked not to tie RIPE Atlas to censorship monitoring, and naming them would
+// point at the probe hosts in Iran.
 function independentLine(independent) {
   if (!independent || independent.status === 'inconclusive') return '';
   const key = independent.status === 'blocked' && independent.dns.blocked >= independent.connect.blocked ? 'board.independent.line.blockedDns'
     : `board.independent.line.${independent.status}`;
   const networks = independent.blockedNetworks.length ? independent.blockedNetworks : independent.networks;
   return `<li class="tile-independent">${escapeHtml(t(key, {
-    sources: listOf(independent.sources.map((source) => ltr(INDEPENDENT_SOURCE[source] ?? source))),
     probes: plural('board.independent.devices', independent.probes), networks: plural('board.independent.networks', independent.networks.length),
     named: ltr(networks.slice(0, 3).join(', ')),
   }))}</li>`;
@@ -746,7 +746,7 @@ function moreServiceName(service) {
 
 // Further services as compact chips per group: blocked, partly, problems or reachable, with the
 // numbers on hover. A dashed chip was answered from other Iranian networks.
-// Where OONI has no test, an independent check from probes in Iran (RIPE Atlas, Globalping)
+// Where OONI has no test, an independent check from probes in Iran
 // answers instead, tagged as such.
 const INDEPENDENT_CHIP_STATUS = { blocked: 'blocked', failing: 'restricted', partial: 'partial', reachable: 'reachable' };
 function withIndependent(service) {
@@ -759,7 +759,6 @@ function renderMoreServices(services) {
   if (!groups?.some((group) => group.services.some((service) => service.scope || service.viaIndependent))) return '';
   const chip = (service) => {
     const title = service.viaIndependent ? t('board.more.independentDetail', {
-      sources: service.independent.sources.map((source) => (source === 'ripe-atlas' ? 'RIPE Atlas' : 'Globalping')).join(separator()),
       probes: formatNumber(service.independent.probes), networks: formatNumber(service.independent.networks.length),
     }) : service.scope ? t('board.more.detail', {
       total: formatNumber(service.measurements), confirmed: formatNumber(service.confirmed),
@@ -965,7 +964,7 @@ function renderServiceTiles(services, selection, connectivity = null) {
         // Without a usable test in this network, the tile answers with the result across Iran,
         // labelled as such, instead of stopping at "not tested".
         const country = ['untested', 'unclear'].includes(item.status) ? item.country : null;
-        // Without any OONI answer, an independent check (RIPE Atlas, Globalping) answers, labelled.
+        // Without any OONI answer, an independent check from probes in Iran answers, labelled.
         const independent = !country && ['untested', 'unclear', 'unavailable'].includes(item.status) && INDEPENDENT_STATUS[item.independent?.status]
           ? item.independent : null;
         const status = country ? country.status : independent ? INDEPENDENT_STATUS[independent.status] : item.status;

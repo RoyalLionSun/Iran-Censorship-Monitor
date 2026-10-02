@@ -1,8 +1,8 @@
 # Verification Report
 
-## Latest verification — 2026-09-30, `main` after release v1.9.1
+## Latest verification — 2026-10-02, `main` after release v1.9.1
 
-- `npm run check`: syntax checks and **561/561** deterministic tests passed, including the Farsi text checks (no sentence opens with a Latin word or with a placeholder that can hold a Latin name, placeholders as in English, Persian ی and ک, composed Unicode, no direction overrides);
+- `npm run check`: syntax checks and **563/563** deterministic tests passed, including the Farsi text checks and the check that public texts name RIPE Atlas for connection quality only (no sentence opens with a Latin word or with a placeholder that can hold a Latin name, placeholders as in English, Persian ی and ک, composed Unicode, no direction overrides);
 - `npm run build` and the headless browser gates (`npm run verify:ui`): passed.
 
 The sections below are the dated records of earlier verification rounds.
