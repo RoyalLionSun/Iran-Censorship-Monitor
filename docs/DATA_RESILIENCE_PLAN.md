@@ -146,7 +146,9 @@ pauses single paths while the others continue. The raw-file path additionally ne
 
 ## Open items
 
-- RIPE Atlas credits (requested on 27 September 2026; alternatively host a probe to earn them).
+- RIPE Atlas credits: 1,000,000 granted on 6 October 2026, about 8 weeks at four rounds a day
+  (about 17,600 credits a day). For continuous operation, a software probe on the server earns
+  about 21,600 credits a day.
 - Globalping token (optional, raises limits).
 - Server operation: the collector runs inside the server process by default; a separate
   timer (systemd) is possible for production.

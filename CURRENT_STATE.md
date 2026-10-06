@@ -34,7 +34,7 @@ The dated history of every change is in [CHANGELOG.md](CHANGELOG.md); this page 
 - **Going online:** [GO_LIVE.md](GO_LIVE.md): public address, a server that is not a home connection, `TRUST_PROXY`, backups.
 - **Reachable from Iran:** plan hosting that Iran does not block, mirrors and an .onion address; once online, test the dashboard's own address from inside Iran (OONI Run link or a Citizen Lab list entry).
 - **Test lists:** Citizen Lab pull request #2277 (app servers and iranopasmigirim.com) is open, not yet merged, and still has the `robots.txt.txt` typo; submit the sites in [OUTREACH_VPN_DATA.md](docs/OUTREACH_VPN_DATA.md) that OONI does not test yet (opposition sites, 14 AI services, 34 domestic everyday services such as banks, Shaparak, Snapp, Rubika, app stores, maps and government e-services).
-- **RIPE Atlas credits:** RIPE NCC agreed on 1 October 2026 to grant them once it has the RIPE Atlas account's address; a software probe could earn more later on the project's server (not on a private connection, since a probe shows its network and approximate location).
+- **RIPE Atlas credits:** 1,000,000 credits granted by RIPE NCC on 6 October 2026 (research). At the planned rate (about 4,400 credits per round, four rounds a day) they last about 8 weeks once the checks run; a software probe on the project's server earns about 21,600 credits a day and would cover the rounds (not on a private connection, since a probe shows its network and approximate location).
 
 ## Known limits
 

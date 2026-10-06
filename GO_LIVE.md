@@ -91,7 +91,8 @@ The Farsi version is for people in Iran; a dashboard they cannot open misses its
       tests the app servers and iranopasmigirim.com; the dashboard picks the results up by itself.
 - [ ] **Test-list entries and data requests for VPN tools**: see [OUTREACH_VPN_DATA.md](docs/OUTREACH_VPN_DATA.md)
       (eight URLs to submit on test-lists.ooni.org; a ready letter to Psiphon, Lantern, Hiddify, ASL19, Windscribe).
-- [ ] **RIPE Atlas credits** for regular independent checks: granted by RIPE NCC once it has the RIPE Atlas account's address (1 October 2026).
+- [x] **RIPE Atlas credits** for regular independent checks: 1,000,000 granted by RIPE NCC on 6 October 2026, enough for about 8 weeks at four rounds a day.
+- [ ] **RIPE Atlas software probe** on the server, so the checks keep running after that: a connected probe earns about 21,600 credits a day, a round costs about 4,400.
 - [ ] **Telegram channels** (English and Farsi) and the bot as administrator, if daily posts are wanted.
 
 ## 5. Checks on the day
